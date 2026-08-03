@@ -26,7 +26,6 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.projectView.actions.ProjectViewActionSupport
 import com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPane
-import com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPaneProvider
 import com.intellij.platform.projectView.pane.PROJECT_VIEW_SELECTED_NODE_IDS_KEY
 import com.intellij.platform.projectView.pane.ProjectViewNodePath
 import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorImpl
@@ -69,13 +68,6 @@ import javax.swing.event.TreeExpansionListener
 import javax.swing.tree.TreePath
 import kotlin.time.ComparableTimeMark
 import kotlin.time.TimeSource
-
-internal class TreeBasedFrontendProjectViewPaneProvider : FrontendProjectViewPaneProvider {
-  override fun createPane(
-    project: Project,
-    descriptor: ProjectViewPaneDescriptorImpl
-  ): FrontendProjectViewPane = TreeBasedFrontendProjectViewPane(project, descriptor)
-}
 
 /**
  * The UI half of the tree-based frontend Project View pane.

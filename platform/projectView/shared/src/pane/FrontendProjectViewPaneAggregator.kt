@@ -18,7 +18,7 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 interface FrontendProjectViewPaneAggregator {
-  suspend fun getPaneDescriptors(): List<ProjectViewPaneDescriptorImpl>
+  suspend fun getPaneDescriptorsFlow(): Flow<Collection<ProjectViewPaneDescriptorImpl>>
 
   suspend fun getPaneStateFlow(paneId: ProjectViewPaneId): Flow<ProjectViewPaneStateEvent>
 

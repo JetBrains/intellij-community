@@ -13,12 +13,14 @@ import com.intellij.platform.projectView.pane.ProjectViewPaneRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneStateEvent
 import com.intellij.platform.projectView.pane.SelectInRequestDTO
 import com.intellij.platform.projectView.rpc.ProjectViewRpc
+import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 
 internal class FrontendProjectViewPaneAggregatorImpl(
   private val project: Project,
@@ -29,32 +31,29 @@ internal class FrontendProjectViewPaneAggregatorImpl(
 
   private suspend fun backendService(): ProjectViewRpc = ProjectViewRpc.getInstance()
   
-  private val paneDescriptorsDeferred: Deferred<Collection<AggregatedDescriptor>> = coroutineScope.async { 
-    // TODO: for Light, we need to be able to transition for specific panes with matching IDs from the front to the back
-    // In other words, for now it's just "backend wins," but we need "backend replaces frontend when it becomes available."
-    val frontendDescriptors = frontendService().getPaneDescriptors().associate {
-      it.id to AggregatedDescriptor(it, isFrontend = true)
+  private val paneDescriptors = MutableStateFlow<Collection<AggregatedDescriptor>>(emptyList())
+  
+  init {
+    coroutineScope.launch(CoroutineName("PV pane descriptors fetching")) {
+      val frontendDescriptors = frontendService().getPaneDescriptors().associate {
+        it.id to AggregatedDescriptor(it, isFrontend = true)
+      }
+      paneDescriptors.value = frontendDescriptors.values
+      LOG.info("Loaded the frontend PV pane descriptors: ${frontendDescriptors.values.joinToString { it.descriptor.id.idString }}")
+      val backendDescriptors = backendService().getPaneDescriptors(project.projectId()).associate {
+        it.id to AggregatedDescriptor(it, isFrontend = false)
+      }
+      LOG.info("Loaded the backend PV pane descriptors: ${backendDescriptors.values.joinToString { it.descriptor.id.idString }}")
+      paneDescriptors.value = (frontendDescriptors + backendDescriptors).values
     }
-    LOG.info("Loaded the frontend PV pane descriptors: ${frontendDescriptors.values.joinToString { it.descriptor.id.idString }}")
-    val backendDescriptors = backendService().getPaneDescriptors(project.projectId()).associate {
-      it.id to AggregatedDescriptor(it, isFrontend = false)
-    }
-    LOG.info("Loaded the backend PV pane descriptors: ${backendDescriptors.values.joinToString { it.descriptor.id.idString }}")
-    (frontendDescriptors + backendDescriptors).values
   }
 
-  private val frontendIdsDeferred: Deferred<Set<ProjectViewPaneId>> = coroutineScope.async { 
-    paneDescriptorsDeferred.await().filter { it.isFrontend }.mapTo(hashSetOf()) { it.descriptor.id }
-  }
-
-  private suspend fun frontendPaneIds(): Set<ProjectViewPaneId> = frontendIdsDeferred.await()
-
-  override suspend fun getPaneDescriptors(): List<ProjectViewPaneDescriptorImpl> {
-    return paneDescriptorsDeferred.await().map { it.descriptor }
+  override suspend fun getPaneDescriptorsFlow(): Flow<Collection<ProjectViewPaneDescriptorImpl>> {
+    return paneDescriptors.asStateFlow().map { descriptors -> descriptors.map { it.descriptor } }
   }
 
   override suspend fun getPaneStateFlow(paneId: ProjectViewPaneId): Flow<ProjectViewPaneStateEvent> {
-    return if (paneId in frontendPaneIds()) {
+    return if (isFrontendPane(paneId)) {
       frontendService().getPaneStateFlow(paneId)
     }
     else {
@@ -63,7 +62,7 @@ internal class FrontendProjectViewPaneAggregatorImpl(
   }
 
   override suspend fun getPaneRequestChannel(paneId: ProjectViewPaneId): SendChannel<ProjectViewPaneRequest> {
-    return if (paneId in frontendPaneIds()) {
+    return if (isFrontendPane(paneId)) {
       frontendService().getPaneRequestChannel(paneId)
     }
     else {
@@ -72,12 +71,17 @@ internal class FrontendProjectViewPaneAggregatorImpl(
   }
 
   override suspend fun findNodeForOpenedFile(paneId: ProjectViewPaneId, editorChoice: EditorChoice): ProjectViewNodePath? {
-    return if (paneId in frontendPaneIds()) {
+    return if (isFrontendPane(paneId)) {
       frontendService().findNodeForOpenedFile(paneId, editorChoice)
     }
     else {
       backendService().findNodeForOpenedFile(project.projectId(), paneId, editorChoice)
     }
+  }
+
+  private fun isFrontendPane(paneId: ProjectViewPaneId): Boolean {
+    val descriptors = paneDescriptors.value.filter { it.descriptor.id == paneId }
+    return descriptors.all { it.isFrontend } // when we have a mix, the backend wins
   }
 
   override suspend fun findNodeForSelectIn(selectInRequest: SelectInRequestDTO): ProjectViewNodePath? {

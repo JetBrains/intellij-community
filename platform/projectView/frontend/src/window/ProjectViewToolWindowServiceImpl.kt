@@ -26,7 +26,6 @@ import com.intellij.platform.projectView.frontend.actions.ProjectViewActionSuppo
 import com.intellij.platform.projectView.frontend.actions.SplitProjectViewAutoscrollFromSource
 import com.intellij.platform.projectView.frontend.impl.pane.TreeBasedFrontendProjectViewPane
 import com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPane
-import com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPaneProviderEP
 import com.intellij.platform.projectView.pane.FrontendProjectViewPaneAggregator
 import com.intellij.platform.projectView.pane.ProjectViewNodePath
 import com.intellij.platform.projectView.pane.ProjectViewPaneId
@@ -43,6 +42,7 @@ import com.intellij.util.ui.launchOnShow
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -55,6 +55,7 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import org.jdom.Element
+import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.concurrent.atomics.AtomicReference
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
@@ -114,16 +115,20 @@ internal class ProjectViewToolWindowServiceImpl(
         }
       }
       launch(CoroutineName("Pane management")) {
+        val managementScope = this
+        val paneDescriptorJobs = hashMapOf<ProjectViewPaneId, Job>()
         val aggregator = FrontendProjectViewPaneAggregator.getInstance(project)
-        for (provider in FrontendProjectViewPaneProviderEP.extensionList) {
-          val paneDescriptors = aggregator.getPaneDescriptors()
+        aggregator.getPaneDescriptorsFlow().collect { paneDescriptors ->
           defaultSelection = paneDescriptors.firstOrNull { it.isDefault }?.id ?: defaultSelectedPaneId()
           for (descriptor in paneDescriptors) {
-            launch(CoroutineName("Manage PV pane ${descriptor.id} from the provider ${provider}")) {
+            val oldJob = paneDescriptorJobs.remove(descriptor.id)
+            oldJob?.cancel(CancellationException("The pane is being replaced by another one with the same ID"))
+            oldJob?.join()
+            paneDescriptorJobs[descriptor.id] = managementScope.launch(CoroutineName("Manage PV pane ${descriptor.id}")) {
               try {
                 LOG.debug { "Initializing pane ${descriptor.id}" }
                 val pane = withContext(Dispatchers.UI) {
-                  provider.createPane(project, descriptor)
+                  TreeBasedFrontendProjectViewPane(project, descriptor)
                 }
                 panes[descriptor.id] = pane
                 LOG.debug { "Created pane ${descriptor.id}" }

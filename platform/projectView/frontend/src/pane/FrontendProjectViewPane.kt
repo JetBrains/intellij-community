@@ -2,11 +2,8 @@
 package com.intellij.platform.projectView.frontend.pane
 
 import com.intellij.ide.SelectInTarget
-import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.projectView.actions.ProjectViewActionSupport
-import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorImpl
 import com.intellij.platform.projectView.pane.ProjectViewPaneId
 import com.intellij.platform.projectView.pane.ProjectViewPaneRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneStateEvent
@@ -15,13 +12,6 @@ import kotlinx.coroutines.channels.ReceiveChannel
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
-
-internal val FrontendProjectViewPaneProviderEP = ExtensionPointName.create<FrontendProjectViewPaneProvider>("com.intellij.project.view.pane.frontend")
-
-@ApiStatus.Internal
-interface FrontendProjectViewPaneProvider {
-  fun createPane(project: Project, descriptor: ProjectViewPaneDescriptorImpl): FrontendProjectViewPane
-}
 
 @ApiStatus.Internal
 interface FrontendProjectViewPane {

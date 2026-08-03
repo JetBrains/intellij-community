@@ -49,7 +49,7 @@ internal suspend fun <T> withProjectViewPane(
   block: suspend (ProjectViewPaneTester) -> T,
 ): T = coroutineScope {
   val aggregator = FrontendProjectViewPaneAggregator.getInstance(project)
-  val descriptors = aggregator.getPaneDescriptors()
+  val descriptors = aggregator.getPaneDescriptorsFlow().first { it.isNotEmpty() }
   val descriptor = descriptors.firstOrNull { it.id.idString == paneIdString }
                    ?: error("No Project View pane '$paneIdString'. Available: ${descriptors.map { it.id.idString }}")
   val paneId = descriptor.id
