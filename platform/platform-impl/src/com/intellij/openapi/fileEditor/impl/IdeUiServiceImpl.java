@@ -20,6 +20,7 @@ import com.intellij.openapi.fileEditor.UnlockOption;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.refactoring.util.RefactoringMessageDialog;
@@ -27,8 +28,9 @@ import com.intellij.ui.SystemNotifications;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.net.IOExceptionDialog;
 import com.intellij.util.net.JdkProxyProvider;
+import com.intellij.util.net.ProxyCredentialStore;
+import com.intellij.util.net.ProxySettings;
 import com.intellij.util.net.ssl.CertificateManager;
-import com.intellij.util.proxy.CommonProxy;
 import com.intellij.util.system.OS;
 import com.intellij.util.ui.SwingHelper;
 import org.jetbrains.annotations.ApiStatus;
@@ -41,6 +43,7 @@ import java.awt.Component;
 import java.io.IOException;
 import java.net.NoRouteToHostException;
 import java.net.Proxy;
+import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.file.Path;
@@ -132,23 +135,14 @@ public class IdeUiServiceImpl extends IdeUiService {
   }
 
   @Override
-  public String getProxyLogin() {
-    return HttpConfigurable.getInstance().getProxyLogin();
+  public @Nullable Pair<String, String> getProxyCredentials() {
+    var credentials = ProxyCredentialStore.getInstance().getCredentials(ProxySettings.getInstance().getProxyConfiguration());
+    return credentials != null ? new Pair<>(credentials.getUserName(), credentials.getPasswordAsString()) : null;
   }
 
   @Override
-  public String getPlainProxyPassword() {
-    return HttpConfigurable.getInstance().getPlainProxyPassword();
-  }
-
-  @Override
-  public boolean isProxyAuth() {
-    return HttpConfigurable.getInstance().PROXY_AUTHENTICATION;
-  }
-
-  @Override
-  public List<Proxy> getProxyList(URL url) {
-    return CommonProxy.getInstance().select(url);
+  public @NotNull List<Proxy> getProxyList(URI uri) {
+    return JdkProxyProvider.getInstance().getProxySelector().select(uri);
   }
 
   @Override

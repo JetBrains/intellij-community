@@ -1,11 +1,10 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("removal", "DEPRECATION")
 package com.intellij.util.net.internal
 
 import com.intellij.credentialStore.Credentials
 import com.intellij.util.net.DisabledProxyAuthPromptsManager
 import com.intellij.util.net.HttpConfigurable
-import com.intellij.util.net.ProxyCredentialProvider
 import com.intellij.util.net.ProxyCredentialStore
 import com.intellij.util.proxy.CommonProxy
 import com.intellij.util.text.nullize
@@ -42,7 +41,7 @@ private fun PasswordAuthentication.toCredentials(): Credentials = Credentials(us
 internal fun (() -> HttpConfigurable).asProxyCredentialStore(): ProxyCredentialStore = HttpConfigurableToCredentialStoreAdapter(this)
 internal fun (() -> HttpConfigurable).asDisabledProxyAuthPromptsManager(): DisabledProxyAuthPromptsManager = HttpConfigurableToDisabledPromptsManager(this)
 
-private class HttpConfigurableToCredentialStoreAdapter(private val getHttpConfigurable: () -> HttpConfigurable) : ProxyCredentialStore, ProxyCredentialProvider {
+private class HttpConfigurableToCredentialStoreAdapter(private val getHttpConfigurable: () -> HttpConfigurable) : ProxyCredentialStore {
   private val httpConfigurable: HttpConfigurable get() = getHttpConfigurable()
 
   // host is not checked in com.intellij.util.net.HttpConfigurable.getPromptedAuthentication, but here we check it

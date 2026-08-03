@@ -11096,6 +11096,7 @@ com.intellij.util.net.ProxyCredentialStore
 - a:areCredentialsRemembered(java.lang.String,I):Z
 - a:clearAllCredentials():V
 - a:clearTransientCredentials():V
+- getCredentials(com.intellij.util.net.ProxyConfiguration):com.intellij.credentialStore.Credentials
 - a:getCredentials(java.lang.String,I):com.intellij.credentialStore.Credentials
 - s:getInstance():com.intellij.util.net.ProxyCredentialStore
 - a:setCredentials(java.lang.String,I,com.intellij.credentialStore.Credentials,Z):V
@@ -11120,14 +11121,12 @@ f:com.intellij.util.net.ProxyUtils
 - sf:NO_PROXY_LIST:java.util.List
 - sf:asJavaProxy(com.intellij.util.net.ProxyConfiguration$StaticProxyConfiguration):java.net.Proxy
 - sf:asJvmProperties(com.intellij.util.net.ProxyConfiguration$StaticProxyConfiguration,com.intellij.util.net.ProxyCredentialProvider):java.util.Map
-- sf:asJvmProperties(java.net.Proxy):java.util.Map
 - sf:editConfigurable(com.intellij.util.net.ProxySettings,javax.swing.JComponent):Z
-- sf:getApplicableProxiesAsJvmProperties(java.net.URI,com.intellij.util.net.ProxyCredentialProvider,java.net.ProxySelector):java.util.List
-- bs:getApplicableProxiesAsJvmProperties$default(java.net.URI,com.intellij.util.net.ProxyCredentialProvider,java.net.ProxySelector,I,java.lang.Object):java.util.List
+- sf:getCurrentSettingsAsJvmProperties():java.util.Map
+- sf:getDetectedSettingsAsJvmProperties(java.net.URI):java.util.List
 - sf:getHostNameReliably(java.lang.String,java.net.InetAddress,java.net.URL):java.lang.String
 - sf:getStaticProxyCredentials(com.intellij.util.net.ProxySettings,com.intellij.util.net.ProxyCredentialProvider):com.intellij.credentialStore.Credentials
 - sf:isRealProxy(java.net.Proxy):Z
-- sf:setStaticProxyCredentials(com.intellij.util.net.ProxySettings,com.intellij.util.net.ProxyCredentialStore,com.intellij.credentialStore.Credentials,Z):V
 c:com.intellij.util.net.ssl.CertificateInfoPanel
 - javax.swing.JPanel
 - <init>(java.security.cert.X509Certificate):V

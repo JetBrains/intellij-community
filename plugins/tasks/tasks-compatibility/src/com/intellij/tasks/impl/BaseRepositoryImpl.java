@@ -1,9 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.impl;
 
 import com.intellij.tasks.TaskRepositoryType;
 import com.intellij.tasks.config.TaskSettings;
-import com.intellij.util.net.HttpConfigurable;
+import com.intellij.util.net.ProxyConfiguration;
+import com.intellij.util.net.ProxyCredentialStore;
+import com.intellij.util.net.ProxySettings;
 import org.apache.commons.httpclient.Credentials;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpMethod;
@@ -72,12 +74,15 @@ public abstract class BaseRepositoryImpl extends BaseRepository {
     client.getParams().setConnectionManagerTimeout(3000);
     client.getParams().setSoTimeout(TaskSettings.getInstance().CONNECTION_TIMEOUT);
     if (isUseProxy()) {
-      HttpConfigurable proxy = HttpConfigurable.getInstance();
-      client.getHostConfiguration().setProxy(proxy.PROXY_HOST, proxy.PROXY_PORT);
-      if (proxy.PROXY_AUTHENTICATION && proxy.getProxyLogin() != null) {
-        AuthScope authScope = new AuthScope(proxy.PROXY_HOST, proxy.PROXY_PORT);
-        Credentials credentials = getCredentials(proxy.getProxyLogin(), proxy.getPlainProxyPassword(), proxy.PROXY_HOST);
-        client.getState().setProxyCredentials(authScope, credentials);
+      var configuration = ProxySettings.getInstance().getProxyConfiguration();
+      if (configuration instanceof ProxyConfiguration.StaticProxyConfiguration staticProxy) {
+        client.getHostConfiguration().setProxy(staticProxy.getHost(), staticProxy.getPort());
+        var credentials = ProxyCredentialStore.getInstance().getCredentials(staticProxy.getHost(), staticProxy.getPort());
+        if (credentials != null && credentials.getUserName() != null) {
+          var authScope = new AuthScope(staticProxy.getHost(), staticProxy.getPort());
+          var proxyCredentials = getCredentials(credentials.getUserName(), credentials.getPasswordAsString(), staticProxy.getHost());
+          client.getState().setProxyCredentials(authScope, proxyCredentials);
+        }
       }
     }
     if (isUseHttpAuthentication()) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.net
 
 import com.intellij.credentialStore.Credentials
@@ -27,28 +27,7 @@ import java.net.URI
 import kotlin.test.assertEquals
 
 class ProxyUtilsTest {
-  val userCredentialProvider = ProxyCredentialProvider { host, port -> Credentials("user", "pwd").takeIf { host.endsWith("domain.com") && port == 500 } }
-
-  @Test
-  fun testJdkProxyAsJvmProperties() {
-    assertEquals(emptyMap(), Proxy.NO_PROXY.asJvmProperties())
-    assertEquals(
-      mapOf(
-        HTTP_HOST to "domain.com",
-        HTTP_PORT to "443",
-        HTTPS_HOST to "domain.com",
-        HTTPS_PORT to "443",
-      ),
-      Proxy(Proxy.Type.HTTP, InetSocketAddress.createUnresolved("domain.com", 443)).asJvmProperties()
-    )
-    assertEquals(
-      mapOf(
-        SOCKS_HOST to "domain.com",
-        SOCKS_PORT to "443",
-      ),
-      Proxy(Proxy.Type.SOCKS, InetSocketAddress.createUnresolved("domain.com", 443)).asJvmProperties()
-    )
-  }
+  private val userCredentials = Credentials("user", "pwd")
 
   @Test
   fun testStaticProxyConfigurationAsJavaProxy() {
@@ -72,7 +51,7 @@ class ProxyUtilsTest {
         HTTPS_PORT to "500",
         HTTP_NON_PROXY_HOSTS to "127.0.0.1|*.example.com",
       ),
-      ProxyConfiguration.proxy(HTTP, "domain.com", 500, "127.0.0.1, *.example.com").asJvmProperties(null)
+      getJvmProperties(ProxyConfiguration.proxy(HTTP, "domain.com", 500, "127.0.0.1, *.example.com"), credentials = null)
     )
     assertEquals(
       mapOf(
@@ -86,7 +65,7 @@ class ProxyUtilsTest {
         HTTPS_PROXY_USER to "user",
         HTTPS_PROXY_PASSWORD to "pwd",
       ),
-      ProxyConfiguration.proxy(HTTP, "domain.com", 500, "127.0.0.1, *.example.com").asJvmProperties(userCredentialProvider)
+      getJvmProperties(ProxyConfiguration.proxy(HTTP, "domain.com", 500, "127.0.0.1, *.example.com"), userCredentials)
     )
 
     assertEquals(
@@ -95,7 +74,7 @@ class ProxyUtilsTest {
         SOCKS_PORT to "500",
         HTTP_NON_PROXY_HOSTS to "127.0.0.1",
       ),
-      ProxyConfiguration.proxy(SOCKS, "domain.com", 500, "127.0.0.1").asJvmProperties(null)
+      getJvmProperties(ProxyConfiguration.proxy(SOCKS, "domain.com", 500, "127.0.0.1"), credentials = null)
     )
     assertEquals(
       mapOf(
@@ -105,7 +84,7 @@ class ProxyUtilsTest {
         SOCKS_USERNAME to "user",
         SOCKS_PASSWORD to "pwd"
       ),
-      ProxyConfiguration.proxy(SOCKS, "domain.com", 500, "127.0.0.1").asJvmProperties(userCredentialProvider)
+      getJvmProperties(ProxyConfiguration.proxy(SOCKS, "domain.com", 500, "127.0.0.1"), userCredentials)
     )
   }
 
@@ -115,21 +94,26 @@ class ProxyUtilsTest {
       override fun select(uri: URI?): List<Proxy?> =
         when (uri) {
           URI.create("https://example.com/path") -> listOf(Proxy(Proxy.Type.HTTP, InetSocketAddress.createUnresolved("domain.com", 500)))
-          URI.create("http://sub.example.com/") -> listOf(Proxy(Proxy.Type.HTTP, InetSocketAddress.createUnresolved("p1.domain.com", 500)),
-                                                          Proxy(Proxy.Type.SOCKS, InetSocketAddress.createUnresolved("p2.domain.com", 501)))
+          URI.create("http://sub.example.com/") -> listOf(
+            Proxy(Proxy.Type.HTTP, InetSocketAddress.createUnresolved("p1.domain.com", 500)),
+            Proxy(Proxy.Type.SOCKS, InetSocketAddress.createUnresolved("p2.domain.com", 501))
+          )
           else -> NO_PROXY_LIST
         }
 
       override fun connectFailed(uri: URI?, sa: SocketAddress?, ioe: IOException?) {}
     }
+    val credentialProvider = { host: String, port: Int ->
+      userCredentials.takeIf { host.endsWith("domain.com") && port == 500 }
+    }
 
     assertEquals(
       emptyList(),
-      URI.create("domain.com").getApplicableProxiesAsJvmProperties(userCredentialProvider, proxySelector)
+      getDetectedSettingsAsJvmProperties(URI.create("domain.com"), proxySelector, credentialProvider)
     )
     assertEquals(
       emptyList(),
-      URI.create("https://example.com").getApplicableProxiesAsJvmProperties(userCredentialProvider, proxySelector)
+      getDetectedSettingsAsJvmProperties(URI.create("https://example.com"), proxySelector, credentialProvider)
     )
     assertEquals(
       listOf(
@@ -144,7 +128,7 @@ class ProxyUtilsTest {
           HTTPS_PROXY_PASSWORD to "pwd",
         )
       ),
-      URI.create("https://example.com/path").getApplicableProxiesAsJvmProperties(userCredentialProvider, proxySelector)
+      getDetectedSettingsAsJvmProperties(URI.create("https://example.com/path"), proxySelector, credentialProvider)
     )
     assertEquals(
       listOf(
@@ -163,7 +147,7 @@ class ProxyUtilsTest {
           SOCKS_PORT to "501",
         )
       ),
-      URI.create("http://sub.example.com/").getApplicableProxiesAsJvmProperties(userCredentialProvider, proxySelector)
+      getDetectedSettingsAsJvmProperties(URI.create("http://sub.example.com/"), proxySelector, credentialProvider)
     )
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.net;
 
 import com.intellij.credentialStore.CredentialAttributesKt;
@@ -95,12 +95,13 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   /** @deprecated use {@link ProxySettings#getProxyConfiguration()} or {@link ProxySettings#setProxyConfiguration(ProxyConfiguration)}  */
   @Deprecated(forRemoval = true) public String PAC_URL;
 
-  /** @deprecated use {@link ProxyUtils#getStaticProxyCredentials(ProxySettings, ProxyCredentialProvider)} or {@link ProxyUtils#setStaticProxyCredentials(ProxySettings, ProxyCredentialStore, Credentials, boolean)} */
+  /// @deprecated the flag is not used in the [ProxySettings] API;
+  /// if no authentication is needed, set credentials to `null` via [ProxyCredentialStore#setCredentials(String, int, Credentials, boolean)]
   @Deprecated(forRemoval = true) public volatile boolean PROXY_AUTHENTICATION;
+
   /** @deprecated this flag shouldn't be persisted. In HttpConfigurable it controls whether the password is dropped from the persistence.
    * But if the user wants the password to not be remembered, then such a password should never reach persistence in the first place.
    *
-   * @see ProxyUtils#getStaticProxyCredentials(ProxySettings, ProxyCredentialProvider)
    * @see ProxyAuthentication
    */
   @Deprecated(forRemoval = true) public boolean KEEP_PROXY_PASSWORD;
@@ -247,28 +248,28 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     }
   }
 
-  /** @deprecated use {@link ProxyUtils#getStaticProxyCredentials(ProxySettings, ProxyCredentialProvider)} or {@link ProxyUtils#setStaticProxyCredentials(ProxySettings, ProxyCredentialStore, Credentials, boolean)} */
+  /// @deprecated use [ProxyCredentialStore#getCredentials] instead
   @Deprecated(forRemoval = true)
   @Transient
   public @Nullable String getProxyLogin() {
     return getSecure("proxy.login");
   }
 
-  /** @deprecated use {@link ProxyUtils#getStaticProxyCredentials(ProxySettings, ProxyCredentialProvider)} or {@link ProxyUtils#setStaticProxyCredentials(ProxySettings, ProxyCredentialStore, Credentials, boolean)} */
+  /// @deprecated use [ProxyCredentialStore#setCredentials] instead
   @Deprecated(forRemoval = true)
   @Transient
   public void setProxyLogin(String login) {
     storeSecure("proxy.login", login);
   }
 
-  /** @deprecated use {@link ProxyUtils#getStaticProxyCredentials(ProxySettings, ProxyCredentialProvider)} or {@link ProxyUtils#setStaticProxyCredentials(ProxySettings, ProxyCredentialStore, Credentials, boolean)} */
+  /// @deprecated use [ProxyCredentialStore#getCredentials] instead
   @Deprecated(forRemoval = true)
   @Transient
   public @Nullable String getPlainProxyPassword() {
     return getSecure("proxy.password");
   }
 
-  /** @deprecated use {@link ProxyUtils#getStaticProxyCredentials(ProxySettings, ProxyCredentialProvider)} or {@link ProxyUtils#setStaticProxyCredentials(ProxySettings, ProxyCredentialStore, Credentials, boolean)} */
+  /// @deprecated use [ProxyCredentialStore#setCredentials] instead
   @Deprecated(forRemoval = true)
   @Transient
   public void setPlainProxyPassword (String password) {
@@ -356,10 +357,10 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     return uri == null || !isProxyException(uri.getHost());
   }
 
-  /** @deprecated use {@link ProxyUtils#getApplicableProxiesAsJvmProperties(URI, ProxyCredentialProvider, ProxySelector)}.
+  /** @deprecated use {@link ProxyUtils#getDetectedSettingsAsJvmProperties(URI)}.
    * If autodetection really needs to be disallowed, check {@link ProxySettings} first. Keep in mind that
    * proxy configuration depends on the URI, so it cannot be null. If you only care about statically configured proxies, see
-   * {@link ProxyUtils#asJvmProperties(ProxyConfiguration.StaticProxyConfiguration, ProxyCredentialProvider)}.
+   * {@link ProxyUtils#getCurrentSettingsAsJvmProperties}.
    * Also, the new util has different properties for user and password that match JDK system properties
    * (see {@link JavaProxyProperty#HTTP_PROXY_USER}). */
   @Deprecated(forRemoval = true)
