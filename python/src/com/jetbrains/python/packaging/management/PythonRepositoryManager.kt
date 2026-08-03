@@ -2,21 +2,22 @@
 package com.jetbrains.python.packaging.management
 
 import com.intellij.openapi.project.Project
+import com.intellij.python.requirements.PyPackageVersion
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.PyPackageName
-import com.intellij.python.requirements.PyPackageVersion
 import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.cache.PythonPackageSearchResult
 import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
-import com.jetbrains.python.packaging.repository.PyPiPackageRepository
 import com.jetbrains.python.packaging.repository.PyPackageRepository
+import com.jetbrains.python.packaging.repository.PyPiPackageRepository
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CheckReturnValue
 
-internal interface PythonRepositoryManager {
+@ApiStatus.Internal
+interface PythonRepositoryManager {
   val project: Project
 
   /**
