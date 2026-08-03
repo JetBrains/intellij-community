@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.references.impl
 
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentsOfType
@@ -30,6 +31,7 @@ import org.jetbrains.kotlin.psi.KtLoopExpression
 import org.jetbrains.kotlin.psi.KtOperationReferenceExpression
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.lookupLocally as lookupLocallyImpl
 import org.jetbrains.kotlin.references.KotlinPsiReferenceProviderContributor
 import org.jetbrains.kotlin.resolution.KtResolvableCall
 import org.jetbrains.kotlin.resolve.references.ReferenceAccess
@@ -71,6 +73,8 @@ internal class KaBaseSimpleNameReference(
                 else -> {}
             }
         }
+
+        expression.lookupLocally()?.let { return listOf(it) }
 
         val referenceTargetSymbols = resolveToSymbols()
         val psiOfReferenceTarget = super.getResolvedToPsi(referenceTargetSymbols)
@@ -161,4 +165,15 @@ private fun KtExpression.doesBelongToLoop(loopExpression: KtExpression): Boolean
 
     // expression belongs to the loop when it is inside the loop body
     return structureBodies.firstOrNull { it.parent is KtLoopExpression }?.parent == loopExpression
+}
+
+private val isLocalLookupRegistryEnabled by lazy(LazyThreadSafetyMode.PUBLICATION) {
+    Registry.`is`("kotlin.analysis.enableLocalLookupOptimization")
+}
+
+private fun KtSimpleNameExpression.lookupLocally(): PsiElement? {
+    if (!isLocalLookupRegistryEnabled) return null
+
+    @OptIn(KtExperimentalApi::class)
+    return lookupLocallyImpl()
 }

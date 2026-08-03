@@ -29,6 +29,10 @@
             key="kotlin.analysis.allowRestrictedAnalysis"
             restartRequired="true"
     />
+    <registryKey defaultValue="false"
+                 description="Enables the local lookup optimizations"
+                 key="kotlin.analysis.enableLocalLookupOptimization"
+                 restartRequired="true"/>
 
     <applicationService
             serviceInterface="org.jetbrains.kotlin.analysis.api.platform.permissions.KotlinAnalysisPermissionOptions"
