@@ -9,7 +9,6 @@ import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.j2k.FileBasedPostProcessing
 import org.jetbrains.kotlin.j2k.PostProcessingApplier
-import org.jetbrains.kotlin.j2k.runUndoTransparentActionInEdt
 import org.jetbrains.kotlin.psi.KtFile
 
 class FormatCodeProcessing : FileBasedPostProcessing() {
@@ -25,15 +24,12 @@ class FormatCodeProcessing : FileBasedPostProcessing() {
         private val rangeMarker: RangeMarker?
     ) : PostProcessingApplier {
         override fun apply() {
-            // TODO investigate why one formatting pass is not enough in some cases (KTIJ-29962)
-            repeat(2) {
-                val file = filePointer.element ?: return
-                val codeStyleManager = CodeStyleManager.getInstance(file.project)
+            val file = filePointer.element ?: return
+            val codeStyleManager = CodeStyleManager.getInstance(file.project)
 
-                when {
-                    rangeMarker == null -> codeStyleManager.reformat(file)
-                    rangeMarker.isValid -> codeStyleManager.reformatRange(file, rangeMarker.startOffset, rangeMarker.endOffset)
-                }
+            when {
+                rangeMarker == null -> codeStyleManager.reformat(file)
+                rangeMarker.isValid -> codeStyleManager.reformatRange(file, rangeMarker.startOffset, rangeMarker.endOffset)
             }
         }
     }
