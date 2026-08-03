@@ -27,8 +27,8 @@ import com.intellij.terminal.TerminalTitle
 import com.intellij.terminal.actions.TerminalActionUtil
 import com.intellij.terminal.frontend.fus.TerminalFusCursorPainterListener
 import com.intellij.terminal.frontend.fus.TerminalFusFirstOutputListener
-import com.intellij.terminal.frontend.view.TerminalInputInterceptor
 import com.intellij.terminal.frontend.view.TerminalKeyEvent
+import com.intellij.terminal.frontend.view.TerminalKeyEventsListener
 import com.intellij.terminal.frontend.view.TerminalTextSelectionModel
 import com.intellij.terminal.frontend.view.TerminalView
 import com.intellij.terminal.frontend.view.TerminalViewSessionState
@@ -106,9 +106,7 @@ import org.jetbrains.plugins.terminal.view.impl.TerminalOutputModelsSetImpl
 import org.jetbrains.plugins.terminal.view.impl.TerminalSendTextBuilderImpl
 import org.jetbrains.plugins.terminal.view.impl.TerminalSendTextOptions
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalBlocksModel
-import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandBlock
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalShellIntegration
-import org.jetbrains.plugins.terminal.view.shellIntegration.getTypedCommandText
 import java.awt.Component
 import java.awt.Dimension
 import java.awt.Point
@@ -120,7 +118,6 @@ import java.awt.event.KeyEvent
 import java.nio.file.Path
 import javax.swing.JComponent
 import javax.swing.JPanel
-import kotlin.coroutines.cancellation.CancellationException
 import kotlin.math.min
 
 @Suppress("TestOnlyProblems")
@@ -180,7 +177,13 @@ class TerminalViewImpl(
     onBufferOverflow = BufferOverflow.DROP_OLDEST
   )
   override val keyEventsFlow: Flow<TerminalKeyEvent> = mutableKeyEventsFlow.asSharedFlow()
-  private val inputInterceptors = ContainerUtil.createLockFreeCopyOnWriteList<TerminalInputInterceptor>()
+  private val keyEventsListeners = ContainerUtil.createLockFreeCopyOnWriteList<TerminalKeyEventsListener>().apply {
+    add(object : TerminalKeyEventsListener {
+      override fun afterKeyEvent(event: TerminalKeyEvent) {
+        check(mutableKeyEventsFlow.tryEmit(event))
+      }
+    })
+  }
 
   override val workingDirectoryFlow: StateFlow<Path?>
 
@@ -232,13 +235,12 @@ class TerminalViewImpl(
     val alternateBufferModel = MutableTerminalOutputModelImpl(alternateBufferEditor.document, maxOutputLength = 0)
     val alternateBufferModelController = TerminalOutputModelControllerImpl(alternateBufferModel)
     val alternateBufferKeyEventsHandler = TerminalKeyEventsHandlerImpl(
-      mutableKeyEventsFlow,
       alternateBufferEditor,
       terminalInput,
       scrollingModel = null,
       alternateBufferModel,
       typeAhead = null,
-      inputInterceptors = { inputInterceptors },
+      keyEventsListeners = keyEventsListeners,
       sessionDeferred = sessionDeferred,
       coroutineScope = coroutineScope.childScope("TerminalAlternateBufferKeyEvents"),
     )
@@ -280,13 +282,12 @@ class TerminalViewImpl(
     outputEditor.putUserData(TerminalTypeAhead.KEY, outputModelController)
 
     outputEditorKeyEventsHandler = TerminalKeyEventsHandlerImpl(
-      mutableKeyEventsFlow,
       outputEditor,
       terminalInput,
       scrollingModel,
       outputModel,
       typeAhead = outputModelController,
-      inputInterceptors = { inputInterceptors },
+      keyEventsListeners = keyEventsListeners,
       sessionDeferred = sessionDeferred,
       coroutineScope = coroutineScope.childScope("TerminalOutputKeyEvents"),
     )
@@ -473,10 +474,10 @@ class TerminalViewImpl(
     return TerminalSendTextBuilderImpl(this::doSendText)
   }
 
-  override fun addInputInterceptor(parentDisposable: Disposable, interceptor: TerminalInputInterceptor) {
-    inputInterceptors.add(interceptor)
+  override fun addKeyEventsListener(parentDisposable: Disposable, listener: TerminalKeyEventsListener) {
+    keyEventsListeners.add(listener)
     Disposer.register(parentDisposable) {
-      inputInterceptors.remove(interceptor)
+      keyEventsListeners.remove(listener)
     }
   }
 

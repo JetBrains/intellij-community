@@ -8,15 +8,14 @@ import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.terminal.frontend.view.TerminalInputInterceptor
 import com.intellij.terminal.frontend.view.TerminalKeyEvent
 import com.intellij.terminal.frontend.view.TerminalKeyEventImpl
+import com.intellij.terminal.frontend.view.TerminalKeyEventsListener
 import com.intellij.terminal.frontend.view.typeahead.TerminalTypeAhead
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.terminal.block.reworked.TerminalUsageLocalStorage
@@ -33,13 +32,12 @@ import java.awt.event.KeyEvent
  * Logic of mouse event handling is copied from [com.jediterm.terminal.model.JediTerminal]
  */
 internal open class TerminalKeyEventsHandlerImpl(
-  private val keyEventsFlow: MutableSharedFlow<TerminalKeyEvent>,
   private val editor: EditorEx,
   private val terminalInput: TerminalInput,
   private val scrollingModel: TerminalOutputScrollingModel?,
   private val outputModel: TerminalOutputModel,
   private val typeAhead: TerminalTypeAhead?,
-  private val inputInterceptors: () -> List<TerminalInputInterceptor> = { emptyList() },
+  private val keyEventsListeners: List<TerminalKeyEventsListener> = emptyList(),
   private val sessionDeferred: CompletableDeferred<TerminalSession>,
   coroutineScope: CoroutineScope,
 ) : TerminalKeyEventsHandler {
@@ -65,17 +63,17 @@ internal open class TerminalKeyEventsHandlerImpl(
 
   override fun keyTyped(e: TimedKeyEvent) {
     LOG.trace { "Key typed event received: ${e.original}" }
-    val beforeKeyTypedCursorOffset = outputModel.cursorOffset
 
     if (ignoreNextKeyTypedEvent) {
       e.original.consume()
       LOG.trace { "Key event ignored: ${e.original}" }
       return
     }
-    if (interceptTerminalInput(e.original)) {
+    val event = TerminalKeyEventImpl(e.original, outputModel.cursorOffset)
+    if (beforeKeyEvent(event)) {
       e.original.consume()
       LOG.trace { "Key event intercepted: ${e.original}" }
-      check(keyEventsFlow.tryEmit(TerminalKeyEventImpl(e.original, beforeKeyTypedCursorOffset)))
+      afterKeyEvent(event)
       return
     }
     try {
@@ -91,7 +89,7 @@ internal open class TerminalKeyEventsHandlerImpl(
       }
       // Keep editor/UI state in sync with the original user input even if session processing is replayed later.
       syncEditorCaretWithModel(editor, outputModel)
-      check(keyEventsFlow.tryEmit(TerminalKeyEventImpl(e.original, beforeKeyTypedCursorOffset)))
+      afterKeyEvent(event)
     }
     catch (ex: Exception) {
       LOG.error("Error sending typed key to emulator", ex)
@@ -100,14 +98,14 @@ internal open class TerminalKeyEventsHandlerImpl(
 
   override fun keyPressed(e: TimedKeyEvent) {
     LOG.trace { "Key pressed event received: ${e.original}" }
-    val beforeKeyPressedCursorOffset = outputModel.cursorOffset
 
     ignoreNextKeyTypedEvent = false
-    if (interceptTerminalInput(e.original)) {
+    val event = TerminalKeyEventImpl(e.original, outputModel.cursorOffset)
+    if (beforeKeyEvent(event)) {
       e.original.consume()
       ignoreNextKeyTypedEvent = true
       LOG.trace { "Key event intercepted: ${e.original}" }
-      check(keyEventsFlow.tryEmit(TerminalKeyEventImpl(e.original, beforeKeyPressedCursorOffset)))
+      afterKeyEvent(event)
       return
     }
     try {
@@ -124,7 +122,7 @@ internal open class TerminalKeyEventsHandlerImpl(
       }
       // Keep editor/UI state in sync with the original user input even if session processing is replayed later.
       syncEditorCaretWithModel(editor, outputModel)
-      check(keyEventsFlow.tryEmit(TerminalKeyEventImpl(e.original, beforeKeyPressedCursorOffset)))
+      afterKeyEvent(event)
     }
     catch (ex: Exception) {
       LOG.error("Error sending pressed key to emulator", ex)
@@ -194,18 +192,29 @@ internal open class TerminalKeyEventsHandlerImpl(
     return true
   }
 
-  private fun interceptTerminalInput(event: KeyEvent): Boolean {
-    for (interceptor in inputInterceptors()) {
+  private fun beforeKeyEvent(event: TerminalKeyEvent): Boolean {
+    for (listener in keyEventsListeners) {
       try {
-        if (interceptor.beforeTerminalInput(event)) {
+        if (listener.beforeKeyEvent(event)) {
           return true
         }
       }
       catch (t: Throwable) {
-        LOG.error("Terminal input interceptor failed", t)
+        LOG.error("Terminal key events listener failed", t)
       }
     }
     return false
+  }
+
+  private fun afterKeyEvent(event: TerminalKeyEvent) {
+    for (listener in keyEventsListeners) {
+      try {
+        listener.afterKeyEvent(event)
+      }
+      catch (t: Throwable) {
+        LOG.error("Terminal key events listener failed", t)
+      }
+    }
   }
 
   private fun isNoModifiers(e: KeyEvent): Boolean {

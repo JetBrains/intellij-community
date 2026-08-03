@@ -16,17 +16,8 @@ import org.jetbrains.plugins.terminal.view.TerminalOutputModel
 import org.jetbrains.plugins.terminal.view.TerminalOutputModelsSet
 import org.jetbrains.plugins.terminal.view.TerminalSendTextBuilder
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalShellIntegration
-import java.awt.event.KeyEvent
 import java.nio.file.Path
 import javax.swing.JComponent
-
-@ApiStatus.Internal
-fun interface TerminalInputInterceptor {
-  /**
-   * Returns `true` when the event is handled and should not be sent to the terminal process.
-   */
-  fun beforeTerminalInput(event: KeyEvent): Boolean
-}
 
 /**
  * Represents the frontend part of the Reworked Terminal.
@@ -171,8 +162,7 @@ interface TerminalView {
    */
   fun createSendTextBuilder(): TerminalSendTextBuilder
 
-  @ApiStatus.Internal
-  fun addInputInterceptor(parentDisposable: Disposable, interceptor: TerminalInputInterceptor)
+  fun addKeyEventsListener(parentDisposable: Disposable, listener: TerminalKeyEventsListener)
 
   @ApiStatus.Internal
   fun setTopComponent(component: JComponent, disposable: Disposable)
