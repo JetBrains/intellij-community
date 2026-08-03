@@ -302,6 +302,9 @@ interface ThreadingSupport {
    */
   fun runWhenWriteActionIsCompleted(action: () -> Unit)
 
+  @ApiStatus.Internal
+  fun writeActionFollowupsSize(): Int
+
   /**
    * Executes [action] with [blockingExecutor], and transfers write access to [action].
    * This function requires the acquired write lock.

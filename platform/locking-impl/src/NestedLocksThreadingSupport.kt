@@ -1846,6 +1846,12 @@ class NestedLocksThreadingSupport : ThreadingSupport {
     drainWriteActionFollowups()
   }
 
+  override fun writeActionFollowupsSize(): Int {
+    return synchronized(pendingWriteActionFollowup) {
+      pendingWriteActionFollowup.size
+    }
+  }
+
   private fun drainWriteActionFollowups() {
     if (isWriteActionPendingOrRunning()) {
       return

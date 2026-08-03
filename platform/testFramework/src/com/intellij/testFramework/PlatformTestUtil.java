@@ -45,6 +45,9 @@ import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ThreadingSupport;
+import com.intellij.openapi.application.ThreadingSupportKt;
+import com.intellij.openapi.application.impl.AppImplKt;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.application.impl.TestOnlyThreading;
@@ -615,12 +618,13 @@ public final class PlatformTestUtil {
           if (elapsed > DISPATCH_ALL_INVOCATION_EVENTS_TIMEOUT_MS) {
             throw new AssertionError(
               "dispatchAllInvocationEventsInIdeEventQueue() did not finish draining the IDE event queue within " +
-              DISPATCH_ALL_INVOCATION_EVENTS_TIMEOUT_MS + " ms (canary fired=" + canary.get() + "). Suspected " +
+              DISPATCH_ALL_INVOCATION_EVENTS_TIMEOUT_MS + " ms (canary fired=" + canary.get() + ").\n Suspected " +
               "`NonBlockingFlushQueue` write-intent livelock: the queued `ModalityState.any()` runnable is starved " +
-              "while FLUSH_NOW invocation events keep being re-posted. Failing fast so that a single hung. Override the " +
+              "while FLUSH_NOW invocation events keep being re-posted.\n Failing fast so that a single hung. Override the " +
               "bound with -Didea.test.dispatch.all.invocation.events.timeout.ms if a slow environment needs longer.\n" +
-              "Thread dump:\n" + ThreadDumper.dumpThreadsToString() + "\n" +
               "LaterInvocatorEdtQueue dump:\n" + LaterInvocator.getLaterInvocatorEdtQueue() + "\n" +
+              "Lock state dump: " + getLockDump() + "\n" +
+              "Thread dump:\n" + ThreadDumper.dumpThreadsToString() + "\n" +
               "Coroutine dump:\n" + CoroutineDumperKt.dumpCoroutines(null, true, true) + "\n"
             );
           }
@@ -638,6 +642,20 @@ public final class PlatformTestUtil {
       });
       return null;
     });
+  }
+
+  private static String getLockDump() {
+    ThreadingSupport lock = ApplicationManager.getApplication().getThreadingSupport();
+    if (lock != null) {
+      return "Threading support dump: " +
+      "raAllowed=" + lock.isReadAccessAllowed() +
+      ", waAllowed=" + lock.isWriteAccessAllowed() +
+      ", waPending=" + lock.isWriteActionPending() +
+      ", waInProgress=" + lock.isWriteActionInProgress() +
+      ", writeActionFollowups=" + lock.writeActionFollowupsSize();
+    } else {
+      return "Threading support not found";
+    }
   }
 
   @TestOnly
