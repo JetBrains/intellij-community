@@ -36,6 +36,7 @@ import com.intellij.maven.testFramework.fixtures.forMaven4
 import com.intellij.maven.testFramework.fixtures.importProjectAsync
 import com.intellij.maven.testFramework.fixtures.isMaven4
 import com.intellij.maven.testFramework.fixtures.isModel410
+import com.intellij.maven.testFramework.fixtures.mavenGeneralSettings
 import com.intellij.maven.testFramework.fixtures.mavenImportingFixture
 import com.intellij.maven.testFramework.fixtures.mavenVersionIsOrMoreThan
 import com.intellij.maven.testFramework.fixtures.moduleTag
@@ -800,6 +801,7 @@ class InvalidProjectImportingTest(mavenVersion: String, modelVersion: String) {
 
   @Test
   fun testUnresolvedExtensionsAfterResolve() = runBlocking {
+    maven.mavenGeneralSettings.isAlwaysUpdateSnapshots = true
     maven.importProjectAsync("""
                               <groupId>test</groupId>
                               <artifactId>project</artifactId>
@@ -913,6 +915,7 @@ class InvalidProjectImportingTest(mavenVersion: String, modelVersion: String) {
                       </build>
                       """.trimIndent())
 
+    maven.mavenGeneralSettings.isAlwaysUpdateSnapshots = true
     maven.importProjectAsync()
 
     val root = rootProjects[0]
@@ -1008,6 +1011,7 @@ class InvalidProjectImportingTest(mavenVersion: String, modelVersion: String) {
     val coordinates = "$groupId:$artifactId:$version"
     val jarCoordinates = "$groupId:$artifactId:jar:$version"
 
+    maven.mavenGeneralSettings.isAlwaysUpdateSnapshots = true
     maven.importProjectAsync("""
                             <groupId>test</groupId>
                             <artifactId>project</artifactId>
