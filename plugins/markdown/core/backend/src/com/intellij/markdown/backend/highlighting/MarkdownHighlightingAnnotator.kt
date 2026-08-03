@@ -72,7 +72,12 @@ internal class MarkdownHighlightingAnnotator : Annotator, DumbAware {
       setOf(ownStyleKey)
     }
     else {
-      element.parents(withSelf = false)
+      val codeSpan = element.parents(withSelf = false)
+        .firstOrNull { it.elementType == MarkdownElementTypes.CODE_SPAN }
+      if (codeSpan != null) {
+        setOf(MarkdownHighlighterColors.CODE_SPAN)
+      }
+      else element.parents(withSelf = false)
         .toList()
         .asReversed()
         .mapNotNullTo(linkedSetOf()) {
