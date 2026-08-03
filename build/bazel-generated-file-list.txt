@@ -1616,6 +1616,7 @@ plugins/ui.webview/markdown-preview
 plugins/ui.webview/markdown-preview/tests
 plugins/ui.webview/tests
 plugins/webp
+plugins/webp/tests
 plugins/xpath
 plugins/xpath/xslt-rt
 plugins/yaml

@@ -47,7 +47,7 @@ public final class WebpNativeLibHelper {
     return getDecoderVersion();
   }
 
-  public static boolean loadNativeLibraryIfNeeded() {
+  static boolean loadNativeLibraryIfNeeded() {
     if (!sJniLibLoadAttempted) {
       try {
         loadNativeLibrary();
@@ -77,20 +77,26 @@ public final class WebpNativeLibHelper {
   }
 
   public static @Nullable Path getLibLocation() {
-    var platformName = switch (OS.CURRENT) {
-      case Windows -> "win";
-      case macOS -> "mac";
-      case Linux -> "linux";
-      default -> null;
-    };
-    var archName = switch (CpuArch.CURRENT) {
-      case X86_64 -> "amd64";
-      case ARM64 -> "aarch64";
-      default -> null;
-    };
-    if (platformName == null || archName == null) return null;
-    var relativePath = "lib/libwebp/" + platformName + '/' + archName + '/' + System.mapLibraryName("webp_jni");
-    var resource = PluginPathManager.getPluginResource(WebpNativeLibHelper.class, relativePath);
-    return resource != null ? resource.toPath().toAbsolutePath() : null;
+    var location = System.getProperty(WebpMetadata.TEST_LIB_LOCATION);
+    if (location != null) {
+      return Path.of(location, System.mapLibraryName("webp_jni"));
+    }
+    else {
+      var platformName = switch (OS.CURRENT) {
+        case Windows -> "win";
+        case macOS -> "mac";
+        case Linux -> "linux";
+        default -> null;
+      };
+      var archName = switch (CpuArch.CURRENT) {
+        case X86_64 -> "amd64";
+        case ARM64 -> "aarch64";
+        default -> null;
+      };
+      if (platformName == null || archName == null) return null;
+      var relativePath = "lib/libwebp/" + platformName + '/' + archName + '/' + System.mapLibraryName("webp_jni");
+      var resource = PluginPathManager.getPluginResource(WebpNativeLibHelper.class, relativePath);
+      return resource != null ? resource.toPath().toAbsolutePath() : null;
+    }
   }
 }

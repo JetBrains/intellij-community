@@ -33,8 +33,11 @@ public class WebpMetadata extends IIOMetadata {
   public static final float DEFAULT_ENCODING_QUALITY = 0.75f;
   public static final boolean DEFAULT_LOSSLESS = true;
 
+  public static final String TEST_LIB_LOCATION = "ij.webp.test.lib.location";
+
   @TestOnly
   public static void ensureWebpRegistered() {
+    WebpNativeLibHelper.loadNativeLibraryIfNeeded();
     var defaultInstance = IIORegistry.getDefaultInstance();
     defaultInstance.registerServiceProvider(new WebpImageReaderSpi(), ImageReaderSpi.class);
     defaultInstance.registerServiceProvider(new WebpImageWriterSpi(), ImageWriterSpi.class);
