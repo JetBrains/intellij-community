@@ -2,7 +2,6 @@
 package com.intellij.terminal.frontend
 
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
@@ -42,15 +41,11 @@ import java.beans.PropertyChangeListener
 import javax.swing.Icon
 import kotlin.coroutines.cancellation.CancellationException
 
-private val LOG = logger<TerminalToolWindowEditorTabSupport>()
-
 internal class TerminalToolWindowEditorTabSupport : ToolWindowEditorTabSupport {
   override fun filterTabsToClose(project: Project, contents: List<Content>): List<Content> {
-    val terminalContents = contents.mapNotNull { content ->
-      content.toTerminalContentOrNull()
-    }
-    if (terminalContents.isEmpty()) {
-      return contents
+    if (contents.isEmpty()) return contents
+    val terminalContents = contents.map { content ->
+      content.toTerminalContent()
     }
 
     val contentsToConfirm = try {
@@ -98,7 +93,7 @@ internal class TerminalToolWindowEditorTabSupport : ToolWindowEditorTabSupport {
   }
 
   override fun canBeMovedToEditor(content: Content): Boolean {
-    return content.toTerminalContentOrNull() != null
+    return content.isTerminalContent()
   }
 
   private fun buildTabPresentation(project: Project, content: Content): ToolWindowEditorTabPresentation {
@@ -115,14 +110,11 @@ internal class TerminalToolWindowEditorTabSupport : ToolWindowEditorTabSupport {
   }
 
   private fun getTabTitle(content: Content): @NlsContexts.TabTitle String {
-    return content.toTerminalContentOrNull()?.getTabTitle() ?: content.displayName
+    return content.toTerminalContent().getTabTitle()
   }
 
   private fun titleUpdatesFlow(content: Content): Flow<Unit> {
-    return content.toTerminalContentOrNull()?.titleUpdatesFlow() ?: run {
-      LOG.debug("Terminal title state is unavailable; falling back to Content.displayName")
-      content.propertyUpdatesFlow(Content.PROP_DISPLAY_NAME)
-    }
+    return content.toTerminalContent().titleUpdatesFlow()
   }
 
   private suspend fun collectContentsToConfirm(
@@ -177,16 +169,23 @@ private sealed interface TerminalContent {
 }
 
 private fun Content.toTerminalContentOrNull(): TerminalContent? {
-    getTerminalTab()?.view?.let {
-      return TerminalContent.Reworked(this, it)
-    }
-
-    TerminalToolWindowManager.findWidgetByContent(this)?.let {
-      return TerminalContent.Classic(this, it)
-    }
-
-    return null
+  getTerminalTab()?.view?.let {
+    return TerminalContent.Reworked(this, it)
   }
+
+  TerminalToolWindowManager.findWidgetByContent(this)?.let {
+    return TerminalContent.Classic(this, it)
+  }
+
+  return null
+}
+
+private fun Content.toTerminalContent(): TerminalContent =
+  toTerminalContentOrNull()
+  ?: error("Content $this is not a terminal tab")
+
+private fun Content.isTerminalContent(): Boolean =
+  toTerminalContentOrNull() != null
 
 private fun Content.propertyUpdatesFlow(targetPropertyName: String): Flow<Unit> = callbackFlow {
   val listener = PropertyChangeListener { event ->
