@@ -13,6 +13,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.project.DumbAwareAction
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRChangeListViewModel
+import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRCumulativeChangeListViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.diff.GHPRDiffReviewViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.editor.GHPRReviewFileEditorViewModel
 
@@ -26,7 +27,7 @@ internal class GHPRViewedStateToggleAction : DumbAwareAction() {
     val changes = e.getData(SELECTED_CHANGES)
     val changesVm = changes?.let { e.getData(GHPRChangeListViewModel.DATA_KEY) }
     if (changes != null && changesVm != null) {
-      if (!changesVm.isOnLatest) return
+      if (changesVm !is GHPRCumulativeChangeListViewModel) return
 
       val isAllViewed = changesVm.isViewedStateForAllChanges(changes, viewed = true)
       e.presentation.text =
@@ -69,7 +70,7 @@ internal class GHPRViewedStateToggleAction : DumbAwareAction() {
     val changes = e.getData(SELECTED_CHANGES)
     val changesVm = e.getData(GHPRChangeListViewModel.DATA_KEY)
     if (changes != null && changesVm != null) {
-      if (!changesVm.isOnLatest) return
+      if (changesVm !is GHPRCumulativeChangeListViewModel) return
 
       val isAllViewed = changesVm.isViewedStateForAllChanges(changes, viewed = true)
       changesVm.setViewedState(changes, !isAllViewed)
