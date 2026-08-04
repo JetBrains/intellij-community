@@ -19,7 +19,7 @@ internal class PyUvBaseSdkConfiguration : PyProjectSdkConfigurationExtension {
 
   override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module, venvsInModule: List<PythonBinary>): CreateSdkInfo? =
     prepareSdkCreator(
-      { checkManageableUvEnvBase(venvsInModule) }
+      { checkManageableUvEnvBase(module, toolId, venvsInModule) }
     ) { envExists -> { createUvSdk(module, toolId, venvsInModule, envExists) } }
 
   override fun asPyProjectTomlSdkConfigurationExtension(): PyProjectTomlConfigurationExtension? = null
