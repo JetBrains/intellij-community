@@ -79,9 +79,16 @@ fun CoroutineScope.consumeReceiveChannelAsKotlin(receiveChannel: EelReceiveChann
 
 /**
  * Collect data from channel line-by-line using [charset] to convert bytes to chars.
- * Much like [java.io.BufferedReader], we consider CR or CRLF as a new line chars.
- * This API might be slow (as it reads one byte per time) so you might prefer to [readAllBytes] first, then decode it and split by lines.
- * However, for interactive source you can't read till the end, so you use this api.
+ * A line ends at `\n`, and neither it nor a `\r` in front of it is part of the emitted line, much like
+ * [java.io.BufferedReader.readLine]. A lone `\r` does not end a line: command line tools use it to
+ * redraw a line in place, and splitting there would tear that output apart.
+ * The end of the stream ends the last line, and emits nothing when there is no unterminated line left.
+ *
+ * For a non-interactive source you might prefer to [readAllBytes] first, then decode it and split by lines.
+ *
+ * This reads ahead, so it fits a channel that is read to its end. To read only the first lines -- a
+ * handshake, a header -- and leave the rest readable, use [com.intellij.platform.eel.channels.readLine]
+ * of [com.intellij.platform.eel.channels.PeekableEelReceiveChannel], which puts the remainder back.
  *
  * As soon as channel gets closed -- flow finishes.
  * ```kotlin
@@ -99,7 +106,17 @@ fun CoroutineScope.consumeReceiveChannelAsKotlin(receiveChannel: EelReceiveChann
  */
 @ApiStatus.Internal
 fun EelReceiveChannel.lines(charset: Charset): Flow<String> =
-  linesImpl(charset)
+  linesImpl(charset, DEFAULT_BUFFER_SIZE)
+
+/**
+ * Please read the documentation for the other overload of [lines].
+ *
+ * [bufferSize] is how many bytes a single `receive` may take, so it bounds the read-ahead described
+ * there. It does not limit the length of an emitted line.
+ */
+@ApiStatus.Internal
+fun EelReceiveChannel.lines(charset: Charset, bufferSize: Int): Flow<String> =
+  linesImpl(charset, bufferSize)
 
 @ApiStatus.Internal
 fun EelReceiveChannel.lines(): Flow<String> = lines(Charset.defaultCharset())
