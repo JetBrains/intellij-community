@@ -35,8 +35,6 @@
   {kind: "moduleId", id: "intellij.cwm.connection.backend", moduleKind: "backend"},
   {kind: "moduleId", id: "intellij.cwm.connection.backend.license", moduleKind: "backend"},
   {kind: "moduleId", id: "intellij.cwm.vcs", moduleKind: "backend"},
-  {kind: "moduleId", id: "intellij.cwm.enabler", moduleKind: "backend"},
-  {kind: "moduleId", id: "intellij.cwm.enabler.core", moduleKind: "backend"},
   {kind: "moduleId", id: "intellij.codeWithMe.abstract.main", moduleKind: "backend"},
   {kind: "moduleId", id: "intellij.codeWithMe.idea.community.main", moduleKind: "backend"},
   {kind: "moduleId", id: "intellij.codeWithMe.idea.ultimate.main.android", moduleKind: "backend"},
