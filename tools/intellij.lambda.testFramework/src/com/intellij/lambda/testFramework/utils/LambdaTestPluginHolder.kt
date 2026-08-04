@@ -144,6 +144,9 @@ object LambdaTestPluginHolder {
       pluginModuleBaseName = "intellij.debugger.lambdaDebuggerTests.java",
     )
 
+  fun setupPhpFrontendSplitLambdaTestsPlugin(): Unit =
+    setupAllModesPlugin("intellij.php.frontend.split.lambdaTests._test")
+
   fun setupRdctLambdaTestsUiPlugin(): Unit =
     setupAllModesPlugin("intellij.rdct.lambdaTestsUi._test")
 
