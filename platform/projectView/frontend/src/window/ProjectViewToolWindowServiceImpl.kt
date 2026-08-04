@@ -33,29 +33,30 @@ import com.intellij.platform.projectView.pane.projectViewPaneId
 import com.intellij.platform.projectView.window.ProjectViewToolWindowService
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentFactory
+import com.intellij.ui.content.ContentManager
 import com.intellij.ui.content.ContentManagerEvent
 import com.intellij.ui.content.ContentManagerListener
 import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.awaitCancellationAndInvoke
+import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.launchOnShow
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import org.jdom.Element
-import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.concurrent.atomics.AtomicReference
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
@@ -116,15 +117,11 @@ internal class ProjectViewToolWindowServiceImpl(
       }
       launch(CoroutineName("Pane management")) {
         val managementScope = this
-        val paneDescriptorJobs = hashMapOf<ProjectViewPaneId, Job>()
         val aggregator = FrontendProjectViewPaneAggregator.getInstance(project)
         aggregator.getPaneDescriptorsFlow().collect { paneDescriptors ->
           defaultSelection = paneDescriptors.firstOrNull { it.isDefault }?.id ?: defaultSelectedPaneId()
           for (descriptor in paneDescriptors) {
-            val oldJob = paneDescriptorJobs.remove(descriptor.id)
-            oldJob?.cancel(CancellationException("The pane is being replaced by another one with the same ID"))
-            oldJob?.join()
-            paneDescriptorJobs[descriptor.id] = managementScope.launch(CoroutineName("Manage PV pane ${descriptor.id}")) {
+            managementScope.launch(CoroutineName("Manage PV pane ${descriptor.id}")) {
               try {
                 LOG.debug { "Initializing pane ${descriptor.id}" }
                 val pane = withContext(Dispatchers.UI) {
@@ -174,6 +171,7 @@ internal class ProjectViewToolWindowServiceImpl(
 
   suspend fun managePane(toolWindow: ToolWindow, pane: FrontendProjectViewPane) {
     coroutineScope {
+      val mainScope = this
       withTimeoutOrNull(15.seconds) { // in case something went wrong with loading the state
         stateInitJob.await()
       }
@@ -203,7 +201,10 @@ internal class ProjectViewToolWindowServiceImpl(
             paneSelectJob.await()
           }
         }
-        val content = addContent(toolWindow, pane)
+        val content = addOrReplaceContent(toolWindow, pane)
+        // This is just a nice way to cancel this whole thing from anywhere.
+        // Currently used by addOrReplaceContent  to replace the previous pane with the same ID.
+        mainScope.coroutineContext.job.cancelOnDispose(content)
         if (mustSelectThisPane) {
           paneSelectJob.complete(Unit)
         }
@@ -272,17 +273,26 @@ internal class ProjectViewToolWindowServiceImpl(
   }
 
   @RequiresEdt
-  private fun addContent(
+  private fun addOrReplaceContent(
     toolWindow: ToolWindow,
     newPane: FrontendProjectViewPane,
   ): Content {
+    val contentManager = toolWindow.contentManager
+    val oldContent = findOldContent(contentManager, newPane.id)
+    val wasSelected = oldContent != null && contentManager.isSelected(oldContent)
+    // This has to be done now so the content is removed and added in a single EDT event.
+    // The old pane's job will be canceled when the content is disposed.
+    if (oldContent != null) {
+      LOG.debug { "There's already a pane with ID = ${newPane.id}, removing its content before adding the new one" }
+      contentManager.removeContent(oldContent, true)
+    }
+
     val newContent = ContentFactory.getInstance().createContent(
       /* component = */ newPane.component,
       /* displayName = */ newPane.displayName,
       /* isLockable = */ false
     )
     newContent.putUserData(PANE_KEY, newPane)
-    val contentManager = toolWindow.contentManager
     val bisectIndex = (0 until contentManager.contentCount).toList().binarySearch { i ->
       val existingContent = contentManager.getContent(i)
       val existingPane = existingContent?.getUserData(PANE_KEY) ?: return@binarySearch 1 // non-pane contents last (not really supported)
@@ -303,7 +313,21 @@ internal class ProjectViewToolWindowServiceImpl(
       -bisectIndex - 1
     }
     contentManager.addContent(newContent, index)
+
+    if (wasSelected) {
+      LOG.debug { "The previous pane with ID = ${newPane.id} was selected, therefore selecting the new one with the same ID" }
+      contentManager.setSelectedContent(newContent)
+    }
     return newContent
+  }
+
+  private fun findOldContent(contentManager: ContentManager, id: ProjectViewPaneId): Content? {
+    for (i in 0 until contentManager.contentCount) {
+      val content = contentManager.getContent(i) ?: continue
+      val pane = content.getUserData(PANE_KEY) ?: continue
+      if (pane.id == id) return content
+    }
+    return null
   }
 
   @RequiresEdt
