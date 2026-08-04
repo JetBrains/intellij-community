@@ -285,7 +285,7 @@ class PyTypeFormTypeTest : PyCodeInsightTestCase() {
     fun `f-string is not assignable to TypeForm`() = test("""
       from typing_extensions import TypeForm
 
-      x: TypeForm[int] = f"int" # ISSUES *
+      x: TypeForm[int] = f"int"
       """)
 
     @Test

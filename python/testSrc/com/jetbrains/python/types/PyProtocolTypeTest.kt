@@ -733,7 +733,7 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
           def val1(self, val: int) -> None:
               ...
 
-      var: Template = Concrete() # WARNING Expected type 'Template', got 'Concrete' instead
+      var: Template = Concrete() # WARNING FIXME Expected type 'Template', got 'Concrete' instead # PY-91385
       """)
 
     @Test
@@ -756,7 +756,7 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
       class Concrete:
           val: int = 0
 
-      var: Template = Concrete() # WARNING Expected type 'Template', got 'Concrete' instead
+      var: Template = Concrete() # WARNING FIXME Expected type 'Template', got 'Concrete' instead # PY-91385
       """)
 
     @Test

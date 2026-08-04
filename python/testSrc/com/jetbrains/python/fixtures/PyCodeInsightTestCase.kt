@@ -452,12 +452,15 @@ abstract class PyCodeInsightTestCase {
     expectedAssertions: List<PyTestAssertion>,
   ): List<PyTestAssertion> {
     val actualAssertions = mutableListOf<PyTestAssertion>()
-    actualAssertions += createActualAssertionsForInspections(options, document, highlights)
+    actualAssertions += createActualAssertionsForInspections(options, document, highlights, expectedAssertions)
 
     runReadActionBlocking {
       for (expectedAssertion in expectedAssertions) {
         if (defaultSeverityNames.contains(expectedAssertion.type)) {
           continue // actual inspection-related assertions have been added above
+        }
+        if (expectedAssertion.isWildcard) {
+          continue // wildcard actuals are fabricated in createActualAssertionsForInspections only when a real issue matched
         }
         actualAssertions += createActualAssertionsForNonInspections(expectedAssertion)
       }
@@ -486,8 +489,10 @@ abstract class PyCodeInsightTestCase {
     options: TestOptions,
     document: Document,
     highlights: List<HighlightInfo>,
+    expectedAssertions: List<PyTestAssertion>,
   ): List<PyTestAssertion> {
     val actualAssertions = mutableListOf<PyTestAssertion>()
+    val allExpectedAssertions = expectedAssertions.toMutableSet()
 
     for (highlight in highlights) {
       val typeName = when (highlight.severity) {
@@ -515,8 +520,28 @@ abstract class PyCodeInsightTestCase {
                                             codeColumnEnd = codeColumnEnd,
                                             type = typeName.name.replace(" ", "-"),
                                             content = highlight.description ?: "")
+
       actualAssertions.add(actualAssertion)
+
+      val counterparts = findCounterparts(expectedAssertions, listOf(actualAssertion))
+      val expectedAssertion = counterparts[actualAssertion]
+      allExpectedAssertions.remove(expectedAssertion)
     }
+
+    // adds: x = "s" # WARNING FIXME expect new issue
+    for (expectedButMissingAssertion in allExpectedAssertions) {
+      if (defaultSeverityNames.contains(expectedButMissingAssertion.type) && expectedButMissingAssertion.hasFixme && expectedButMissingAssertion.content.isBlank()) {
+        actualAssertions.add(expectedButMissingAssertion.copy())
+      }
+    }
+
+    // adds: x = "s" # ISSUES *
+    for (expectedAssertion in expectedAssertions) {
+      if (expectedAssertion.isWildcard && expectedAssertion !in allExpectedAssertions) {
+        actualAssertions.add(expectedAssertion.copy())
+      }
+    }
+
     return actualAssertions
   }
 
@@ -814,12 +839,13 @@ private object PyTestAssertionInliner {
   ): PyTestAssertion? {
     return expectedAssertions
       .filter { it !in usedExpected && areCounterparts(it, actual) }
-      .minWithOrNull(
-        compareBy(
-          { expected -> if (expected.content == actual.content) 0 else 1 },
-          { expected -> abs(expected.codeColumnStart - actual.codeColumnStart) },
-        )
-      )
+      .minByOrNull { expected ->
+        when {
+          expected.content == actual.content -> 0
+          expected.isWildcard -> 1
+          else -> abs(expected.codeColumnStart - actual.codeColumnStart) + 2
+        }
+      }
   }
 
   private fun areCounterparts(expected: PyTestAssertion, actual: PyTestAssertion): Boolean {
@@ -865,7 +891,7 @@ private object PyTestAssertionInliner {
         replaceInlineAssertion(result, inlineExpected, inlineActual)
       }
       else if (inlineUnmatchedExpectedAssertions.size == 1) {
-        // keep
+        removeAssertions(result, inlineUnmatchedExpectedAssertions)
       }
       else {
         val actualAndPlaceholderAssertions = actualAssertions + unmatchedAssertions.filter { it.content.isBlank() && it.hasFixme }
@@ -1495,103 +1521,118 @@ class PyCodeInsightTestCaseAssertionParserAndInlinerTest {
     Assertions.assertNull(assertion.comment)
   }
 
+}
+
+/**
+ * Verifies, through the real [PyCodeInsightTestCase.test] pipeline, that [PyCodeInsightTestCase]'s
+ * `computeAssertions` correctly renders and matches assertions against real highlighting and real
+ * type inference (as opposed to the parser/inliner unit tests above, which fabricate their own data).
+ */
+class PyCodeInsightTestCaseComputeAssertionsTest : PyCodeInsightTestCase() {
+
   @Test
-  fun `inliner replaces comment assertion content`() {
-    val original = """
-      value = call()
-      #       └ TYPE old
-    """.trimIndent()
+  fun `WARNING inline matching message passes`() = test("""
+    i: int = "" # WARNING Expected type 'int', got 'Literal[""]' instead
+    """)
 
-    val expectedAssertions = parseAssertions(original)
-    val actualAssertions = listOf(expectedAssertions.single().withContent("new"))
-    val actualText = PyTestAssertionInliner.generateActualText(original, expectedAssertions, actualAssertions)
-
-    Assertions.assertEquals(
-      """
-      value = call()
-      #       └ TYPE new
-      """.trimIndent(),
-      actualText
-    )
+  @Test
+  fun `WARNING inline wrong message fails`() {
+    Assertions.assertThrows(AssertionError::class.java) {
+      test("""
+        i: int = "" # WARNING Wrong warning message
+        """)
+    }
   }
 
   @Test
-  fun `inliner replaces inline and comment assertions on the same code line`() {
-    val original = """
-      x = foo() # WARNING old-inline
-      #    └ TYPE old-comment
-    """.trimIndent()
-
-    val expectedAssertions = parseAssertions(original)
-    val inlineExpected = expectedAssertions.single { it.isInlineAssertion() }
-    val commentExpected = expectedAssertions.single { !it.isInlineAssertion() }
-    val actualAssertions = listOf(
-      inlineExpected.withContent("new-inline"),
-      commentExpected.withContent("new-comment"),
-    )
-
-    val actualText = PyTestAssertionInliner.generateActualText(original, expectedAssertions, actualAssertions)
-
-    Assertions.assertEquals(
-      """
-      x = foo() # WARNING new-inline
-      #    └ TYPE new-comment
-      """.trimIndent(),
-      actualText
-    )
+  fun `WARNING inline missing warning fails`() {
+    Assertions.assertThrows(AssertionError::class.java) {
+      test("""
+        x = 1 # WARNING No warning message
+        """)
+    }
   }
 
   @Test
-  fun `inliner matches ISSUES expectation with severity assertions`() {
-    val original = """
-      x = 1 # ISSUES *
-    """.trimIndent()
+  fun `WARNING inline FIXME placeholder without actual warning passes`() = test("""
+    x = 1 # WARNING FIXME some future warning
+    """)
 
-    val expectedAssertions = parseAssertions(original)
-    val actualAssertions = listOf(expectedAssertions.single().copy(type = HighlightSeverity.WARNING.name, content = "found warning"))
-    val actualText = PyTestAssertionInliner.generateActualText(original, expectedAssertions, actualAssertions)
-
-    Assertions.assertEquals(
-      """
-      x = 1 # WARNING found warning
-      """.trimIndent(),
-      actualText
-    )
+  @Test
+  fun `WARNING inline FIXME wrong expectation fails`() {
+    Assertions.assertThrows(AssertionError::class.java) {
+      test("""
+        i: int = "" # WARNING Wrong warning message FIXME
+        """)
+    }
   }
 
   @Test
-  fun `empty actual result is matched`() {
-    val code = """
-      a = 1 + ""
-      #       └ WARNING message1
-      a = 1
-      #   ^ WARNING message2
-      """.trimIndent()
-    val actualOutput = """
-      a = 1 + ""
-      #       └ WARNING message1
-      a = 1
-      """.trimIndent()
+  fun `ISSUES inline wildcard matching issue passes`() = test("""
+    i: int = "" # ISSUES *
+    """)
 
-    val expectedAssertions = parseAssertions(code)
-    val actualAssertions = listOf(expectedAssertions.first())
-    val actualText = PyTestAssertionInliner.generateActualText(code, expectedAssertions, actualAssertions)
+  @Test
+  fun `ISSUES inline wildcard matching rest issue passes 1`() = test("""
+    x: int = "s" + 1 # ISSUES * # Covers issue "No overload of '__add__' matches the arguments. Argument types: (Literal[1]). Expected one of: (value: LiteralString), (value: str)"
+    #        ^^^^^^^ WARNING Expected type 'int', got 'UnsafeUnion[LiteralString, str] | int' instead
+    """)
 
-    Assertions.assertEquals(actualOutput, actualText)
+  @Test
+  fun `ISSUES inline wildcard matching rest issue passes 2`() = test("""
+    x: int = "s" + 1 # ISSUES * # Covers issue "Expected type 'int', got 'UnsafeUnion[LiteralString, str] | int' instead"
+    #              └ WARNING No overload of '__add__' matches the arguments. Argument types: (Literal[1]). Expected one of: (value: LiteralString), (value: str)
+    """)
+
+  @Test
+  fun `ISSUES inline wildcard without issue fails`() {
+    Assertions.assertThrows(AssertionError::class.java) {
+      test("""
+        i: int = 2 # ISSUES *
+        """)
+    }
   }
 
   @Test
-  fun `inline assertion with FIXME is preserved when actual value matches pre-FIXME expected`() {
-    val original = """
-      i: int = 0 # WARNING FIXME Some future fix
-    """.trimIndent()
+  fun `WARNING comment-marker FIXME placeholder without actual warning passes`() = test("""
+    x = 1
+    #   └ WARNING FIXME some future warning
+    """)
 
-    val expectedAssertions = parseAssertions(original)
-    val actualAssertions = emptyList<PyTestAssertion>()
-    val actualText = PyTestAssertionInliner.generateActualText(original, expectedAssertions, actualAssertions)
-
-    Assertions.assertEquals(original, actualText, "FIXME clause must remain at its original position in the generated text.")
+  @Test
+  fun `WARNING comment-marker FIXME wrong expectation fails`() {
+    Assertions.assertThrows(AssertionError::class.java) {
+      test("""
+        x = 1
+        #   └ WARNING No warning message FIXME some future warning
+        """)
+    }
   }
+
+  @Test
+  fun `TYPE inline matching type passes`() = test("""
+    s = "" # TYPE Literal[""]
+    """)
+
+  @Test
+  fun `TYPE comment-marker matching type passes`() = test("""
+    n = 1
+    #   └ TYPE Literal[1]
+    """)
+
+  @Test
+  fun `TYPE inline wrong type fails`() {
+    Assertions.assertThrows(AssertionError::class.java) {
+      test("""
+        n = 1 # TYPE str
+        """)
+    }
+  }
+
+  @Test
+  fun `TYPE inline FIXME current and future type passes`() = test("""
+    n = 1 # TYPE Literal[1] FIXME str
+    """)
 }
 
 /**

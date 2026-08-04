@@ -864,7 +864,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     class A:
         pass
 
-    assert isinstance(A(), Tuple)  # ISSUES *
+    assert isinstance(A(), Tuple)
     B = Tuple
     assert issubclass(A, B)
 

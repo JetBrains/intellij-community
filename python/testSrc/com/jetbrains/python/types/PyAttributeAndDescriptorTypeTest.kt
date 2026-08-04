@@ -1745,7 +1745,7 @@ class PyAttributeAndDescriptorTypeTest : PyCodeInsightTestCase() {
           attr: list[T]
 
       c: C[int]
-      c.attr = ["foo"] # WARNING Expected type 'list[int]', got 'list[Literal["foo"]]' instead
+      c.attr = ["foo"] # WARNING FIXME Expected type 'list[int]', got 'list[Literal["foo"]]' instead # PY-91385
       """)
 
     @Test
@@ -1767,7 +1767,7 @@ class PyAttributeAndDescriptorTypeTest : PyCodeInsightTestCase() {
 
       a: A[int] = A()
       a.attr += 1
-      a.attr += "s" # WARNING Expected type 'int', got 'Literal["s"]' instead
+      a.attr += "s" # WARNING FIXME Expected type 'int', got 'Literal["s"]' instead # PY-91385
 
       class B:
           def __add__(self, other) -> int: ...
@@ -1800,7 +1800,7 @@ class PyAttributeAndDescriptorTypeTest : PyCodeInsightTestCase() {
 
       a: A = A()
       a.attr += 1
-      a.attr += "s" # WARNING Expected type 'int', got 'Literal["s"]' instead
+      a.attr += "s" # WARNING FIXME Expected type 'int', got 'Literal["s"]' instead # PY-91385
       a.attr += C() # WARNING Expected type 'int' (from '__set__'), got 'str' instead
       """)
   }

@@ -958,7 +958,7 @@ class PyDataclassTypeTest : PyCodeInsightTestCase() {
       class B: ...
       
       A().__le__(A())
-      A().__le__(B()) # WARNING Expected type 'A', got 'B' instead
+      A().__le__(B()) # WARNING FIXME Expected type 'A', got 'B' instead # PY-91385
       """)
   }
 
