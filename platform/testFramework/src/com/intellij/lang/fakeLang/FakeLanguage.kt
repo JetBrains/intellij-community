@@ -13,6 +13,7 @@ import com.intellij.lexer.EmptyLexer
 import com.intellij.lexer.Lexer
 import com.intellij.model.psi.PsiExternalReferenceHost
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileTypes.ExtensionFileNameMatcher
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypeManager
@@ -27,13 +28,24 @@ import com.intellij.psi.tree.IFileElementType
 import com.intellij.psi.tree.TokenSet
 import javax.swing.Icon
 
+private val fakeLanguageRegistrationLock = Any()
+private var fakeFileTypeRegistered = false
+
 fun registerFakeLanguage(testRootDisposable: Disposable) {
-  (FileTypeManager.getInstance() as FileTypeManagerImpl).registerFileType(
-    /* type = */ FakeFileType.INSTANCE,
-    /* defaultAssociations = */ listOf(ExtensionFileNameMatcher(FakeFileType.INSTANCE.defaultExtension)),
-    /* disposable = */ testRootDisposable,
-    /* pluginDescriptor = */ PluginManagerCore.getPlugin(PluginManagerCore.CORE_ID)!!
-  )
+  synchronized(fakeLanguageRegistrationLock) {
+    if (!fakeFileTypeRegistered) {
+      val fileTypeManager = FileTypeManager.getInstance() as FileTypeManagerImpl
+      if (fileTypeManager.findFileTypeByName(FakeFileType.INSTANCE.name) == null) {
+        fileTypeManager.registerFileType(
+          /* type = */ FakeFileType.INSTANCE,
+          /* defaultAssociations = */ listOf(ExtensionFileNameMatcher(FakeFileType.INSTANCE.defaultExtension)),
+          /* disposable = */ ApplicationManager.getApplication(),
+          /* pluginDescriptor = */ PluginManagerCore.getPlugin(PluginManagerCore.CORE_ID)!!
+        )
+      }
+      fakeFileTypeRegistered = true
+    }
+  }
 
   LanguageParserDefinitions.INSTANCE.addExplicitExtension(
     /* key = */ FakeLanguage,
