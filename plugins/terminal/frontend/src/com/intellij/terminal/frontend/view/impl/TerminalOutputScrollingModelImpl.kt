@@ -2,6 +2,9 @@
 package com.intellij.terminal.frontend.view.impl
 
 import com.intellij.ide.IdeEventQueue
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.UI
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.editor.Editor
@@ -10,12 +13,16 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.EditorScrollableIncrementProvider
 import com.intellij.openapi.editor.impl.view.VisualLinesIterator
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.asDisposable
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.terminal.block.BlockTerminalOptions
@@ -77,27 +84,15 @@ class TerminalOutputScrollingModelImpl(
     // instead of the editor's default fixed-line-height increment.
     editor.scrollableIncrementProvider = LineSnappingIncrementProvider()
 
-    outputModel.addListener(lifetimeDisposable, object : TerminalOutputModelListener {
-      override fun afterContentChanged(event: TerminalContentChangeEvent) {
-        if (shouldScrollToCursor) {
-          LOG.trace { "Updating scroll position because the output content changed" }
-          updateScrollPosition(outputModel.cursorOffset)
-        }
-        else {
-          appliedOutputModelState.value = getCurrentOutputModelState()
-        }
+    listenOutputModelChanges(coroutineScope.childScope("outputModelChanges")) {
+      if (shouldScrollToCursor) {
+        LOG.trace { "Updating scroll position because the output content changed" }
+        updateScrollPosition(outputModel.cursorOffset)
       }
-
-      override fun cursorOffsetChanged(event: TerminalCursorOffsetChangeEvent) {
-        if (shouldScrollToCursor) {
-          LOG.trace { "Updating scroll position because the cursor offset changed to ${event.newOffset}" }
-          updateScrollPosition(event.newOffset)
-        }
-        else {
-          appliedOutputModelState.value = getCurrentOutputModelState()
-        }
+      else {
+        appliedOutputModelState.value = getCurrentOutputModelState()
       }
-    })
+    }
 
     // Manage the follow state from the visible area. This is the only place that reacts to thumb drag / scrollbar click.
     editor.scrollingModel.addVisibleAreaListener(VisibleAreaListener { e ->
@@ -293,6 +288,39 @@ class TerminalOutputScrollingModelImpl(
       JBUI.scale(TerminalUi.blockTopInset)
     }
     else 0
+  }
+
+  /**
+   * Output model usually fires two events on every content update: content change and cursor position change.
+   * If these events are handled synchronously, the handler may see a stale cursor offset right after the content update,
+   * but it will be corrected later when the cursor position change is applied.
+   * To not see the "intermediate" state of the model, let's invoke [onUpdate] change asynchronously -
+   * the state of the model is expected to be consistent there.
+   *
+   * Use the approach with [MutableStateFlow] to schedule a single [onUpdate] call
+   * for a burst of output model changes that happen in the same EDT invocation.
+   */
+  private fun listenOutputModelChanges(coroutineScope: CoroutineScope, onUpdate: () -> Unit) {
+    var counter = 0L
+    val updatesFlow = MutableStateFlow(counter)
+
+    outputModel.addListener(coroutineScope.asDisposable(), object : TerminalOutputModelListener {
+      override fun afterContentChanged(event: TerminalContentChangeEvent) {
+        updatesFlow.value = ++counter
+      }
+
+      override fun cursorOffsetChanged(event: TerminalCursorOffsetChangeEvent) {
+        updatesFlow.value = ++counter
+      }
+    })
+
+    coroutineScope.launch(Dispatchers.UI + ModalityState.any().asContextElement()) {
+      updatesFlow
+        .filter { it != 0L }  // Do not call `onUpdate()` for the initial state
+        .collect {
+          onUpdate()
+        }
+    }
   }
 
   @TestOnly
