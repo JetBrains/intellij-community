@@ -21,7 +21,7 @@ import javax.swing.SwingConstants
 import javax.swing.plaf.basic.BasicSliderUI
 
 @ApiStatus.Internal
-public open class DarculaSliderUI(b: JComponent? = null) : BasicSliderUI(b as JSlider) {
+class DarculaSliderUI(b: JComponent? = null) : BasicSliderUI(b as JSlider) {
   companion object {
     @JvmStatic
     fun createUI(c: JComponent): DarculaSliderUI = DarculaSliderUI(c)
