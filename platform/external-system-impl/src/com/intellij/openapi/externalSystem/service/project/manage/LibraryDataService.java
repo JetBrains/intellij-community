@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.ide.highlighter.ArchiveFileType;
@@ -267,13 +267,13 @@ public final class LibraryDataService extends AbstractProjectDataService<Library
     }
   }
 
-  private static void registerPaths(@NotNull Library.ModifiableModel libraryModel, @NotNull LibraryData libraryData) {
+  static void registerPaths(@NotNull Library.ModifiableModel libraryModel, @NotNull LibraryData libraryData) {
     var libraryFiles = prepareLibraryFiles(libraryData);
     var excludedPaths = libraryData.getPaths(LibraryPathType.EXCLUDED);
     registerPaths(libraryData.isUnresolved(), libraryFiles, excludedPaths, libraryModel, libraryData.getInternalName());
   }
 
-  private static void syncPaths(@NotNull Library.ModifiableModel libraryModel, @NotNull LibraryData libraryData) {
+  static void syncPaths(@NotNull Library.ModifiableModel libraryModel, @NotNull LibraryData libraryData) {
     if (libraryData.isUnresolved()) {
       return;
     }
