@@ -17,6 +17,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable
 import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizableOptions
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings
+import com.intellij.psi.codeStyle.DocCommentSettings
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.KotlinLanguage
@@ -351,6 +352,24 @@ class KotlinLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvide
             else -> consumer.showStandardOptions()
         }
     }
+
+    override fun getDocCommentSettings(rootSettings: CodeStyleSettings): DocCommentSettings =
+        object : DocCommentSettings {
+            private val settings = rootSettings.kotlinCustomSettings
+
+            override fun isDocFormattingEnabled(): Boolean = settings.ENABLE_KDOC_FORMATTING
+
+            override fun setDocFormattingEnabled(formattingEnabled: Boolean) {
+                settings.ENABLE_KDOC_FORMATTING = formattingEnabled
+            }
+
+            // KDoc always uses leading asterisks, and no tag is ever removed for being empty.
+            override fun isLeadingAsteriskEnabled(): Boolean = true
+
+            override fun isRemoveEmptyTags(): Boolean = false
+
+            override fun setRemoveEmptyTags(removeEmptyTags: Boolean) {}
+        }
 
     override fun usesCommonKeepLineBreaks(): Boolean {
         return true
