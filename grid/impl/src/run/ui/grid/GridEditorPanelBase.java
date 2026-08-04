@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.actionSystem.UiDataProvider;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
@@ -332,10 +333,11 @@ public abstract class GridEditorPanelBase extends JPanel
       DataGrid grid = getDataGrid(e.getDataContext());
       GridEditorPanel panel = grid == null ? null : myGetPanel.fun(grid);
       if (panel == null) return;
-      actionPerformed(panel, e.getProject());
+      // The editor document belongs to the grid, so PSI must be resolved in the grid's project.
+      actionPerformed(panel, grid.getProject());
     }
 
-    protected abstract void actionPerformed(@NotNull GridEditorPanel panel, @Nullable Project project);
+    protected abstract void actionPerformed(@NotNull GridEditorPanel panel, @NotNull Project project);
   }
 
   protected static class CancelAction extends FilterFieldAction {
@@ -344,7 +346,7 @@ public abstract class GridEditorPanelBase extends JPanel
     }
 
     @Override
-    protected void actionPerformed(@NotNull GridEditorPanel panel, @Nullable Project project) {
+    protected void actionPerformed(@NotNull GridEditorPanel panel, @NotNull Project project) {
       JComponent component = panel.getGridPreferredFocusedComponent();
       IdeFocusManager.findInstanceByComponent(component).requestFocus(component, true);
     }
@@ -356,7 +358,7 @@ public abstract class GridEditorPanelBase extends JPanel
     }
 
     @Override
-    protected void actionPerformed(@NotNull GridEditorPanel panel, @Nullable Project project) {
+    protected void actionPerformed(@NotNull GridEditorPanel panel, @NotNull Project project) {
       if (isValidTextEntered(panel.getEditor().getDocument(), project)) {
         panel.apply();
       }
@@ -365,13 +367,15 @@ public abstract class GridEditorPanelBase extends JPanel
       }
     }
 
-    private static boolean isValidTextEntered(Document document, Project project) {
-      String filter = document.getText();
-      if (StringUtil.isEmptyOrSpaces(filter) || isComment(filter)) {
-        return true;
-      }
-      PsiFile psi = PsiDocumentManager.getInstance(project).getPsiFile(document);
-      return psi == null || psi.getLanguage().getID().equals("GenericSQL") || !PsiTreeUtil.hasErrorElements(psi);
+    private static boolean isValidTextEntered(@NotNull Document document, @NotNull Project project) {
+      return ReadAction.computeBlocking(() -> {
+        String filter = document.getText();
+        if (StringUtil.isEmptyOrSpaces(filter) || isComment(filter)) {
+          return true;
+        }
+        PsiFile psi = PsiDocumentManager.getInstance(project).getPsiFile(document);
+        return psi == null || psi.getLanguage().getID().equals("GenericSQL") || !PsiTreeUtil.hasErrorElements(psi);
+      });
     }
 
     private static void showInvalidFilterCriteriaBalloon(@NotNull GridEditorPanel panel,
@@ -391,7 +395,7 @@ public abstract class GridEditorPanelBase extends JPanel
     }
 
     @Override
-    protected void actionPerformed(@NotNull GridEditorPanel panel, @Nullable Project project) {
+    protected void actionPerformed(@NotNull GridEditorPanel panel, @NotNull Project project) {
       panel.showHistoryPopup();
     }
   }
