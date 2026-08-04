@@ -47,6 +47,13 @@
             class="com.intellij.markdown.frontend.actions.ChangeFontSizeAction$Decrease"
             use-shortcut-of="CollapseAll"/>
 
+    <action id="Markdown.Preview.Find"
+            class="com.intellij.markdown.frontend.actions.FindInPreviewAction"
+            icon="AllIcons.Actions.Find"
+            use-shortcut-of="Find">
+      <add-to-group group-id="Markdown.PreviewGroup"/>
+    </action>
+
     <action id="Markdown.InsertEmptyTable"
             class="com.intellij.markdown.frontend.actions.InsertEmptyTableAction"
             icon="org.intellij.plugins.markdown.MarkdownIcons.EditorActions.Table">
