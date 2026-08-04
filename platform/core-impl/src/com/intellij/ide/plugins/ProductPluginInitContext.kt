@@ -4,6 +4,7 @@ package com.intellij.ide.plugins
 import com.intellij.core.CoreBundle
 import com.intellij.ide.plugins.PluginDependencyAnalysis.DependencyRef
 import com.intellij.ide.plugins.PluginInitializationContext.EnvironmentConfiguredModuleData
+import com.intellij.ide.plugins.PluginInitializationContext.RemainingCandidatesView
 import com.intellij.ide.plugins.PluginManagerCore.CORE_ID
 import com.intellij.ide.plugins.PluginManagerCore.JAVA_PLUGIN_ALIAS_ID
 import com.intellij.ide.plugins.PluginManagerCore.getPluginNameAndVendor
@@ -103,6 +104,9 @@ class ProductPluginInitContext(
 
   override fun provideCompatibilityDependencies(descriptor: IdeaPluginDescriptorImpl, pluginSet: UnambiguousPluginSet): Sequence<DependencyRef> =
     defaultProductCompatibilityDependenciesProvider(descriptor, pluginSet)
+
+  override fun provideCompatibilityDependenciesForRemainingCandidates(descriptor: IdeaPluginDescriptorImpl, remainingCandidates: RemainingCandidatesView): Sequence<DependencyRef> =
+    defaultProductCompatibilityDependenciesForRemainingCandidatesProvider(descriptor, remainingCandidates)
 
   override fun provideModuleExclusionsImposedByProductRules(pluginSet: UnambiguousPluginSet): Sequence<Pair<PluginModuleDescriptor, ProductRulesImposedExclusionReason>> =
     defaultProductRulesImposedExclusions(pluginSet, expiredPlugins, thirdPartyPluginsWithoutConsentCheckResult)
@@ -357,6 +361,16 @@ class ProductPluginInitContext(
             yieldPlatformAliasCompatibilityDependencies()
           }
         }
+      }
+    }
+
+    @VisibleForTesting
+    fun defaultProductCompatibilityDependenciesForRemainingCandidatesProvider(
+      descriptor: IdeaPluginDescriptorImpl,
+      remainingCandidates: RemainingCandidatesView,
+    ): Sequence<DependencyRef> {
+      return sequence {
+
       }
     }
 

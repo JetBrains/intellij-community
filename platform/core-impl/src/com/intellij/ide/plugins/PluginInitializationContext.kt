@@ -58,12 +58,42 @@ interface PluginInitializationContext {
   }
 
   /**
-   * Processed for all possible modules and "depends" sub-descriptors independently.
-   * @return a sequence of modules that should be deemed as additional dependencies of a given [descriptor].
+   * Produces a sequence of modules that should be deemed as additional dependencies of a given [descriptor].
+   * Note that the generated dependency is "strict", meaning that if the target gets excluded (e.g., if the target is a plugin that is marked disabled),
+   * then [descriptor] will also be excluded.
+   *
+   * Called for all possible modules and "depends" sub-descriptors independently.
    *
    * TODO Ideally, [pluginSet] should not be used, but it's required in the current [ProductPluginInitContext] implementation.
+   *
+   * @see [provideCompatibilityDependenciesForRemainingCandidates]
    */
   fun provideCompatibilityDependencies(descriptor: IdeaPluginDescriptorImpl, pluginSet: UnambiguousPluginSet): Sequence<DependencyRef>
+
+  /**
+   * This method is different from [provideCompatibilityDependencies] in that it allows generating "soft" compatibility dependencies:
+   * imagine that several modules were extracted from the IDE's core and now form a separate plugin that can be disabled.
+   * Previously, these modules were available to external plugins via the Core classloader, i.e. without any explicit dependency,
+   * but now they are not available without an explicit dependency, which breaks compatibility.
+   * To remedy this, we want to supply additional dependencies on extracted modules. Producing a "strict" dependency
+   * (as in [provideCompatibilityDependencies]) may sometimes be too strict, e.g., if that new extracted plugin is disabled, external plugins
+   * that receive such a compatibility dependency (even those that don't actually need it) will be excluded since the dependency is "strict".
+   * However, this method is called when the preliminary set of remaining candidates is already constructed, i.e. when all regular module
+   * exclusion rules are processed, and it allows skipping generation of compatibility dependencies if the dependency target is already excluded.
+   *
+   * This method is called for every remaining candidate descriptor.
+   *
+   * Note that producing additional dependencies here still may cause exclusions (e.g., if a dependency cycle appears).
+   *
+   * Note that eventually every implicit dependency that is added through this method should become explicit in the affected plugins.
+   * This method should only work as a temporary compatibility mechanism, it should not grow indefinitely.
+   */
+  fun provideCompatibilityDependenciesForRemainingCandidates(descriptor: IdeaPluginDescriptorImpl, remainingCandidates: RemainingCandidatesView): Sequence<DependencyRef>
+
+  interface RemainingCandidatesView {
+    fun resolvePluginId(id: PluginId): PluginModuleDescriptor?
+    fun resolveContentModuleId(id: PluginModuleId): ContentModuleDescriptor?
+  }
 
   fun provideModuleExclusionsImposedByProductRules(pluginSet: UnambiguousPluginSet): Sequence<Pair<PluginModuleDescriptor, ProductRulesImposedExclusionReason>>
 
@@ -105,3 +135,11 @@ fun PluginInitializationContext.validatePluginIsCompatible(plugin: PluginMainDes
 
 @ApiStatus.Internal
 data class PluginsPerProjectConfig(val isMainProcess: Boolean)
+
+@ApiStatus.Internal
+fun PluginInitializationContext.RemainingCandidatesView.resolveReference(ref: DependencyRef): PluginModuleDescriptor? {
+  return when (ref) {
+    is DependencyRef.Plugin -> resolvePluginId(ref.pluginId)
+    is DependencyRef.ContentModule -> resolveContentModuleId(ref.moduleId)
+  }
+}

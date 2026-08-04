@@ -5,6 +5,7 @@ import com.intellij.ide.plugins.AmbiguousPluginSet
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginDependencyAnalysis.DependencyRef
 import com.intellij.ide.plugins.PluginInitializationContext
+import com.intellij.ide.plugins.PluginInitializationContext.RemainingCandidatesView
 import com.intellij.ide.plugins.PluginMainDescriptor
 import com.intellij.ide.plugins.PluginModuleDescriptor
 import com.intellij.ide.plugins.PluginModuleId
@@ -28,6 +29,11 @@ abstract class EmptyTestPluginInitContext : PluginInitializationContext {
   override fun provideCompatibilityDependencies(
     descriptor: IdeaPluginDescriptorImpl,
     pluginSet: UnambiguousPluginSet,
+  ): Sequence<DependencyRef> = emptySequence()
+
+  override fun provideCompatibilityDependenciesForRemainingCandidates(
+    descriptor: IdeaPluginDescriptorImpl,
+    remainingCandidates: RemainingCandidatesView,
   ): Sequence<DependencyRef> = emptySequence()
 
   override fun provideModuleExclusionsImposedByProductRules(pluginSet: UnambiguousPluginSet): Sequence<Pair<PluginModuleDescriptor, ProductRulesImposedExclusionReason>> =
