@@ -160,8 +160,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
   @SuppressWarnings("WeakerAccess") public boolean REPORT_NOT_ANNOTATED_INSTANTIATION_NOT_NULL_TYPE = false;
   @SuppressWarnings("WeakerAccess") public boolean REPORT_NOT_NULL_TO_NULLABLE_CONFLICTS_IN_ASSIGNMENTS = false;
   /**
-   * Widening a parameter to nullable is allowed by the JLS (parameter types are not contravariant for nullness), so this
-   * is off by default. JSpecify deliberately deviates from the JLS here, see <a href="https://github.com/jspecify/jspecify/issues/49">jspecify/jspecify#49</a>.
+   * see <a href="https://github.com/jspecify/jspecify/issues/49">jspecify/jspecify#49</a>.
    */
   @SuppressWarnings("WeakerAccess") public boolean REPORT_NULLABLE_PARAMETER_OVERRIDES_NOTNULL = false;
   /**
