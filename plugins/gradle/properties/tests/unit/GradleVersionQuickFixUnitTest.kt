@@ -1,6 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.gradle.issue.quickfix
+package com.intellij.gradle.properties.tests.unit
 
+import com.intellij.gradle.properties.GradleVersionQuickFix
+import com.intellij.gradle.properties.GradleVersionQuickFix.Companion.replaceDistributionUrlVersion
+import com.intellij.gradle.properties.GradleVersionQuickFix.Companion.updateGradleWrapperVersion
 import com.intellij.lang.properties.psi.PropertiesElementFactory
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.command.WriteCommandAction
@@ -8,8 +11,6 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import org.assertj.core.api.Assertions.assertThat
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.issue.quickfix.GradleVersionQuickFix.Companion.replaceDistributionUrlVersion
-import org.jetbrains.plugins.gradle.issue.quickfix.GradleVersionQuickFix.Companion.updateGradleWrapperVersion
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest

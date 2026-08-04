@@ -40,7 +40,6 @@
     <module name="intellij.platform.util.coroutines"/>
     <module name="intellij.platform.util.ex"/>
     <module name="intellij.platform.util.ui"/>
-    <module name="intellij.properties.backend.psi"/>
   </dependencies>
   <!-- endregion -->
 
@@ -81,6 +80,9 @@
                     dynamic="true"/>
     <extensionPoint qualifiedName="org.jetbrains.plugins.gradle.autoReloadSettingsCollector"
                     interface="org.jetbrains.plugins.gradle.service.project.GradleAutoReloadSettingsCollector"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.plugins.gradle.wrapperVersionQuickFixProvider"
+                    interface="org.jetbrains.plugins.gradle.issue.quickfix.GradleWrapperVersionQuickFixProvider"
                     dynamic="true"/>
   </extensionPoints>
 

@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.codeInspection.fix
 
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.codeInspection.util.IntentionName
+import com.intellij.gradle.properties.GradleVersionQuickFix
 import com.intellij.lang.properties.psi.Property
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix
@@ -10,7 +11,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle
-import org.jetbrains.plugins.gradle.issue.quickfix.GradleVersionQuickFix
 
 /**
  * A local quick-fix implementation to replace the Gradle wrapper distribution URL in a `gradle-wrapper.properties` file

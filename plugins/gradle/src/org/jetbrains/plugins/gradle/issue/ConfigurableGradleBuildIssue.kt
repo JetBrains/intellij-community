@@ -10,7 +10,7 @@ import org.jetbrains.plugins.gradle.issue.quickfix.GradleDownloadToolchainQuickF
 import org.jetbrains.plugins.gradle.issue.quickfix.GradleOpenDaemonJvmSettingsQuickFix
 import org.jetbrains.plugins.gradle.issue.quickfix.GradleRecreateToolchainDownloadUrlsQuickFix
 import org.jetbrains.plugins.gradle.issue.quickfix.GradleSettingsQuickFix
-import org.jetbrains.plugins.gradle.issue.quickfix.GradleVersionQuickFix
+import org.jetbrains.plugins.gradle.issue.quickfix.GradleWrapperVersionQuickFixProvider
 import org.jetbrains.plugins.gradle.util.GradleBundle
 import org.jetbrains.plugins.gradle.util.GradleUtil
 import java.nio.file.Path
@@ -19,11 +19,13 @@ abstract class ConfigurableGradleBuildIssue : ConfigurableBuildIssue() {
 
   /**
    * Adds a quick fix to update the Gradle wrapper version only if a Gradle wrapper properties file exists
-   * according to [GradleUtil.findDefaultWrapperPropertiesFile].
+   * according to [GradleUtil.findDefaultWrapperPropertiesFile],
+   * and a [GradleWrapperVersionQuickFixProvider] is available.
    */
   fun addGradleWrapperVersionQuickFix(projectPath: String, gradleVersion: GradleVersion) {
     GradleUtil.findDefaultWrapperPropertiesFile(Path.of(projectPath)) ?: return
-    val quickFix = GradleVersionQuickFix(projectPath, gradleVersion, true)
+    val provider = GradleWrapperVersionQuickFixProvider.EP_NAME.extensionList.firstOrNull() ?: return
+    val quickFix = provider.createQuickFix(projectPath, gradleVersion, requestImport = true)
     val hyperlinkReference = addQuickFix(quickFix)
     addQuickFixPrompt(GradleBundle.message("gradle.build.quick.fix.gradle.version", hyperlinkReference, gradleVersion.version))
   }

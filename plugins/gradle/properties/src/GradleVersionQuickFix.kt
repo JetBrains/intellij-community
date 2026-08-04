@@ -1,7 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.gradle.issue.quickfix
+package com.intellij.gradle.properties
 
 import com.intellij.build.issue.BuildIssueQuickFix
+import com.intellij.gradle.properties.GradleVersionQuickFix.Companion.VERSION_SPECIFIC_WRAPPER_KEYS
 import com.intellij.ide.actions.ShowLogAction
 import com.intellij.lang.properties.psi.PropertiesFile
 import com.intellij.lang.properties.psi.PropertyKeyValueFormat
@@ -29,7 +30,6 @@ import kotlinx.coroutines.withContext
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.GradleCoroutineScope.gradleCoroutineScope
-import org.jetbrains.plugins.gradle.issue.quickfix.GradleVersionQuickFix.Companion.VERSION_SPECIFIC_WRAPPER_KEYS
 import org.jetbrains.plugins.gradle.issue.quickfix.GradleWrapperSettingsOpenQuickFix.Companion.showWrapperPropertiesFile
 import org.jetbrains.plugins.gradle.util.GradleBundle
 import org.jetbrains.plugins.gradle.util.GradleConstants

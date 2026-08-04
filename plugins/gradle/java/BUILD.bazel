@@ -85,6 +85,7 @@ jvm_library(
         "//platform/execution",
         "//platform/testRunner",
         "//plugins/properties/properties-psi-impl:backend-psi",
+        "//plugins/gradle/properties",
     ],
 )
 
@@ -165,6 +166,7 @@ jvm_library(
         "//platform/execution:execution_test_lib",
         "//platform/testRunner:testRunner_test_lib",
         "//plugins/properties/properties-psi-impl:backend-psi_test_lib",
+        "//plugins/gradle/properties:properties_test_lib",
     ],
 )
 ### auto-generated section `build intellij.gradle.java` end

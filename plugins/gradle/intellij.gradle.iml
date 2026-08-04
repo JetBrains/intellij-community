@@ -72,7 +72,6 @@
     <orderEntry type="module" module-name="intellij.platform.util.ui" />
     <orderEntry type="module" module-name="intellij.platform.util.ex" />
     <orderEntry type="module" module-name="intellij.platform.testRunner" />
-    <orderEntry type="module" module-name="intellij.properties.backend.psi" />
     <orderEntry type="module" module-name="intellij.libraries.groovy" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.libraries.groovy.ant" scope="PROVIDED" />
   </component>

@@ -112,7 +112,6 @@ jvm_library(
         "//platform/util:util-ui",
         "//platform/util-ex",
         "//platform/testRunner",
-        "//plugins/properties/properties-psi-impl:backend-psi",
         ":libraries_groovy_provided",
         ":libraries_groovy_ant_provided",
     ],
@@ -201,7 +200,6 @@ jvm_library(
         "//platform/util:util-ui_test_lib",
         "//platform/util-ex:util-ex_test_lib",
         "//platform/testRunner:testRunner_test_lib",
-        "//plugins/properties/properties-psi-impl:backend-psi_test_lib",
         "//libraries/groovy",
         "//libraries/groovy:groovy_test_lib",
         "//libraries/groovy/ant",
@@ -460,8 +458,6 @@ jvm_library(
         "//libraries/junit5:junit5_test_lib",
         "//libraries/junit5-params",
         "//libraries/junit5-params:junit5-params_test_lib",
-        "//plugins/properties/properties-psi-impl:backend-psi",
-        "//plugins/properties/properties-psi-impl:backend-psi_test_lib",
     ],
 )
 ### auto-generated section `build intellij.gradle.tests` end
@@ -517,6 +513,8 @@ jvm_library(
         "//plugins/gradle/java/toml/tests:tests_test_lib",
         "//plugins/gradle/jps-plugin:jps-tests",
         "//plugins/gradle/jps-plugin:jps-tests_test_lib",
+        "//plugins/gradle/properties:properties-tests",
+        "//plugins/gradle/properties:properties-tests_test_lib",
         "//plugins/gradle:gradle-tests",
         "//plugins/gradle:gradle-tests_test_lib",
         "//plugins/gradle/tooling-extension-impl:toolingExtension-tests",

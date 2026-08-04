@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.codeInspection
 
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.gradle.properties.GradleVersionQuickFix.Companion.DISTRIBUTION_URL_VERSION_REGEX
 import com.intellij.lang.properties.psi.Property
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.io.FileUtilRt
@@ -11,7 +12,6 @@ import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.codeInspection.fix.GradleWrapperVersionFix
-import org.jetbrains.plugins.gradle.issue.quickfix.GradleVersionQuickFix.Companion.DISTRIBUTION_URL_VERSION_REGEX
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
 import org.jetbrains.plugins.gradle.util.GradleConstants.GRADLE_WRAPPER_PROPERTIES_FILE_NAME
 

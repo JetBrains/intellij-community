@@ -2,6 +2,7 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.gradle"/>
+    <module name="intellij.gradle.properties"/>
     <module name="intellij.gradle.toolingExtension.impl"/>
     <module name="intellij.java.debugger.impl.shared"/>
     <module name="intellij.java"/>
