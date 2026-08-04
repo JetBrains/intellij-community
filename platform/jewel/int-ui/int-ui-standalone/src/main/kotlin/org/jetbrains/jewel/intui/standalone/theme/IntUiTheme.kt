@@ -66,6 +66,7 @@ import org.jetbrains.jewel.ui.component.styling.PopupContainerStyle
 import org.jetbrains.jewel.ui.component.styling.RadioButtonStyle
 import org.jetbrains.jewel.ui.component.styling.ScrollbarStyle
 import org.jetbrains.jewel.ui.component.styling.SearchMatchStyle
+import org.jetbrains.jewel.ui.component.styling.SearchTextFieldStyle
 import org.jetbrains.jewel.ui.component.styling.SegmentedControlButtonStyle
 import org.jetbrains.jewel.ui.component.styling.SegmentedControlStyle
 import org.jetbrains.jewel.ui.component.styling.SelectableLazyColumnStyle
@@ -304,6 +305,7 @@ public fun ComponentStyling.dark(
     defaultSlimButtonStyle: ButtonStyle = ButtonStyle.Slim.Default.dark(),
     outlinedSlimButtonStyle: ButtonStyle = ButtonStyle.Slim.Outlined.dark(),
     badgeStyle: BadgeStyles = BadgeStyles.dark(),
+    searchTextFieldStyle: SearchTextFieldStyle = SearchTextFieldStyle.dark(),
 ): ComponentStyling =
     DefaultComponentStyling(
         checkboxStyle = checkboxStyle,
@@ -345,6 +347,93 @@ public fun ComponentStyling.dark(
         defaultSlimButtonStyle = defaultSlimButtonStyle,
         outlinedSlimButtonStyle = outlinedSlimButtonStyle,
         badgeStyle = badgeStyle,
+        searchTextFieldStyle = searchTextFieldStyle,
+    )
+
+@Suppress("UnusedReceiverParameter", "DEPRECATION_ERROR")
+@Deprecated(message = "Use the variant with searchTextFieldStyle.", level = DeprecationLevel.HIDDEN)
+public fun ComponentStyling.dark(
+    checkboxStyle: CheckboxStyle = CheckboxStyle.dark(),
+    chipStyle: ChipStyle = ChipStyle.dark(),
+    circularProgressStyle: CircularProgressStyle = CircularProgressStyle.dark(),
+    defaultBannerStyle: DefaultBannerStyles = DefaultBannerStyles.Default.dark(),
+    comboBoxStyle: ComboBoxStyle = ComboBoxStyle.Default.dark(),
+    defaultButtonStyle: ButtonStyle = ButtonStyle.Default.dark(),
+    defaultSplitButtonStyle: SplitButtonStyle = SplitButtonStyle.Default.dark(),
+    defaultTabStyle: TabStyle = TabStyle.Default.dark(),
+    dividerStyle: DividerStyle = DividerStyle.dark(),
+    dropdownStyle: DropdownStyle = DropdownStyle.Default.dark(),
+    editorTabStyle: TabStyle = TabStyle.Editor.dark(),
+    groupHeaderStyle: GroupHeaderStyle = GroupHeaderStyle.dark(),
+    horizontalProgressBarStyle: HorizontalProgressBarStyle = HorizontalProgressBarStyle.dark(),
+    iconButtonStyle: IconButtonStyle = IconButtonStyle.dark(),
+    transparentIconButtonStyle: IconButtonStyle = IconButtonStyle.darkTransparentBackground(),
+    inlineBannerStyle: InlineBannerStyles = InlineBannerStyles.Default.dark(),
+    lazyTreeStyle: LazyTreeStyle = LazyTreeStyle.dark(),
+    linkStyle: LinkStyle = LinkStyle.dark(),
+    menuStyle: MenuStyle = MenuStyle.dark(),
+    outlinedButtonStyle: ButtonStyle = ButtonStyle.Outlined.dark(),
+    popupContainerStyle: PopupContainerStyle = PopupContainerStyle.dark(),
+    outlinedSplitButtonStyle: SplitButtonStyle = SplitButtonStyle.Outlined.dark(),
+    radioButtonStyle: RadioButtonStyle = RadioButtonStyle.dark(),
+    scrollbarStyle: ScrollbarStyle = ScrollbarStyle.dark(),
+    segmentedControlButtonStyle: SegmentedControlButtonStyle = SegmentedControlButtonStyle.dark(),
+    segmentedControlStyle: SegmentedControlStyle = SegmentedControlStyle.dark(),
+    selectableLazyColumnStyle: SelectableLazyColumnStyle = SelectableLazyColumnStyle.dark(),
+    sliderStyle: SliderStyle = SliderStyle.dark(),
+    simpleListItemStyle: SimpleListItemStyle = SimpleListItemStyle.dark(),
+    textAreaStyle: TextAreaStyle = TextAreaStyle.dark(),
+    textFieldStyle: TextFieldStyle = TextFieldStyle.dark(),
+    tooltipStyle: TooltipStyle = TooltipStyle.dark(autoHideBehavior = TooltipAutoHideBehavior.Normal),
+    undecoratedDropdownStyle: DropdownStyle = DropdownStyle.Undecorated.dark(),
+    speedSearchStyle: SpeedSearchStyle = SpeedSearchStyle.dark(),
+    searchMatchStyle: SearchMatchStyle = SearchMatchStyle.dark(),
+    popupAdStyle: PopupAdStyle = PopupAdStyle.dark(),
+    defaultSlimButtonStyle: ButtonStyle = ButtonStyle.Slim.Default.dark(),
+    outlinedSlimButtonStyle: ButtonStyle = ButtonStyle.Slim.Outlined.dark(),
+    badgeStyle: BadgeStyles = BadgeStyles.dark(),
+): ComponentStyling =
+    DefaultComponentStyling(
+        checkboxStyle = checkboxStyle,
+        chipStyle = chipStyle,
+        circularProgressStyle = circularProgressStyle,
+        defaultBannerStyle = defaultBannerStyle,
+        comboBoxStyle = comboBoxStyle,
+        defaultButtonStyle = defaultButtonStyle,
+        defaultDropdownStyle = dropdownStyle,
+        defaultSplitButtonStyle = defaultSplitButtonStyle,
+        defaultTabStyle = defaultTabStyle,
+        dividerStyle = dividerStyle,
+        editorTabStyle = editorTabStyle,
+        groupHeaderStyle = groupHeaderStyle,
+        horizontalProgressBarStyle = horizontalProgressBarStyle,
+        iconButtonStyle = iconButtonStyle,
+        transparentIconButtonStyle = transparentIconButtonStyle,
+        inlineBannerStyle = inlineBannerStyle,
+        lazyTreeStyle = lazyTreeStyle,
+        linkStyle = linkStyle,
+        menuStyle = menuStyle,
+        outlinedButtonStyle = outlinedButtonStyle,
+        popupContainerStyle = popupContainerStyle,
+        outlinedSplitButtonStyle = outlinedSplitButtonStyle,
+        radioButtonStyle = radioButtonStyle,
+        scrollbarStyle = scrollbarStyle,
+        segmentedControlButtonStyle = segmentedControlButtonStyle,
+        segmentedControlStyle = segmentedControlStyle,
+        selectableLazyColumnStyle = selectableLazyColumnStyle,
+        simpleListItemStyle = simpleListItemStyle,
+        sliderStyle = sliderStyle,
+        textAreaStyle = textAreaStyle,
+        textFieldStyle = textFieldStyle,
+        tooltipStyle = tooltipStyle,
+        undecoratedDropdownStyle = undecoratedDropdownStyle,
+        speedSearchStyle = speedSearchStyle,
+        searchMatchStyle = searchMatchStyle,
+        popupAdStyle = popupAdStyle,
+        defaultSlimButtonStyle = defaultSlimButtonStyle,
+        outlinedSlimButtonStyle = outlinedSlimButtonStyle,
+        badgeStyle = badgeStyle,
+        searchTextFieldStyle = SearchTextFieldStyle.dark(),
     )
 
 @Deprecated("Use the variant with badgeStyle.", level = DeprecationLevel.HIDDEN)
@@ -429,6 +518,7 @@ public fun ComponentStyling.dark(
         defaultSlimButtonStyle = defaultSlimButtonStyle,
         outlinedSlimButtonStyle = outlinedSlimButtonStyle,
         badgeStyle = BadgeStyles.dark(),
+        searchTextFieldStyle = SearchTextFieldStyle.dark(),
     )
 
 @Suppress("UnusedReceiverParameter", "DEPRECATION_ERROR")
@@ -514,6 +604,7 @@ public fun ComponentStyling.dark(
         defaultSlimButtonStyle = ButtonStyle.Slim.Default.dark(),
         outlinedSlimButtonStyle = ButtonStyle.Slim.Outlined.dark(),
         badgeStyle = BadgeStyles.dark(),
+        searchTextFieldStyle = SearchTextFieldStyle.dark(),
     )
 
 @Suppress("UnusedReceiverParameter", "DEPRECATION_ERROR")
@@ -595,6 +686,7 @@ public fun ComponentStyling.dark(
         defaultSlimButtonStyle = ButtonStyle.Slim.Default.dark(),
         outlinedSlimButtonStyle = ButtonStyle.Slim.Outlined.dark(),
         badgeStyle = BadgeStyles.dark(),
+        searchTextFieldStyle = SearchTextFieldStyle.dark(),
     )
 
 @Suppress("UnusedReceiverParameter", "DEPRECATION_ERROR")
@@ -674,6 +766,7 @@ public fun ComponentStyling.dark(
         defaultSlimButtonStyle = ButtonStyle.Slim.Default.dark(),
         outlinedSlimButtonStyle = ButtonStyle.Slim.Outlined.dark(),
         badgeStyle = BadgeStyles.dark(),
+        searchTextFieldStyle = SearchTextFieldStyle.dark(),
     )
 
 @Suppress("UnusedReceiverParameter", "DEPRECATION_ERROR")
@@ -752,10 +845,98 @@ public fun ComponentStyling.dark(
         defaultSlimButtonStyle = ButtonStyle.Slim.Default.dark(),
         outlinedSlimButtonStyle = ButtonStyle.Slim.Outlined.dark(),
         badgeStyle = BadgeStyles.dark(),
+        searchTextFieldStyle = SearchTextFieldStyle.dark(),
     )
 
 /** Creates an Int UI light [ComponentStyling] with the provided parameters. */
 @Suppress("UnusedReceiverParameter")
+public fun ComponentStyling.light(
+    checkboxStyle: CheckboxStyle = CheckboxStyle.light(),
+    chipStyle: ChipStyle = ChipStyle.light(),
+    circularProgressStyle: CircularProgressStyle = CircularProgressStyle.light(),
+    defaultBannerStyle: DefaultBannerStyles = DefaultBannerStyles.Default.light(),
+    comboBoxStyle: ComboBoxStyle = ComboBoxStyle.Default.light(),
+    defaultButtonStyle: ButtonStyle = ButtonStyle.Default.light(),
+    defaultSplitButtonStyle: SplitButtonStyle = SplitButtonStyle.Default.light(),
+    defaultTabStyle: TabStyle = TabStyle.Default.light(),
+    dividerStyle: DividerStyle = DividerStyle.light(),
+    dropdownStyle: DropdownStyle = DropdownStyle.Default.light(),
+    editorTabStyle: TabStyle = TabStyle.Editor.light(),
+    groupHeaderStyle: GroupHeaderStyle = GroupHeaderStyle.light(),
+    horizontalProgressBarStyle: HorizontalProgressBarStyle = HorizontalProgressBarStyle.light(),
+    iconButtonStyle: IconButtonStyle = IconButtonStyle.light(),
+    transparentIconButtonStyle: IconButtonStyle = IconButtonStyle.lightTransparentBackground(),
+    inlineBannerStyle: InlineBannerStyles = InlineBannerStyles.Default.light(),
+    lazyTreeStyle: LazyTreeStyle = LazyTreeStyle.light(),
+    linkStyle: LinkStyle = LinkStyle.light(),
+    menuStyle: MenuStyle = MenuStyle.light(),
+    popupContainerStyle: PopupContainerStyle = PopupContainerStyle.light(),
+    outlinedButtonStyle: ButtonStyle = ButtonStyle.Outlined.light(),
+    outlinedSplitButtonStyle: SplitButtonStyle = SplitButtonStyle.Outlined.light(),
+    radioButtonStyle: RadioButtonStyle = RadioButtonStyle.light(),
+    scrollbarStyle: ScrollbarStyle = ScrollbarStyle.light(),
+    segmentedControlButtonStyle: SegmentedControlButtonStyle = SegmentedControlButtonStyle.light(),
+    segmentedControlStyle: SegmentedControlStyle = SegmentedControlStyle.light(),
+    sliderStyle: SliderStyle = SliderStyle.light(),
+    selectableLazyColumnStyle: SelectableLazyColumnStyle = SelectableLazyColumnStyle.light(),
+    simpleListItemStyle: SimpleListItemStyle = SimpleListItemStyle.light(),
+    textAreaStyle: TextAreaStyle = TextAreaStyle.light(),
+    textFieldStyle: TextFieldStyle = TextFieldStyle.light(),
+    tooltipStyle: TooltipStyle = TooltipStyle.light(autoHideBehavior = TooltipAutoHideBehavior.Normal),
+    undecoratedDropdownStyle: DropdownStyle = DropdownStyle.Undecorated.light(),
+    speedSearchStyle: SpeedSearchStyle = SpeedSearchStyle.light(),
+    searchMatchStyle: SearchMatchStyle = SearchMatchStyle.light(),
+    popupAdStyle: PopupAdStyle = PopupAdStyle.light(),
+    defaultSlimButtonStyle: ButtonStyle = ButtonStyle.Slim.Default.light(),
+    outlinedSlimButtonStyle: ButtonStyle = ButtonStyle.Slim.Outlined.light(),
+    badgeStyle: BadgeStyles = BadgeStyles.light(),
+    searchTextFieldStyle: SearchTextFieldStyle = SearchTextFieldStyle.light(),
+): ComponentStyling =
+    DefaultComponentStyling(
+        checkboxStyle = checkboxStyle,
+        chipStyle = chipStyle,
+        circularProgressStyle = circularProgressStyle,
+        comboBoxStyle = comboBoxStyle,
+        defaultBannerStyle = defaultBannerStyle,
+        defaultButtonStyle = defaultButtonStyle,
+        defaultDropdownStyle = dropdownStyle,
+        defaultSplitButtonStyle = defaultSplitButtonStyle,
+        defaultTabStyle = defaultTabStyle,
+        dividerStyle = dividerStyle,
+        editorTabStyle = editorTabStyle,
+        groupHeaderStyle = groupHeaderStyle,
+        horizontalProgressBarStyle = horizontalProgressBarStyle,
+        iconButtonStyle = iconButtonStyle,
+        transparentIconButtonStyle = transparentIconButtonStyle,
+        inlineBannerStyle = inlineBannerStyle,
+        lazyTreeStyle = lazyTreeStyle,
+        linkStyle = linkStyle,
+        menuStyle = menuStyle,
+        outlinedButtonStyle = outlinedButtonStyle,
+        popupContainerStyle = popupContainerStyle,
+        outlinedSplitButtonStyle = outlinedSplitButtonStyle,
+        radioButtonStyle = radioButtonStyle,
+        scrollbarStyle = scrollbarStyle,
+        segmentedControlButtonStyle = segmentedControlButtonStyle,
+        segmentedControlStyle = segmentedControlStyle,
+        selectableLazyColumnStyle = selectableLazyColumnStyle,
+        sliderStyle = sliderStyle,
+        simpleListItemStyle = simpleListItemStyle,
+        textAreaStyle = textAreaStyle,
+        textFieldStyle = textFieldStyle,
+        tooltipStyle = tooltipStyle,
+        undecoratedDropdownStyle = undecoratedDropdownStyle,
+        speedSearchStyle = speedSearchStyle,
+        searchMatchStyle = searchMatchStyle,
+        popupAdStyle = popupAdStyle,
+        defaultSlimButtonStyle = defaultSlimButtonStyle,
+        outlinedSlimButtonStyle = outlinedSlimButtonStyle,
+        badgeStyle = badgeStyle,
+        searchTextFieldStyle = searchTextFieldStyle,
+    )
+
+@Suppress("UnusedReceiverParameter", "DEPRECATION_ERROR")
+@Deprecated(message = "Use the variant with searchTextFieldStyle.", level = DeprecationLevel.HIDDEN)
 public fun ComponentStyling.light(
     checkboxStyle: CheckboxStyle = CheckboxStyle.light(),
     chipStyle: ChipStyle = ChipStyle.light(),
@@ -837,6 +1018,7 @@ public fun ComponentStyling.light(
         defaultSlimButtonStyle = defaultSlimButtonStyle,
         outlinedSlimButtonStyle = outlinedSlimButtonStyle,
         badgeStyle = badgeStyle,
+        searchTextFieldStyle = SearchTextFieldStyle.light(),
     )
 
 @Deprecated("Use the variant with badgeStyle.", level = DeprecationLevel.HIDDEN)
@@ -921,6 +1103,7 @@ public fun ComponentStyling.light(
         defaultSlimButtonStyle = defaultSlimButtonStyle,
         outlinedSlimButtonStyle = outlinedSlimButtonStyle,
         badgeStyle = BadgeStyles.light(),
+        searchTextFieldStyle = SearchTextFieldStyle.light(),
     )
 
 @Suppress("UnusedReceiverParameter", "DEPRECATION_ERROR")
@@ -1006,9 +1189,10 @@ public fun ComponentStyling.light(
         defaultSlimButtonStyle = ButtonStyle.Slim.Default.light(),
         outlinedSlimButtonStyle = ButtonStyle.Slim.Outlined.light(),
         badgeStyle = BadgeStyles.light(),
+        searchTextFieldStyle = SearchTextFieldStyle.light(),
     )
 
-@Suppress("UnusedReceiverParameter", "DEPRECATION_ERROR")
+@Suppress("UnusedReceiverParameter")
 @Deprecated("Use the variant with popupAdTextStyle.", level = DeprecationLevel.HIDDEN)
 public fun ComponentStyling.light(
     checkboxStyle: CheckboxStyle = CheckboxStyle.light(),
@@ -1087,6 +1271,7 @@ public fun ComponentStyling.light(
         defaultSlimButtonStyle = ButtonStyle.Slim.Default.light(),
         outlinedSlimButtonStyle = ButtonStyle.Slim.Outlined.light(),
         badgeStyle = BadgeStyles.light(),
+        searchTextFieldStyle = SearchTextFieldStyle.light(),
     )
 
 @Suppress("UnusedReceiverParameter", "DEPRECATION_ERROR")
@@ -1166,6 +1351,7 @@ public fun ComponentStyling.light(
         defaultSlimButtonStyle = ButtonStyle.Slim.Default.light(),
         outlinedSlimButtonStyle = ButtonStyle.Slim.Outlined.light(),
         badgeStyle = BadgeStyles.light(),
+        searchTextFieldStyle = SearchTextFieldStyle.light(),
     )
 
 @Suppress("UnusedReceiverParameter", "DEPRECATION_ERROR")
@@ -1244,6 +1430,7 @@ public fun ComponentStyling.light(
         defaultSlimButtonStyle = ButtonStyle.Slim.Default.light(),
         outlinedSlimButtonStyle = ButtonStyle.Slim.Outlined.light(),
         badgeStyle = BadgeStyles.light(),
+        searchTextFieldStyle = SearchTextFieldStyle.light(),
     )
 
 /** Applies the Int UI standalone theme with automatically selected light or dark component styling. */
