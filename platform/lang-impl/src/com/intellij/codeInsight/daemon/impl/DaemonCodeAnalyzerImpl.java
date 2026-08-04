@@ -1002,6 +1002,11 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     }
   }
 
+  @ApiStatus.Internal
+  public static boolean assertHighlightingPassNotRunning() {
+    return PassExecutorService.assertHighlightingPassNotRunning();
+  }
+
   static final class HighlightByOffsetProcessor implements Processor<HighlightInfo> {
     private final List<HighlightInfo> foundInfoList = new SmartList<>();
     private final boolean highestPriorityOnly;

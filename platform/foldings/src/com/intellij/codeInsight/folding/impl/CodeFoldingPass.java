@@ -27,9 +27,7 @@ final class CodeFoldingPass extends EditorBoundHighlightingPass implements Possi
   @Override
   public void doCollectInformation(@NotNull ProgressIndicator progress) {
     boolean firstTime = isFirstTime(myFile, myEditor, THE_FIRST_TIME_KEY);
-    try (var ignored = runPass()) {
-      myRunnable = CodeFoldingManager.getInstance(myProject).updateFoldRegionsAsync(myEditor, firstTime);
-    }
+    myRunnable = CodeFoldingManager.getInstance(myProject).updateFoldRegionsAsync(myEditor, firstTime);
   }
 
   static boolean isFirstTime(@NotNull PsiFile psiFile, @NotNull Editor editor, @NotNull Key<Boolean> key) {

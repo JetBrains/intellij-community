@@ -89,6 +89,7 @@ public final class PassExecutorService implements Disposable {
   private final AtomicReference<@NotNull Map<ScheduledPass, Job>> mySubmittedPasses = new AtomicReference<>(new ConcurrentHashMap<>());
   private final Project myProject;
   private volatile boolean isDisposed;
+  private static final ThreadLocal<AtomicInteger> PASS_RUNNING = ThreadLocal.withInitial(() -> new AtomicInteger());
 
   PassExecutorService(@NotNull Project project) {
     myProject = project;
@@ -263,7 +264,7 @@ public final class PassExecutorService implements Disposable {
     assert id2Visits.size() == threadsToStartCountdown.get() : "Expected "+threadsToStartCountdown+" but got "+id2Visits.size()+": "+id2Visits;
   }
 
-  private void checkConsistency(@NotNull ScheduledPass pass, Map<ScheduledPass, Pair<ScheduledPass, Integer>> id2Visits) {
+  private void checkConsistency(@NotNull ScheduledPass pass, @NotNull Map<ScheduledPass, Pair<ScheduledPass, Integer>> id2Visits) {
     for (ScheduledPass successor : ContainerUtil.concat(pass.mySuccessorsOnCompletion, pass.mySuccessorsOnSubmit)) {
       Pair<ScheduledPass, Integer> pair = id2Visits.get(successor);
       if (pair == null) {
@@ -414,6 +415,7 @@ public final class PassExecutorService implements Disposable {
     @Override
     public void run() {
       ((ApplicationImpl)ApplicationManager.getApplication()).executeByImpatientReader(() -> {
+        PASS_RUNNING.get().incrementAndGet();
         try {
           ((FileTypeManagerImpl)FileTypeManager.getInstance()).cacheFileTypesInside(() -> doRun());
         }
@@ -423,6 +425,9 @@ public final class PassExecutorService implements Disposable {
         catch (RuntimeException | Error e) {
           myUpdateProgress.cancel(e, "exception thrown");
           throw e;
+        }
+        finally {
+          PASS_RUNNING.get().decrementAndGet();
         }
       });
     }
@@ -485,7 +490,7 @@ public final class PassExecutorService implements Disposable {
               ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject)).stopAndRestartMyProcess(myUpdateProgress,
                                                                                                           ObjectUtils.notNull(e.getCause(), e), "PCE was thrown by pass");
               if (LOG.isDebugEnabled()) {
-                LOG.debug("PCE was thrown by " + myPass.getClass(), e);
+                LOG.debug("PCE was thrown by " + myPass.getClass(), new RuntimeException(e));
               }
             }
           }
@@ -652,5 +657,10 @@ public final class PassExecutorService implements Disposable {
     catch (InterruptedException e) {
       return true;
     }
+  }
+
+  @ApiStatus.Internal
+  static boolean assertHighlightingPassNotRunning() {
+    return PASS_RUNNING.get().get() == 0;
   }
 }

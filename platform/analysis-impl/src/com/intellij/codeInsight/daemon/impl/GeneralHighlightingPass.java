@@ -113,10 +113,6 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
     return myFile;
   }
 
-  public static void assertHighlightingPassNotRunning() {
-    HighlightVisitorRunner.assertHighlightingPassNotRunning();
-  }
-
   @Override
   protected void collectInformationWithProgress(@NotNull ProgressIndicator progress) {
     ThreadingAssertions.assertBackgroundThread();
