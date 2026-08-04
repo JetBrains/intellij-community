@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.spi
 
+import com.intellij.platform.ijent.IjentUnavailableException
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.be
 import io.kotest.matchers.collections.beIn
@@ -131,7 +132,7 @@ class IjentDeployingOverShellProcessStrategyUnitTest {
 
     @Test
     fun `no chmod and no busybox`(): Unit = runBlocking {
-      val errorAssertion = shouldThrow<IjentStartupError.IncompatibleTarget> {
+      val errorAssertion = shouldThrow<IjentUnavailableException.CommunicationFailure> {
         createDeployingContext { commands ->
           "busybox" should beIn(commands)
           "chmod" should beIn(commands)

@@ -15,6 +15,7 @@ import com.intellij.platform.eel.provider.utils.sendWholeText
 import com.intellij.platform.ijent.IjentLog
 import com.intellij.platform.ijent.IjentScope
 import com.intellij.platform.ijent.IjentUnavailableException
+import com.intellij.platform.ijent.IjentUnavailableException.CommunicationFailure
 import com.intellij.platform.ijent.ParentOfIjentScopes
 import com.intellij.platform.ijent.getIjentGrpcArgv
 import com.intellij.platform.ijent.spi.IjentSessionMediatorUtils.readLineOrThrow
@@ -277,7 +278,7 @@ private suspend fun <T : Any> DeployingContextAndShell.execCommand(block: suspen
 
     throw when (mainError) {
       is IjentUnavailableException, is CancellationException -> mainError
-      else -> IjentStartupError.CommunicationError(mainError)
+      else -> CommunicationFailure(mainError.message.orEmpty(), mainError)
     }
   }
 }
@@ -391,7 +392,7 @@ internal suspend fun createDeployingContext(filterAvailableBinariesCmd: suspend 
     return when {
       name in outputOfWhich -> name
       "busybox" in outputOfWhich -> "busybox $name"
-      else -> throw IjentStartupError.IncompatibleTarget(setOf("busybox", name).joinToString(prefix = "The remote machine has none of: "))
+      else -> throw CommunicationFailure(setOf("busybox", name).joinToString(prefix = "The remote machine has none of: "), null)
     }
   }
 
@@ -426,7 +427,7 @@ private suspend fun DeployingContextAndShell.getTargetPlatform(): EelPlatform.Po
 
   val unameOutput = process.readLine().split(" ").filter(String::isNotEmpty)
   if (unameOutput.isEmpty()) {
-    throw IjentStartupError.IncompatibleTarget("Empty output of `uname`")
+    throw CommunicationFailure("Empty output of `uname`", null)
   }
 
   val osName = unameOutput.first()
@@ -436,13 +437,13 @@ private suspend fun DeployingContextAndShell.getTargetPlatform(): EelPlatform.Po
   val targetArch = when {
     "x86_64" in arch || "amd64" in arch -> EelPlatform.Arch.X86_64
     "aarch64" in arch || "arm64" in arch -> EelPlatform.Arch.ARM_64
-    else -> throw IjentStartupError.IncompatibleTarget("No binary for architecture $arch")
+    else -> throw CommunicationFailure("No binary for architecture $arch", null)
   }
 
   val targetPlatform = when (osName) {
     "Linux" -> EelPlatform.Linux(targetArch)
     "Darwin" -> EelPlatform.Darwin(targetArch)
-    else -> throw IjentStartupError.IncompatibleTarget("No binary for the operating system $osName")
+    else -> throw CommunicationFailure("No binary for the operating system $osName", null)
   }
   return targetPlatform
 }
