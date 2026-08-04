@@ -2,18 +2,10 @@
 package org.jetbrains.kotlin.idea.codeInsight.inspections.utils
 
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.types.isByteType
-import org.jetbrains.kotlin.analysis.api.types.isDoubleType
-import org.jetbrains.kotlin.analysis.api.types.isFloatType
-import org.jetbrains.kotlin.analysis.api.types.isIntType
-import org.jetbrains.kotlin.analysis.api.types.isLongType
-import org.jetbrains.kotlin.analysis.api.types.isShortType
-import org.jetbrains.kotlin.analysis.api.types.isUByteType
-import org.jetbrains.kotlin.analysis.api.types.isUIntType
-import org.jetbrains.kotlin.analysis.api.types.isULongType
-import org.jetbrains.kotlin.analysis.api.types.isUShortType
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.symbols.findClassLike
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.ExternalCompilerVersionProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -48,11 +40,17 @@ private val COMPILER_VERSION_WITH_RANGEUNTIL_SUPPORT = IdeKotlinVersion.get("1.7
 
 context(_: KaSession)
 val KaType.isSignedIntegralType: Boolean
-    get() = isIntType || isLongType || isShortType || isByteType
+    get() = classId == KaStandardTypeClassIds.INT ||
+            classId == KaStandardTypeClassIds.LONG ||
+            classId == KaStandardTypeClassIds.SHORT ||
+            classId == KaStandardTypeClassIds.BYTE
 
 context(_: KaSession)
 val KaType.isUnsignedIntegralType: Boolean
-    get() = isUIntType || isULongType || isUShortType || isUByteType
+    get() = classId == StandardClassIds.UInt ||
+            classId == StandardClassIds.ULong ||
+            classId == StandardClassIds.UShort ||
+            classId == StandardClassIds.UByte
 
 context(_: KaSession)
 val KaType.isIntegralType: Boolean
@@ -60,7 +58,7 @@ val KaType.isIntegralType: Boolean
 
 context(_: KaSession)
 val KaType.isFloatingPointType: Boolean
-    get() = isFloatType || isDoubleType
+    get() = classId == KaStandardTypeClassIds.FLOAT || classId == KaStandardTypeClassIds.DOUBLE
 
 private val OPEN_END_RANGE_CLASS_ID = ClassId.fromString("kotlin/ranges/OpenEndRange")
 private val EXPERIMENTAL_STDLIB_API_CLASS_ID = ClassId.fromString("kotlin/ExperimentalStdlibApi")

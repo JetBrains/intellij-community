@@ -39,9 +39,10 @@ import org.jetbrains.kotlin.analysis.api.types.KaSubstitutor
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.approximateToDenotableSubtypeOrSelf
 import org.jetbrains.kotlin.analysis.api.types.createInheritanceTypeSubstitutor
-import org.jetbrains.kotlin.analysis.api.types.isUnitType
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
 import org.jetbrains.kotlin.analysis.api.types.symbol
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -238,7 +239,7 @@ internal object ChangeMemberFunctionSignatureFixFactory {
                     Variance.INVARIANT
                 )
             })
-            superFunction.returnType.takeUnless { it.isUnitType }?.let {
+            superFunction.returnType.takeUnless { it.classId == KaStandardTypeClassIds.UNIT }?.let {
                 append(": ")
                 append((substitutor?.substitute(it) ?: it).render(declarationRenderer.typeRenderer, Variance.INVARIANT))
             }

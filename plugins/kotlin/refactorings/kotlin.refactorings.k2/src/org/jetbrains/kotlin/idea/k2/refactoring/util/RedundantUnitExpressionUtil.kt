@@ -16,7 +16,8 @@ import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
 import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
-import org.jetbrains.kotlin.analysis.api.types.isUnitType
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.psi.previousStatement
 import org.jetbrains.kotlin.name.StandardClassIds
@@ -63,7 +64,7 @@ fun isRedundantUnit(referenceExpression: KtReferenceExpression): Boolean {
             analyze(prev) {
                 val ktType = prev.expressionType
                 if (ktType != null) {
-                    return ktType.isUnitType && !ktType.isMarkedNullable && prev.canBeUsedAsValue()
+                    return ktType.classId == KaStandardTypeClassIds.UNIT && !ktType.isMarkedNullable && prev.canBeUsedAsValue()
                 }
             }
 

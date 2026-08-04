@@ -4,8 +4,9 @@ package org.jetbrains.kotlin.idea.inspections
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.session.analyze
-import org.jetbrains.kotlin.analysis.api.types.isNothingType
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.isNullable
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.psi.KtBreakExpression
 import org.jetbrains.kotlin.psi.KtContinueExpression
 import org.jetbrains.kotlin.psi.KtExpression
@@ -27,7 +28,7 @@ fun createReturnOrEmptyText(
             val label = labelName?.let { "@$it" }.orEmpty()
             val isNothingType = analyze(expression) {
                 val expressionType = expression.expressionType
-                expressionType?.isNothingType == true && !expressionType.isNullable
+                expressionType?.classId == KaStandardTypeClassIds.NOTHING && !expressionType.isNullable
             }
             if (isNothingType) {
                 ""

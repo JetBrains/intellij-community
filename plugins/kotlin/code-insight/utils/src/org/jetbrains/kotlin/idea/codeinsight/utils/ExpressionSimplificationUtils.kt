@@ -12,8 +12,8 @@ import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteActio
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.types.KaType
-import org.jetbrains.kotlin.analysis.api.types.isDoubleType
-import org.jetbrains.kotlin.analysis.api.types.isFloatType
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.lexer.KtSingleValueToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtBinaryExpression
@@ -52,7 +52,8 @@ object NegatedBinaryExpressionSimplificationUtils {
         if (operation != KtTokens.LT && operation != KtTokens.LTEQ && operation != KtTokens.GT && operation != KtTokens.GTEQ) return true
 
         analyze(this) {
-            fun KaType?.isFloatingPoint() = this != null && (isFloatType || isDoubleType)
+            fun KaType?.isFloatingPoint() =
+                this != null && (classId == KaStandardTypeClassIds.FLOAT || classId == KaStandardTypeClassIds.DOUBLE)
 
             return !left?.expressionType.isFloatingPoint() && !right?.expressionType.isFloatingPoint()
         }

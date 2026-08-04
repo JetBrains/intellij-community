@@ -12,7 +12,8 @@ import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
-import org.jetbrains.kotlin.analysis.api.types.isStringType
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeInsight.inspections.StringReferentialEqualityInspection.Context
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
@@ -47,7 +48,7 @@ internal class StringReferentialEqualityInspection : KotlinApplicableInspectionB
         val left = element.left ?: return null
         val right = element.right ?: return null
 
-        if (left.expressionType?.isStringType != true || right.expressionType?.isStringType != true) {
+        if (left.expressionType?.classId != KaStandardTypeClassIds.STRING || right.expressionType?.classId != KaStandardTypeClassIds.STRING) {
             return null
         }
 

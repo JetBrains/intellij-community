@@ -9,8 +9,8 @@ import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteActio
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.session.analyze
-import org.jetbrains.kotlin.analysis.api.types.isPrimitive
-import org.jetbrains.kotlin.analysis.api.types.isUnitType
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameValidator
@@ -29,7 +29,8 @@ internal class K2KotlinNameSuggestionProvider : KotlinNameSuggestionProvider() {
         allowAnalysisFromWriteAction {
             analyze(callable) {
                 val type = callable.returnType
-                if (!type.isUnitType && !type.isPrimitive) {
+                val classId = type.classId
+                if (classId != KaStandardTypeClassIds.UNIT && classId !in KaStandardTypeClassIds.PRIMITIVES) {
                     with(KotlinNameSuggester()) {
                         suggestTypeNames(type).filter { validator(it) }.toList()
                     }

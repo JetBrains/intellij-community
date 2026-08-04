@@ -80,7 +80,8 @@ import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaUsualClassType
-import org.jetbrains.kotlin.analysis.api.types.isUnitType
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.analysis.decompiler.psi.file.KtClsFile
 import org.jetbrains.kotlin.codegen.inline.KOTLIN_STRATA_NAME
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
@@ -582,7 +583,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         }
         val isUnitReturnType = runDumbAnalyze(function, fallback = false) {
             val functionalType = function.functionType
-            (functionalType as? KaFunctionType)?.returnType?.isUnitType == true
+            (functionalType as? KaFunctionType)?.returnType?.classId == KaStandardTypeClassIds.UNIT
         }
         if (!isUnitReturnType) {
             // We always must specify return explicitly

@@ -66,12 +66,13 @@ import org.jetbrains.kotlin.analysis.api.types.commonSupertype
 import org.jetbrains.kotlin.analysis.api.types.fullyExpandedType
 import org.jetbrains.kotlin.analysis.api.types.isFunctionalInterface
 import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
-import org.jetbrains.kotlin.analysis.api.types.isUnitType
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.lowerBoundIfFlexible
 import org.jetbrains.kotlin.analysis.api.types.receiverType
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.analysis.api.types.type
 import org.jetbrains.kotlin.analysis.api.types.typeCreation.typeCreator
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.asJava.toLightAnnotation
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -841,7 +842,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
             val ktType = ktExpression.expressionType.takeUnless { it is KaErrorType } ?: return null
             // Again, Analysis API returns [Unit] for statements, so we need to filter out
             // some cases that are not actually expression's return type.
-            if (ktType.isUnitType) {
+            if (ktType.classId == KaStandardTypeClassIds.UNIT) {
                 // E.g., AnnotationTarget.FIELD, reference to enum class is resolved to the constructor call,
                 // and then returned as Unit expression type. Same for path segments in a fully qualified name
                 if ((parent is KtQualifiedExpression || parent is KtDoubleColonExpression) &&

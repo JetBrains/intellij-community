@@ -10,8 +10,8 @@ import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.components.diagnostics
 import org.jetbrains.kotlin.analysis.api.evaluation.evaluate
 import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
-import org.jetbrains.kotlin.analysis.api.types.isPrimitive
-import org.jetbrains.kotlin.analysis.api.types.isStringType
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.codeinsight.utils.JVM_FIELD_CLASS_ID
@@ -60,7 +60,7 @@ internal class MayBeConstantInspection : MayBeConstantInspectionBase() {
     private fun KtProperty.hasNonNullablePrimitiveOrStringType(): Boolean {
         val type = this.returnType
         if (type.isMarkedNullable) return false
-        return type.isPrimitive || type.isStringType
+        return type.classId in KaStandardTypeClassIds.PRIMITIVES || type.classId == KaStandardTypeClassIds.STRING
     }
 
     context(_: KaSession)

@@ -31,10 +31,10 @@ import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypePointer
 import org.jetbrains.kotlin.analysis.api.types.defaultType
-import org.jetbrains.kotlin.analysis.api.types.isNothingType
-import org.jetbrains.kotlin.analysis.api.types.isUnitType
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.restore
 import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.asJava.namedUnwrappedElement
 import org.jetbrains.kotlin.idea.base.psi.getReturnTypeReference
 import org.jetbrains.kotlin.idea.base.psi.replaced
@@ -119,7 +119,7 @@ internal class ConvertFunctionToPropertyIntention :
         analyze(element) {
             val functionSymbol = element.symbol
             val returnType = functionSymbol.returnType
-            if (returnType.isUnitType || returnType.isNothingType) return false
+            if (returnType.classId == KaStandardTypeClassIds.UNIT || returnType.classId == KaStandardTypeClassIds.NOTHING) return false
 
             val propertyName = element.getPropertyName() ?: return false
             return findExistingPropertyWithSameName(element, propertyName) == null

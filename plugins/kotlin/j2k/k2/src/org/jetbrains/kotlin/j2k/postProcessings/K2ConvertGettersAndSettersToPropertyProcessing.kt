@@ -38,12 +38,12 @@ import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
-import org.jetbrains.kotlin.analysis.api.types.isAnyType
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
 import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
-import org.jetbrains.kotlin.analysis.api.types.isUnitType
 import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
 import org.jetbrains.kotlin.analysis.api.types.withNullability
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
@@ -355,7 +355,7 @@ private object PropertiesDataCollector {
         if (typeParameters.isNotEmpty()) return null
 
         return analyze(this) {
-            if (!symbol.returnType.isUnitType) return null
+            if (symbol.returnType.classId != KaStandardTypeClassIds.UNIT) return null
 
             val binaryExpression = bodyExpression?.statements()?.singleOrNull() as? KtBinaryExpression
             val property = binaryExpression?.let { expression ->
@@ -1047,7 +1047,7 @@ private class ClassConverter(
 
 context(_: KaSession)
 private fun KaClassSymbol.superClassAndSuperInterfaces(): List<KaClassSymbol> {
-    return superTypes.filter { !it.isAnyType }.mapNotNull { it.expandedSymbol }
+    return superTypes.filter { it.classId != KaStandardTypeClassIds.ANY }.mapNotNull { it.expandedSymbol }
 }
 
 private fun KtExpression.isReferenceToThis(): Boolean {

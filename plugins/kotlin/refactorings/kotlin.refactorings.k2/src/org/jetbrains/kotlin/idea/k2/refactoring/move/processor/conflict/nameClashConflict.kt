@@ -28,7 +28,8 @@ import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
-import org.jetbrains.kotlin.analysis.api.types.isAnyType
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.getSymbolContainingMemberDeclarations
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -103,7 +104,7 @@ private fun KaSymbol.getContainingSymbolFqn(): FqName? {
 }
 
 context(_: KaSession)
-private fun KaType.isAnyOrTypeParameter(): Boolean = isAnyType || this is KaTypeParameterType
+private fun KaType.isAnyOrTypeParameter(): Boolean = classId == KaStandardTypeClassIds.ANY || this is KaTypeParameterType
 
 context(_: KaSession)
 private fun KaSymbol.toSignatureData(): SymbolData {

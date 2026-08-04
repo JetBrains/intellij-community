@@ -16,7 +16,8 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.containingSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.defaultType
-import org.jetbrains.kotlin.analysis.api.types.isPrimitive
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
@@ -159,7 +160,7 @@ private fun isPrimitiveOperation(expression: KtBinaryExpression): Boolean {
         .resolveToSymbol()
         ?.containingSymbol as? KaClassSymbol ?: return false
 
-    return operationSymbol.defaultType.isPrimitive
+    return operationSymbol.defaultType.classId in KaStandardTypeClassIds.PRIMITIVES
 }
 
 private fun isCommutative(operationToken: IElementType): Boolean =

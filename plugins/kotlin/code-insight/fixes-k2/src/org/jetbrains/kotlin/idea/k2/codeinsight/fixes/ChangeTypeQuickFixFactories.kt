@@ -39,21 +39,13 @@ import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.approximateToDenotableSupertypeOrSelf
 import org.jetbrains.kotlin.analysis.api.types.builtinTypes
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.commonSupertype
-import org.jetbrains.kotlin.analysis.api.types.isBooleanType
-import org.jetbrains.kotlin.analysis.api.types.isCharType
-import org.jetbrains.kotlin.analysis.api.types.isDoubleType
-import org.jetbrains.kotlin.analysis.api.types.isFloatType
-import org.jetbrains.kotlin.analysis.api.types.isIntType
-import org.jetbrains.kotlin.analysis.api.types.isLongType
-import org.jetbrains.kotlin.analysis.api.types.isPrimitive
-import org.jetbrains.kotlin.analysis.api.types.isUByteType
-import org.jetbrains.kotlin.analysis.api.types.isUIntType
-import org.jetbrains.kotlin.analysis.api.types.isULongType
-import org.jetbrains.kotlin.analysis.api.types.isUShortType
-import org.jetbrains.kotlin.analysis.api.types.isUnitType
+import org.jetbrains.kotlin.analysis.api.types.restore
 import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
 import org.jetbrains.kotlin.analysis.api.types.typeCreation.typeCreator
 import org.jetbrains.kotlin.analysis.api.types.withNullability
@@ -70,6 +62,7 @@ import org.jetbrains.kotlin.idea.quickfix.ChangeTypeFixUtils
 import org.jetbrains.kotlin.idea.quickfix.NumberConversionFix
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtClassOrObject
@@ -147,7 +140,7 @@ internal object ChangeTypeQuickFixFactories {
     @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     private fun getActualType(ktType: KaType, position: KtElement): KaType {
-        return ktType.toFunctionType() ?: with(session) { ktType.approximateToDenotableSupertypeOrSelf(position) } ?: ktType
+        return ktType.toFunctionType() ?: ktType.approximateToDenotableSupertypeOrSelf(position)
     }
 
     @OptIn(KaExperimentalApi::class)
@@ -180,7 +173,7 @@ internal object ChangeTypeQuickFixFactories {
                 (propertyInitializerType ?: returnExpr.expressionType)?.let { getActualType(it, this@returnTypeWithCandidate) }
                     ?.takeUnless { it is KaErrorType }
             })
-            if (!candidateType.isUnitType) {
+            if (candidateType.classId != KaStandardTypeClassIds.UNIT) {
                 add(candidateType)
             }
         }.distinct()
@@ -199,9 +192,7 @@ internal object ChangeTypeQuickFixFactories {
             // converting a type to a pointer and back can be used
 
             val typePointer = analyze(newExpression) { newExpression.expressionType?.createPointer() }
-            with(session) {
-                typePointer?.restore()
-            }
+            typePointer?.restore()
         } else null
     }
 
@@ -258,10 +249,7 @@ internal object ChangeTypeQuickFixFactories {
 
         val candidateType = getActualType(newExpressionType, enclosingDeclaration)
         val ktType = enclosingDeclaration.returnTypeWithCandidate(candidateType)
-        val typeInfo =
-            with(session) {
-                createTypeInfo(ktType)
-            }
+        val typeInfo = createTypeInfo(ktType)
 
         val target =
             if (lambdaDeclarationIsProperty) enclosingDeclaration.property else enclosingDeclaration as KtCallableDeclaration
@@ -481,7 +469,7 @@ internal object ChangeTypeQuickFixFactories {
         return buildList {
             var wrongPrimitiveLiteralFix: WrongPrimitiveLiteralFix? = null
             if (expression is KtConstantExpression && isNumberOrUNumberType(expectedType) && isNumberOrUNumberType(actualType)) {
-                wrongPrimitiveLiteralFix = WrongPrimitiveLiteralFix.createIfAvailable(expression, expectedType, session)
+                wrongPrimitiveLiteralFix = WrongPrimitiveLiteralFix.createIfAvailable(expression, expectedType)
                 addIfNotNull(wrongPrimitiveLiteralFix)
             }
 
@@ -666,9 +654,15 @@ private fun isValReassignment(assignment: KtBinaryExpression): Boolean {
 context(session: KaSession)
 fun isNumberOrUNumberType(type: KaType): Boolean = isNumberType(type) || isUNumberType(type)
 context(session: KaSession)
-fun isNumberType(type: KaType): Boolean = with(type) { isPrimitive && !isBooleanType && !isCharType }
+fun isNumberType(type: KaType): Boolean =
+    with(type.classId) {
+        this in KaStandardTypeClassIds.PRIMITIVES && this != KaStandardTypeClassIds.BOOLEAN && this != KaStandardTypeClassIds.CHAR
+    }
 context(session: KaSession)
-fun isUNumberType(type: KaType): Boolean = with(type) { isUByteType || isUShortType || isUIntType || isULongType }
+fun isUNumberType(type: KaType): Boolean =
+    with(type.classId) {
+        this == StandardClassIds.UByte || this == StandardClassIds.UShort || this == StandardClassIds.UInt || this == StandardClassIds.ULong
+    }
 
 context(session: KaSession)
 private fun isRoundNumberFixAvailable(expression: KtExpression, type: KaType): Boolean {
@@ -677,6 +671,12 @@ private fun isRoundNumberFixAvailable(expression: KtExpression, type: KaType): B
 }
 
 context(session: KaSession)
-private fun isLongOrInt(type: KaType): Boolean = type.isLongType || type.isIntType
+private fun isLongOrInt(type: KaType): Boolean =
+    with(type.classId) {
+        this == KaStandardTypeClassIds.LONG || this == KaStandardTypeClassIds.INT
+    }
 context(session: KaSession)
-private fun isDoubleOrFloat(type: KaType): Boolean = type.isDoubleType || type.isFloatType
+private fun isDoubleOrFloat(type: KaType): Boolean =
+    with(type.classId) {
+        this == KaStandardTypeClassIds.DOUBLE || this == KaStandardTypeClassIds.FLOAT
+    }

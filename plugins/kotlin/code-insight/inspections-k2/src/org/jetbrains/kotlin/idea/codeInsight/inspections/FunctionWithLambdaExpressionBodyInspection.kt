@@ -13,7 +13,8 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.session.analyze
-import org.jetbrains.kotlin.analysis.api.types.isNothingType
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
@@ -126,7 +127,7 @@ private fun KtExpression.setTypeIfNeed() {
     val declaration = getStrictParentOfType<KtCallableDeclaration>() ?: return
     analyze(this) {
         val returnType = declaration.returnType
-        if (returnType.isNothingType) {
+        if (returnType.classId == KaStandardTypeClassIds.NOTHING) {
             declaration.setType(returnType)
         }
     }

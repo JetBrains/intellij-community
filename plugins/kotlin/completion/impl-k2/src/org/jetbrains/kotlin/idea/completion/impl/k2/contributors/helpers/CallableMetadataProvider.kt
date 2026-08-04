@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.symbols.fakeOverrideOriginal
 import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
 import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
-import org.jetbrains.kotlin.analysis.api.types.isUnitType
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
 import org.jetbrains.kotlin.analysis.api.types.withNullability
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
@@ -46,6 +46,7 @@ import org.jetbrains.kotlin.analysis.api.types.KaIntersectionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.analysis.api.types.symbol
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.buildClassTypeWithStarProjections
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.resolveToExpandedSymbol
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.isExtensionCall
@@ -273,7 +274,7 @@ internal object CallableMetadataProvider {
     private fun KtExpression.getTypeWithCorrectedNullability(
         referenceClass: KaSymbol? = null,
     ): KaType? {
-        val expressionType: KaType? = expressionType?.takeUnless { it.isUnitType }
+        val expressionType: KaType? = expressionType?.takeUnless { it.classId == KaStandardTypeClassIds.UNIT }
             ?: when (val symbol = referenceClass) {
                 is KaTypeAliasSymbol -> symbol.expandedType
                 is KaClassifierSymbol -> symbol.defaultType

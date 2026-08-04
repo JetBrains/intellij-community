@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.analysis.api.components.KaScopeKinds
 import org.jetbrains.kotlin.analysis.api.signatures.asSignature
 import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
 import org.jetbrains.kotlin.analysis.api.scopes.declaredMemberScope
-import org.jetbrains.kotlin.analysis.api.types.isUnitType
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbols
 import org.jetbrains.kotlin.analysis.api.scopes.scope
 import org.jetbrains.kotlin.analysis.api.scopes.syntheticJavaPropertiesScope
@@ -28,6 +28,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaSyntheticJavaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.rootPackageSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersionSettings
@@ -185,7 +186,7 @@ private fun Sequence<KaCallableSignature<*>>.filterOutJavaGettersAndSetters(
         .flatMapTo(mutableSetOf()) { symbol ->
             listOfNotNull(
                 symbol.javaGetterSymbol,
-                symbol.javaSetterSymbol?.takeIf { it.returnType.isUnitType })
+                symbol.javaSetterSymbol?.takeIf { it.returnType.classId == KaStandardTypeClassIds.UNIT })
         }
 
     return filterNot { it.symbol in javaGetterAndUnitSetterSymbols }

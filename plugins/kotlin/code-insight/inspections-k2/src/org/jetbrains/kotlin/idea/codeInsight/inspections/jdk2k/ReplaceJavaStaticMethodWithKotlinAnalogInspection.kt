@@ -17,7 +17,8 @@ import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
-import org.jetbrains.kotlin.analysis.api.types.isCharType
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -137,7 +138,7 @@ private object Holder {
                         val singleArgument = valueArguments.single().getArgumentExpression()
                         if (singleArgument != null) {
                             analyze(call) {
-                              singleArgument.expressionType?.isCharType
+                              singleArgument.expressionType?.classId == KaStandardTypeClassIds.CHAR
                             } == true
                         } else {
                             false

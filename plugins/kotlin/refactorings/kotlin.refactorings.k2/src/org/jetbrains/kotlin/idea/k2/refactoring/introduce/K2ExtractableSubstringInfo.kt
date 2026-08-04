@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.builtinTypes
-import org.jetbrains.kotlin.analysis.api.types.isStringType
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.idea.refactoring.introduce.ExtractableSubstringInfo
 import org.jetbrains.kotlin.psi.KtLiteralStringTemplateEntry
 import org.jetbrains.kotlin.psi.KtPsiFactory
@@ -57,7 +57,7 @@ class K2ExtractableSubstringInfo(
         }
     }
 
-    override val isString: Boolean = isStr ?: analyze(startEntry) { guessLiteralType().isStringType }
+    override val isString: Boolean = isStr ?: analyze(startEntry) { guessLiteralType().classId == KaStandardTypeClassIds.STRING }
 
     override fun copy(
         newStartEntry: KtStringTemplateEntry,

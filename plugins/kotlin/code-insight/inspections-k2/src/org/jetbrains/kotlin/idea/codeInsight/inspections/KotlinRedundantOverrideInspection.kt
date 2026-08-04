@@ -26,10 +26,11 @@ import org.jetbrains.kotlin.analysis.api.symbols.containingSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.defaultType
 import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
-import org.jetbrains.kotlin.analysis.api.types.isUnitType
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
 import org.jetbrains.kotlin.analysis.api.types.type
 import org.jetbrains.kotlin.analysis.api.types.withNullability
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.builtins.StandardNames.EQUALS_NAME
 import org.jetbrains.kotlin.builtins.StandardNames.HASHCODE_NAME
 import org.jetbrains.kotlin.builtins.StandardNames.TO_STRING_NAME
@@ -190,7 +191,7 @@ internal class KotlinRedundantOverrideInspection : KotlinApplicableInspectionBas
         val functionName = function.nameAsName ?: return false
         if (!canBePropertyAccessor(functionName.asString())) return false
         val functionType = functionSymbol.returnType
-        val isSetter = functionType.isUnitType
+        val isSetter = functionType.classId == KaStandardTypeClassIds.UNIT
         val valueParameters = function.valueParameters
         val singleValueParameter = valueParameters.singleOrNull()
         if (isSetter && singleValueParameter == null || !isSetter && valueParameters.isNotEmpty()) return false

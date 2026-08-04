@@ -20,9 +20,9 @@ import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.KaStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.types.KaType
-import org.jetbrains.kotlin.analysis.api.types.isAnyType
-import org.jetbrains.kotlin.analysis.api.types.isBooleanType
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -45,13 +45,11 @@ import org.jetbrains.kotlin.psi.KtTryExpression
 import org.jetbrains.kotlin.psi.KtWhenExpression
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 
-@OptIn(KaContextParameterApi::class)
 context(_: KaSession)
-fun KaType.isNullableAnyType(): Boolean = isAnyType && isMarkedNullable
+fun KaType.isNullableAnyType(): Boolean = classId == KaStandardTypeClassIds.ANY && isMarkedNullable
 
-@OptIn(KaContextParameterApi::class)
 context(_: KaSession)
-fun KaType.isNonNullableBooleanType(): Boolean = isBooleanType && !isMarkedNullable
+fun KaType.isNonNullableBooleanType(): Boolean = classId == KaStandardTypeClassIds.BOOLEAN && !isMarkedNullable
 
 context(_: KaSession)
 fun KaType.isEnum(): Boolean {

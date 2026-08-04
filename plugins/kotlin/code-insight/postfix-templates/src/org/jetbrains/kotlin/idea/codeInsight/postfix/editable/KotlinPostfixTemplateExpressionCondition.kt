@@ -17,10 +17,10 @@ import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.allSupertypes
 import org.jetbrains.kotlin.analysis.api.types.defaultType
 import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
-import org.jetbrains.kotlin.analysis.api.types.isBooleanType
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
-import org.jetbrains.kotlin.analysis.api.types.isUnitType
 import org.jetbrains.kotlin.analysis.api.types.symbol
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -102,7 +102,7 @@ interface KotlinPostfixTemplateExpressionCondition : PostfixTemplateExpressionCo
 
         override fun value(expr: KtExpression): Boolean {
             analyze(expr) {
-                return expr.expressionType?.isUnitType == true
+                return expr.expressionType?.classId == KaStandardTypeClassIds.UNIT
             }
         }
     }
@@ -115,7 +115,7 @@ interface KotlinPostfixTemplateExpressionCondition : PostfixTemplateExpressionCo
 
         override fun value(expr: KtExpression): Boolean {
             analyze(expr) {
-                return expr.expressionType?.isUnitType == false
+                return expr.expressionType?.classId != KaStandardTypeClassIds.UNIT
             }
         }
     }
@@ -128,7 +128,7 @@ interface KotlinPostfixTemplateExpressionCondition : PostfixTemplateExpressionCo
 
         override fun value(expr: KtExpression): Boolean {
             analyze(expr) {
-                return expr.expressionType?.isBooleanType == true
+                return expr.expressionType?.classId == KaStandardTypeClassIds.BOOLEAN
             }
         }
     }

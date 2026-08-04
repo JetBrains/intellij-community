@@ -14,8 +14,9 @@ import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.session.analyzeCopy
 import org.jetbrains.kotlin.analysis.api.types.KaType
-import org.jetbrains.kotlin.analysis.api.types.isBooleanType
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.CallParameterInfoProvider
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.collectCallCandidates
@@ -112,7 +113,7 @@ internal class K2NamedArgumentCompletionContributor : K2SimpleCompletionContribu
                         // suggest default values only for types from parameters with matching positions to not clutter completion
                         val typesAtCurrentPosition = missingParameters.filter { it.isFirstUnpassedParameter }
 
-                        val booleanPosition = typesAtCurrentPosition.firstOrNull { it.type.isBooleanType }
+                        val booleanPosition = typesAtCurrentPosition.firstOrNull { it.type.classId == KaStandardTypeClassIds.BOOLEAN }
                         if (booleanPosition != null) {
                             add(createNamedArgumentWithValueLookupElement(name, KtTokens.TRUE_KEYWORD.value, booleanPosition.index))
                             add(createNamedArgumentWithValueLookupElement(name, KtTokens.FALSE_KEYWORD.value, booleanPosition.index))

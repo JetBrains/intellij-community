@@ -26,9 +26,9 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
-import org.jetbrains.kotlin.analysis.api.types.isStringType
-import org.jetbrains.kotlin.analysis.api.types.isUnitType
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.type
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
@@ -58,7 +58,7 @@ fun KtDotQualifiedExpression.isToString(): Boolean {
     return analyze(callExpression) {
         referenceExpression.mainReference.resolveToSymbols().any { symbol ->
             val functionSymbol = symbol as? KaNamedFunctionSymbol ?: return@any false
-            functionSymbol.valueParameters.isEmpty() && functionSymbol.returnType.isStringType
+            functionSymbol.valueParameters.isEmpty() && functionSymbol.returnType.classId == KaStandardTypeClassIds.STRING
         }
     }
 }
@@ -69,7 +69,7 @@ fun KtDeclaration.isFinalizeMethod(): Boolean {
     val function = this as? KtNamedFunction ?: return false
     return function.name == "finalize"
             && function.valueParameters.isEmpty()
-            && function.returnType.isUnitType
+            && function.returnType.classId == KaStandardTypeClassIds.UNIT
 }
 
 context(_: KaSession)

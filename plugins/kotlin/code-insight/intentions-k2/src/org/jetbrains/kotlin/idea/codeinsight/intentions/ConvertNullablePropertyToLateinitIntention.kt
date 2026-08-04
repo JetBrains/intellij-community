@@ -11,8 +11,9 @@ import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
 import org.jetbrains.kotlin.analysis.api.types.hasFlexibleNullability
-import org.jetbrains.kotlin.analysis.api.types.isPrimitive
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.withNullability
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.isNullExpression
@@ -71,7 +72,7 @@ internal class ConvertNullablePropertyToLateinitIntention : KotlinApplicableModC
         }
 
         val nonNullableType = returnType.withNullability(false)
-        if (nonNullableType is KaTypeParameterType || nonNullableType.isPrimitive) return null
+        if (nonNullableType is KaTypeParameterType || nonNullableType.classId in KaStandardTypeClassIds.PRIMITIVES) return null
 
         val classifier = nonNullableType.expandedSymbol
         if (classifier is KaNamedClassSymbol && classifier.isInline) return null

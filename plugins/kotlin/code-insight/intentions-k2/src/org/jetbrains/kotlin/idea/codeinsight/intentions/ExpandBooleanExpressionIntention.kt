@@ -8,7 +8,8 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
-import org.jetbrains.kotlin.analysis.api.types.isBooleanType
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -48,7 +49,7 @@ class ExpandBooleanExpressionIntention : KotlinApplicableModCommandAction<KtExpr
         val parent = element.parent
         if (parent is KtValueArgument || parent is KtParameter || parent is KtStringTemplateEntry) return null
 
-        if (element.expressionType?.isBooleanType != true) return null
+        if (element.expressionType?.classId != KaStandardTypeClassIds.BOOLEAN) return null
 
         return Unit
     }

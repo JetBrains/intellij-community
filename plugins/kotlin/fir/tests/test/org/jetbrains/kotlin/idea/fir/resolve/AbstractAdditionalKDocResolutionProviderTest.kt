@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.AdditionalKDocResolutionProvider
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtElement
 
@@ -20,7 +21,7 @@ abstract class AbstractAdditionalKDocResolutionProviderTest : AbstractFirReferen
             fqName: FqName,
             contextElement: KtElement
         ): Collection<KaSymbol> {
-            with(analysisSession) {
+            context(analysisSession) {
                 return contextElement.containingKtFile.declarations
                     .filter { it.name == fqName.shortName().asString() }
                     .map { it.symbol }

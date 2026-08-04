@@ -7,8 +7,9 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
-import org.jetbrains.kotlin.analysis.api.types.isBooleanType
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.isNullable
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
@@ -58,6 +59,6 @@ class NullableBooleanEqualityCheckToElvisIntention : KotlinApplicableModCommandA
 
         val expressionType = lhs.expressionType ?: return false
 
-        return expressionType.isNullable && expressionType.isBooleanType
+        return expressionType.isNullable && expressionType.classId == KaStandardTypeClassIds.BOOLEAN
     }
 }

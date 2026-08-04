@@ -57,9 +57,10 @@ import org.jetbrains.kotlin.analysis.api.types.KaIntersectionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.builtinTypes
 import org.jetbrains.kotlin.analysis.api.types.isDenotable
-import org.jetbrains.kotlin.analysis.api.types.isUnitType
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.lowerBoundIfFlexible
 import org.jetbrains.kotlin.analysis.api.types.type
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.getImplicitReceivers
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
@@ -416,7 +417,7 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
             this is KaIntersectionType -> this.conjuncts.firstOrNull { it.isDenotable }
             else -> null
         }
-        return if (type?.isUnitType == true) {
+        return if (type?.classId == KaStandardTypeClassIds.UNIT) {
             null
         } else {
             (type ?: builtinTypes.any)

@@ -22,7 +22,8 @@ import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
-import org.jetbrains.kotlin.analysis.api.types.isUnitType
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.idea.codeInsight.hints.SHOW_IMPLICIT_RECEIVERS_AND_PARAMS
 import org.jetbrains.kotlin.idea.codeInsight.hints.SHOW_RETURN_EXPRESSIONS
 import org.jetbrains.kotlin.idea.codeinsight.utils.isFollowedByNewLine
@@ -208,7 +209,7 @@ class KtLambdasHintsProvider(
     ): Boolean {
         anonymousFunctionSymbol.valueParameters.singleOrNull()?.let { singleParameterSymbol ->
             val type = singleParameterSymbol.takeIf { it.isImplicitLambdaParameter }
-                ?.returnType?.takeUnless { it.isUnitType } ?: return@let
+                ?.returnType?.takeUnless { it.classId == KaStandardTypeClassIds.UNIT } ?: return@let
             val offset = lambdaExpression.leftCurlyBrace.textRange.endOffset
             if (printLeadingSpace) printSpace(sink, offset)
             sink.addPresentation(

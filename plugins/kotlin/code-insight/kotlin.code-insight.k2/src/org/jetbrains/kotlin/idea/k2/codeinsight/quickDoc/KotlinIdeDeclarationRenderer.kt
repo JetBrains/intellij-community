@@ -46,6 +46,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaFunctionalTy
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaTypeNameRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaTypeParameterTypeRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaUsualClassTypeRenderer
+import org.jetbrains.kotlin.analysis.api.scopes.declaredMemberScope
 import org.jetbrains.kotlin.analysis.api.session.useSiteSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
@@ -66,6 +67,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeAliasSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
 import org.jetbrains.kotlin.analysis.api.symbols.isLocal
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.typeParameters
@@ -78,6 +80,8 @@ import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeArgumentWithVariance
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.analysis.api.types.KaUsualClassType
+import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
+import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
 import org.jetbrains.kotlin.analysis.api.types.type
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.analysis.utils.printer.prettyPrint
@@ -127,7 +131,7 @@ internal class KotlinIdeDeclarationRenderer(
         bodyMemberScopeProvider = KaRendererBodyMemberScopeProvider.NONE
         parameterDefaultValueRenderer = object : KaParameterDefaultValueRenderer {
             override fun renderDefaultValue(analysisSession: KaSession, symbol: KaValueParameterSymbol, printer: PrettyPrinter) {
-                val defaultValue = with(analysisSession) { symbol.defaultValue }
+                val defaultValue = context(analysisSession) { symbol.defaultValue }
                 if (defaultValue != null) {
                     val expressionValue =
                         KotlinParameterInfoBase.getDefaultValueStringRepresentation(defaultValue)
@@ -377,7 +381,7 @@ internal class KotlinIdeDeclarationRenderer(
                 declarationModifiersRenderer: KaDeclarationModifiersRenderer,
                 printer: PrettyPrinter
             ) =
-                with(analysisSession) {
+                context(analysisSession) {
                     printer {
                         " ".separated(
                             {
@@ -404,7 +408,7 @@ internal class KotlinIdeDeclarationRenderer(
                 typeRenderer: KaTypeRenderer,
                 printer: PrettyPrinter
             ): Unit = printer {
-                with(analysisSession) {
+                context(analysisSession) {
                     if (type.isReflectType) {
                         " ".separated(
                             { typeRenderer.annotationsRenderer.renderAnnotations(analysisSession, type, printer) },
@@ -476,7 +480,7 @@ internal class KotlinIdeDeclarationRenderer(
                 typeRenderer: KaTypeRenderer,
                 printer: PrettyPrinter
             ): Unit = printer {
-                with(analysisSession) {
+                context(analysisSession) {
                     " ".separated({ typeRenderer.annotationsRenderer.renderAnnotations(analysisSession, type, printer) }, {
                         typeRenderer.typeNameRenderer.renderName(analysisSession, type.name, type, typeRenderer, printer)
                         if (type.isMarkedNullable) {
@@ -497,7 +501,7 @@ internal class KotlinIdeDeclarationRenderer(
                 typeRenderer: KaTypeRenderer,
                 printer: PrettyPrinter
             ): Unit = printer {
-                with(analysisSession) {
+                context(analysisSession) {
                     " ".separated(
                         { typeRenderer.annotationsRenderer.renderAnnotations(analysisSession, type, printer) },
                         {
@@ -549,7 +553,7 @@ internal class KotlinIdeDeclarationRenderer(
                 owner: KaType,
                 typeRenderer: KaTypeRenderer,
                 printer: PrettyPrinter
-            ): Unit = with(analysisSession) {
+            ): Unit = context(analysisSession) {
                 if (owner is KaClassType) {
                     val superTypes = (owner.expandedSymbol as? KaAnonymousObjectSymbol)?.superTypes
                     if (superTypes != null) {
@@ -589,7 +593,7 @@ internal class KotlinIdeDeclarationRenderer(
                 keyword: KtKeywordToken?,
                 declarationRenderer: KaDeclarationRenderer,
                 printer: PrettyPrinter
-            ) = with(analysisSession) {
+            ) = context(analysisSession) {
                 printer {
                     val callableSymbol = (symbol as? KaValueParameterSymbol)?.primaryConstructorProperty ?: symbol
                     " ".separated(
@@ -802,7 +806,7 @@ internal class KotlinIdeDeclarationRenderer(
                 symbol: KaNamedSymbol?,
                 declarationRenderer: KaDeclarationRenderer,
                 printer: PrettyPrinter
-            ): Unit = with(analysisSession) {
+            ): Unit = context(analysisSession) {
                 if (symbol is KaClassSymbol && symbol.classKind == KaClassKind.COMPANION_OBJECT && symbol.name == SpecialNames.DEFAULT_NAME_FOR_COMPANION_OBJECT) {
                     val className = (symbol.containingDeclaration as? KaClassSymbol)?.name
                     if (className != null) {

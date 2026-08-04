@@ -8,7 +8,8 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
-import org.jetbrains.kotlin.analysis.api.types.isStringType
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
@@ -45,7 +46,7 @@ internal class RemoveSingleExpressionStringTemplateInspection :
     override fun prepareContext(element: KtStringTemplateExpression): Context? {
         val expression = element.singleExpressionOrNull() ?: return null
         val type = expression.expressionType
-        return Context(type?.isStringType == true && !type.isMarkedNullable)
+        return Context(type?.classId == KaStandardTypeClassIds.STRING && !type.isMarkedNullable)
     }
 
     override fun createQuickFix(

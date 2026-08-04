@@ -12,7 +12,8 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
-import org.jetbrains.kotlin.analysis.api.types.isBooleanType
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -88,12 +89,11 @@ internal class NullableBooleanElvisInspection : KotlinApplicableInspectionBase.S
     override fun isApplicableByPsi(element: KtBinaryExpression): Boolean = element.isTargetOfNullableBooleanElvisInspection()
 
     context(session: KaSession)
-    override fun prepareContext(element: KtBinaryExpression): Unit? {
-        return element.left
+    override fun prepareContext(element: KtBinaryExpression): Unit? =
+        element.left
             ?.expressionType
-            ?.let { it.isBooleanType && it.isMarkedNullable }
+            ?.let { it.classId == KaStandardTypeClassIds.BOOLEAN && it.isMarkedNullable }
             ?.asUnit
-    }
 
     override fun createQuickFix(
         element: KtBinaryExpression,
@@ -126,7 +126,7 @@ internal class NullableBooleanElvisInspection : KotlinApplicableInspectionBase.S
      *  - LHS must have a nullable boolean type. - This is checked by `isApplicableByAnalyze` above.
      */
     private fun KtBinaryExpression.isTargetOfNullableBooleanElvisInspection(): Boolean =
-        operationToken == KtTokens.ELVIS && right?.let { KtPsiUtil.isBooleanConstant(it) } == true
+        operationToken == KtTokens.ELVIS && right?.let { KtPsiUtil.isBooleanConstant(it) } ?: false
 
     /**
      * A method to find the nearest recursive parent with a negation operator.

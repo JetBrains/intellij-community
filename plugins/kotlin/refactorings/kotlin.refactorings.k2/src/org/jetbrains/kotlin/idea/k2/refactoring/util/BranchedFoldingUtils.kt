@@ -10,11 +10,12 @@ import org.jetbrains.kotlin.analysis.api.components.directDiagnostics
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.types.KaType
-import org.jetbrains.kotlin.analysis.api.types.isNothingType
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.isNullable
 import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
 import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
 import org.jetbrains.kotlin.analysis.api.types.withNullability
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -175,7 +176,7 @@ object BranchedFoldingUtils {
             }
 
             is KtCallExpression -> {
-                e.expressionType?.isNothingType ?: false
+                e.expressionType?.classId == KaStandardTypeClassIds.NOTHING
             }
 
             is KtBreakExpression, is KtContinueExpression, is KtThrowExpression, is KtReturnExpression -> true
@@ -390,7 +391,7 @@ object BranchedFoldingUtils {
                 getFoldableReturnsFromBranches(expression.tryBlockAndCatchBodies())
         }
         is KtCallExpression -> {
-            if (expression.expressionType?.isNothingType == true) FoldableReturns(emptyList(), true) else FoldableReturns.NotFoldable
+            if (expression.expressionType?.classId == KaStandardTypeClassIds.NOTHING) FoldableReturns(emptyList(), true) else FoldableReturns.NotFoldable
         }
         is KtBreakExpression, is KtContinueExpression, is KtThrowExpression -> FoldableReturns(emptyList(), true)
         else -> FoldableReturns.NotFoldable
@@ -443,7 +444,7 @@ object BranchedFoldingUtils {
                 getFoldableReturns(expression.tryBlockAndCatchBodies())
         }
         is KtCallExpression -> {
-            if (expression.expressionType?.isNothingType == true) emptyList() else null
+            if (expression.expressionType?.classId == KaStandardTypeClassIds.NOTHING) emptyList() else null
         }
         is KtBreakExpression, is KtContinueExpression, is KtThrowExpression -> emptyList()
         else -> null

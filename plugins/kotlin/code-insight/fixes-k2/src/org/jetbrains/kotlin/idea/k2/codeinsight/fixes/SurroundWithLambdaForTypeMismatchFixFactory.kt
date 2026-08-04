@@ -7,10 +7,10 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
-import org.jetbrains.kotlin.analysis.api.types.isBooleanType
-import org.jetbrains.kotlin.analysis.api.types.isPrimitive
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
 import org.jetbrains.kotlin.analysis.api.types.withNullability
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.SurroundWithLambdaForTypeMismatchFix
 import org.jetbrains.kotlin.psi.KtExpression
@@ -61,5 +61,6 @@ internal object SurroundWithLambdaForTypeMismatchFixFactory {
     }
 
     context(_: KaSession)
-    private fun KaType.isPrimitiveNumberType(): Boolean = isPrimitive && !isBooleanType
+    private fun KaType.isPrimitiveNumberType(): Boolean =
+        classId in KaStandardTypeClassIds.PRIMITIVES && classId != KaStandardTypeClassIds.BOOLEAN
 }

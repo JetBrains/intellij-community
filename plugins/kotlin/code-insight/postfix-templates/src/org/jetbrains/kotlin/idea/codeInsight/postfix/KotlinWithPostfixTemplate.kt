@@ -6,8 +6,8 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
-import org.jetbrains.kotlin.analysis.api.types.isPrimitive
-import org.jetbrains.kotlin.analysis.api.types.isUnitType
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.psi.KtClassLiteralExpression
 import org.jetbrains.kotlin.psi.KtConstantExpression
 import org.jetbrains.kotlin.psi.KtDeclaration
@@ -55,5 +55,5 @@ private object WhenTargetFilter : (KtExpression) -> Boolean {
 
 context(_: KaSession)
 private fun isWithTargetType(type: KaType): Boolean {
-    return !type.isUnitType && !type.isMarkedNullable && !type.isPrimitive
+    return type.classId != KaStandardTypeClassIds.UNIT && !type.isMarkedNullable && type.classId !in KaStandardTypeClassIds.PRIMITIVES
 }

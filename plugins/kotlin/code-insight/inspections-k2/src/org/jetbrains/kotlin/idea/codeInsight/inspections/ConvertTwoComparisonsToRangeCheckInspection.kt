@@ -18,10 +18,11 @@ import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
-import org.jetbrains.kotlin.analysis.api.types.isCharType
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
 import org.jetbrains.kotlin.analysis.api.types.lowerBoundIfFlexible
 import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.psi.getSingleUnwrappedStatementOrThis
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -197,7 +198,7 @@ internal class ConvertTwoComparisonsToRangeCheckInspection : KotlinApplicableIns
     context(_: KaSession)
     private fun KtExpression.adjustLowerBoundForExclusive(): String? {
         val type = expressionType ?: return null
-        if (!type.isIntegralType && !type.isCharType) return null
+        if (!type.isIntegralType && type.classId != KaStandardTypeClassIds.CHAR) return null
 
         // Try to render an incremented constant value.
         renderConstantPlusOne(type)?.let { return it }
@@ -261,7 +262,7 @@ internal class ConvertTwoComparisonsToRangeCheckInspection : KotlinApplicableIns
         val minText: String =
             // If we're using an exclusive comparison, the lower bound has to be increased by 1.
             if (psiContext.minExclusive) {
-                if (!valueType.isIntegralType && !valueType.isCharType) return null
+                if (!valueType.isIntegralType && valueType.classId != KaStandardTypeClassIds.CHAR) return null
                 min.adjustLowerBoundForExclusive() ?: return null
             } else {
                 min.text
@@ -271,7 +272,7 @@ internal class ConvertTwoComparisonsToRangeCheckInspection : KotlinApplicableIns
         val rangeOp = when {
             !psiContext.maxExclusive -> ".."
             element.canUseRangeUntil() -> "..<"
-            valueType.isIntegralType || valueType.isCharType -> " until "
+            valueType.isIntegralType || valueType.classId == KaStandardTypeClassIds.CHAR -> " until "
             else -> return null
         }
 

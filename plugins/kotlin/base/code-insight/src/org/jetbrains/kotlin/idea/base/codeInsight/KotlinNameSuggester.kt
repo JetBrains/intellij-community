@@ -15,25 +15,12 @@ import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.calls
 import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.analysis.api.types.allSupertypes
-import org.jetbrains.kotlin.analysis.api.types.isAnyType
-import org.jetbrains.kotlin.analysis.api.types.isBooleanType
-import org.jetbrains.kotlin.analysis.api.types.isByteType
-import org.jetbrains.kotlin.analysis.api.types.isCharSequenceType
-import org.jetbrains.kotlin.analysis.api.types.isCharType
-import org.jetbrains.kotlin.analysis.api.types.isDoubleType
-import org.jetbrains.kotlin.analysis.api.types.isFloatType
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.isFunctionType
-import org.jetbrains.kotlin.analysis.api.types.isIntType
-import org.jetbrains.kotlin.analysis.api.types.isLongType
-import org.jetbrains.kotlin.analysis.api.types.isShortType
-import org.jetbrains.kotlin.analysis.api.types.isStringType
-import org.jetbrains.kotlin.analysis.api.types.isUByteType
-import org.jetbrains.kotlin.analysis.api.types.isUIntType
-import org.jetbrains.kotlin.analysis.api.types.isULongType
-import org.jetbrains.kotlin.analysis.api.types.isUShortType
 import org.jetbrains.kotlin.analysis.api.types.type
 import org.jetbrains.kotlin.builtins.PrimitiveType
 import org.jetbrains.kotlin.builtins.StandardNames.FqNames
@@ -262,7 +249,8 @@ class KotlinNameSuggester(
                 return@sequence
             }
 
-            if (presentableType.isCharSequenceType || presentableType.isStringType) {
+            val presentableTypeClassId = presentableType.classId
+            if (presentableTypeClassId == KaStandardTypeClassIds.CHAR_SEQUENCE || presentableTypeClassId == KaStandardTypeClassIds.STRING) {
                 registerCompoundName("string")
                 registerCompoundName("str")
                 registerCompoundName("s")
@@ -294,7 +282,7 @@ class KotlinNameSuggester(
             }
 
             // when the presentable iterable element type is `Any`, don't suggest `anies`
-            val presentableElementType = getIterableElementType(presentableType)?.let { getPresentableType(it) }?.takeUnless { it.isAnyType }
+            val presentableElementType = getIterableElementType(presentableType)?.let { getPresentableType(it) }?.takeUnless { it.classId == KaStandardTypeClassIds.ANY }
 
             if (presentableElementType != null) {
                 registerClassNames(presentableElementType) { Strings.pluralize(it) }
@@ -354,7 +342,7 @@ class KotlinNameSuggester(
                     type.parameters.forEach { process(it.typeReference?.typeElement) }
                     val returnType = type.returnTypeReference
                     if (returnType != null) {
-                        if (returnType.type.isBooleanType) {
+                        if (returnType.type.classId == KaStandardTypeClassIds.BOOLEAN) {
                             add("predicate")
                         } else {
                             add("to")
@@ -660,19 +648,18 @@ class KotlinNameSuggester(
 }
 
 context(_: KaSession)
-private fun getPrimitiveType(type: KaType): PrimitiveType? {
-    return when {
-        type.isBooleanType -> PrimitiveType.BOOLEAN
-        type.isCharType -> PrimitiveType.CHAR
-        type.isByteType || type.isUByteType -> PrimitiveType.BYTE
-        type.isShortType || type.isUShortType -> PrimitiveType.SHORT
-        type.isIntType || type.isUIntType -> PrimitiveType.INT
-        type.isLongType || type.isULongType -> PrimitiveType.LONG
-        type.isFloatType -> PrimitiveType.FLOAT
-        type.isDoubleType -> PrimitiveType.DOUBLE
+private fun getPrimitiveType(type: KaType): PrimitiveType? =
+    when (type.classId) {
+        KaStandardTypeClassIds.BOOLEAN -> PrimitiveType.BOOLEAN
+        KaStandardTypeClassIds.CHAR -> PrimitiveType.CHAR
+        KaStandardTypeClassIds.BYTE, StandardClassIds.UByte -> PrimitiveType.BYTE
+        KaStandardTypeClassIds.SHORT, StandardClassIds.UShort -> PrimitiveType.SHORT
+        KaStandardTypeClassIds.INT, StandardClassIds.UInt -> PrimitiveType.INT
+        KaStandardTypeClassIds.LONG, StandardClassIds.ULong -> PrimitiveType.LONG
+        KaStandardTypeClassIds.FLOAT -> PrimitiveType.FLOAT
+        KaStandardTypeClassIds.DOUBLE -> PrimitiveType.DOUBLE
         else -> null
     }
-}
 
 private val ITERABLE_LIKE_CLASS_IDS: Collection<ClassId> = hashSetOf(StandardClassIds.Iterable, StandardClassIds.Array)
 

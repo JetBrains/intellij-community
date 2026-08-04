@@ -10,7 +10,8 @@ import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.types.isLongType
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
@@ -74,7 +75,7 @@ internal class ConvertLongToDurationInspection :
     context(session: KaSession)
     private fun isLongFirstParameter(function: KaFunctionSymbol): Boolean {
         val firstParam = function.valueParameters.firstOrNull() ?: return false
-        return firstParam.returnType.isLongType
+        return firstParam.returnType.classId == KaStandardTypeClassIds.LONG
     }
 
     override fun isApplicableByPsi(element: KtCallExpression): Boolean {

@@ -16,16 +16,13 @@ import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.functionTypeFamily
 import org.jetbrains.kotlin.analysis.api.types.isArrayOrPrimitiveArray
-import org.jetbrains.kotlin.analysis.api.types.isDoubleType
-import org.jetbrains.kotlin.analysis.api.types.isIntType
-import org.jetbrains.kotlin.analysis.api.types.isLongType
 import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
 import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
-import org.jetbrains.kotlin.analysis.api.types.isUIntType
-import org.jetbrains.kotlin.analysis.api.types.isULongType
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -164,7 +161,6 @@ internal abstract class AbstractSimplifiableCallChainInspection :
         return parentPostfixExpression.operationToken != KtTokens.EXCLEXCL
     }
 
-    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun isMapNotNullOnPrimitiveArrayConversion(conversion: CallChainConversion, firstCall: KaCallInfo): Boolean {
         if (conversion.replacementName != CallChainConversions.MAP_NOT_NULL) return false
@@ -232,7 +228,7 @@ internal abstract class AbstractSimplifiableCallChainInspection :
         // Extra check for Integer Literal Type overload resolution ambiguity, see KT-46360
         if (functionalArgumentExpr !is KtLambdaExpression) return false
         val lastStatement = functionalArgumentExpr.bodyExpression?.lastBlockStatementOrThis() ?: return false
-        return lambdaReturnType.isIntType && lastStatement.isLiteralValue()
+        return lambdaReturnType.classId == KaStandardTypeClassIds.INT && lastStatement.isLiteralValue()
     }
     // endregion
 
@@ -275,7 +271,11 @@ internal abstract class AbstractSimplifiableCallChainInspection :
 
     context(_: KaSession)
     private fun KaType.isApplicableTypeForSumOf(): Boolean =
-        isIntType || isUIntType || isLongType || isULongType || isDoubleType
+        classId == KaStandardTypeClassIds.INT ||
+                classId == StandardClassIds.UInt ||
+                classId == KaStandardTypeClassIds.LONG ||
+                classId == StandardClassIds.ULong ||
+                classId == KaStandardTypeClassIds.DOUBLE
 
     context(_: KaSession)
     private fun KtCallExpression.isSuspendCall(): Boolean {

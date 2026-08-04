@@ -19,7 +19,8 @@ import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.types.isArrayOrPrimitiveArray
 import org.jetbrains.kotlin.analysis.api.types.isNestedArray
-import org.jetbrains.kotlin.analysis.api.types.isStringType
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeInsight.inspections.KotlinArrayToStringInspection.Context
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
@@ -125,7 +126,7 @@ internal class KotlinArrayToStringInspection : KotlinApplicableInspectionBase<Kt
 
             is KtBinaryExpression -> {
                 // String concatenation only works as String + Any (not Any + String)
-                if (element.left?.expressionType?.isStringType != true) return null
+                if (element.left?.expressionType?.classId != KaStandardTypeClassIds.STRING) return null
                 val rightType = element.right?.expressionType ?: return null
                 if (!rightType.isArrayOrPrimitiveArray) return null
 

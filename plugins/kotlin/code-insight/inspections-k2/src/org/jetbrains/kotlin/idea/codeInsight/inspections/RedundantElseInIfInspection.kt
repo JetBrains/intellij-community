@@ -11,7 +11,8 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.expressions.isUsedAsExpression
 import org.jetbrains.kotlin.analysis.api.session.analyze
-import org.jetbrains.kotlin.analysis.api.types.isNothingType
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.idea.base.psi.getLineNumber
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
@@ -132,7 +133,7 @@ internal class RedundantElseInIfInspection : KotlinApplicableInspectionBase.Simp
     private fun KtExpression.isReturnOrNothing(): Boolean {
         val lastExpression = (this as? KtBlockExpression)?.statements?.lastOrNull() ?: this
         return analyze(lastExpression) {
-            lastExpression.expressionType?.isNothingType == true
+            lastExpression.expressionType?.classId == KaStandardTypeClassIds.NOTHING
         }
     }
 }

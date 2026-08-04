@@ -50,16 +50,17 @@ import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeMappingMode
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.analysis.api.types.KaTypePointer
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
 import org.jetbrains.kotlin.analysis.api.types.fullyExpandedType
 import org.jetbrains.kotlin.analysis.api.types.hasFlexibleNullability
 import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
 import org.jetbrains.kotlin.analysis.api.types.isNullable
-import org.jetbrains.kotlin.analysis.api.types.isUnitType
 import org.jetbrains.kotlin.analysis.api.types.typeCreation.typeCreator
 import org.jetbrains.kotlin.asJava.classes.lazyPub
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
@@ -442,9 +443,7 @@ internal fun toPsiType(
             else -> null
         }
         if (psiType != null) {
-            return psiType as? PsiPrimitiveType ?: with(session) {
-                annotateByKtType(psiType, ktType, context, true)
-            }
+            return psiType as? PsiPrimitiveType ?: annotateByKtType(psiType, ktType, context, true)
         }
     }
     val psiTypeParent: PsiElement =
@@ -471,7 +470,7 @@ internal fun receiverType(
         ?: ktCall.partiallyAppliedSymbol.signature.receiverType
     if (ktType == null ||
         ktType is KaErrorType ||
-        ktType.isUnitType
+        ktType.classId == KaStandardTypeClassIds.UNIT
     ) {
         return null
     }

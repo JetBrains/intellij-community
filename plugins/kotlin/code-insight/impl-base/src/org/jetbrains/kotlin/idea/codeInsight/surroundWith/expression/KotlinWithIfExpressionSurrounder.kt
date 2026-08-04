@@ -9,7 +9,8 @@ import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.session.analyze
-import org.jetbrains.kotlin.analysis.api.types.isBooleanType
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.idea.codeInsight.surroundWith.KotlinExpressionSurrounder
 import org.jetbrains.kotlin.idea.codeInsight.surroundWith.statement.KotlinTryFinallySurrounder.moveCaretToBlockCenter
 import org.jetbrains.kotlin.psi.KtExpression
@@ -23,7 +24,7 @@ class KotlinWithIfExpressionSurrounder(val withElse: Boolean) : KotlinExpression
     override fun isApplicable(expression: KtExpression): Boolean {
         allowAnalysisOnEdt {
             return super.isApplicable(expression) && analyze(expression) {
-              expression.expressionType?.isBooleanType == true
+              expression.expressionType?.classId == KaStandardTypeClassIds.BOOLEAN
             }
         }
     }

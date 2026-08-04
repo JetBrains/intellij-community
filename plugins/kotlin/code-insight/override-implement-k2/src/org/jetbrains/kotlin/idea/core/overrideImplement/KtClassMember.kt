@@ -61,7 +61,8 @@ import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaType
-import org.jetbrains.kotlin.analysis.api.types.isUnitType
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.idea.base.util.names.FqNames.OptInFqNames.isRequiresOptInFqName
 import org.jetbrains.kotlin.idea.core.TemplateKind
@@ -561,7 +562,7 @@ private fun generateFunction(
     bodyType: BodyType,
 ): KtCallableDeclaration {
     val returnType = symbol.returnType
-    val returnsUnit = returnType.isUnitType
+    val returnsUnit = returnType.classId == KaStandardTypeClassIds.UNIT
 
     val canHaveBody = symbol is KaNamedFunctionSymbol || symbol is KaConstructorSymbol && !symbol.isPrimary
     val isToKeepAbstract = isToKeepAbstract(mode, symbol)
@@ -697,7 +698,7 @@ private fun generateProperty(
     bodyType: BodyType,
 ): KtCallableDeclaration {
     val returnType = symbol.returnType
-    val returnsNotUnit = !returnType.isUnitType
+    val returnsNotUnit = returnType.classId != KaStandardTypeClassIds.UNIT
 
     val isToKeepAbstract = isToKeepAbstract(mode, symbol)
     val body = if (bodyType != BodyType.NoBody && !isToKeepAbstract) {

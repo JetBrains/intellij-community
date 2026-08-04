@@ -10,8 +10,8 @@ import org.jetbrains.kotlin.analysis.api.evaluation.evaluate
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
-import org.jetbrains.kotlin.analysis.api.types.isPrimitive
-import org.jetbrains.kotlin.analysis.api.types.isStringType
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.AddConstModifierFix
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -53,7 +53,7 @@ private fun constModifierApplicable(property: KtProperty): Boolean {
         !property.isTopLevel && !isInsideObject -> false
         property.getter != null -> false
         type.isMarkedNullable -> false
-        !type.isPrimitive && !type.isStringType -> false
+        type.classId !in KaStandardTypeClassIds.PRIMITIVES && type.classId != KaStandardTypeClassIds.STRING -> false
         initializer == null -> false
         constValue == null || constValue is KaConstantValue.ErrorValue -> false
         else -> true

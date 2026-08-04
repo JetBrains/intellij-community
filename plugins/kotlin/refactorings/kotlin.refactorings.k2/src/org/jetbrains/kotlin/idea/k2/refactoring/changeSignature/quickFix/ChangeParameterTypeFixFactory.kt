@@ -8,7 +8,6 @@ import com.intellij.psi.util.parentOfType
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.approximateToSuperPublicDenotableOrSelf
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
@@ -23,8 +22,10 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaDefinitelyNotNullType
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.approximateToDenotableSupertypeOrSelf
 import org.jetbrains.kotlin.analysis.api.types.withNullability
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
@@ -119,10 +120,8 @@ object ChangeParameterTypeFixFactory {
 
     context(session: KaSession)
     private fun getValueParameterSymbolForPropertySymbol(propertySymbol: KaPropertySymbol): KaValueParameterSymbol? {
-        with(session) {
-            val probableConstructorParameterPsi = propertySymbol.psi as? KtParameter
-            return probableConstructorParameterPsi?.symbol as? KaValueParameterSymbol
-        }
+        val probableConstructorParameterPsi = propertySymbol.psi as? KtParameter
+        return probableConstructorParameterPsi?.symbol as? KaValueParameterSymbol
     }
 
     @OptIn(KaExperimentalApi::class)
@@ -136,7 +135,7 @@ object ChangeParameterTypeFixFactory {
         val isPrimaryConstructorParameter = functionLikeSymbol is KaConstructorSymbol && functionLikeSymbol.isPrimary
         val functionName = getDeclarationName(functionLikeSymbol) ?: return null
 
-        val approximatedType = targetType.approximateToSuperPublicDenotableOrSelf(true)
+        val approximatedType = targetType.approximateToDenotableSupertypeOrSelf(false)
         val typePresentation = approximatedType.render(KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.IN_VARIANCE)
         val typeFQNPresentation = approximatedType.render(position = Variance.IN_VARIANCE)
 

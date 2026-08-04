@@ -17,9 +17,10 @@ import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
-import org.jetbrains.kotlin.analysis.api.types.isAnyType
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
 import org.jetbrains.kotlin.analysis.api.types.typeCreation.typeCreator
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.name.ClassId
@@ -80,7 +81,7 @@ private fun KtObjectDeclaration.doesImplementReadResolve(): Boolean = analyze(th
     fun KaScope.isAnyReadResolve(vararg visibilities: KaSymbolVisibility): Boolean =
         callables(JAVA_IO_SERIALIZATION_READ_RESOLVE).any {
             val functionLikeSymbol = it as? KaFunctionSymbol ?: return@any false
-            functionLikeSymbol.valueParameters.isEmpty() && it.visibility in visibilities && it.returnType.isAnyType
+            functionLikeSymbol.valueParameters.isEmpty() && it.visibility in visibilities && it.returnType.classId == KaStandardTypeClassIds.ANY
         }
 
     classSymbol.declaredMemberScope.isAnyReadResolve(KaSymbolVisibility.PUBLIC, KaSymbolVisibility.PRIVATE, KaSymbolVisibility.PROTECTED) ||

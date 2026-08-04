@@ -17,7 +17,8 @@ import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.psiSafe
-import org.jetbrains.kotlin.analysis.api.types.isUnitType
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.allOverriddenSymbolsWithSelf
 import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -80,7 +81,7 @@ internal class ReplaceGetOrSetInspection :
         if (functionSymbol.name != OperatorNameConventions.GET && functionSymbol.name != OperatorNameConventions.SET) return null
 
         val receiverExpression = element.receiverExpression
-        if (receiverExpression is KtSuperExpression || receiverExpression.expressionType?.isUnitType != false) return null
+        if (receiverExpression is KtSuperExpression || receiverExpression.expressionType?.classId == KaStandardTypeClassIds.UNIT) return null
 
         if (functionSymbol.name == OperatorNameConventions.SET && element.isUsedAsExpression) return null
 

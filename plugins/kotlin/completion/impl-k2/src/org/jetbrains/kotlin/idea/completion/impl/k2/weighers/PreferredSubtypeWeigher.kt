@@ -6,9 +6,10 @@ import com.intellij.codeInsight.lookup.LookupElementWeigher
 import com.intellij.openapi.util.Key
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.types.defaultType
-import org.jetbrains.kotlin.analysis.api.types.isNothingType
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
 import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.psi.UserDataProperty
@@ -28,7 +29,7 @@ internal object PreferredSubtypeWeigher {
         val actualClassType = (symbol as? KaClassLikeSymbol)?.defaultType ?: return
         lookupElement.hasPreferredSubtype = if (actualClassType.semanticallyEquals(preferredSubtype)) {
             Weight.PREFERRED_EXACT_TYPE
-        } else if (!actualClassType.isNothingType && actualClassType.isSubtypeOf(preferredSubtype)) {
+        } else if (actualClassType.classId != KaStandardTypeClassIds.NOTHING && actualClassType.isSubtypeOf(preferredSubtype)) {
             Weight.PREFERRED_SUBTYPE
         } else {
             Weight.UNRELATED

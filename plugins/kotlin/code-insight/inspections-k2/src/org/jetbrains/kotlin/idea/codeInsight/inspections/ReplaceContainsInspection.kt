@@ -14,7 +14,8 @@ import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.types.isBooleanType
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
@@ -70,7 +71,7 @@ class ReplaceContainsInspection :
         val symbol = resolvedCall.symbol as? KaNamedFunctionSymbol ?: return null
 
         if (!symbol.isOperator) return null
-        if (!symbol.returnType.isBooleanType) return null
+        if (symbol.returnType.classId != KaStandardTypeClassIds.BOOLEAN) return null
 
         val valueArgument = selectorExpression.valueArguments.singleOrNull()?.getArgumentExpression() ?: return null
         val variableSignature = resolvedCall.valueArgumentMapping[valueArgument] ?: return null

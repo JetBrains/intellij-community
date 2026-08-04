@@ -99,9 +99,7 @@ internal open class KotlinFunctionCallSemanticAnalyzer(holder: HighlightInfoHold
                 KotlinCallHighlighterExtension.EP_NAME.extensionList.firstNotNullOfOrNull {
                     with(it) {
                         // keep with as KotlinCallHighlighterExtension API should be stable
-                        with(session) {
-                            highlightCall(expression, call)
-                        }
+                        highlightCall(expression, call)
                     }
                 }
             return highlightInfoType

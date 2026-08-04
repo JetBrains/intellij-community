@@ -24,7 +24,8 @@ import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.analysis.api.types.arrayElementType
 import org.jetbrains.kotlin.analysis.api.types.isArrayOrPrimitiveArray
-import org.jetbrains.kotlin.analysis.api.types.isPrimitive
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.fileClasses.internalNameWithoutInnerClasses
 import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants
@@ -332,7 +333,7 @@ private fun jvmName(type: KaType?, element: PsiElement): String? {
             return psiType.kind.binaryName
         }
     }
-    if (type.isPrimitive) {
+    if (type.classId in KaStandardTypeClassIds.PRIMITIVES) {
         return if (psiType is PsiPrimitiveType) psiType.kind.binaryName
         else psiType.canonicalText.fqnToInternalName().internalNameToReferenceTypeName()
     }

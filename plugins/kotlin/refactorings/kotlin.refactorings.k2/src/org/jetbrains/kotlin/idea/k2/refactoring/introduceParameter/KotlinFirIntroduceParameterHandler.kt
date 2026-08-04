@@ -48,9 +48,9 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaReceiverParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.allSupertypes
-import org.jetbrains.kotlin.analysis.api.types.isNothingType
-import org.jetbrains.kotlin.analysis.api.types.isUnitType
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.type
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.unwrapSmartCasts
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinDeclarationNameValidator
@@ -251,7 +251,7 @@ open class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroduc
             val expressionType = expressionTypeEvaluator.invoke(useSiteSession)
             message = if (expressionType == null) {
                 KotlinBundle.message("error.text.expression.has.no.type")
-            } else if (expressionType.isUnitType || expressionType.isNothingType) {
+            } else if (expressionType.classId == KaStandardTypeClassIds.UNIT || expressionType.classId == KaStandardTypeClassIds.NOTHING) {
                 KotlinBundle.message(
                     "cannot.introduce.parameter.of.0.type",
                     expressionType.render(KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT),

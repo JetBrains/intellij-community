@@ -19,9 +19,10 @@ import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.isFunctionType
-import org.jetbrains.kotlin.analysis.api.types.isIntType
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
 import org.jetbrains.kotlin.analysis.api.types.isSuspendFunctionType
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.psi.getContainingValueArgument
 import org.jetbrains.kotlin.name.StandardClassIds
@@ -109,7 +110,7 @@ context(session: KaSession)
 private fun isArrayGeneratorConstructorCall(symbol: KaFunctionSymbol): Boolean {
     fun checkParameters(symbol: KaFunctionSymbol): Boolean {
         return symbol.valueParameters.size == 2
-                && symbol.valueParameters[0].returnType.isIntType
+                && symbol.valueParameters[0].returnType.classId == KaStandardTypeClassIds.INT
                 && symbol.valueParameters[1].returnType.isFunctionType
     }
 

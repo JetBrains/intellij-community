@@ -13,7 +13,8 @@ import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
 import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
-import org.jetbrains.kotlin.analysis.api.types.isNothingType
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
@@ -95,7 +96,7 @@ class ElvisToIfThenIntention : SelfTargetingRangeIntention<KtBinaryExpression>(
             element,
             KotlinBundle.message("fix.change.signature.prepare")
         ) {
-            val isNothingOnRightSide = KtPsiUtil.safeDeparenthesize(element.right!!).expressionType?.isNothingType == true
+            val isNothingOnRightSide = KtPsiUtil.safeDeparenthesize(element.right!!).expressionType?.classId == KaStandardTypeClassIds.NOTHING
             left.findSafeCastReceiver() to isNothingOnRightSide
         }
         if (leftSafeCastReceiver == null) {

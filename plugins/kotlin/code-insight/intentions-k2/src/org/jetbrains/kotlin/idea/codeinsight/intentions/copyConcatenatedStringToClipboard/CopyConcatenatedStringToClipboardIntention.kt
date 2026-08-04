@@ -9,7 +9,8 @@ import com.intellij.modcommand.Presentation
 import com.intellij.modcommand.PsiBasedModCommandAction
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.session.analyze
-import org.jetbrains.kotlin.analysis.api.types.isStringType
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtBinaryExpression
@@ -24,7 +25,7 @@ internal class CopyConcatenatedStringToClipboardIntention :
         if (element.operationToken != KtTokens.PLUS) return null
 
         val isString = analyze(element) {
-            element.expressionType?.isStringType == true
+            element.expressionType?.classId == KaStandardTypeClassIds.STRING
         }
         if (!isString) return null
 

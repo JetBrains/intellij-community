@@ -13,7 +13,8 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.containingSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
-import org.jetbrains.kotlin.analysis.api.types.isPrimitive
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.extensions.DefaultMemberFilters
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.extensions.KotlinEqualsHashCodeGeneratorExtension
@@ -228,7 +229,9 @@ private fun List<KtNamedDeclaration>.sortedWithPrimitiveFirst(): List<KtNamedDec
         val fieldCompare = -isBacking1.compareTo(isBacking2)
         if (fieldCompare != 0) return fieldCompare
         check (o1 is KtDeclarationWithReturnType && o2 is KtDeclarationWithReturnType)
-        return -o1.returnType.isPrimitive.compareTo(o2.returnType.isPrimitive)
+        return -(o1.returnType.classId in KaStandardTypeClassIds.PRIMITIVES).compareTo(
+            o2.returnType.classId in KaStandardTypeClassIds.PRIMITIVES
+        )
     }
 })
 

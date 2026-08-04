@@ -33,8 +33,9 @@ import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.analysis.api.types.KaTypePointer
 import org.jetbrains.kotlin.analysis.api.types.hasFlexibleNullability
 import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
-import org.jetbrains.kotlin.analysis.api.types.isUnitType
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.restore
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.utils.SmartSet
@@ -137,7 +138,7 @@ constructor(
         _isUnit.getOrBuild {
             analyzeForUast(context) {
                 val functionSymbol = original.restoreSymbol() ?: return@analyzeForUast false
-                functionSymbol.returnType.isUnitType
+                functionSymbol.returnType.classId == KaStandardTypeClassIds.UNIT
             }
         }
 

@@ -8,7 +8,8 @@ import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
-import org.jetbrains.kotlin.analysis.api.types.isUnitType
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -75,7 +76,7 @@ internal class UnusedVariableInspection :
             (declaration is KtProperty)
                     && !declaration.isVar
                     && element.languageVersionSettings.supportsFeature(LanguageFeature.UnnamedLocalVariables)
-                    && !declaration.symbol.returnType.isUnitType
+                    && declaration.symbol.returnType.classId != KaStandardTypeClassIds.UNIT
         
         val isSimpleCase = isSimpleCaseVariable(declaration)
         val typeReference = declaration.typeReference ?: return Context(couldBeAnExplicitlyIgnoredValue, isSimpleCase)

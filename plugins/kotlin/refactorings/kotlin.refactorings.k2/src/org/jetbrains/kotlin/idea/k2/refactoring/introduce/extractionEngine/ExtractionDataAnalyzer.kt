@@ -35,7 +35,8 @@ import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.builtinTypes
 import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
-import org.jetbrains.kotlin.analysis.api.types.isNothingType
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.names.FqNames
@@ -193,7 +194,7 @@ internal class ExtractionDataAnalyzer(private val extractionData: ExtractionData
                 defaultResultExpression = defaultExpressionInfo?.expression,
                 typeOfDefaultFlow = approximateWithResolvableType(typeOfDefaultFlow, scope) ?: builtinTypes.unit,
                 implicitReturn = exitSnapshot.valuedReturnExpressions.filter { it !is KtReturnExpression }.singleOrNull(),
-                lastExpressionHasNothingType = extractionData.expressions.lastOrNull()?.expressionType?.isNothingType == true,
+                lastExpressionHasNothingType = extractionData.expressions.lastOrNull()?.expressionType?.classId == KaStandardTypeClassIds.NOTHING,
                 valuedReturnExpressions = exitSnapshot.valuedReturnExpressions.filter { it is KtReturnExpression },
                 returnValueType = approximateWithResolvableType(exitSnapshot.returnValueType, scope) ?: builtinTypes.unit,
                 jumpExpressions = exitSnapshot.jumpExpressions.filter { it is KtBreakExpression || it is KtContinueExpression || it is KtReturnExpression && it.returnedExpression == null },

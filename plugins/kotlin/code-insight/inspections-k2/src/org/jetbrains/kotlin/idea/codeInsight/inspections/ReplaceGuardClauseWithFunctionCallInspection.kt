@@ -13,7 +13,8 @@ import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.expressions.isUsedAsExpression
 import org.jetbrains.kotlin.analysis.api.resolution.successfulConstructorCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
-import org.jetbrains.kotlin.analysis.api.types.isStringType
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -94,7 +95,8 @@ internal class ReplaceGuardClauseWithFunctionCallInspection :
         val calleeText = call.calleeExpression?.text ?: return null
         val valueArguments = call.valueArguments
         val argumentType = valueArguments.firstOrNull()?.getArgumentExpression()?.expressionType
-        if (argumentType?.isStringType == false) return null
+        val argumentTypeClassId = argumentType?.classId
+        if (argumentTypeClassId != null && argumentTypeClassId != KaStandardTypeClassIds.STRING) return null
         if (element.isUsedAsExpression) return null
 
         val fqName = call.resolveToCall()

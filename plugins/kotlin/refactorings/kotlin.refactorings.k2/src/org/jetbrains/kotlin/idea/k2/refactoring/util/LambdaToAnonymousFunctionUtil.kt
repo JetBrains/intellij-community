@@ -11,8 +11,9 @@ import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.isNullable
-import org.jetbrains.kotlin.analysis.api.types.isUnitType
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.withNullability
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.psi.copied
@@ -110,7 +111,7 @@ object LambdaToAnonymousFunctionUtil {
                     param(nameToUse.quoteIfNeeded(), renderType)
                 }
 
-                functionSymbol.returnType.takeIf { !it.isUnitType && it !is KaErrorType }?.let {
+                functionSymbol.returnType.takeIf { it.classId != KaStandardTypeClassIds.UNIT && it !is KaErrorType }?.let {
                     val lastStatement = bodyExpressionCopy.statements.lastOrNull()
                     if (lastStatement != null && lastStatement !is KtReturnExpression) {
                         analyze(lastStatement) {

@@ -8,7 +8,8 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
-import org.jetbrains.kotlin.analysis.api.types.isFloatType
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
@@ -56,7 +57,7 @@ internal class FloatingPointLiteralPrecisionInspection : KotlinApplicableInspect
     context(session: KaSession)
     override fun prepareContext(element: KtConstantExpression): String? {
         if (element.elementType == KtConstantExpressionElementType.kindToConstantElementType(ConstantValueKind.FLOAT_CONSTANT)) {
-            val isFloat = element.expressionType?.isFloatType == true
+            val isFloat = element.expressionType?.classId == KaStandardTypeClassIds.FLOAT
             val uppercaseSuffix = isFloat && element.text?.endsWith('F') == true
             val literal = element.text?.replace(Regex("[_fF]"), "") ?: return null
 

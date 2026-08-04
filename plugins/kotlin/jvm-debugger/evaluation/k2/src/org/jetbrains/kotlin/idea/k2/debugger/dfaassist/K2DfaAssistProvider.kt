@@ -43,8 +43,9 @@ import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.restoreSymbol
 import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
 import org.jetbrains.kotlin.analysis.api.types.isNullable
-import org.jetbrains.kotlin.analysis.api.types.isPrimitive
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.type
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.codegen.AsmUtil
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.codeInsight.inspections.dfa.KotlinConstantConditionsInspection
@@ -207,7 +208,7 @@ internal class K2DfaAssistProvider : DfaAssistProvider {
                         if (symbol is KaVariableSymbol) {
                             val name = symbol.name.asString() + inlineSuffix
                             val expectedType = symbol.returnType
-                            val isNonNullPrimitiveType = expectedType.isPrimitive && !expectedType.isNullable
+                            val isNonNullPrimitiveType = expectedType.classId in KaStandardTypeClassIds.PRIMITIVES && !expectedType.isNullable
                             return@readAction VariableResult.Variable(name, symbol.psi, isNonNullPrimitiveType)
                         }
                     }

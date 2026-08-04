@@ -34,15 +34,9 @@ import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.approximateToDenotableSubtypeOrSelf
 import org.jetbrains.kotlin.analysis.api.types.arrayElementType
-import org.jetbrains.kotlin.analysis.api.types.isBooleanType
-import org.jetbrains.kotlin.analysis.api.types.isByteType
-import org.jetbrains.kotlin.analysis.api.types.isCharType
-import org.jetbrains.kotlin.analysis.api.types.isDoubleType
-import org.jetbrains.kotlin.analysis.api.types.isFloatType
-import org.jetbrains.kotlin.analysis.api.types.isIntType
-import org.jetbrains.kotlin.analysis.api.types.isLongType
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
-import org.jetbrains.kotlin.analysis.api.types.isShortType
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinDeclarationNameValidator
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
@@ -452,14 +446,14 @@ class CodeInliner(
     context(_: KaSession)
     private fun arrayOfFunctionName(elementType: KaType): String {
         return when {
-            elementType.isIntType -> "kotlin.intArrayOf"
-            elementType.isLongType -> "kotlin.longArrayOf"
-            elementType.isShortType -> "kotlin.shortArrayOf"
-            elementType.isCharType -> "kotlin.charArrayOf"
-            elementType.isBooleanType -> "kotlin.booleanArrayOf"
-            elementType.isByteType -> "kotlin.byteArrayOf"
-            elementType.isDoubleType -> "kotlin.doubleArrayOf"
-            elementType.isFloatType -> "kotlin.floatArrayOf"
+            elementType.classId == KaStandardTypeClassIds.INT -> "kotlin.intArrayOf"
+            elementType.classId == KaStandardTypeClassIds.LONG -> "kotlin.longArrayOf"
+            elementType.classId == KaStandardTypeClassIds.SHORT -> "kotlin.shortArrayOf"
+            elementType.classId == KaStandardTypeClassIds.CHAR -> "kotlin.charArrayOf"
+            elementType.classId == KaStandardTypeClassIds.BOOLEAN -> "kotlin.booleanArrayOf"
+            elementType.classId == KaStandardTypeClassIds.BYTE -> "kotlin.byteArrayOf"
+            elementType.classId == KaStandardTypeClassIds.DOUBLE -> "kotlin.doubleArrayOf"
+            elementType.classId == KaStandardTypeClassIds.FLOAT -> "kotlin.floatArrayOf"
             elementType is KaErrorType -> "kotlin.arrayOf"
             else -> "kotlin.arrayOf"
         }

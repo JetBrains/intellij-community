@@ -30,8 +30,9 @@ import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
 import org.jetbrains.kotlin.analysis.api.symbols.importableFqName
-import org.jetbrains.kotlin.analysis.api.types.isPrimitive
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
@@ -103,10 +104,10 @@ internal class UnusedUnaryOperatorInspection : KotlinApplicableInspectionBase<Kt
         val currentOperandType = element.expressionType
 
         if (currentOperandType == null) {
-            return prevOperandType.isPrimitive && isUnaryOperatorOnIntLiteralReference(prefix.operationReference.mainReference)
+            return prevOperandType.classId in KaStandardTypeClassIds.PRIMITIVES && isUnaryOperatorOnIntLiteralReference(prefix.operationReference.mainReference)
         }
 
-        return currentOperandType.isPrimitive && prevOperandType.isPrimitive ||
+        return currentOperandType.classId in KaStandardTypeClassIds.PRIMITIVES && prevOperandType.classId in KaStandardTypeClassIds.PRIMITIVES ||
                currentOperandType.semanticallyEquals(prevOperandType)
     }
 

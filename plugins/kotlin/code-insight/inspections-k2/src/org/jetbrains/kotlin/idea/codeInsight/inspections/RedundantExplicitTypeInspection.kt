@@ -13,9 +13,10 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
-import org.jetbrains.kotlin.analysis.api.types.isStringType
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
 import org.jetbrains.kotlin.analysis.api.types.symbol
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
@@ -58,7 +59,7 @@ internal class RedundantExplicitTypeInspection : KotlinApplicableInspectionBase.
             }
 
             is KtStringTemplateExpression -> {
-                if (!type.isStringType || type.isMarkedNullable) return false
+                if (type.classId != KaStandardTypeClassIds.STRING || type.isMarkedNullable) return false
             }
 
             is KtNameReferenceExpression -> {

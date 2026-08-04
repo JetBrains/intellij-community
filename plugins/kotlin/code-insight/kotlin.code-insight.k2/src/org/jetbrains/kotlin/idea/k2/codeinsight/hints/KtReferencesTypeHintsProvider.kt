@@ -11,8 +11,7 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.types.augmentedByWarningLevelAnnotations
-import org.jetbrains.kotlin.analysis.api.types.isAnyType
-import org.jetbrains.kotlin.analysis.api.types.isUnitType
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
@@ -29,6 +28,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaUsualClassType
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.idea.base.psi.getLineNumber
 import org.jetbrains.kotlin.idea.base.psi.isMultiLine
 import org.jetbrains.kotlin.idea.base.psi.isOneLiner
@@ -302,7 +302,7 @@ private fun renderKtTypeHint(element: KtCallableDeclaration, multilineLocalPrope
     calculateAllTypes(element) { declarationType, allTypes, _ ->
         if (declarationType is KaErrorType) return@calculateAllTypes null
 
-        if (declarationType.isUnitType && multilineLocalProperty) {
+        if (declarationType.classId == KaStandardTypeClassIds.UNIT && multilineLocalProperty) {
             return@calculateAllTypes null
         }
 
@@ -359,7 +359,7 @@ private fun isUnclearType(type: KaType, element: KtCallableDeclaration): Boolean
         }
     }
 
-    return !type.isAnyType
+    return type.classId != KaStandardTypeClassIds.ANY
 }
 
 internal fun collectLambdaTypeHint(lambdaExpression: KtExpression, sink: InlayTreeSink) {

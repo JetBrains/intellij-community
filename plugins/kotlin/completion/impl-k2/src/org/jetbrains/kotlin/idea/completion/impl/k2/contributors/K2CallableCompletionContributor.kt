@@ -29,7 +29,7 @@ import org.jetbrains.kotlin.analysis.api.types.defaultType
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.symbols.fakeOverrideOriginal
 import org.jetbrains.kotlin.analysis.api.types.isDenotable
-import org.jetbrains.kotlin.analysis.api.types.isStringType
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
 import org.jetbrains.kotlin.analysis.api.types.lowerBoundIfFlexible
 import org.jetbrains.kotlin.analysis.api.scopes.memberScope
@@ -72,6 +72,7 @@ import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaIntersectionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.symbol
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.collectReceiverTypesForExplicitReceiverExpression
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isIgnoredExpectDeclaration
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isJavaSourceOrLibrary
@@ -867,7 +868,7 @@ internal abstract class K2AbstractCallableCompletionContributor<P : KotlinNameRe
 
     context(_: KaSession)
     private fun KaJavaFieldSymbol.hasPrimitiveOrStringReturnType(): Boolean =
-        (psi as? PsiField)?.type is PsiPrimitiveType || returnType.isStringType
+        (psi as? PsiField)?.type is PsiPrimitiveType || returnType.classId == KaStandardTypeClassIds.STRING
 
     context(_: KaSession)
     private fun KaCallableSymbol.hasConstEvaluationAnnotation(): Boolean =

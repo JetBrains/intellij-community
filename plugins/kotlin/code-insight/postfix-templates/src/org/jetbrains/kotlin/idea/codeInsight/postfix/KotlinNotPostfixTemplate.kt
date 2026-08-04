@@ -2,8 +2,9 @@
 package org.jetbrains.kotlin.idea.codeInsight.postfix
 
 import com.intellij.codeInsight.template.postfix.templates.NotPostfixTemplate
-import org.jetbrains.kotlin.analysis.api.types.isBooleanType
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtPrefixExpression
@@ -12,7 +13,7 @@ internal class KotlinNotPostfixTemplate : NotPostfixTemplate {
     @Suppress("ConvertSecondaryConstructorToPrimary")
     constructor(provider: KotlinPostfixTemplateProvider) : super(
         /* info = */ KotlinPostfixTemplatePsiInfo,
-        /* selector = */ allExpressions(ValuedFilter, NotExpressionFilter, ExpressionTypeFilter { it.isBooleanType && !it.isMarkedNullable }),
+        /* selector = */ allExpressions(ValuedFilter, NotExpressionFilter, ExpressionTypeFilter { it.classId == KaStandardTypeClassIds.BOOLEAN && !it.isMarkedNullable }),
         /* provider = */ provider
     )
 

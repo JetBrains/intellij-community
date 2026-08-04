@@ -11,7 +11,8 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
-import org.jetbrains.kotlin.analysis.api.types.isUnitType
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
@@ -32,7 +33,7 @@ abstract class KotlinExpressionSurrounder : PsiUpdateModCommandSurrounder() {
         allowAnalysisOnEdt {
             return analyze(expression) {
                 val type = expression.expressionType
-                if (type == null || type is KaErrorType || type.isUnitType && isApplicableToStatements) {
+                if (type == null || type is KaErrorType || type.classId == KaStandardTypeClassIds.UNIT && isApplicableToStatements) {
                     false
                 } else {
                     isApplicableToStatements || expression.isUsedAsExpression

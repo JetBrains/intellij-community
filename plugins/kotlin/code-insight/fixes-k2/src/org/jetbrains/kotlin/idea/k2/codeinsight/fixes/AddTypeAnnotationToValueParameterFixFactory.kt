@@ -14,7 +14,8 @@ import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.arrayElementType
 import org.jetbrains.kotlin.analysis.api.types.isArrayOrPrimitiveArray
-import org.jetbrains.kotlin.analysis.api.types.isPrimitive
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
@@ -48,7 +49,7 @@ internal object AddTypeAnnotationToValueParameterFixFactory {
                 return getTypeName(elementType)
             } else if (defaultValue is KtCollectionLiteralExpression) {
                 val elementType = type.arrayElementType
-                if (elementType?.isPrimitive == true) {
+                if (elementType?.classId in KaStandardTypeClassIds.PRIMITIVES) {
                     val classId = (elementType as KaClassType).classId
                     val arrayTypeName = "${classId.shortClassName}Array"
                     return arrayTypeName

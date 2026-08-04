@@ -94,9 +94,7 @@ internal class OverrideKeywordHandler(
 
         for (member in members) {
             val symbolPointer = member.memberInfo.symbolPointer
-            val memberSymbol = with(session) {
-                symbolPointer.restoreSymbol()
-            }
+            val memberSymbol = symbolPointer.restoreSymbol()
             requireNotNull(memberSymbol) { "${symbolPointer::class} can't be restored" }
 
             if (declaration != null && !canCompleteDeclarationWithMember(declaration, memberSymbol)) continue
@@ -147,7 +145,7 @@ internal class OverrideKeywordHandler(
         project: Project,
     ): OverridesCompletionLookupElementDecorator {
         val symbolPointer = member.memberInfo.symbolPointer
-        val memberSymbol = with(session) { symbolPointer.restoreSymbol() }
+        val memberSymbol = symbolPointer.restoreSymbol()
         requireNotNull(memberSymbol) { "${symbolPointer::class} can't be restored" }
         check(memberSymbol is KaNamedSymbol)
 

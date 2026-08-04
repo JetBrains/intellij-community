@@ -22,8 +22,9 @@ import org.jetbrains.kotlin.analysis.api.resolution.successfulVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
 import org.jetbrains.kotlin.analysis.api.types.isArrayOrPrimitiveArray
-import org.jetbrains.kotlin.analysis.api.types.isIntType
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.idea.base.psi.unwrapIfLabeled
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
@@ -211,7 +212,7 @@ internal class UseWithIndexInspection : KotlinApplicableInspectionBase.Simple<Kt
         val variableSymbol = resolveToVariable(incrementExpressionOperand) ?: return null
         val variable = variableSymbol.psi as? KtProperty ?: return null
         if (!variable.isVar) return null
-        if (!variable.returnType.isIntType) return null
+        if (variable.returnType.classId != KaStandardTypeClassIds.INT) return null
 
         val unwrappedFor = forLoopExpression.unwrapIfLabeled()
         if (unwrappedFor.parent !is KtBlockExpression) return null

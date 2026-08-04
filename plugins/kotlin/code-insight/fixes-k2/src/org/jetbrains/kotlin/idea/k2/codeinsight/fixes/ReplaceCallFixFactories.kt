@@ -22,8 +22,9 @@ import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
 import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
 import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
-import org.jetbrains.kotlin.analysis.api.types.isUnitType
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.withNullability
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.collectCallCandidates
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.getImplicitReceivers
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
@@ -154,7 +155,7 @@ object ReplaceCallFixFactories {
         if (nullableExpressionType != null && nullableTypeIsAcceptableForValueArgument(expression, nullableExpressionType)) return false
 
         val expectedType = expression.expectedType ?: return false
-        return nullableExpressionType?.isSubtypeOf(expectedType) != true && !expectedType.isMarkedNullable && !expectedType.isUnitType
+        return nullableExpressionType?.isSubtypeOf(expectedType) != true && !expectedType.isMarkedNullable && expectedType.classId != KaStandardTypeClassIds.UNIT
     }
 
     context(session: KaSession)

@@ -17,9 +17,10 @@ import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
-import org.jetbrains.kotlin.analysis.api.types.isUnitType
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.type
 import org.jetbrains.kotlin.analysis.api.types.typeCreation.typeCreator
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.getJvmName
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinMainFunctionDetector
@@ -74,7 +75,7 @@ internal class SymbolBasedKotlinMainFunctionDetector : KotlinMainFunctionDetecto
                         return false
                     }
 
-                    if (configuration.checkResultType && !function.returnType.isUnitType) {
+                    if (configuration.checkResultType && function.returnType.classId != KaStandardTypeClassIds.UNIT) {
                         return false
                     }
 

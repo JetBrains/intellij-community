@@ -7,7 +7,8 @@ import org.jetbrains.kotlin.analysis.api.KaContextParameterApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
-import org.jetbrains.kotlin.analysis.api.types.isBooleanType
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtExpression
@@ -87,7 +88,7 @@ object DemorgansLawUtils {
     @OptIn(KaContextParameterApi::class)
     context(_: KaSession)
     private val KtExpression?.isBoolean: Boolean
-        get() = this != null && this.expressionType?.isBooleanType == true
+        get() = this != null && this.expressionType?.classId == KaStandardTypeClassIds.BOOLEAN
 
     fun KtBinaryExpression.topmostBinaryExpression(): KtBinaryExpression =
         parentsWithSelf.takeWhile { it is KtBinaryExpression }.last() as KtBinaryExpression

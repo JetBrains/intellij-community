@@ -13,10 +13,11 @@ import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
-import org.jetbrains.kotlin.analysis.api.types.isUnitType
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
 import org.jetbrains.kotlin.analysis.api.types.type
 import org.jetbrains.kotlin.analysis.api.types.typeCreation.typeCreator
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.analysis.api.visibility.isPublicApi
 import org.jetbrains.kotlin.config.AnalysisFlags
 import org.jetbrains.kotlin.config.ExplicitApiMode
@@ -86,7 +87,7 @@ internal class RemoveExplicitTypeIntention :
     override fun prepareContext(element: KtDeclarationWithReturnType): Unit? =
         when (element) {
             is KtParameter, is KtDestructuringDeclarationEntry -> true
-            is KtNamedFunction if element.hasBlockBody() -> element.returnType.isUnitType
+            is KtNamedFunction if element.hasBlockBody() -> element.returnType.classId == KaStandardTypeClassIds.UNIT
             is KtNamedFunction if element.isRecursive() -> false
             is KtCallableDeclaration if publicReturnTypeShouldBePresentInApiMode(element) -> false
             else -> !element.isExplicitTypeReferenceNeededForTypeInferenceByAnalyze()

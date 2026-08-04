@@ -15,7 +15,6 @@ import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
-import org.jetbrains.kotlin.analysis.api.session.useSiteSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
@@ -72,21 +71,21 @@ internal object AbstractSuperCallFixFactories {
         }
 
         return when {
-            functionSymbol.isAnyEquals(useSiteSession) -> {
+            functionSymbol.isAnyEquals() -> {
                 val info = computeInfoIfNotInObject(containingClass) ?: return null
                 val generatedEquals = GenerateEqualsAndHashCodeUtils.generateEquals(info, tryToFindEqualsMethodForClass = false)
                                       ?: return null
                 val elementContext = UpdateToCorrectMethodFix.ElementContext(generatedEquals)
                 UpdateToCorrectMethodFix(containingFunction, elementContext, UpdateToCorrectMethodFix.Method.EQUALS)
             }
-            functionSymbol.isAnyHashCode(useSiteSession) -> {
+            functionSymbol.isAnyHashCode() -> {
                 val info = computeInfoIfNotInObject(containingClass) ?: return null
                 val generatedHashCode = GenerateEqualsAndHashCodeUtils.generateHashCode(info, tryToFindHashCodeMethodForClass = false)
                                         ?: return null
                 val elementContext = UpdateToCorrectMethodFix.ElementContext(generatedHashCode)
                 UpdateToCorrectMethodFix(containingFunction, elementContext, UpdateToCorrectMethodFix.Method.HASH_CODE)
             }
-            functionSymbol.isAnyToString(useSiteSession) -> {
+            functionSymbol.isAnyToString() -> {
                 val template = TemplateResource(
                     KotlinBundle.message("action.generate.tostring.template.single"),
                     KotlinToStringTemplatesManager.readFile(DEFAULT_SINGLE),
@@ -130,14 +129,17 @@ private class UpdateToCorrectMethodFix(
         TO_STRING(CallableId(StandardClassIds.Any, Name.identifier("toString")), "action.generate.tostring.name");
 
         companion object {
-            fun KaCallableSymbol.isAnyEquals(analysisSession: KaSession): Boolean =
-                isOverride(EQUALS.callableId, analysisSession)
+            context(session: KaSession)
+            fun KaCallableSymbol.isAnyEquals(): Boolean =
+                isOverride(EQUALS.callableId)
 
-            fun KaCallableSymbol.isAnyHashCode(analysisSession: KaSession): Boolean =
-                isOverride(HASH_CODE.callableId, analysisSession)
+            context(session: KaSession)
+            fun KaCallableSymbol.isAnyHashCode(): Boolean =
+                isOverride(HASH_CODE.callableId)
 
-            fun KaCallableSymbol.isAnyToString(analysisSession: KaSession): Boolean =
-                isOverride(TO_STRING.callableId, analysisSession)
+            context(session: KaSession)
+            fun KaCallableSymbol.isAnyToString(): Boolean =
+                isOverride(TO_STRING.callableId)
         }
     }
 
@@ -201,9 +203,7 @@ private fun getSuperClassFqNameToReferTo(expression: KtNameReferenceExpression):
     return callableToUseInstead.containingDeclaration?.importableFqName
 }
 
+context(session: KaSession)
 private fun KaCallableSymbol.isOverride(
-    callableId: CallableId,
-    analysisSession: KaSession,
-): Boolean = with(analysisSession) {
-    allOverriddenSymbolsWithSelf.any { it.callableId == callableId }
-}
+    callableId: CallableId
+): Boolean = allOverriddenSymbolsWithSelf.any { it.callableId == callableId }

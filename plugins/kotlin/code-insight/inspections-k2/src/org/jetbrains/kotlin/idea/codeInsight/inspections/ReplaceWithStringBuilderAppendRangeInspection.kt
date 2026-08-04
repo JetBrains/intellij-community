@@ -17,9 +17,9 @@ import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.arrayElementType
 import org.jetbrains.kotlin.analysis.api.types.isArrayOrPrimitiveArray
-import org.jetbrains.kotlin.analysis.api.types.isCharType
-import org.jetbrains.kotlin.analysis.api.types.isIntType
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.isNullable
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
@@ -78,7 +78,7 @@ internal class ReplaceWithStringBuilderAppendRangeInspection :
         val secondParamType = parameters[1].returnType
         val thirdParamType = parameters[2].returnType
 
-        if (!isCharArrayType(firstParamType) || !secondParamType.isIntType || !thirdParamType.isIntType) {
+        if (!isCharArrayType(firstParamType) || secondParamType.classId != KaStandardTypeClassIds.INT || thirdParamType.classId != KaStandardTypeClassIds.INT) {
             return null
         }
 
@@ -107,7 +107,7 @@ internal class ReplaceWithStringBuilderAppendRangeInspection :
     context(session: KaSession)
     private fun isCharArrayType(type: KaType): Boolean =
         type.isArrayOrPrimitiveArray &&
-            type.arrayElementType?.isCharType == true
+            type.arrayElementType?.classId == KaStandardTypeClassIds.CHAR
 
     context(session: KaSession)
     private fun isNullable(expression: KtExpression): Boolean {

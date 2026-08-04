@@ -18,7 +18,8 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.isNullable
-import org.jetbrains.kotlin.analysis.api.types.isUnitType
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.idea.base.psi.getParentLambdaLabelName
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -86,7 +87,7 @@ internal class ReplaceNotNullAssertionWithElvisReturnInspection :
             is KtNamedFunction -> {
                 val returnType = parent.getReturnType() ?: return null
                 val isNullable = returnType.isNullable
-                if (!returnType.isUnitType && !isNullable) return null
+                if (returnType.classId != KaStandardTypeClassIds.UNIT && !isNullable) return null
 
                 Context(
                     returnNull = isNullable,
@@ -97,7 +98,7 @@ internal class ReplaceNotNullAssertionWithElvisReturnInspection :
             is KtLambdaExpression -> {
                 val functionLiteral = parent.functionLiteral
                 val returnType = functionLiteral.getReturnType() ?: return null
-                if (!returnType.isUnitType) return null
+                if (returnType.classId != KaStandardTypeClassIds.UNIT) return null
                 val lambdaLabelName = functionLiteral.bodyBlockExpression?.getParentLambdaLabelName() ?: return null
 
                 Context(

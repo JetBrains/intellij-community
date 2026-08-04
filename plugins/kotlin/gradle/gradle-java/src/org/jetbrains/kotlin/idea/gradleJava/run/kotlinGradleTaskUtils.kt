@@ -22,9 +22,10 @@ import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
-import org.jetbrains.kotlin.analysis.api.types.isStringType
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.analysis.api.types.withNullability
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -161,8 +162,7 @@ private fun isMethodOfProject(methodName: String, fqClassName: FqName) =
 context(session: KaSession)
 private fun isStringParameterSignature(signature: KaVariableSignature<KaValueParameterSymbol>): Boolean {
     return signature.symbol.returnType
-        .withNullability(false)
-        .isStringType
+        .withNullability(false).classId == KaStandardTypeClassIds.STRING
 }
 
 fun KtNamedFunction.getKMPGradleConfigurationName(runTask: KotlinJvmRunTaskData): String =

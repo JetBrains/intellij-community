@@ -18,12 +18,11 @@ import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.allSupertypes
 import org.jetbrains.kotlin.analysis.api.types.defaultType
-import org.jetbrains.kotlin.analysis.api.types.isAnyType
-import org.jetbrains.kotlin.analysis.api.types.isIntType
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
-import org.jetbrains.kotlin.analysis.api.types.isStringType
 import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
 import org.jetbrains.kotlin.analysis.api.types.symbol
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.name.Name
@@ -147,7 +146,7 @@ object KotlinEqualsHashCodeToStringSymbolUtils {
     private fun findExplicitSuperclassOrAny(classSymbol: KaClassSymbol): KaClassSymbol? {
         val supertypes = classSymbol.superTypes
         return supertypes.map { it.symbol }.filterIsInstance<KaClassSymbol>().singleOrNull { it.classKind == KaClassKind.CLASS }
-            ?: supertypes.first().allSupertypes.singleOrNull { it.isAnyType }?.symbol as? KaClassSymbol
+            ?: supertypes.first().allSupertypes.singleOrNull { it.classId == KaStandardTypeClassIds.ANY }?.symbol as? KaClassSymbol
     }
 
     context(_: KaSession)
@@ -174,7 +173,7 @@ object KotlinEqualsHashCodeToStringSymbolUtils {
         if (function.typeParameters.isNotEmpty()) return false
         if (function.valueParameters.isNotEmpty()) return false
         val returnType = function.returnType
-        return returnType.isIntType && !returnType.isMarkedNullable
+        return returnType.classId == KaStandardTypeClassIds.INT && !returnType.isMarkedNullable
     }
 
     context(_: KaSession)
@@ -184,6 +183,6 @@ object KotlinEqualsHashCodeToStringSymbolUtils {
         if (function.typeParameters.isNotEmpty()) return false
         if (function.valueParameters.isNotEmpty()) return false
         val returnType = function.returnType
-        return returnType.isStringType && !returnType.isMarkedNullable
+        return returnType.classId == KaStandardTypeClassIds.STRING && !returnType.isMarkedNullable
     }
 }

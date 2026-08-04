@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.analysis.api.session.canBeAnalysed
 import org.jetbrains.kotlin.analysis.api.components.compositeScope
 import org.jetbrains.kotlin.analysis.api.types.defaultType
 import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
-import org.jetbrains.kotlin.analysis.api.types.isAnyType
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.scopes.memberScope
 import org.jetbrains.kotlin.analysis.api.javaInterop.namedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.samConstructor
@@ -37,6 +37,7 @@ import org.jetbrains.kotlin.analysis.api.types.KaTypeArgumentWithVariance
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeProjection
 import org.jetbrains.kotlin.analysis.api.types.symbol
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.findSamSymbolOrNull
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isPossiblySubTypeOf
@@ -145,7 +146,7 @@ internal class K2TypeInstantiationContributor : K2CompletionContributor<KotlinNa
     context(_: KaSession, context: K2CompletionSectionContext<KotlinNameReferencePositionContext>)
     private fun completeSubtypes() {
         val expectedType = context.weighingContext.expectedType?.upperBoundIfFlexible() ?: return
-        if (expectedType.isAnyType) {
+        if (expectedType.classId == KaStandardTypeClassIds.ANY) {
             // There would be too many results as every class would match
             return
         }

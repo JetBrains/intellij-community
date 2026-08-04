@@ -32,8 +32,9 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
 import org.jetbrains.kotlin.analysis.api.types.isNullable
 import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
-import org.jetbrains.kotlin.analysis.api.types.isUnitType
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.type
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.getImplicitReceivers
 import org.jetbrains.kotlin.idea.base.psi.expressionComparedToNull
 import org.jetbrains.kotlin.idea.base.psi.getSingleUnwrappedStatement
@@ -241,7 +242,7 @@ object IfThenTransformationUtils {
         val transformationData = buildTransformationData(element) ?: return null
         val transformationStrategy = IfThenTransformationStrategy.create(transformationData) ?: return null
 
-        if (element.expressionType?.isUnitType != false) return null
+        if (element.expressionType?.classId == KaStandardTypeClassIds.UNIT) return null
         if (!clausesReplaceableByElvis(transformationData)) return null
         val checkedExpressions = listOfNotNull(
             transformationData.checkedExpression,

@@ -13,7 +13,8 @@ import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.session.analyze
-import org.jetbrains.kotlin.analysis.api.types.isUnitType
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.psi.getLineNumber
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
@@ -51,7 +52,7 @@ class IntroduceVariableIntention : SelfTargetingIntention<PsiElement>(
 
         return allowAnalysisOnEdt {
             analyze(expression) {
-                expression.expressionType?.takeUnless { it.isUnitType } != null
+                expression.expressionType?.takeUnless { it.classId == KaStandardTypeClassIds.UNIT } != null
             }
         }
     }

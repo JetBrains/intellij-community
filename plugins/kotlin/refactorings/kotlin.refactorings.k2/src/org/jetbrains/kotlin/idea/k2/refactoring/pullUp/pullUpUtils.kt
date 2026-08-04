@@ -12,8 +12,9 @@ import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaSubstitutor
 import org.jetbrains.kotlin.analysis.api.types.builtinTypes
 import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
-import org.jetbrains.kotlin.analysis.api.types.isUnitType
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.type
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtClass
@@ -59,7 +60,7 @@ internal fun computeAndRenderReturnType(
     } else {
         returnType = substitutor.substitute(returnType)
     }
-    return if (copiedDeclaration is KtProperty || !returnType.isUnitType) {
+    return if (copiedDeclaration is KtProperty || returnType.classId != KaStandardTypeClassIds.UNIT) {
         returnType.render(position = Variance.INVARIANT)
     } else {
         null

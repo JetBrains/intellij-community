@@ -27,7 +27,8 @@ import org.jetbrains.kotlin.analysis.api.symbols.fakeOverrideOriginal
 import org.jetbrains.kotlin.analysis.api.symbols.implementationState
 import org.jetbrains.kotlin.analysis.api.symbols.intersectionOverriddenSymbols
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
-import org.jetbrains.kotlin.analysis.api.types.isAnyType
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.analysis.api.visibility.isVisibleInClass
 import org.jetbrains.kotlin.idea.KotlinIconProvider
 import org.jetbrains.kotlin.idea.core.util.KotlinIdeaCoreBundle
@@ -109,7 +110,7 @@ private fun collectMembers(classOrObject: KtClassOrObject): List<KtClassMember> 
                     }
                 }
 
-                val hasNoSuperTypesExceptAny = classOrObjectSymbol.superTypes.singleOrNull()?.isAnyType == true
+                val hasNoSuperTypesExceptAny = classOrObjectSymbol.superTypes.singleOrNull()?.classId == KaStandardTypeClassIds.ANY
                 for (symbolToProcess in symbolsToProcess) {
                     val originalOverriddenSymbol = symbolToProcess.fakeOverrideOriginal
                     val containingSymbol = originalOverriddenSymbol.fakeOverrideOriginal.containingSymbol as? KaClassSymbol

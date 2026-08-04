@@ -6,8 +6,8 @@ import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
-import org.jetbrains.kotlin.analysis.api.types.isNothingType
-import org.jetbrains.kotlin.analysis.api.types.isUnitType
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.psi.KtDeclarationWithBody
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtFunctionLiteral
@@ -40,7 +40,7 @@ class KotlinHighlightExitPointsHandlerFactory: AbstractKotlinHighlightExitPoints
         allowAnalysisOnEdt {
             analyze(functionLiteral) {
                 val returnType = functionLiteral.symbol.returnType
-                !(returnType.isUnitType || returnType.isNothingType)
+                !(returnType.classId == KaStandardTypeClassIds.UNIT || returnType.classId == KaStandardTypeClassIds.NOTHING)
             }
         }
 }

@@ -6,11 +6,10 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.evaluation.evaluate
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
-import org.jetbrains.kotlin.analysis.api.types.isDoubleType
-import org.jetbrains.kotlin.analysis.api.types.isFloatType
-import org.jetbrains.kotlin.analysis.api.types.isLongType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -41,8 +40,9 @@ private data class PrimitiveLiteralData(
 context(session: KaSession)
 private fun preparePrimitiveLiteral(element: KtExpression, type: KaType): PrimitiveLiteralData {
     val typeName = type.expandedSymbol?.classId?.asSingleFqName()?.toUnsafe()
-    val expectedTypeIsFloat = type.isFloatType
-    val expectedTypeIsDouble = type.isDoubleType
+    val typeClassId = type.classId
+    val expectedTypeIsFloat = typeClassId == KaStandardTypeClassIds.FLOAT
+    val expectedTypeIsDouble = typeClassId == KaStandardTypeClassIds.DOUBLE
     val expectedTypeIsUnsigned = isUNumberType(type)
 
     val constValue =
@@ -66,7 +66,7 @@ private fun preparePrimitiveLiteral(element: KtExpression, type: KaType): Primit
                 append(element.text.trimEnd('l', 'L', 'u'))
             }
 
-            if (type.isLongType) {
+            if (typeClassId == KaStandardTypeClassIds.LONG) {
                 append('L')
             }
         }
@@ -90,12 +90,12 @@ class WrongPrimitiveLiteralFix private constructor(
 ) : KotlinPsiUpdateModCommandAction.ElementContextless<KtExpression>(element) {
 
     companion object {
+        context(session: KaSession)
         internal fun createIfAvailable(
             element: KtExpression,
-            type: KaType,
-            analysisSession: KaSession,
+            type: KaType
         ): WrongPrimitiveLiteralFix? {
-            val primitiveLiteral = with(analysisSession) { preparePrimitiveLiteral(element, type) }
+            val primitiveLiteral = preparePrimitiveLiteral(element, type)
             with(primitiveLiteral) {
                 if (constValue == null) return null
                 val longValue = toLong(constValue) ?: return null

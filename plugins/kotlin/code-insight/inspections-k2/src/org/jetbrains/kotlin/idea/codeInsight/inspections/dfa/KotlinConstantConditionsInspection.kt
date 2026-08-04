@@ -48,7 +48,8 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaIntersectionType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
-import org.jetbrains.kotlin.analysis.api.types.isNothingType
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
@@ -393,7 +394,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
         val expression = entry.expression ?: return false
         return analyze(expression) {
             val missingCases = whenExpr.computeMissingCases()
-            missingCases.isEmpty() && expression.expressionType?.isNothingType == true
+            missingCases.isEmpty() && expression.expressionType?.classId == KaStandardTypeClassIds.NOTHING
         }
     }
 
@@ -658,7 +659,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                 // While inner "return" is redundant, the "always true" warning is confusing
                 // probably separate inspection could report extra "return"
                 val ktType = expression.left?.expressionType
-                if (ktType != null && ktType.isNothingType && ktType.isMarkedNullable) {
+                if (ktType != null && ktType.classId == KaStandardTypeClassIds.NOTHING && ktType.isMarkedNullable) {
                     return true
                 }
             }
@@ -779,7 +780,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
         private fun isAndOrConditionWithNothingOperand(expression: KtExpression, token: KtSingleValueToken): Boolean {
             if (expression !is KtBinaryExpression || expression.operationToken != token) return false
             val type = expression.right?.expressionType
-            return type != null && type.isNothingType
+            return type != null && type.classId == KaStandardTypeClassIds.NOTHING
         }
     }
 }

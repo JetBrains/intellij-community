@@ -17,7 +17,8 @@ import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.importableFqName
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
-import org.jetbrains.kotlin.analysis.api.types.isBooleanType
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
@@ -100,7 +101,7 @@ internal sealed class ConvertFunctionWithDemorgansLawIntention(
             else -> lastStatement
         } ?: return null
 
-        if (functionPredicate.expressionType?.isBooleanType != true) return null
+        if (functionPredicate.expressionType?.classId != KaStandardTypeClassIds.BOOLEAN) return null
 
         val callOrQualified = element.getQualifiedExpressionForSelectorOrThis()
         val skippedParenthesisUp = callOrQualified.parents.dropWhile { it is KtParenthesizedExpression }.firstOrNull()
@@ -120,7 +121,7 @@ internal sealed class ConvertFunctionWithDemorgansLawIntention(
     private fun negate(baseExpression: KtExpression): List<KtExpression>? {
         fun negateOperand(operand: KtExpression): KtExpression {
             return (operand as? KtQualifiedExpression)?.invertSelectorFunction()
-                ?: operand.negate(reformat = false) { analyze(it) { it.expressionType?.isBooleanType == true }}
+                ?: operand.negate(reformat = false) { analyze(it) { it.expressionType?.classId == KaStandardTypeClassIds.BOOLEAN }}
         }
 
         return when (baseExpression) {

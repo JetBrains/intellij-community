@@ -526,7 +526,7 @@ object K2SemanticMatcher {
 
             if (dcl is KtFunction && patternDcl is KtFunction) {
                 if (dcl.isFunctionLiteralWithoutParameterSpecification() || patternDcl.isFunctionLiteralWithoutParameterSpecification()) {
-                    with(analysisSession) {
+                    context(analysisSession) {
                         if (!areFunctionsWithZeroOrOneParametersMatchingByResolve(dcl, patternDcl, context)) return false
                         context.associateSingleParameterSymbolsForAnonymousFunctions(dcl, patternDcl)
                     }
@@ -536,14 +536,14 @@ object K2SemanticMatcher {
             }
 
             if (dcl is KtCallableDeclaration && patternDcl is KtCallableDeclaration) {
-                with(analysisSession) {
+                context(analysisSession) {
                     if (!areReceiverParametersMatchingByResolve(dcl, patternDcl, context)) return false
                     if (!areReturnTypesOfDeclarationsMatchingByResolve(dcl, patternDcl, context)) return false
                     context.associateReceiverParameterSymbolsForCallables(dcl, patternDcl)
                 }
             }
 
-            with(analysisSession) {
+            context(analysisSession) {
                 context.associateSymbolsForDeclarations(dcl, patternDcl)
             }
 
@@ -587,7 +587,7 @@ object K2SemanticMatcher {
 
         override fun visitTypeParameter(parameter: KtTypeParameter, data: KtElement): Boolean {
             val patternParameter = data as? KtTypeParameter ?: return false
-            with(analysisSession) {
+            context(analysisSession) {
                 if (!areTypeParametersMatchingByResolve(parameter, patternParameter, context)) return false
             }
             return visitDeclaration(parameter, patternParameter)
@@ -613,7 +613,7 @@ object K2SemanticMatcher {
 
         override fun visitTypeReference(typeReference: KtTypeReference, data: KtElement): Boolean {
             val patternTypeReference = data as? KtTypeReference ?: return false
-            with(analysisSession) {
+            context(analysisSession) {
                 if (!areTypeReferencesMatchingByResolve(typeReference, patternTypeReference, context)) return false
             }
             return true
@@ -630,7 +630,7 @@ object K2SemanticMatcher {
             if (expression is KtSimpleNameExpression != patternExpression is KtSimpleNameExpression) return false
             if (patternExpression !is KtReferenceExpression && patternExpression !is KtOperationExpression) return false
 
-            with(analysisSession) {
+            context(analysisSession) {
                 if (!areCallsMatchingByResolve(expression, patternExpression, context)) return false
             }
             return true
@@ -640,7 +640,7 @@ object K2SemanticMatcher {
 
         override fun visitConstantExpression(expression: KtConstantExpression, data: KtElement): Boolean {
             val patternExpression = data.deparenthesized() as? KtConstantExpression ?: return false
-            val exprText = with(analysisSession) {
+            val exprText = context(analysisSession) {
                 val evaluatedExpression = expression.evaluate() ?: return false
                 if (evaluatedExpression.value is KaConstantValue.ErrorValue) return false
                 evaluatedExpression.render()
@@ -662,7 +662,7 @@ object K2SemanticMatcher {
             if (patternExpression is KtUnaryExpression) {
                 if (expression::class != patternExpression::class) return false
                 if (expression.operationToken != patternExpression.operationToken) return false
-                with(analysisSession) {
+                context(analysisSession) {
                     if (!areReferencesMatchingByResolve(expression.mainReference, patternExpression.mainReference, context)) return false
                 }
                 return elementsMatchOrBothAreNull(expression.baseExpression, patternExpression.baseExpression)
@@ -674,7 +674,7 @@ object K2SemanticMatcher {
             val patternExpression = data.deparenthesized() as? KtExpression ?: return false
             if (patternExpression is KtBinaryExpression) {
                 if (expression.operationToken != patternExpression.operationToken) return false
-                with(analysisSession) {
+                context(analysisSession) {
                     if (!areReferencesMatchingByResolve(expression.mainReference, patternExpression.mainReference, context)) return false
                 }
                 return elementsMatchOrBothAreNull(expression.left, patternExpression.left) &&
@@ -685,7 +685,7 @@ object K2SemanticMatcher {
 
         override fun visitReturnExpression(expression: KtReturnExpression, data: KtElement): Boolean {
             val patternExpression = data.deparenthesized() as? KtReturnExpression ?: return false
-            with(analysisSession) {
+            context(analysisSession) {
                 if (!areReturnTargetsMatchingByResolve(expression, patternExpression, context)) return false
             }
             return elementsMatchOrBothAreNull(expression.returnedExpression, patternExpression.returnedExpression)
@@ -763,7 +763,7 @@ object K2SemanticMatcher {
             val patternFunction = patternExpression.parent as? KtFunction
             if (targetFunction != null || patternFunction != null) {
                 if (targetFunction == null || patternFunction == null) return false
-                with(analysisSession) { context.associateSymbolsForBlockBodyOwners(targetFunction, patternFunction) }
+                context(analysisSession) { context.associateSymbolsForBlockBodyOwners(targetFunction, patternFunction) }
             }
 
             for ((targetStatement, patternStatement) in expression.statements.zip(patternExpression.statements)) {
@@ -783,7 +783,7 @@ object K2SemanticMatcher {
 
         override fun visitThisExpression(expression: KtThisExpression, data: KtElement): Boolean {
             val patternExpression = data.deparenthesized() as? KtThisExpression ?: return false
-            with(analysisSession) {
+            context(analysisSession) {
                 if (!areReferencesMatchingByResolve(expression.mainReference, patternExpression.mainReference, context)) return false
             }
             return true
@@ -791,7 +791,7 @@ object K2SemanticMatcher {
 
         override fun visitSuperExpression(expression: KtSuperExpression, data: KtElement): Boolean {
             val patternExpression = data.deparenthesized() as? KtSuperExpression ?: return false
-            with(analysisSession) {
+            context(analysisSession) {
                 if (!areReferencesMatchingByResolve(expression.mainReference, patternExpression.mainReference, context)) return false
             }
             return true

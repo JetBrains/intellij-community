@@ -17,7 +17,8 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
 import org.jetbrains.kotlin.analysis.api.symbols.importableFqName
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
-import org.jetbrains.kotlin.analysis.api.types.isUnitType
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -149,8 +150,8 @@ internal class DeprecatedCallableAddReplaceWithInspection :
 
     context(_: KaSession)
     private fun KtCallableDeclaration.suggestReplacementExpression(): KtExpression? = when (this) {
-        is KtNamedFunction -> replacementExpressionFromBody(returnType.isUnitType)
-        is KtProperty -> getter?.replacementExpressionFromBody(returnType.isUnitType)
+        is KtNamedFunction -> replacementExpressionFromBody(returnType.classId == KaStandardTypeClassIds.UNIT)
+        is KtProperty -> getter?.replacementExpressionFromBody(returnType.classId == KaStandardTypeClassIds.UNIT)
         else -> null
     }
 

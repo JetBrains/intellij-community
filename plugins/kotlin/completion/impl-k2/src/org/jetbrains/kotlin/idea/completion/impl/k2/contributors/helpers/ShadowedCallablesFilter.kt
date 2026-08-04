@@ -4,8 +4,6 @@ package org.jetbrains.kotlin.idea.completion.impl.k2.contributors.helpers
 import com.intellij.openapi.util.Ref
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
-import org.jetbrains.kotlin.analysis.api.types.allSupertypes
-import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
@@ -17,6 +15,9 @@ import org.jetbrains.kotlin.analysis.api.symbols.findClass
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.allSupertypes
+import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
+import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
 import org.jetbrains.kotlin.idea.completion.impl.k2.ImportStrategyDetector
 import org.jetbrains.kotlin.idea.completion.impl.k2.checkers.ApplicableExtension
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.CallableInsertionOptions
@@ -25,7 +26,6 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.ImportStrategy
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
-import kotlin.collections.get
 
 internal class ShadowedCallablesFilter {
 
@@ -346,7 +346,7 @@ private class FunctionLikeSimplifiedSignature(
                 && containerFqName == other.containerFqName
                 && requiredTypeArgumentsCount == other.requiredTypeArgumentsCount
                 && varargValueParameterIndices == other.varargValueParameterIndices
-                && with(kaSession) {
+                && context(kaSession) {
             valueParameterTypes.value
                 .all(other.valueParameterTypes.value) { (left, right) ->
                     left.semanticallyEquals(right)

@@ -4,13 +4,13 @@ package org.jetbrains.kotlin.idea.codeInsight.inspections
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.types.isPrimitive
-import org.jetbrains.kotlin.analysis.api.types.isStringType
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.withNullability
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsight.utils.isEnum
@@ -41,6 +41,6 @@ internal class KotlinEqualsBetweenInconvertibleTypesInspection : AbstractKotlinI
     context(_: KaSession)
     private fun KtExpression.getTypeIfComparable(): KaType? {
         val type = expressionType?.withNullability(false)
-        return type?.takeIf { it.isPrimitive || it.isStringType || it.isEnum() }
+        return type?.takeIf { it.classId in KaStandardTypeClassIds.PRIMITIVES || it.classId == KaStandardTypeClassIds.STRING || it.isEnum() }
     }
 }

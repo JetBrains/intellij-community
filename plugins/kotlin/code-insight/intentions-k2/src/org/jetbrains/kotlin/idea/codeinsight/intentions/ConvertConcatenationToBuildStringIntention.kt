@@ -5,7 +5,8 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
-import org.jetbrains.kotlin.analysis.api.types.isStringType
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.psi.isInsideAnnotationEntryArgumentList
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -26,10 +27,10 @@ internal class ConvertConcatenationToBuildStringIntention :
     context(session: KaSession)
     override fun prepareContext(element: KtBinaryExpression): Unit? {
         val parent = element.parent
-        val isApplicable = element.expressionType?.isStringType == true
+        val isApplicable = element.expressionType?.classId == KaStandardTypeClassIds.STRING
                 && (parent !is KtBinaryExpression
                 || parent.operationToken != KtTokens.PLUS
-                || parent.expressionType?.isStringType == false)
+                || parent.expressionType?.classId != KaStandardTypeClassIds.STRING)
         return isApplicable.asUnit
     }
 
