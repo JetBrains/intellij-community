@@ -258,7 +258,7 @@ http_file(
     name = "jps-javac-extension_http",
     downloaded_file_path = "jps-javac-extension-11.jar",
     sha256 = "56805dd4b0fbc40988c2d15993ff8f7c7a6609a95a5871d5f67b521f2f6f100e",
-    url = "https://packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/jps/jps-javac-extension/11/jps-javac-extension-11.jar",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/jps/jps-javac-extension/11/jps-javac-extension-11.jar",
 )
 
 http_file(

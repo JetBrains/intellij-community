@@ -44,12 +44,12 @@
     <remote-repository>
       <option name="id" value="kotlin-bootstrap" />
       <option name="name" value="Kotlin Bootstrap (non-expiring bi-weekly dev-builds)" />
-      <option name="url" value="https://packages.jetbrains.team/maven/p/kt/bootstrap" />
+      <option name="url" value="https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/kt/bootstrap" />
     </remote-repository>
     <remote-repository>
       <option name="id" value="kotlin-experimental" />
       <option name="name" value="Kotlin Experimental (expireable per-merge-to-master dev-builds)" />
-      <option name="url" value="https://packages.jetbrains.team/maven/p/kt/experimental" />
+      <option name="url" value="https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/kt/experimental" />
     </remote-repository>
   </component>
 </project>
