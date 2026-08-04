@@ -18,9 +18,14 @@ import javax.swing.JComponent
  * Layout manager represented as a table, where some cells can be merged in one cell (the resulting cell occupies several columns and rows)
  * and every cell (or merged cells) can contain a sub-table inside. [Constraints] specifies all possible settings for every cell.
  * Root grid [rootGrid] and all sub-grids have own columns and rows settings placed in [Grid]
+ *
+ * A subclass can fill the grid from all of the components together instead of as each one is added. Such a
+ * layout accepts a component without a [Constraints], keeps whatever describes it, and builds the grid with
+ * [resetRootGrid] before it measures or positions anything. It overrides [getConstraints] too, so that a cell
+ * can be asked for before the first measurement.
  */
 @ApiStatus.Experimental
-class GridLayout : LayoutManager2 {
+open class GridLayout : LayoutManager2 {
 
   /**
    * Root grid of layout
@@ -28,7 +33,7 @@ class GridLayout : LayoutManager2 {
   val rootGrid: Grid
     get() = _rootGrid
 
-  private val _rootGrid = GridImpl()
+  private var _rootGrid = GridImpl()
 
   /**
    * Forces layout manager to respect the minimum size of components:
@@ -116,7 +121,7 @@ class GridLayout : LayoutManager2 {
     // Nothing to do
   }
 
-  fun getConstraints(component: JComponent): Constraints? {
+  open fun getConstraints(component: JComponent): Constraints? {
     return _rootGrid.getConstraints(component)
   }
 
@@ -126,6 +131,16 @@ class GridLayout : LayoutManager2 {
 
   internal fun getPreferredSizeData(parent: Container): SizeConstrainsData {
     return _rootGrid.getSizeConstrainsData(parent.insets, respectMinimumSize)
+  }
+
+  /**
+   * Throws the built grid away so that it can be built again. A grid keeps every cell it is given for as long
+   * as it lives, and so does every sub-grid within it, so building anew replaces the grid rather than emptying
+   * it.
+   */
+  @ApiStatus.Internal
+  protected fun resetRootGrid() {
+    _rootGrid = GridImpl()
   }
 }
 

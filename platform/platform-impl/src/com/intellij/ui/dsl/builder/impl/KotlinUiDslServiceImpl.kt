@@ -9,6 +9,7 @@ import com.intellij.ui.dsl.builder.KotlinUiDslService
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.SegmentedButton
 import com.intellij.ui.dsl.gridLayout.GridLayout
+import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
@@ -23,8 +24,8 @@ internal class KotlinUiDslServiceImpl : KotlinUiDslService {
     val layout = GridLayout()
     layout.respectMinimumSize = true
     val result = DialogPanel(layout = layout)
-    val builder = PanelBuilder(panel.rows, dialogPanelConfig, panel.spacingConfiguration, result, layout.rootGrid)
-    builder.build()
+    val form = toGridForm(panel.rows, dialogPanelConfig, result, panel.spacingConfiguration)
+    buildGridForm(form, RowsGridBuilder(result, grid = layout.rootGrid), panel.spacingConfiguration)
     initPanel(dialogPanelConfig, result)
 
     if (LoadingState.COMPONENTS_LOADED.isOccurred) {

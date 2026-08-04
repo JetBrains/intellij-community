@@ -539,14 +539,14 @@ f:com.intellij.ui.dsl.builder.TextFieldWithBrowseButtonKt
 - f:getY():I
 - hashCode():I
 - f:setVisualPaddings(com.intellij.ui.dsl.gridLayout.UnscaledGaps):V
-*f:com.intellij.ui.dsl.gridLayout.GridLayout
+*c:com.intellij.ui.dsl.gridLayout.GridLayout
 - java.awt.LayoutManager2
 - <init>():V
 - addLayoutComponent(java.awt.Component,java.lang.Object):V
 - addLayoutComponent(java.lang.String,java.awt.Component):V
 - f:addLayoutSubGrid(com.intellij.ui.dsl.gridLayout.Constraints):com.intellij.ui.dsl.gridLayout.Grid
 - f:getConstraints(com.intellij.ui.dsl.gridLayout.Grid):com.intellij.ui.dsl.gridLayout.Constraints
-- f:getConstraints(javax.swing.JComponent):com.intellij.ui.dsl.gridLayout.Constraints
+- getConstraints(javax.swing.JComponent):com.intellij.ui.dsl.gridLayout.Constraints
 - getLayoutAlignmentX(java.awt.Container):F
 - getLayoutAlignmentY(java.awt.Container):F
 - f:getRootGrid():com.intellij.ui.dsl.gridLayout.Grid

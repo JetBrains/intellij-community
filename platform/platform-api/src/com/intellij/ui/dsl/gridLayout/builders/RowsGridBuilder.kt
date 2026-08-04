@@ -80,7 +80,14 @@ class RowsGridBuilder(private val panel: JComponent, grid: Grid? = null) {
     val constraints = Constraints(grid, x, y, width = width, horizontalAlign = horizontalAlign,
                                   verticalAlign = verticalAlign, baselineAlign = baselineAlign,
                                   gaps = gaps, visualPaddings = visualPaddings, widthGroup = widthGroup)
-    panel.add(component, constraints)
+    // A component already in the panel is registered with the grid rather than added again: adding it a second
+    // time would move it to the end of the panel's children, which is the order a form is read back in.
+    if (component.parent === panel) {
+      layout.addLayoutComponent(component, constraints)
+    }
+    else {
+      panel.add(component, constraints)
+    }
     return skip(width)
   }
 

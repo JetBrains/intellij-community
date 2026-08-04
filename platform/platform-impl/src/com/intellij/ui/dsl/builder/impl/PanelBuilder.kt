@@ -2,9 +2,7 @@
 package com.intellij.ui.dsl.builder.impl
 
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.dsl.builder.BottomGap
-import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.DslComponentProperty
 import com.intellij.ui.dsl.builder.LabelPosition
 import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_WORD_WRAP
@@ -24,9 +22,15 @@ import javax.swing.JRadioButton
 import javax.swing.JToggleButton
 import kotlin.math.min
 
-internal class PanelBuilder(val rows: List<RowImpl>, private val dialogPanelConfig: DialogPanelConfig,
+/**
+ * Turns a form - see [GridFormRow] - into the cells of a grid, through [rowsGridBuilder].
+ *
+ * The rules are the same whatever described the form, so a page written in `panel { }` and a page written in
+ * Compose are laid out alike. [buildGridForm] is how either of them gets here.
+ */
+internal class PanelBuilder(val rows: List<GridFormRow>,
                             private val spacingConfiguration: SpacingConfiguration,
-                            val panel: DialogPanel, val grid: Grid) {
+                            private val rowsGridBuilder: RowsGridBuilder) {
 
   companion object {
     val log = thisLogger()
@@ -37,12 +41,8 @@ internal class PanelBuilder(val rows: List<RowImpl>, private val dialogPanelConf
       return
     }
 
-    preprocess()
-
     val maxColumnsCount = getMaxColumnsCount()
-    val rowsGridBuilder = RowsGridBuilder(panel, grid = grid)
-      .defaultVerticalAlign(VerticalAlign.CENTER)
-      .defaultBaselineAlign(true)
+    rowsGridBuilder.defaultVerticalAlign(VerticalAlign.CENTER).defaultBaselineAlign(true)
     val allRowsGaps = getRowsGaps(rows)
     for ((i, row) in rows.withIndex()) {
       if (!checkRow(row)) {
@@ -58,13 +58,13 @@ internal class PanelBuilder(val rows: List<RowImpl>, private val dialogPanelConf
           val subGridBuilder = rowsGridBuilder.subGridBuilder(width = maxColumnsCount,
             horizontalAlign = HorizontalAlign.FILL,
             verticalAlign = subRowVerticalAlign,
-            gaps = UnscaledGaps(left = row.getIndent()))
+            gaps = UnscaledGaps(left = row.indent))
           val cells = row.cells
 
           buildLabelRow(cells, 0, cells.size, row.rowLayout, subGridBuilder)
 
           subGridBuilder.resizableRow()
-          buildRow(cells, 0, cells.size, panel, subGridBuilder)
+          buildRow(cells, 0, cells.size, subGridBuilder)
           subGridBuilder.row()
 
           buildCommentRow(cells, 0, cells.size, row.rowLayout, subGridBuilder)
@@ -76,9 +76,9 @@ internal class PanelBuilder(val rows: List<RowImpl>, private val dialogPanelConf
         }
 
         RowLayout.LABEL_ALIGNED -> {
-          buildLabelRow(row.cells, row.getIndent(), maxColumnsCount, row.rowLayout, rowsGridBuilder)
+          buildLabelRow(row.cells, row.indent, maxColumnsCount, row.rowLayout, rowsGridBuilder)
 
-          buildCell(row.cells[0], isLabelGap(row.cells.getOrNull(1)), row.getIndent(), row.cells.size == 1, 1, panel, rowsGridBuilder)
+          buildCell(row.cells[0], isLabelGap(row.cells.getOrNull(1)), row.indent, row.cells.size == 1, 1, rowsGridBuilder)
 
           if (row.cells.size > 1) {
             val subGridBuilder = rowsGridBuilder.subGridBuilder(width = maxColumnsCount - 1,
@@ -86,7 +86,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, private val dialogPanelConf
               verticalAlign = subRowVerticalAlign)
               .resizableRow()
             val cells = row.cells.subList(1, row.cells.size)
-            buildRow(cells, 0, cells.size, panel, subGridBuilder)
+            buildRow(cells, 0, cells.size, subGridBuilder)
             setLastColumnResizable(subGridBuilder)
           }
           if (row.resizableRow) {
@@ -94,24 +94,24 @@ internal class PanelBuilder(val rows: List<RowImpl>, private val dialogPanelConf
           }
           rowsGridBuilder.row()
 
-          buildCommentRow(row.cells, row.getIndent(), maxColumnsCount, row.rowLayout, rowsGridBuilder)
+          buildCommentRow(row.cells, row.indent, maxColumnsCount, row.rowLayout, rowsGridBuilder)
         }
 
         RowLayout.PARENT_GRID -> {
-          buildLabelRow(row.cells, row.getIndent(), maxColumnsCount, row.rowLayout, rowsGridBuilder)
+          buildLabelRow(row.cells, row.indent, maxColumnsCount, row.rowLayout, rowsGridBuilder)
 
-          buildRow(row.cells, row.getIndent(), maxColumnsCount, panel, rowsGridBuilder)
+          buildRow(row.cells, row.indent, maxColumnsCount, rowsGridBuilder)
           if (row.resizableRow) {
             rowsGridBuilder.resizableRow()
           }
           rowsGridBuilder.row()
 
-          buildCommentRow(row.cells, row.getIndent(), maxColumnsCount, row.rowLayout, rowsGridBuilder)
+          buildCommentRow(row.cells, row.indent, maxColumnsCount, row.rowLayout, rowsGridBuilder)
         }
       }
 
       row.rowComment?.let {
-        val gaps = UnscaledGaps(left = row.getIndent(), bottom = spacingConfiguration.verticalComponentGap)
+        val gaps = UnscaledGaps(left = row.indent, bottom = spacingConfiguration.verticalComponentGap)
         val horizontalAlign = if (it.maxLineLength == MAX_LINE_LENGTH_WORD_WRAP) HorizontalAlign.FILL else HorizontalAlign.LEFT
         rowsGridBuilder.cell(it, maxColumnsCount, gaps = gaps, horizontalAlign = horizontalAlign)
         rowsGridBuilder.row()
@@ -122,41 +122,15 @@ internal class PanelBuilder(val rows: List<RowImpl>, private val dialogPanelConf
     }
 
     setLastColumnResizable(rowsGridBuilder)
-    checkNoDoubleRowGaps(grid)
-  }
-
-  /**
-   * Preprocesses rows/cells and adds necessary rows/cells
-   * 1. Labels, see [Cell.label]
-   */
-  private fun preprocess() {
-    for (row in rows) {
-      var i = 0
-      while (i < row.cells.size) {
-        val cell = row.cells[i]
-        if (cell is CellImpl<*>) {
-          cell.label?.let {
-            if (cell.labelPosition == LabelPosition.LEFT) {
-              val labelCell = CellImpl(dialogPanelConfig, it, row)
-              row.cells.add(i, labelCell)
-              i++
-            }
-
-            labelCell(it, cell)
-          }
-        }
-
-        i++
-      }
-    }
+    checkNoDoubleRowGaps(rowsGridBuilder.grid)
   }
 
   /**
    * According to https://plugins.jetbrains.com/docs/intellij/layout.html#checkboxes-and-radio-buttons
    * space between label and CheckBox/RadioButton should be increased
    */
-  private fun isLabelGap(cellAfterLabel: CellBaseImpl<*>?): Boolean {
-    val component = (cellAfterLabel as? CellImpl<*>)?.component
+  private fun isLabelGap(cellAfterLabel: GridFormCell?): Boolean {
+    val component = (cellAfterLabel as? GridFormComponentCell)?.component
     return !(component is JCheckBox || component is JRadioButton)
   }
 
@@ -166,7 +140,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, private val dialogPanelConf
     }
   }
 
-  private fun checkRow(row: RowImpl): Boolean {
+  private fun checkRow(row: GridFormRow): Boolean {
     if (row.cells.isEmpty()) {
       errorInInternalOrLogWarn("Row should not be empty", row.creationStackTrace)
       return false
@@ -184,28 +158,27 @@ internal class PanelBuilder(val rows: List<RowImpl>, private val dialogPanelConf
     }
   }
 
-  private fun buildRow(cells: List<CellBaseImpl<*>?>,
+  private fun buildRow(cells: List<GridFormCell?>,
                        firstCellIndent: Int,
                        maxColumnsCount: Int,
-                       panel: DialogPanel,
                        builder: RowsGridBuilder) {
     for ((cellIndex, cell) in cells.withIndex()) {
       val lastCell = cellIndex == cells.size - 1
       val width = if (lastCell) maxColumnsCount - cellIndex else 1
       val leftGap = if (cellIndex == 0) firstCellIndent else 0
-      val isLabel = cell is CellImpl<*> && (cell.component.getClientProperty(DslComponentProperty.ROW_LABEL) == true ||
-                                            cell.component.getClientProperty(DslComponentPropertyInternal.CELL_LABEL) == true)
+      val isLabel = cell is GridFormComponentCell && (cell.component.getClientProperty(DslComponentProperty.ROW_LABEL) == true ||
+                                                      cell.component.getClientProperty(DslComponentPropertyInternal.CELL_LABEL) == true)
 
-      buildCell(cell, isLabel && isLabelGap(cells.getOrNull(cellIndex + 1)), leftGap, lastCell, width, panel, builder)
+      buildCell(cell, isLabel && isLabelGap(cells.getOrNull(cellIndex + 1)), leftGap, lastCell, width, builder)
     }
   }
 
-  private fun buildCell(cell: CellBaseImpl<*>?, isLabelGap: Boolean, leftGap: Int, lastCell: Boolean, width: Int,
-                        panel: DialogPanel, builder: RowsGridBuilder) {
+  private fun buildCell(cell: GridFormCell?, isLabelGap: Boolean, leftGap: Int, lastCell: Boolean, width: Int,
+                        builder: RowsGridBuilder) {
     val rightGap = getRightGap(cell, lastCell, isLabelGap)
 
     when (cell) {
-      is CellImpl<*> -> {
+      is GridFormComponentCell -> {
         val gaps = cell.customGaps ?: getComponentGaps(leftGap, rightGap, cell.component, spacingConfiguration)
         val commentRight = cell.commentRight
         val contextHelpLabel = cell.contextHelpLabel
@@ -218,7 +191,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, private val dialogPanelConf
         } else {
           if (cell.verticalAlign == VerticalAlign.FILL) {
             log.error("Vertical align FILL is not supported for cells with right comment or context help, commentRight = " +
-                      "${commentRight?.userText}, contextHelp = ${cell.contextHelpInfo?.description}")
+                      "${commentRight?.userText}, contextHelp = ${cell.contextHelpDescription}")
           }
 
           val subGridBuilder = builder.subGridBuilder(width = width, horizontalAlign = cell.horizontalAlign, verticalAlign = cell.verticalAlign,
@@ -241,26 +214,26 @@ internal class PanelBuilder(val rows: List<RowImpl>, private val dialogPanelConf
           }
         }
       }
-      is PanelImpl -> {
+      is GridFormPanelCell -> {
         // todo visualPaddings
         val gaps = cell.customGaps ?: UnscaledGaps(left = leftGap, right = rightGap)
-        val subGrid = builder.subGrid(width = width, horizontalAlign = cell.horizontalAlign, verticalAlign = cell.verticalAlign,
-                                      resizableColumn = cell.resizableColumn, gaps = gaps)
+        val subGridBuilder = builder.subGridBuilder(width = width, horizontalAlign = cell.horizontalAlign,
+                                                    verticalAlign = cell.verticalAlign,
+                                                    resizableColumn = cell.resizableColumn, gaps = gaps)
 
-        val subBuilder = PanelBuilder(cell.rows, dialogPanelConfig, cell.spacingConfiguration, panel, subGrid)
+        val subBuilder = PanelBuilder(cell.rows, cell.spacingConfiguration, subGridBuilder)
         subBuilder.build()
       }
-      is PlaceholderBaseImpl -> {
+      is GridFormDeferredCell -> {
         val gaps = cell.customGaps ?: UnscaledGaps(left = leftGap, right = rightGap)
         if (cell.resizableColumn) {
           builder.addResizableColumn()
         }
         val constraints = builder.constraints(width = width, horizontalAlign = cell.horizontalAlign, verticalAlign = cell.verticalAlign,
                                               gaps = gaps)
-        cell.init(panel, constraints, spacingConfiguration)
+        cell.place(constraints)
       }
-      // todo revert back to null after migrating to Kotlin 1.7.21, see KT-45474
-      else -> {
+      null -> {
         builder.skip(1)
       }
     }
@@ -276,7 +249,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, private val dialogPanelConf
     }
   }
 
-  private fun getRightGap(cell: CellBaseImpl<*>?, lastCell: Boolean, isLabelGap: Boolean): Int {
+  private fun getRightGap(cell: GridFormCell?, lastCell: Boolean, isLabelGap: Boolean): Int {
     if (cell == null) {
       return 0
     }
@@ -301,15 +274,15 @@ internal class PanelBuilder(val rows: List<RowImpl>, private val dialogPanelConf
   /**
    * Appends row with cell labels, which are marked as [LabelPosition.TOP]
    */
-  private fun buildLabelRow(cells: List<CellBaseImpl<*>?>,
+  private fun buildLabelRow(cells: List<GridFormCell?>,
                             firstCellIndent: Int,
                             maxColumnsCount: Int,
                             layout: RowLayout,
                             builder: RowsGridBuilder) {
     val columnsAndLabels = cells.mapIndexedNotNull { index, cell ->
-      val cellImpl = cell as? CellImpl<*>
-      val label = cellImpl?.label
-      if (label == null || cellImpl.labelPosition != LabelPosition.TOP ||
+      val componentCell = cell as? GridFormComponentCell
+      val label = componentCell?.label
+      if (label == null || componentCell.labelPosition != LabelPosition.TOP ||
           (layout == RowLayout.LABEL_ALIGNED && index > 1)) {
         null
       }
@@ -325,14 +298,14 @@ internal class PanelBuilder(val rows: List<RowImpl>, private val dialogPanelConf
   /**
    * Appends row with cell comments
    */
-  private fun buildCommentRow(cells: List<CellBaseImpl<*>?>,
+  private fun buildCommentRow(cells: List<GridFormCell?>,
                               firstCellIndent: Int,
                               maxColumnsCount: Int,
                               layout: RowLayout,
                               builder: RowsGridBuilder) {
     var columnsAndComments = cells.mapIndexedNotNull { index, cell ->
-      val cellImpl = cell as? CellImpl<*>
-      val comment = cellImpl?.comment
+      val componentCell = cell as? GridFormComponentCell
+      val comment = componentCell?.comment
       if (comment == null) {
         null
       }
@@ -383,14 +356,14 @@ internal class PanelBuilder(val rows: List<RowImpl>, private val dialogPanelConf
     builder.row()
   }
 
-  private fun getAdditionalHorizontalIndent(cell: CellBaseImpl<*>?): Int {
-    return if (cell is CellImpl<*> && cell.viewComponent is JToggleButton)
+  private fun getAdditionalHorizontalIndent(cell: GridFormCell?): Int {
+    return if (cell is GridFormComponentCell && cell.viewComponent is JToggleButton)
       spacingConfiguration.horizontalToggleButtonIndent
     else
       0
   }
 
-  private fun getRowsGaps(rows: List<RowImpl>): List<UnscaledGapsY> {
+  private fun getRowsGaps(rows: List<GridFormRow>): List<UnscaledGapsY> {
     val result = mutableListOf<UnscaledGapsY>()
 
     for ((i, row) in rows.withIndex()) {
@@ -414,7 +387,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, private val dialogPanelConf
     return result
   }
 
-  private fun getRowGaps(row: RowImpl, first: Boolean, last: Boolean): UnscaledGapsY {
+  private fun getRowGaps(row: GridFormRow, first: Boolean, last: Boolean): UnscaledGapsY {
     row.customGaps?.let {
       return it
     }
