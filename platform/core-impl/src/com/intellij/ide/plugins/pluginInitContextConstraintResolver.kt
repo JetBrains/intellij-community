@@ -179,7 +179,8 @@ private class PluginSetConstraintsResolver(
   }
 
   private fun sequenceAllDependenciesOfCandidateIncludingCompatibility(candidate: IdeaPluginDescriptorImpl): Sequence<DependencyRef> {
-    return PluginDependencyAnalysis.sequenceStrictDependencies(candidate) + initContext.provideCompatibilityDependencies(candidate, pluginSet)
+    return PluginDependencyAnalysis.sequenceStrictDependencies(candidate) +
+           initContext.provideCompatibilityDependencies(candidate, pluginSet)
   }
 
   /**
