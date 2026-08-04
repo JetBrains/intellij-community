@@ -624,7 +624,7 @@ class PyTypeInferenceCspTest : PyCodeInsightTestCase() {
 
   @TestFor(issues = ["PY-91194"])
   @Test
-  fun `test Performance of combination of overloads and control flow and csp`() = test("""
+  fun `Performance of combination of overloads and control flow and csp`() = test("""
     class Solution:
         def maxProduct(self, nums: list[int]) -> int:
             result = max(nums)
@@ -645,6 +645,15 @@ class PyTypeInferenceCspTest : PyCodeInsightTestCase() {
                 result = max(result, cur_max, cur_min)
     
             return result
+    """.trimIndent())
+
+  @TestFor(issues = ["PY-87976"])
+  @Test
+  fun `Type variable should be passed to the return type unsolved`() = test("""
+    from typing import Callable, assert_type
+    def f[T]() -> Callable[[T], T]: ...
+    fn = f()
+    assert_type(fn(1), int)
     """.trimIndent())
 
 }
