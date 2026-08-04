@@ -5,11 +5,13 @@ import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
 import com.intellij.python.junit5Tests.framework.env.PythonBinaryPath
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pytools.runtime.PyToolRuntime
+import com.intellij.python.uv.backend.cli.uv.UvInitKind
 import com.intellij.python.uv.backend.runtime.uvCli
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.getOrThrow
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -18,8 +20,11 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInfo
 import org.junit.jupiter.api.io.TempDir
+import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.exists
+import kotlin.io.path.isDirectory
+import kotlin.io.path.name
 import kotlin.time.Duration.Companion.seconds
 
 @PyEnvTestCase
@@ -76,6 +81,33 @@ class UvCliTest {
   fun testGetVersion() = timeoutRunBlocking {
     val version = myRuntime.uvCli().getVersion().getOrThrow()
     assertTrue(version.isNotBlank())
+  }
+
+  /**
+   * Covers PY-91393: `init(kind = PACKAGE)` must scaffold a `src/`-layout package (mirroring
+   * Hatch's `src` layout) rather than the default flat `main.py`. This is the path
+   * `EnvironmentCreatorUv.createPythonModuleStructure` relies on so that the welcome `main.py`
+   * later created by the new-project wizard lands in `src/` instead of the project root.
+   */
+  @Test
+  fun testInitPackagedCreatesSrcLayout(@TempDir packagedTempDir: Path): Unit = timeoutRunBlocking(60.seconds) {
+    // GIVEN a fresh, empty project directory
+    val packagedProjectPath = packagedTempDir.toRealPath().resolve("packaged_project")
+    Files.createDirectories(packagedProjectPath)
+
+    // WHEN initializing with --package
+    uvContext.globalRuntime.withWorkingDirectory(packagedProjectPath).uvCli().init(kind = UvInitKind.PACKAGE).getOrThrow()
+
+    // THEN uv creates a src/ package layout and no flat root main.py
+    assertSrcPackageLayout(packagedProjectPath)
+  }
+
+  private fun assertSrcPackageLayout(projectPath: Path) {
+    val srcDir = projectPath.resolve("src")
+    assertTrue(srcDir.isDirectory()) { "expected a src/ directory after init(kind = PACKAGE)" }
+    assertFalse(projectPath.resolve("main.py").exists()) { "packaged layout must not create a root main.py" }
+    val hasPackageInit = Files.walk(srcDir).use { paths -> paths.anyMatch { it.name == "__init__.py" } }
+    assertTrue(hasPackageInit) { "expected a package __init__.py under src/" }
   }
 
   @Test
