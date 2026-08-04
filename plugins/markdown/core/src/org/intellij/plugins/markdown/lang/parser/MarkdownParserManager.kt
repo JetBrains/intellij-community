@@ -30,9 +30,10 @@ class MarkdownParserManager: Disposable {
     if (info != null && info.bufferHash == buffer.hashCode() && info.buffer == buffer) {
       return info.tree
     }
+    val stringBuffer = buffer as? String ?: buffer.toString()
     val parseResult = createMarkdownParser(flavour).parse(
       MarkdownElementTypes.MARKDOWN_FILE,
-      object : BombedCharSequence(buffer) {
+      object : BombedCharSequence(stringBuffer) {
         override fun checkCanceled() {
           ProgressManager.checkCanceled()
         }

@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.lang.parser.at
 
+import com.intellij.testFramework.PerformanceUnitTest
+import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import org.assertj.core.api.Assertions.assertThat
 import org.intellij.markdown.flavours.gfm.GFMFlavourDescriptor
 import org.intellij.markdown.lexer.GeneratedLexer
@@ -68,6 +70,18 @@ class MarkdownAtPathLexerTest {
     assertThat(lexer.state).isNotZero()
     assertThat(lexer.advance()).isNotNull
     assertThat(lexer.state).isZero()
+  }
+
+  @Test
+  @PerformanceUnitTest
+  fun `splits paths in a large text token`() {
+    val text = buildString {
+      repeat(20_000) { append("thread line with @path/to/file.md and ordinary text\n") }
+    }
+
+    Benchmark.newBenchmark("split @ paths in a large Markdown text token") {
+      createLexer(text).tokens(text)
+    }.start()
   }
 
   private fun createLexer(text: String): MarkdownAtPathLexer {

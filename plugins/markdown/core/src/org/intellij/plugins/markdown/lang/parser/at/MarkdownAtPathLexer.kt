@@ -68,6 +68,7 @@ class MarkdownAtPathLexer(private val delegate: MarkdownLexer) : GeneratedLexer 
   private data class Segment(val type: IElementType, val start: Int, val end: Int)
 
   companion object {
-    private val PATH = Regex("(?<![\\w@])@[\\w./-]*")
+    // The possessive quantifier prevents backtracking while consuming the path.
+    private val PATH = Regex("""(?<![\w@])@[\w./-]*+""")
   }
 }
