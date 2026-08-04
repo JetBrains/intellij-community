@@ -59,6 +59,10 @@
     {
       "id": "Junit4Converter",
       "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "UseOfObsoleteAssert",
+      "codeQualityCategory": "Code Style"
     }
   ]
 }

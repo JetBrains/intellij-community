@@ -1163,6 +1163,14 @@
     {
       "id": "IllegalIdentifier",
       "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ConvertRangeCheckToTwoComparisons",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "KotlinMisorderedAssertEqualsArguments",
+      "codeQualityCategory": "Reliability"
     }
   ]
 }
