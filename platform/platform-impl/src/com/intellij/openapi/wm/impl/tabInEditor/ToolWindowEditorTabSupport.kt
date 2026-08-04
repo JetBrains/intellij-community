@@ -14,24 +14,30 @@ import javax.swing.Icon
 @ApiStatus.Internal
 interface ToolWindowEditorTabSupport {
   /**
-   * Filters the provided list of tool window tab [contents], returning only those that are allowed to be closed.
+   * Filters the provided list of tool window tab [contents], returning only those that are allowed
+   * to be closed.
    *
-   * This method is called before closing one or multiple tool window tabs in the editor.
-   * Implementations can use this to perform pre-close checks.
+   * This method is called before tool window tabs are closed in the editor.
+   * It is used to perform pre-close checks and exclude tabs that must remain open.
+   *
+   * **Contract:**
+   * 1. All items in [contents] belong to the same tool window as this [ToolWindowEditorTabSupport].
+   * 2. Every item in [contents] was accepted by [canBeMovedToEditor] when it was moved to the editor.
    */
   @RequiresEdt
   fun filterTabsToClose(project: Project, contents: List<Content>): List<Content> = contents
 
   /**
-   * Checks whether the given tool window tab [content] may be moved to the editor area as a tool window editor tab.
+   * Returns whether the given tool window tab [content] may be moved to the editor area.
    */
   @RequiresEdt
   fun canBeMovedToEditor(content: Content): Boolean
 
   /**
-   * Returns the current tab presentation and subsequent presentation updates.
+   * Returns a flow containing the current tab presentation and all subsequent presentation updates.
    *
-   * **Contract:** this method is called only for [content] that [canBeMovedToEditor] accepted at the moment the tab was moved to the editor.
+   * **Contract:** this method is called only for [content] that was accepted by
+   * [canBeMovedToEditor] when it was moved to the editor.
    */
   fun getTabPresentationFlow(project: Project, content: Content): Flow<ToolWindowEditorTabPresentation>
 }
