@@ -74,7 +74,7 @@ internal class KDocMissingDocumentationInspection : KotlinApplicableInspectionBa
             element: KtNamedDeclaration,
             updater: ModPsiUpdater,
         ) {
-            element.addBefore(KDocElementFactory(project).createKDocFromText("/**\n* \n*/\n"), element.firstChild)
+            element.addBefore(KDocElementFactory(project).createKDocFromText("/**\n* \n*/"), element.firstChild)
 
             val section = element.firstChild.getChildOfType<KDocSection>() ?: return
             val asterisk = section.firstChild

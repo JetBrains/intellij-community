@@ -9890,6 +9890,16 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("annotatedClass.kt")
+        public void testAnnotatedClass() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/kdocMissingDocumentation/annotatedClass.kt");
+        }
+
+        @TestMetadata("enumEntry.kt")
+        public void testEnumEntry() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/kdocMissingDocumentation/enumEntry.kt");
+        }
+
         @TestMetadata("funWithKDoc.kt")
         public void testFunWithKDoc() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/kdocMissingDocumentation/funWithKDoc.kt");
@@ -9913,6 +9923,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         @TestMetadata("publicClass.kt")
         public void testPublicClass() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/kdocMissingDocumentation/publicClass.kt");
+        }
+
+        @TestMetadata("topLevelProperty.kt")
+        public void testTopLevelProperty() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/kdocMissingDocumentation/topLevelProperty.kt");
         }
 
         @TestMetadata("withIndentation.kt")
