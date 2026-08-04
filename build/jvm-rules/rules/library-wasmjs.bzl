@@ -67,6 +67,12 @@ wasmjs_library = rule(
             doc = """Value for the compiler's `-ir-output-name`: the klib uniqueName, which determines the
               per-module JS/Wasm file names emitted by (multimodule) linking. Defaults to `module_name`.""",
         ),
+        "npm_packages": attr.string_keyed_label_dict(
+            allow_files = True,
+            doc = """Bare import specifier -> npm package files (an http_archive exposing the `//:package`
+              filegroup of BUILD.npm.bazel) required at runtime by this library's own code; the npm packages
+              of dependencies are propagated automatically.""",
+        ),
         "_wasmjs_builder": attr.label(
             default = "//kotlin-builder-wasmjs:kotlin-builder-wasmjs_deploy.jar",
             allow_single_file = True,

@@ -174,4 +174,19 @@ use_repo(
     "jps_dynamic_deps_community",
 )
 
+# Hermetic node/npm used by the KMP resolver (//fleet/build/rules:kmp.bzl) to resolve
+# the NPM dependencies declared by the `package.json` embedded in KMP klibs.
+bazel_dep(name = "rules_nodejs", version = "6.7.4")
+
+node = use_extension("@rules_nodejs//nodejs:extensions.bzl", "node")
+use_repo(
+    node,
+    "nodejs_darwin_amd64",
+    "nodejs_darwin_arm64",
+    "nodejs_linux_amd64",
+    "nodejs_linux_arm64",
+    "nodejs_windows_amd64",
+    "nodejs_windows_arm64",
+)
+
 include("//:fleet/kmp.MODULE.bazel")

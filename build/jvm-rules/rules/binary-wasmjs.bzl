@@ -1,5 +1,5 @@
 load("//:rules/common-attrs.bzl", "add_dicts", "common_toolchains")
-load("//:rules/impl/compile-wasmjs.bzl", "KtWasmJsInfo", "wasmjs_link_action")
+load("//:rules/impl/compile-wasmjs.bzl", "KtWasmJsInfo", "merged_npm_packages", "wasmjs_link_action")
 load("//:rules/impl/kotlinc-options.bzl", "KotlincExtraOptionsInfo", "KotlincOptions")
 load("//:rules/impl/transitions.bzl", "jvm_platform_transition", "scrubbed_host_platform_transition")
 load("//:rules/opt-wasmjs.bzl", "WASM_OPT_IMPLICIT_ATTRS", "wasm_opt_action")
@@ -14,6 +14,9 @@ KtWasmJsBinaryInfo = provider(
           copied through), otherwise the plain KotlinLinkWasmJs output (`<ir_output_name>-js`).""",
         "functions_map_directory": """Directory of per-wasm-file symbol maps (wasm-opt --symbolmap), named
           `<wasm basename without extension>.txt`. None unless wasm-opt ran.""",
+        "npm_packages": """dict[str, struct(specifier, label, files)]: NPM packages required at runtime by that
+          binary, keyed by bare import specifier, merged from the transitive runtime closure of the linked
+          module (each `files` is an npm package directory whose root contains a package.json).""",
     },
 )
 
@@ -45,6 +48,7 @@ def _wasmjs_binary(ctx):
         KtWasmJsBinaryInfo(
             dist_directory = dist_dir,
             functions_map_directory = functions_map_dir,
+            npm_packages = merged_npm_packages(module_info.npm_packages.to_list(), ctx.label),
         ),
     ]
 
