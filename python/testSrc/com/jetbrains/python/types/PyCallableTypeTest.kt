@@ -700,6 +700,47 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       #└ TYPE (self: int) -> str
       """)
 
+    @TestFor(issues = ["PY-83644"])
+    @Test
+    fun `dunder call annotated as attribute is not bound`() = test("""
+      from typing import Callable
+
+      class Wrapped:
+          __call__: Callable[[int], str]
+
+      def f(w: Wrapped):
+          expr = w(1)
+      #   └ TYPE str
+      """)
+
+    @TestFor(issues = ["PY-83644"])
+    @Test
+    fun `dunder call annotated with type variable`() = test("""
+      from typing import Callable
+
+      class Wrapped[F]:
+          __call__: F
+
+      def f(w: Wrapped[Callable[[], int]]):
+          expr = w()
+      #   └ TYPE int
+      """)
+
+    @TestFor(issues = ["PY-83644"])
+    @Test
+    fun `annotated callable attribute is not bound`() = test("""
+      from typing import Callable
+
+      class C:
+          h: Callable[[int], int]
+
+      def f(c: C):
+          expr = c.h
+      #   └ TYPE (int) -> int
+          expr2 = c.h(1)
+      #   └ TYPE int
+      """)
+
     @Test
     fun `call type preserves generic parameter`() = test("""
       class MyList[T]:

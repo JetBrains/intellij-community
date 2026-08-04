@@ -36,6 +36,7 @@ import com.jetbrains.python.psi.PyUtil.isObjectClass
 import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.PyTypeProvider
 import com.jetbrains.python.psi.resolve.RatedResolveResult
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.psi.types.PyRecursiveTypeVisitor.PyTypeTraverser
 import com.jetbrains.python.psi.types.PyTypeChecker.GenericSubstitutions
 import com.jetbrains.python.psi.types.PyTypeChecker.collectTypeSubstitutions
@@ -531,8 +532,29 @@ object PyTypeUtil {
   ): PyType? {
     val memberType = getTypeOfMember(memberResolveResults, context)
     val specializedMemberType = specializeMemberType(classType, selfType, memberType, context)
+    // An annotated instance attribute holding a callable is not a descriptor, so it must not be bound to `self`.
+    if (!selfType.isDefinition() && isInstanceMember(memberResolveResults, context)) {
+      return specializedMemberType
+    }
     val memberOwner = getContainingClass(memberResolveResults)
     return bindFunction(selfType, specializedMemberType, memberOwner, context, errors)
+  }
+
+  @ApiStatus.Internal
+  @JvmStatic
+  fun isInstanceMember(
+    memberResolveResults: List<@JvmWildcard RatedResolveResult>,
+    context: TypeEvalContext,
+  ): Boolean {
+    val elements = memberResolveResults.mapNotNull { it.element }
+    val first = elements.firstOrNull() ?: return false
+    return ScopeUtil.getScopeOwner(first) !is PyClass ||
+           elements.any {
+             it is PyTargetExpression &&
+             (it.annotationValue != null || it.typeCommentAnnotation != null) &&
+             !PyTypingTypeProvider.isClassVar(it, context) &&
+             !(PyTypingTypeProvider.isFinal(it, context) && it.hasAssignedValue())
+           }
   }
 
   @ApiStatus.Internal

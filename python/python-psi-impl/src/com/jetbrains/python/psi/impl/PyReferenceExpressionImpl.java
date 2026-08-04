@@ -509,7 +509,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     boolean isFunction = specializedMemberType instanceof PyCallableType && !(specializedMemberType instanceof PyClassLikeType) ||
                          specializedMemberType instanceof PyOverloadType;
     if (isFunction) {
-      if (!selfType.isDefinition() && isInstanceMember(resolveResults, context)) {
+      if (!selfType.isDefinition() && PyTypeUtil.isInstanceMember(resolveResults, context)) {
         return specializedMemberType;
       }
       PyClass memberOwner = PyTypeUtil.getContainingClass(resolveResults);
@@ -517,20 +517,6 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     }
 
     return specializedMemberType;
-  }
-
-  private static boolean isInstanceMember(@NotNull List<? extends RatedResolveResult> resolveResults,
-                                          @NotNull TypeEvalContext context) {
-    List<PsiElement> elements = ContainerUtil.mapNotNull(resolveResults, RatedResolveResult::getElement);
-    if (elements.isEmpty()) return false;
-    if (!(ScopeUtil.getScopeOwner(elements.getFirst()) instanceof PyClass)) {
-      return true;
-    }
-    return ContainerUtil.exists(elements,
-                                element -> element instanceof PyTargetExpression target &&
-                                           (target.getAnnotationValue() != null || target.getTypeCommentAnnotation() != null) &&
-                                           !PyTypingTypeProvider.isClassVar(target, context) &&
-                                           !(PyTypingTypeProvider.isFinal(target, context) && target.hasAssignedValue()));
   }
 
   private static @Nullable Ref<PyType> getTypeFromTarget(@NotNull PsiElement target,

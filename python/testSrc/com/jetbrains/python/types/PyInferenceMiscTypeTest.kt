@@ -1106,6 +1106,27 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
       """)
 
     @Test
+    @TestFor(issues = ["PY-83644"])
+    fun `call of callable attribute returning Never terminates flow`() = test("""
+      from typing import Callable, Never, Protocol
+
+      class _WithException[F, ET](Protocol):
+          __call__: F
+          Exception: ET
+
+      class Failed(BaseException): ...
+
+      fail: _WithException[Callable[[str, bool], Never], type[Failed]]
+
+      def f() -> int:
+          try:
+              return 1
+          except TimeoutError:
+              expr = fail("boom", True)
+      #       └ TYPE Never
+      """)
+
+    @Test
     @TestFor(issues = ["PY-52930"])
     fun `exception group in except star`() = test("""
       try:
