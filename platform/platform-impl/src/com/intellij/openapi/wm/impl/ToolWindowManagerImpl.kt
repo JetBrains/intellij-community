@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "OverridingDeprecatedMember", "ReplaceNegatedIsEmptyWithIsNotEmpty",
                "PrivatePropertyName")
-@file:OptIn(FlowPreview::class)
 
 package com.intellij.openapi.wm.impl
 
@@ -71,6 +70,7 @@ import com.intellij.toolWindow.ToolWindowButtonManager
 import com.intellij.toolWindow.ToolWindowDefaultLayoutManager
 import com.intellij.toolWindow.ToolWindowEntry
 import com.intellij.toolWindow.ToolWindowEventSource
+import com.intellij.toolWindow.ToolWindowExtension
 import com.intellij.toolWindow.ToolWindowPane
 import com.intellij.toolWindow.ToolWindowPaneNewButtonManager
 import com.intellij.toolWindow.ToolWindowProperty
@@ -96,7 +96,6 @@ import com.intellij.util.ui.EDT
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.launch
@@ -1066,6 +1065,11 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
         info.order = layout.getNextOrder(paneId = info.safeToolWindowPaneId, anchor = task.anchor)
         layout.addInfo(task.id, info)
       }
+    }
+
+    // The new UI (without a ToolWindowExtension) does not have top stripes, and their presence is considered an error
+    if (isNewUi && info.anchor == ToolWindowAnchor.TOP && !ToolWindowExtension.exists) {
+      info.anchor = ToolWindowAnchor.LEFT
     }
 
     val disposable = Disposer.newDisposable(task.id)

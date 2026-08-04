@@ -287,9 +287,9 @@ internal abstract class AbstractDroppableStripe(val paneId: String, layoutManage
     }
 
     val dragButton = dragButton
-    val p = dropRectangle.location.also { SwingUtilities.convertPointToScreen(it, this) }
+    dropRectangle.location.also { SwingUtilities.convertPointToScreen(it, this) }
     val processDrop = dragButton != null && !noDrop
-    if (!isNewStripes && dragButton != null) {
+    if ((!isNewStripes || ToolWindowExtension.exists) && dragButton != null) {
       data.shouldSwapCoordinates = anchor.isHorizontal != dragButton.toolWindow.anchor.isHorizontal
     }
     data.fitSize = toFitWith ?: JBUI.emptySize()
@@ -324,9 +324,7 @@ internal abstract class AbstractDroppableStripe(val paneId: String, layoutManage
     }
 
     val visibleMoreButton = moreButton?.takeIf { it.isVisible }
-    if (visibleMoreButton != null && toFitWith != null) {
-      gap = max(0, gap - visibleMoreButton.preferredSize.height)
-    }
+    val moreButtonHeight = if (visibleMoreButton != null && toFitWith != null) visibleMoreButton.preferredSize.height else 0
     var visibleMoreButtonProcessed = false
 
     var sidesStarted = false
@@ -351,20 +349,25 @@ internal abstract class AbstractDroppableStripe(val paneId: String, layoutManage
       val isSplit = windowInfo.isSplit
 
       if (!sidesStarted && isSplit && useSplitGap) {
-        if (visibleMoreButton != null && !visibleMoreButtonProcessed) {
-          layoutMoreButton(data, visibleMoreButton, setBounds)
-          visibleMoreButtonProcessed = true
-        }
+        // Compute the drop target first, only then lay out the More button below it
+        val nonSplitEnd = data.eachY
         if (processDrop && !data.dragTargetChosen) {
           tryDroppingOnGap(data, gap, insertOrder)
         }
+        if (visibleMoreButton != null && !visibleMoreButtonProcessed) {
+          val moreY = if (data.dragTargetChosen && !data.dragToSide) data.eachY else nonSplitEnd
+          layoutMoreButton(data, visibleMoreButton, setBounds, moreY)
+          visibleMoreButtonProcessed = true
+        }
+        // The More button already consumed moreButtonHeight of the gap, so advance by the remaining (visual) gap only.
+        val layoutGap = max(0, gap - moreButtonHeight)
         if (data.horizontal) {
-          data.eachX += gap
-          data.size.width += gap
+          data.eachX += layoutGap
+          data.size.width += layoutGap
         }
         else {
-          data.eachY += gap
-          data.size.height += gap
+          data.eachY += layoutGap
+          data.size.height += layoutGap
         }
         sidesStarted = true
       }
@@ -400,12 +403,17 @@ internal abstract class AbstractDroppableStripe(val paneId: String, layoutManage
       layoutButton(data, b.asDragButton(), setBounds, shouldSwapCoordinates = false)
     }
 
-    if (visibleMoreButton != null && !visibleMoreButtonProcessed) {
-      layoutMoreButton(data, visibleMoreButton, setBounds)
-    }
-
+    // No split buttons were encountered. Compute the drop target first (eachY still at the end of the non-split group, before
+    // the More button) so a drop over the More button is highlighted above it, then place the More button below.
+    val nonSplitEnd = data.eachY
     if (!sidesStarted && processDrop && !data.dragTargetChosen) {
       tryDroppingOnGap(data, gap, -1)
+    }
+
+    if (visibleMoreButton != null && !visibleMoreButtonProcessed) {
+      // Same as in the split-gap block: below the reserved slot for a non-split drop, otherwise at the non-split end.
+      val moreY = if (data.dragTargetChosen && !data.dragToSide) data.eachY else nonSplitEnd
+      layoutMoreButton(data, visibleMoreButton, setBounds, moreY)
     }
 
     dragButton?.getComponent()?.let {
@@ -489,10 +497,10 @@ internal abstract class AbstractDroppableStripe(val paneId: String, layoutManage
     }
   }
 
-  private fun layoutMoreButton(data: LayoutData, button: MoreSquareStripeButton, setBounds: Boolean) {
+  private fun layoutMoreButton(data: LayoutData, button: MoreSquareStripeButton, setBounds: Boolean, y: Int) {
     val size = button.preferredSize
     if (setBounds) {
-      button.setBounds(data.eachX, data.eachY, data.fitSize.width, size.height)
+      button.setBounds(data.eachX, y, data.fitSize.width, size.height)
     }
     data.eachY += size.height
   }
@@ -519,7 +527,7 @@ internal abstract class AbstractDroppableStripe(val paneId: String, layoutManage
     drawRectangle.x = data.eachX
     drawRectangle.y = data.eachY
     if (isNewStripes) {
-      dragButton?.asDragButton()?.let { layoutButton(data, it, setBounds = false, shouldSwapCoordinates = false) }
+      dragButton?.asDragButton()?.let { layoutButton(data, it, setBounds = false, shouldSwapCoordinates = data.shouldSwapCoordinates) }
     }
     else {
       dragButtonImage?.let { layoutButton(data, it, setBounds = false, shouldSwapCoordinates = data.shouldSwapCoordinates) }

@@ -3,13 +3,13 @@ package com.intellij.openapi.wm.impl
 
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.ActionButtonComponent
-import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook
 import com.intellij.toolWindow.ResizeStripeManager
 import com.intellij.ui.icons.HoledIcon
 import com.intellij.ui.icons.toStrokeIcon
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.JBValue
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import java.awt.Graphics
@@ -114,7 +114,23 @@ open class SquareStripeButtonLook(private val button: AbstractSquareStripeButton
     super.paintIcon(g, actionButton, toStrokeIcon(icon, UIManager.getColor("ToolWindow.Button.selectedForeground")))
   }
 
-  override fun getButtonArc() = JBUI.CurrentTheme.Toolbar.stripeButtonArc(UISettings.getInstance().compactMode)
+  override fun getButtonArc(): JBValue = JBUI.CurrentTheme.Toolbar.stripeButtonArc(UISettings.getInstance().compactMode)
+
+  open fun paintDraggingButton(g: Graphics, isLeft: Boolean) {
+    val areaSize = button.size.also {
+      JBInsets.removeFrom(it, button.insets)
+      JBInsets.removeFrom(it, getIconPadding(isLeft))
+    }
+
+    val color = JBUI.CurrentTheme.ToolWindow.DragAndDrop.BUTTON_FLOATING_BACKGROUND
+    val rect = Rectangle(areaSize)
+    paintLookBackground(g, rect, color)
+    val icon = button.icon
+    val x = (areaSize.width - icon.iconWidth) / 2
+    val y = (areaSize.height - icon.iconHeight) / 2
+    paintIcon(g, button, icon, x, y)
+    paintLookBorder(g, rect, color)
+  }
 }
 
 private fun centerIcon(rect: Rectangle, icon: Icon): Point {

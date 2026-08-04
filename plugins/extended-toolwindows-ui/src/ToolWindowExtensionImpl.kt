@@ -12,10 +12,14 @@ import com.intellij.toolWindow.StripeButtonUi
 import com.intellij.toolWindow.ToolWindowExtension
 import com.intellij.ui.icons.toStrokeIcon
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.ui.JBInsets
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import java.awt.Color
 import java.awt.Dimension
 import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.Rectangle
 import javax.swing.Icon
 import javax.swing.UIManager
 
@@ -130,6 +134,28 @@ private class SquareStripeButtonLookVerticalText(button: SquareStripeButton) : S
         }
       }
     }
+  }
+
+  override fun paintDraggingButton(g: Graphics, isLeft: Boolean) {
+    val color = JBUI.CurrentTheme.ToolWindow.DragAndDrop.BUTTON_FLOATING_BACKGROUND
+    val iconPadding = getIconPadding(isLeft)
+    val areaSize = button.size.also {
+      JBInsets.removeFrom(it, button.insets)
+      JBInsets.removeFrom(it, iconPadding)
+    }
+    val rect = Rectangle(areaSize)
+    paintLookBackground(g, rect, color)
+
+    val g2 = g.create() as Graphics2D
+    try {
+      g2.translate(-(button.insets.left + iconPadding.left), -(button.insets.top + iconPadding.top))
+      paintIcon(g2, button, button.icon)
+    }
+    finally {
+      g2.dispose()
+    }
+
+    paintLookBorder(g, rect, color)
   }
 
   override fun getPreferredSize(size: Dimension): Dimension {

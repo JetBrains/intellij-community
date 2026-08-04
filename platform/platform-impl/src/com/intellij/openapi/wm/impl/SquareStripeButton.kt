@@ -41,7 +41,6 @@ import com.intellij.ui.icons.toStrokeIcon
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.ui.JBDimension
-import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
@@ -75,21 +74,7 @@ abstract class AbstractSquareStripeButton(
   }
 
   fun paintDraggingButton(g: Graphics, isLeft: Boolean) {
-    val areaSize = size.also {
-      JBInsets.removeFrom(it, insets)
-      JBInsets.removeFrom(it, SquareStripeButtonLook.getIconPadding(isLeft))
-    }
-
-    val color = JBUI.CurrentTheme.ToolWindow.DragAndDrop.BUTTON_FLOATING_BACKGROUND
-    val rect = Rectangle(areaSize)
-    buttonLook.paintLookBackground(g, rect, color)
-    icon.let {
-      val x = (areaSize.width - it.iconWidth) / 2
-      val y = (areaSize.height - it.iconHeight) / 2
-      buttonLook.paintIcon(g, this, it, x, y)
-    }
-
-    buttonLook.paintLookBorder(g, rect, color)
+    (buttonLook as SquareStripeButtonLook).paintDraggingButton(g, isLeft)
   }
 }
 
@@ -106,7 +91,7 @@ class SquareStripeButton(val toolWindow: ToolWindowImpl) :
   init {
     doInit { createPopupGroup(toolWindow) }
     MouseDragHelper.setComponentDraggable(this, true)
-    setLook(SquareStripeButtonLook(this))
+    setLook(createSquareStripeButtonLook())
   }
 
   override fun paintButtonLook(g: Graphics) {

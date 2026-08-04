@@ -70,26 +70,18 @@ private class HorizontalStripe(toolBar: ToolWindowToolbar, paneId: String, ancho
   override fun isHorizontal(): Boolean = true
 
   override fun containsPoint(screenPoint: Point): Boolean {
+    // The bar itself (full width) is a drop target, so a cursor over the bar's own buttons is recognized.
+    if (toolBar.isShowing && Rectangle(toolBar.locationOnScreen, toolBar.size).contains(screenPoint)) {
+      return true
+    }
+
     val depth = max(getFirstVisibleToolWindowSize(false), JBUI.scale(40))
-    val bounds: Rectangle
-
-    if (toolBar.isShowing) {
-      // The bar is the NORTH/SOUTH sibling of the content pane, so extend the toolbar's own bounds by depth into the content.
-      bounds = Rectangle(toolBar.locationOnScreen, toolBar.size)
-      if (anchor == ToolWindowAnchor.BOTTOM) {
-        bounds.y -= depth
-      }
-      bounds.height += depth
+    val pane = bottomAnchorDropAreaComponent ?: rootPane
+    val bounds = Rectangle(pane.locationOnScreen, pane.size)
+    if (anchor == ToolWindowAnchor.BOTTOM) {
+      bounds.y += bounds.height - depth - getStatusBarHeight()
     }
-    else {
-      val pane = bottomAnchorDropAreaComponent ?: rootPane
-      bounds = Rectangle(pane.locationOnScreen, pane.size)
-      if (anchor == ToolWindowAnchor.BOTTOM) {
-        bounds.y += bounds.height - depth - getStatusBarHeight()
-      }
-      bounds.height = depth
-    }
-
+    bounds.height = depth
     return bounds.contains(screenPoint)
   }
 
