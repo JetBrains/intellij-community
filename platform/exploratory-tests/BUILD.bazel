@@ -39,8 +39,6 @@ jvm_library(
         "//platform/workspace/jps/tests:tests_test_lib",
         "//platform/workspace/storage/tests",
         "//platform/workspace/storage/tests:tests_test_lib",
-        "//plugins/properties/property-tests:propertyBased-tests",
-        "//plugins/properties/property-tests:propertyBased-tests_test_lib",
         "//plugins/yaml/backend:backend-tests",
         "//plugins/yaml/backend:backend-tests_test_lib",
     ],
