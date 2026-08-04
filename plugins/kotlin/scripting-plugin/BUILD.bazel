@@ -42,6 +42,16 @@ jvm_provided_library(
     lib = "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
 )
 
+jvm_provided_library(
+    name = "libraries_kotlinc_libraries-kotlinc-kotlin-scripting-common_provided",
+    lib = "//libraries/kotlinc/kotlin-scripting-common:libraries-kotlinc-kotlin-scripting-common",
+)
+
+jvm_provided_library(
+    name = "libraries_kotlinc_libraries-kotlinc-kotlin-scripting-jvm_provided",
+    lib = "//libraries/kotlinc/kotlin-scripting-jvm:libraries-kotlinc-kotlin-scripting-jvm",
+)
+
 jvm_library(
     name = "jsr223-plugin",
     srcs = glob(
@@ -66,6 +76,8 @@ jvm_library(
         "//plugins/kotlin/build-tools-runtime",
         "//platform/util",
         ":libraries_kotlinc_libraries-kotlinc-kotlin-compiler-common_provided",
+        ":libraries_kotlinc_libraries-kotlinc-kotlin-scripting-common_provided",
+        ":libraries_kotlinc_libraries-kotlinc-kotlin-scripting-jvm_provided",
     ],
 )
 
@@ -87,6 +99,10 @@ jvm_library(
         "//platform/util:util_test_lib",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
+        "//libraries/kotlinc/kotlin-scripting-common:libraries-kotlinc-kotlin-scripting-common",
+        "//libraries/kotlinc/kotlin-scripting-common:libraries-kotlinc-kotlin-scripting-common_test_lib",
+        "//libraries/kotlinc/kotlin-scripting-jvm:libraries-kotlinc-kotlin-scripting-jvm",
+        "//libraries/kotlinc/kotlin-scripting-jvm:libraries-kotlinc-kotlin-scripting-jvm_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.jsr223.plugin` end
