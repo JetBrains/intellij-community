@@ -141,6 +141,7 @@ object UniversalFileChooser {
     private val descriptor: FileChooserDescriptor,
     private val contributors: Collection<UniversalFileChooserContributor> = UniversalFileChooserContributor.EP_NAME.extensionList,
     private val persistLocation: Boolean = true,
+    private val preselectPath: Path? = null
   ) : DialogWrapper(project, parent, true, IdeModalityType.IDE), FileChooserDialog, PathChooserDialog {
     private lateinit var mainPanel: Panel
 
@@ -171,7 +172,7 @@ object UniversalFileChooser {
     }
 
     override fun createCenterPanel(): JComponent {
-      mainPanel = Panel(this.disposable, descriptor, project, ::doOKAction, ::setOKActionEnabled, contributors)
+      mainPanel = Panel(this.disposable, descriptor, project, ::doOKAction, ::setOKActionEnabled, contributors, preselectPath = preselectPath)
       return mainPanel
     }
 
@@ -202,7 +203,8 @@ object UniversalFileChooser {
     private val okEnabledUpdater: (Boolean) -> Unit = {},
     contributors: Collection<UniversalFileChooserContributor> = UniversalFileChooserContributor.EP_NAME.extensionList,
     private val extraToolbarActions: ActionGroup = DefaultActionGroup(),
-    private val extraPopupActions: ActionGroup = DefaultActionGroup()
+    private val extraPopupActions: ActionGroup = DefaultActionGroup(),
+    preselectPath: Path? = null
   ) : JPanel(), FileBrowserPanel {
 
     companion object {
@@ -275,7 +277,7 @@ object UniversalFileChooser {
         tabbedPane
       }
 
-      preselect(null)
+      preselect(preselectPath)
       updateOkEnabled()
 
       if (leftPanel) {
