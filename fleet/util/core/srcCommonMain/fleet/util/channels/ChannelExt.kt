@@ -87,3 +87,18 @@ fun <T> channels(
 ): Pair<SendChannel<T>, ReceiveChannel<T>> = Channel<T>(capacity, onBufferOverflow = onBufferOverlow).split()
 
 val <T> ChannelResult<T>.isFull: Boolean get() = isFailure && !isClosed
+
+suspend fun <T> SendChannel<T>.writeAll(channel: ReceiveChannel<T>, closeAfter: Boolean = true) {
+  if (closeAfter) {
+    use {
+      for (blob in channel) {
+        send(blob)
+      }
+    }
+  }
+  else {
+    for (blob in channel) {
+      send(blob)
+    }
+  }
+}
