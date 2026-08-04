@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.projectView.frontend.tests
+package com.intellij.platform.projectView.tests
 
 import com.intellij.ide.projectView.impl.ProjectViewPane
 import com.intellij.openapi.application.EDT
@@ -155,7 +155,7 @@ internal class ProjectViewPaneTester internal constructor(
 }
 
 /**
- * Resolves a repo-relative [relativePath] (e.g. `platform/projectView/frontend/testData/foo`) to an
+ * Resolves a repo-relative [relativePath] (e.g. `platform/projectView/tests/testData/foo`) to an
  * absolute path, trying the ultimate root first and then the `community/` sub-root — the standard
  * JUnit5 test-resource lookup (see `JUnit5ProjectFixtureTest`).
  */

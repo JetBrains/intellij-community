@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.projectView.frontend.tests
+package com.intellij.platform.projectView.tests
 
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
@@ -26,7 +26,7 @@ import kotlin.time.Duration.Companion.seconds
 @TestApplication
 internal class ProjectViewPaneTest : AbstractProjectViewPaneTest() {
   companion object {
-    private const val BLUEPRINT = "platform/projectView/frontend/testData/paneTreeExample"
+    private const val BLUEPRINT = "platform/projectView/tests/testData/paneTreeExample"
     private val blueprint: Path by lazy { projectViewTestDataPath(ProjectViewPaneTest::class.java, BLUEPRINT) }
 
     // Pin the project and source-root directory names so the rendered tree is deterministic.

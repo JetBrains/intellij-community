@@ -1728,7 +1728,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/projectView/shared/intellij.platform.projectView.iml" filepath="$PROJECT_DIR$/platform/projectView/shared/intellij.platform.projectView.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/projectView/backend/intellij.platform.projectView.backend.iml" filepath="$PROJECT_DIR$/platform/projectView/backend/intellij.platform.projectView.backend.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/projectView/frontend/intellij.platform.projectView.frontend.iml" filepath="$PROJECT_DIR$/platform/projectView/frontend/intellij.platform.projectView.frontend.iml" />
-      <module fileurl="file://$PROJECT_DIR$/platform/projectView/frontend/intellij.platform.projectView.frontend.tests.iml" filepath="$PROJECT_DIR$/platform/projectView/frontend/intellij.platform.projectView.frontend.tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/projectView/tests/intellij.platform.projectView.tests.iml" filepath="$PROJECT_DIR$/platform/projectView/tests/intellij.platform.projectView.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/rd-platform-community/intellij.platform.rd.community.iml" filepath="$PROJECT_DIR$/platform/rd-platform-community/intellij.platform.rd.community.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/recentFiles/shared/intellij.platform.recentFiles.iml" filepath="$PROJECT_DIR$/platform/recentFiles/shared/intellij.platform.recentFiles.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/recentFiles/backend/intellij.platform.recentFiles.backend.iml" filepath="$PROJECT_DIR$/platform/recentFiles/backend/intellij.platform.recentFiles.backend.iml" />

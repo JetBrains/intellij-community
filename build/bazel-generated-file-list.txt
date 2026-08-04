@@ -945,6 +945,7 @@ platform/projectModel-impl
 platform/projectView/backend
 platform/projectView/frontend
 platform/projectView/shared
+platform/projectView/tests
 platform/rd-platform-community
 platform/recentFiles/backend
 platform/recentFiles/frontend
