@@ -222,7 +222,7 @@
       <group id="Internal.UI.KotlinUiDsl" popup="true">
         <action id="GridLayoutTestAction" internal="true" class="com.intellij.internal.ui.gridLayoutTestAction.GridLayoutTestAction"/>
       </group>
-      <action id="ComponentPanelTestAction" internal="true" class="com.intellij.internal.ui.ComponentPanelTestAction"/>
+      <action id="ComponentPanelTestAction" internal="true" class="com.intellij.internal.ui.componentPanelTestAction.ComponentPanelTestAction"/>
       <action id="WrapLayoutTestAction" internal="true" class="com.intellij.internal.ui.WrapLayoutTestAction"/>
       <action id="UIFreeze" internal="true" class="com.intellij.internal.UIFreezeAction"/>
       <action id="PooledFreeze" internal="true" class="com.intellij.internal.PooledFreezeAction"/>
