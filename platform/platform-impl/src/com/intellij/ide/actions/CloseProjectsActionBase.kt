@@ -13,6 +13,7 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.ProjectFrameHelper
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.ui.ComponentUtil
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * @author Konstantin Bulenkov
@@ -21,9 +22,13 @@ abstract class CloseProjectsActionBase : DumbAwareAction(), ActionRemoteBehavior
   init {
     templatePresentation.isApplicationScope = true
   }
-
   override fun actionPerformed(e: AnActionEvent) {
     val currentProject = getProjectEvenIfNotInitialized(e) ?: return
+
+    // This needs to be called early because once the current project is disposed we lose the ability to check on things like
+    // ProjectFrameCapability
+    val shouldReopenWelcomeFrameAfterClose = shouldReopenWelcomeFrameAfterClose(currentProject)
+
     ProjectManager.getInstance().openProjects
       .filter { canClose(it, currentProject) }
       .forEach {
@@ -39,8 +44,13 @@ abstract class CloseProjectsActionBase : DumbAwareAction(), ActionRemoteBehavior
         RecentProjectsManager.getInstance().updateLastProjectPath()
       }
 
-    showWelcomeFrameIfNeeded()
+    if (shouldReopenWelcomeFrameAfterClose) {
+      showWelcomeFrameIfNeeded()
+    }
   }
+
+  @ApiStatus.Internal
+  protected open fun shouldReopenWelcomeFrameAfterClose(project: Project): Boolean = true
 
   protected open fun showWelcomeFrameIfNeeded() {
     WelcomeFrame.showIfNoProjectOpened()
