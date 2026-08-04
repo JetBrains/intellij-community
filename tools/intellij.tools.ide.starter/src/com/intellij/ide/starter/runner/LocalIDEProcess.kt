@@ -10,7 +10,7 @@ import com.intellij.ide.starter.process.exec.ProcessExecutor
 import com.intellij.ide.starter.process.getIdeProcessIdWithRetry
 import com.intellij.ide.starter.profiler.ProfilerType
 import com.intellij.ide.starter.report.ErrorReporter
-import com.intellij.ide.starter.report.FailureDetailsOnCI
+import com.intellij.ide.starter.report.DetailsOnCI
 import com.intellij.ide.starter.report.TimeoutAnalyzer
 import com.intellij.ide.starter.runner.events.IdeAfterLaunchEvent
 import com.intellij.ide.starter.runner.events.IdeBeforeKillEvent
@@ -45,7 +45,7 @@ class LocalIDEProcess : IDEProcess {
       val stderr = getStderr()
       var ideProcessId: Long? = null
       var isRunSuccessful = true
-      val ciFailureDetails = FailureDetailsOnCI.instance.getLinkToCIArtifacts(this)?.let { "Link on CI artifacts ${it}" }
+      val ciDetails = DetailsOnCI.instance.getLinkToCIArtifacts(this)?.let { "Link on CI artifacts ${it}" }
 
       try {
         testContext.setProviderMemoryOnlyOnLinux()
@@ -132,10 +132,10 @@ class LocalIDEProcess : IDEProcess {
             throw ExecTimeoutException(
               error.messageText + System.lineSeparator() +
               error.stackTraceContent + System.lineSeparator() +
-              (ciFailureDetails ?: ""))
+              (ciDetails ?: ""))
           }
           else {
-            throw ExecTimeoutException("Timeout of IDE run '$contextName' for $runTimeout" + System.lineSeparator() + (ciFailureDetails
+            throw ExecTimeoutException("Timeout of IDE run '$contextName' for $runTimeout" + System.lineSeparator() + (ciDetails
                                                                                                                        ?: ""))
           }
         }
@@ -147,7 +147,7 @@ class LocalIDEProcess : IDEProcess {
       }
       catch (exception: Throwable) {
         isRunSuccessful = false
-        throw Exception(getErrorMessage(exception, ciFailureDetails), exception)
+        throw Exception(getErrorMessage(exception, ciDetails), exception)
       }
       finally {
         try {
@@ -159,7 +159,7 @@ class LocalIDEProcess : IDEProcess {
             }
             ideProcessId?.let { testContext.collectJBRDiagnosticFiles(it) }
 
-            val link = FailureDetailsOnCI.instance.getLinkToCIArtifacts(this)
+            val link = DetailsOnCI.instance.getLinkToCIArtifacts(this)
             TeamCityReporter.reportTestMetadata(testName = null, type = TeamCityReporter.MetadataType.LINK, flowId = null, name = "Link to Logs and artifacts", value = link.toString())
             (CIServer.instance as? TeamCityCIServer)?.addBisectMetadata()
             ErrorReporter.instance.reportErrorsAsFailedTests(this)

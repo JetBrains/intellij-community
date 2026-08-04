@@ -9,14 +9,13 @@ import com.intellij.ide.starter.ci.CIServer
 import com.intellij.ide.starter.ci.teamcity.TeamCityClient
 import com.intellij.ide.starter.config.ConfigurationStorage
 import com.intellij.ide.starter.config.useDockerContainer
-import com.intellij.ide.starter.report.FailureDetailsOnCI
+import com.intellij.ide.starter.report.DetailsOnCI
 import com.intellij.ide.starter.runner.IDERunContext
 import com.intellij.ide.starter.runner.events.IdeLaunchEvent
 import com.intellij.platform.testFramework.teamCity.TeamCityReporter
 import com.intellij.tools.ide.starter.bus.EventsBus
 import com.intellij.tools.ide.util.common.logError
 import com.intellij.tools.ide.util.common.logOutput
-import com.intellij.util.system.OS
 import com.intellij.tools.ide.util.common.replaceSpecialCharactersWithHyphens
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeoutOrNull
@@ -119,7 +118,7 @@ internal class DriverWithDetailedLogging(private val driver: Driver, logUiHierar
       }
       if (CIServer.instance.isBuildRunningOnCI) {
         runContext?.let {
-          FailureDetailsOnCI.instance.getLinkToCIArtifacts(it)?.let { link ->
+          DetailsOnCI.instance.getLinkToCIArtifacts(it)?.let { link ->
             append("Artifacts: $link\n")
           }
         }

@@ -9,8 +9,8 @@ import com.intellij.tools.ide.util.common.replaceSpecialCharactersWithHyphens
 import java.net.URI
 import java.net.URLEncoder
 
-object FailureDetailsForTeamcity : FailureDetailsOnCI {
-  override fun getFailureDetails(runContext: IDERunContext, error: Error?): String {
+object DetailsForTeamcity : DetailsOnCI {
+  override fun getDetails(runContext: IDERunContext, error: Error?): String {
 
     return if (CIServer.instance.isBuildRunningOnCI) {
       if (CIServer.instance.asTeamCity().isJetbrainsBuildserver) getFailureDetailsWithBisectLinkForCI(runContext, error)

@@ -7,10 +7,10 @@ import com.intellij.tools.ide.util.common.replaceSpecialCharactersWithHyphens
 import org.kodein.di.direct
 import org.kodein.di.instance
 
-interface FailureDetailsOnCI {
+interface DetailsOnCI {
   companion object {
-    val instance: FailureDetailsOnCI
-      get() = di.direct.instance<FailureDetailsOnCI>()
+    val instance: DetailsOnCI
+      get() = di.direct.instance<DetailsOnCI>()
 
     fun getActiveTestName(): String {
       val method = di.direct.instance<CurrentTestMethod>().get()
@@ -18,7 +18,7 @@ interface FailureDetailsOnCI {
     }
   }
 
-  fun getFailureDetails(runContext: IDERunContext, error: Error?): String =
+  fun getDetails(runContext: IDERunContext, error: Error?): String =
     "Test: ${getActiveTestName(runContext, error)}" + System.lineSeparator() +
     "You can find logs and other useful info in CI artifacts under the path ${runContext.contextName.replaceSpecialCharactersWithHyphens()}"
 

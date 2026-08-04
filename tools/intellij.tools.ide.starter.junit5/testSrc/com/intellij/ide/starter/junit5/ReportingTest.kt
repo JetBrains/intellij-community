@@ -1,7 +1,7 @@
 package com.intellij.ide.starter.junit5
 
 import com.intellij.ide.starter.junit5.config.KillOutdatedProcessesAfterEach
-import com.intellij.ide.starter.report.FailureDetailsOnCI
+import com.intellij.ide.starter.report.DetailsOnCI
 import com.intellij.ide.starter.runner.IDERunContext
 import com.intellij.ide.starter.utils.FileSystem.getFileOrDirectoryPresentableSize
 import com.intellij.ide.starter.utils.formatSize
@@ -142,8 +142,8 @@ class ReportingTest {
     }
     Mockito.doReturn(testName).`when`(runContextMock).contextName
 
-    val failureDetails = FailureDetailsOnCI.instance.getFailureDetails(runContext = runContextMock, error = null)
-    failureDetails.shouldBe("""
+    val details = DetailsOnCI.instance.getDetails(runContext = runContextMock, error = null)
+    details.shouldBe("""
       Test: $testName
       $ciMessagePrefix ${testName.replaceSpecialCharactersWithHyphens()}
     """.trimIndent())
@@ -156,8 +156,8 @@ class ReportingTest {
     }
     Mockito.doReturn(testName).`when`(runContextMock).contextName
 
-    val failureDetails = FailureDetailsOnCI.instance.getFailureDetails(runContext = runContextMock, error = null)
-    failureDetails.shouldBe("""
+    val details = DetailsOnCI.instance.getDetails(runContext = runContextMock, error = null)
+    details.shouldBe("""
       Test: $testName
       $ciMessagePrefix ${testName.replaceSpecialCharactersWithHyphens()}
     """.trimIndent())

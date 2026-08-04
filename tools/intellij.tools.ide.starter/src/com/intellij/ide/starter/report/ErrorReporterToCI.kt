@@ -120,12 +120,12 @@ object ErrorReporterToCI : ErrorReporter {
   }
 
   fun reportErrors(runContext: IDERunContext, errors: List<Error>) {
-    val failureDetailsProvider = FailureDetailsOnCI.instance
+    val detailsProvider = DetailsOnCI.instance
     for (error in errors) {
       reportError(
         error = error,
-        failureDetailsMessage = failureDetailsProvider.getFailureDetails(runContext, error),
-        urlToLogs = failureDetailsProvider.getLinkToCIArtifacts(runContext),
+        failureDetailsMessage = detailsProvider.getDetails(runContext, error),
+        urlToLogs = detailsProvider.getLinkToCIArtifacts(runContext),
         allureContextName = runContext.contextName,
       )
     }

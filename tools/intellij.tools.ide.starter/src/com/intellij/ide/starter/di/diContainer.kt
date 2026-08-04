@@ -26,7 +26,7 @@ import com.intellij.ide.starter.plugins.PluginConfigurator
 import com.intellij.ide.starter.report.AllurePath
 import com.intellij.ide.starter.report.ErrorReporter
 import com.intellij.ide.starter.report.ErrorReporterToCI
-import com.intellij.ide.starter.report.FailureDetailsOnCI
+import com.intellij.ide.starter.report.DetailsOnCI
 import com.intellij.ide.starter.report.publisher.ReportPublisher
 import com.intellij.ide.starter.report.publisher.impl.ConsoleTestResultPublisher
 import com.intellij.ide.starter.runner.CurrentTestMethod
@@ -67,7 +67,7 @@ private var _di = DI {
   bindSingleton<GlobalPaths> { StarterGlobalPaths() }
   bindSingleton<CIServer> { NoCIServer }
   bindSingleton<ErrorReporter> { ErrorReporterToCI }
-  bindSingleton<FailureDetailsOnCI> { object : FailureDetailsOnCI {} }
+  bindSingleton<DetailsOnCI> { object : DetailsOnCI {} }
   bindFactory<IDETestContext, PluginConfigurator> { testContext: IDETestContext -> PluginConfigurator(testContext) }
   bindSingleton<IdeDownloader> { PublicIdeDownloader() }
   bindSingleton<IdeInstallerFactory> { IdeInstallerFactory() }
