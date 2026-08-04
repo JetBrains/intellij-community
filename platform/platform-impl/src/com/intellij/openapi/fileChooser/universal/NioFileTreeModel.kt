@@ -42,7 +42,7 @@ class NioFileTreeModel(
 
     private fun fileName(path: Path): String {
       val contributor = UniversalFileChooserContributor.findOwner(path)
-      return contributor?.getFileName(path) ?: path.toString()
+      return contributor?.getFileName(path) ?: path.fileName?.toString() ?: path.toString()
     }
   }
 
