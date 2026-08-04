@@ -65,8 +65,7 @@ public class IdeUiServiceImpl extends IdeUiService {
 
   @Override
   public boolean isFileRecentlyChanged(Project project, VirtualFile file) {
-    IdeDocumentHistory documentHistory = IdeDocumentHistory.getInstance(project);
-    return documentHistory instanceof IdeDocumentHistoryImpl && ((IdeDocumentHistoryImpl)documentHistory).isRecentlyChanged(file);
+    return IdeDocumentHistory.getInstance(project) instanceof IdeDocumentHistoryImpl impl && impl.isRecentlyChanged(file);
   }
 
   @Override

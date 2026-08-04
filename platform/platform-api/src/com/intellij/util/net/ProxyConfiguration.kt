@@ -1,11 +1,7 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.net
 
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.util.net.ProxyConfiguration.Companion.autodetect
-import com.intellij.util.net.ProxyConfiguration.Companion.direct
-import com.intellij.util.net.ProxyConfiguration.Companion.proxy
-import com.intellij.util.net.ProxyConfiguration.Companion.proxyAutoConfiguration
 import java.net.URL
 import java.util.function.Predicate
 import java.util.regex.Pattern
@@ -31,13 +27,13 @@ sealed interface ProxyConfiguration {
     val direct: DirectProxy get() = DirectProxyData
 
     /**
-     * Automatically determine proxy settings using java system properties, OS settings or environment variables.
+     * Automatically determine proxy settings using JVM system properties, OS settings, or environment variables.
      */
     @JvmStatic
     val autodetect: AutoDetectProxy get() = AutoDetectProxyData
 
     /**
-     * @param exceptions comma-delimited list of host globs which must not be proxied, e.g. `*.domain.com,192.168.*`
+     * @param exceptions comma-delimited list of host globs that must not be proxied – e.g., `*.domain.com,192.168.*`
      */
     @JvmStatic
     fun proxy(protocol: ProxyProtocol, host: String, port: Int = protocol.defaultPort, exceptions: String = ""): StaticProxyConfiguration {
@@ -79,10 +75,7 @@ sealed interface ProxyConfiguration {
     val protocol: ProxyProtocol
     val host: String
     val port: Int
-
-    /**
-     * comma-delimited list of host globs which must not be proxied
-     */
+    /** A comma-delimited list of host globs that must not be proxied. */
     val exceptions: String
   }
 

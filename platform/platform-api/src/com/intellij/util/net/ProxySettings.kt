@@ -30,5 +30,6 @@ fun interface ProxyConfigurationProvider {
   fun getProxyConfiguration(): ProxyConfiguration
 }
 
+@Suppress("DeprecatedCallableAddReplaceWith")
 @Deprecated("Pointless; use `ProxySettings.getProxyConfiguration` directly", level = DeprecationLevel.ERROR)
 fun ProxySettings.asConfigurationProvider(): ProxyConfigurationProvider = ProxyConfigurationProvider(this::getProxyConfiguration)

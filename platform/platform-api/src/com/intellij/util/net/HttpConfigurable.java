@@ -390,8 +390,8 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
         result.add(pair(JavaProxyProperty.HTTPS_HOST, PROXY_HOST));
         result.add(pair(JavaProxyProperty.HTTPS_PORT, String.valueOf(PROXY_PORT)));
         if (putCredentials) {
-          result.add(pair(JavaProxyProperty.HTTP_USERNAME, getProxyLogin()));
-          result.add(pair(JavaProxyProperty.HTTP_PASSWORD, getPlainProxyPassword()));
+          result.add(pair("proxy.authentication.username", getProxyLogin()));
+          result.add(pair("proxy.authentication.password", getPlainProxyPassword()));
         }
       }
     }
@@ -425,8 +425,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   /** @deprecated use {@link ProxyConfiguration#buildProxyExceptionsMatcher(String)} */
   @Deprecated(forRemoval = true)
   public boolean isProxyException(URI uri) {
-    String uriHost = uri.getHost();
-    return isProxyException(uriHost);
+    return isProxyException(uri.getHost());
   }
 
   @Contract("null -> false")

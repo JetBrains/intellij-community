@@ -27,9 +27,11 @@ internal class BaseResolverExtension : GradleProjectResolverExtension {
   override fun populateModuleContentRoots(gradleModule: IdeaModule, ideModule: DataNode<ModuleData>) {}
   override fun populateModuleCompileOutputSettings(gradleModule: IdeaModule, ideModule: DataNode<ModuleData>) {}
   override fun populateModuleDependencies(gradleModule: IdeaModule, ideModule: DataNode<ModuleData>, ideProject: DataNode<ProjectData>) {}
-  override fun populateModuleTasks(gradleModule: IdeaModule,
-                                   ideModule: DataNode<ModuleData>,
-                                   ideProject: DataNode<ProjectData>): Collection<TaskData> = emptyList()
+  override fun populateModuleTasks(
+    gradleModule: IdeaModule,
+    ideModule: DataNode<ModuleData>,
+    ideProject: DataNode<ProjectData>,
+  ): Collection<TaskData> = emptyList()
   override fun getToolingExtensionsClasses(): Set<Class<*>> = linkedSetOf()
 
   override fun getExtraJvmArgs(): List<Pair<String, String>> {
@@ -38,9 +40,10 @@ internal class BaseResolverExtension : GradleProjectResolverExtension {
     return extraJvmArgs
   }
 
-  override fun getUserFriendlyError(buildEnvironment: BuildEnvironment?,
-                                    error: Throwable,
-                                    projectPath: String,
-                                    buildFilePath: String?): ExternalSystemException =
-    BaseProjectImportErrorHandler().getUserFriendlyError(buildEnvironment, error, projectPath, buildFilePath)
+  override fun getUserFriendlyError(
+    buildEnvironment: BuildEnvironment?,
+    error: Throwable,
+    projectPath: String,
+    buildFilePath: String?,
+  ): ExternalSystemException = BaseProjectImportErrorHandler().getUserFriendlyError(buildEnvironment, error, projectPath, buildFilePath)
 }

@@ -84,7 +84,6 @@ internal class ProxySettingsUi(
   private fun getMainPanel() = mainPanel
 
   init {
-    // TODO would be nice to reimplement it using bindings
     mainPanel = panel {
       row {
         systemProxyDefinedWarning = label(UIBundle.message("proxy.system.label")).applyToComponent {
@@ -382,7 +381,7 @@ internal class ProxySettingsUi(
       pluginOverrideCheckbox.isSelected = overrideProvider != null && settings.isOverrideEnabled
       if (overrideProvider != null) {
         val pluginName = settings.getProviderPluginName(overrideProvider) ?: "<unknown>".also {
-          thisLogger().error("couldn't find plugin descriptor for $overrideProvider")
+          thisLogger().error("can't find a plugin descriptor for ${overrideProvider}")
         }
         pluginOverrideCheckbox.text = UIBundle.message("proxy.settings.override.by.plugin.checkbox", pluginName)
       }
