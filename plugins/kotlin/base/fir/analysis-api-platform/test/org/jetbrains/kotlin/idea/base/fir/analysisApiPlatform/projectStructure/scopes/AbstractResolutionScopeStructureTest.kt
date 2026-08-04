@@ -20,7 +20,8 @@ import kotlin.io.path.Path
 /**
  * Tests that resolution scopes provided by [KaResolutionScopeProvider] are correct, especially with respect to scope merging.
  *
- * This test exists on the IntelliJ side for now because the union and intersection scope mergers are currently defined here (see KT-77194).
+ * This is mostly a duplicate of Analysis API `AbstractContentAndResolutionScopesProvidersTest` test from the compiler.
+ * However, the compiler test isn't able to cover various IDE-specific merging strategies, e.g., `IdeKotlinCombinableSourceAndClassRootsScopeMergeStrategy`.
  */
 abstract class AbstractResolutionScopeStructureTest : AbstractProjectStructureTest<ResolutionScopeTestProjectStructure>(
     ResolutionScopeTestProjectStructureParser,
