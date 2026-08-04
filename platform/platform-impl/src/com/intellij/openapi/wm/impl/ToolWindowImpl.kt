@@ -796,12 +796,14 @@ private val LOG = logger<ToolWindowManagerImpl>()
     ToolWindowContentUi.toggleContentPopup(contentUi!!, contentManager.value)
   }
 
-  fun createPopupGroup(skipHideAction: Boolean = false): ActionGroup {
+  fun createPopupGroup(isGearPopup: Boolean = false): ActionGroup {
     return object : ActionGroupWrapper(GearActionGroup()) {
       override fun getChildren(e: AnActionEvent?): Array<AnAction> {
         val result = mutableListOf<AnAction>()
         result.addAll(super.getChildren(e))
-        if (!skipHideAction) {
+        val hideActionIsInGearPopup = ClientProperty.isTrue(getComponentIfInitialized(),
+                                                            ToolWindowContentUi.CLEANED_TOOL_WINDOW_CONTEXT_MENUS)
+        if (isGearPopup == hideActionIsInGearPopup) {
           result.add(Separator.getInstance())
           result.add(HideAction())
         }

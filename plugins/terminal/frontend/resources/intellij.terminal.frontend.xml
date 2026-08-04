@@ -176,10 +176,10 @@
       <add-to-group group-id="TouchBarDefault_alt" anchor="last"/>
     </action>
     <action id="Terminal.RenameSession" class="com.intellij.terminal.frontend.action.TerminalRenameTabAction">
-      <add-to-group group-id="ToolWindowContextMenu" anchor="last"/>
+      <add-to-group group-id="ToolWindowTabContextMenu" anchor="first"/>
     </action>
     <action id="Terminal.MoveToEditor" class="com.intellij.terminal.frontend.action.MoveTerminalSessionToEditorAction">
-      <add-to-group group-id="ToolWindowContextMenu" anchor="last"/>
+      <add-to-group group-id="ToolWindowTabContextMenu" anchor="last"/>
     </action>
 
     <action id="Terminal.LineUp" class="com.intellij.terminal.frontend.action.TerminalLineUpAction">
@@ -207,7 +207,9 @@
 
     <group id="Terminal.ToolWindowActions">
       <reference ref="Terminal.Engine"/>
-      <action id="Terminal.AiAgents.ToggleShowAiAgentsInToolbar" class="com.intellij.terminal.frontend.action.ToggleShowAiAgentsInToolbarAction"/>
+      <action id="Terminal.AiAgents.ToggleShowAiAgentsInToolbar" class="com.intellij.terminal.frontend.action.ToggleShowAiAgentsInToolbarAction">
+        <add-to-group group-id="ToolWindowEmptySpaceContextMenu" anchor="last"/>
+      </action>
       <action id="Terminal.Settings" class="com.intellij.terminal.frontend.action.TerminalSettingsAction" icon="AllIcons.General.Settings"/>
       <action id="Terminal.Feedback" class="com.intellij.terminal.frontend.action.TerminalFeedbackAction">
         <override-text place="GoToAction"/>

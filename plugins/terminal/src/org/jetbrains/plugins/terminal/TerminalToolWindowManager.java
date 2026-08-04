@@ -24,11 +24,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
+import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.terminal.JBTerminalWidget;
 import com.intellij.terminal.JBTerminalWidgetListener;
 import com.intellij.terminal.TerminalTitle;
 import com.intellij.terminal.ui.TerminalWidget;
 import com.intellij.terminal.ui.TerminalWidgetKt;
+import com.intellij.ui.ClientProperty;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
@@ -139,6 +141,7 @@ public final class TerminalToolWindowManager implements Disposable {
       return;
     }
     myToolWindow = toolWindow;
+    ClientProperty.put(toolWindow.getComponent(), ToolWindowContentUi.CLEANED_TOOL_WINDOW_CONTEXT_MENUS, Boolean.TRUE);
   }
 
   /** Restores tabs for Classic Terminal and New Terminal Gen1. */

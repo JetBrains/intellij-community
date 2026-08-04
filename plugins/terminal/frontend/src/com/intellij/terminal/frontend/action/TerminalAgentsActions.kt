@@ -27,6 +27,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.TerminalBundle
+import org.jetbrains.plugins.terminal.TerminalToolWindowManager
 import org.jetbrains.plugins.terminal.agent.TerminalAgentsStateService
 import org.jetbrains.plugins.terminal.agent.rpc.TerminalAgentMode
 import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
@@ -124,7 +125,9 @@ internal class ToggleShowAiAgentsInToolbarAction : DumbAwareToggleAction(), Acti
 
   override fun update(e: AnActionEvent) {
     super.update(e)
-    e.presentation.isEnabledAndVisible = e.project != null && isTerminalAgentsEnabled()
+    val toolWindow = e.getData(PlatformDataKeys.TOOL_WINDOW)
+    e.presentation.isEnabledAndVisible =
+      e.project != null && TerminalToolWindowManager.isTerminalToolWindow(toolWindow) && isTerminalAgentsEnabled()
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT

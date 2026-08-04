@@ -580,8 +580,9 @@ object Utils {
         val checked = group is CheckedActionGroup
         if (uiKind !is FrameMenuUiKind) {
           menuComponent ?: throw AssertionError("${uiKind} is not `ActualActionUiKind`")
+          val hideIfEmpty = presentationFactory.getPresentation(group).getClientProperty(ActionUtil.HIDE_EMPTY_POPUP_MENU) == true
           fillMenuInner(menuComponent, list, checked, enableMnemonics,
-                        presentationFactory, asyncDataContext, place, uiKind)
+                        presentationFactory, asyncDataContext, place, uiKind, hideIfEmpty)
         }
         else {
           fillMenuInnerMacNative(uiKind.peer, uiKind.frame, list, checked, enableMnemonics,
@@ -649,6 +650,7 @@ object Utils {
     context: DataContext,
     place: String,
     uiKind: ActionUiKind.Popup,
+    hideIfEmpty: Boolean,
   ) {
     val useDarkIcons = MacMenuSettings.isSystemMenu && NSDefaults.isDarkMenuBar()
     val isWindowMenu = (uiKind as? ActualActionUiKind.Menu)?.menu is JMenu
@@ -671,7 +673,7 @@ object Utils {
       component.add(childComponent)
       children.add(childComponent)
     }
-    if (list.isEmpty()) {
+    if (list.isEmpty() && !hideIfEmpty) {
       val presentation = presentationFactory.getPresentation(EMPTY_MENU_FILLER)
       val each = ActionMenuItem(EMPTY_MENU_FILLER, context, place, uiKind, enableMnemonics, checked, useDarkIcons)
       each.updateFromPresentation(presentation)

@@ -658,7 +658,6 @@
           <reference ref="HideSideWindows"/>
           <reference ref="HideBottomWindows"/>
           <reference ref="HideAllWindows"/>
-          <reference ref="MoveToolWindowTabToEditorAction"/>
           <reference ref="PinToolwindowTab"/>
           <reference ref="JumpToLastWindow"/>
           <reference ref="MaximizeToolWindow"/>
@@ -1327,6 +1326,13 @@
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
     <group id="ToolWindowContextMenu"/>
+    <group id="ToolWindowTabContextMenu"/>
+    <group id="ToolWindowEmptySpaceContextMenu"/>
+
+    <action id="MoveToolWindowTabToEditorAction" class="com.intellij.openapi.wm.impl.tabInEditor.MoveToolWindowTabToEditorAction"
+            icon="AllIcons.Actions.OpenNewTab">
+      <add-to-group group-id="ToolWindowTabContextMenu"/>
+    </action>
 
     <group id="SearchEverywhereActions">
       <reference ref="SearchEverywhere.NextTab"/>
