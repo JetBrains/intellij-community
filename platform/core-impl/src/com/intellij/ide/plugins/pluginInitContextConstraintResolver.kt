@@ -178,7 +178,7 @@ private class PluginSetConstraintsResolver(
     // TODO: do we want to support non-optional `depends` with a sub-descriptor?
   }
 
-  private fun sequenceAllDependenciesOfCandidateIncludingCompatibility(candidate: IdeaPluginDescriptorImpl): Sequence<DependencyRef> {
+  private fun sequenceAllStrictDependenciesOfCandidateIncludingCompatibility(candidate: IdeaPluginDescriptorImpl): Sequence<DependencyRef> {
     return PluginDependencyAnalysis.sequenceStrictDependencies(candidate) +
            initContext.provideCompatibilityDependencies(candidate, pluginSet)
   }
@@ -190,9 +190,12 @@ private class PluginSetConstraintsResolver(
    * For `<depends>` dependencies **does not** include edges to the content modules of the target plugin
    * (the accurate set of such dependencies can only be determined after all exclusions are settled).
    *
+   * Does not include dependencies produced by [PluginInitializationContext.provideCompatibilityDependenciesForRemainingCandidates]:
+   * this map contains only dependencies that affect regular exclusion rules.
+   *
    * LinkedHashMap is used to preserve iteration order.
    */
-  private val resolvedDependenciesLists: LinkedHashMap<IdeaPluginDescriptorImpl, List<IdeaPluginDescriptorImpl>> = LinkedHashMap()
+  private val resolvedStrictDependenciesLists: LinkedHashMap<IdeaPluginDescriptorImpl, List<IdeaPluginDescriptorImpl>> = LinkedHashMap()
 
   /**
    * For all strict dependencies and implicit dependencies provided by [PluginInitializationContext.provideCompatibilityDependencies]:
@@ -210,7 +213,7 @@ private class PluginSetConstraintsResolver(
       }
       return false
     }
-    for (dependencyRef in sequenceAllDependenciesOfCandidateIncludingCompatibility(candidate)) {
+    for (dependencyRef in sequenceAllStrictDependenciesOfCandidateIncludingCompatibility(candidate)) {
       val target = pluginSet.resolveReference(dependencyRef)
       if (target == null) {
         exclude(DependencyIsNotResolved(candidate, dependencyRef))
@@ -250,7 +253,7 @@ private class PluginSetConstraintsResolver(
         tryAddDependency(candidate.parent)
       }
     }
-    resolvedDependenciesLists[candidate] = resolvedDependencies
+    resolvedStrictDependenciesLists[candidate] = resolvedDependencies
   }
 
   private val essentialModulesClosure: Set<PluginModuleDescriptor> by lazy {
@@ -344,7 +347,7 @@ private class PluginSetConstraintsResolver(
    */
   private fun tryBuildRuntimeModuleGroupDAGOrExcludeCycles(): ResolvedPluginSet? {
     val remainingCandidates = candidates.keys.filterTo(ArrayList()) { it.getState() is Candidate }
-    val resolvedDependencies = populateDependsEdges(resolvedDependenciesLists.filterKeys { it.getState() is Candidate })
+    val resolvedDependencies = populateDependsEdges(resolvedStrictDependenciesLists.filterKeys { it.getState() is Candidate })
     val resolvedDependents = resolvedDependencies.invertEdges()
     val sortedCandidates = sortRemainingCandidatesTopologicallyOrExcludeCycles(remainingCandidates, resolvedDependencies, resolvedDependents)
                            ?: return null
