@@ -229,7 +229,7 @@ public class InferenceSession {
           }
           LOG.assertTrue(parameterType != null);
           if (!ignoreLambdaConstraintTree(args[i])) {
-            addConstraint(new ExpressionCompatibilityConstraint(args[i], substituteWithInferenceVariables(parameterType)));
+            addConstraint(new ExpressionCompatibilityConstraint(args[i], substituteWithInferenceVariables(parameterType), true));
           }
         }
       }
@@ -468,7 +468,7 @@ public class InferenceSession {
         final PsiSubstitutor nestedSubstitutor = myInferenceSessionContainer.findNestedSubstitutor(arg, myInferenceSubstitution);
         final PsiType parameterType = nestedSubstitutor.substitute(getParameterType(parameters, i, siteSubstitutor, varargs));
         if (parameterType == null) continue;
-        ExpressionCompatibilityConstraint compatibilityConstraint = new ExpressionCompatibilityConstraint(arg, parameterType);
+        ExpressionCompatibilityConstraint compatibilityConstraint = new ExpressionCompatibilityConstraint(arg, parameterType, true);
         if (arg instanceof PsiFunctionalExpression && ignoreLambdaConstraintTree(arg) || dependsOnIgnoredConstraint(ignoredConstraints, compatibilityConstraint)) {
           ignoredConstraints.add(compatibilityConstraint);
           continue;

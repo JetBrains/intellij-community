@@ -14,7 +14,7 @@ class Bar {
   Foo<List<String>> transform(final Foo<? extends String> foo) {
     return foo
       .map(v2 -> tuple(v2))
-      .<error descr="Incompatible types. Found: 'Foo<? extends java.util.List<? extends java.lang.String>>', required: 'Foo<java.util.List<java.lang.String>>'">onClose</error>();
+      .onClose();
   }
 
   static <T2> List<T2> tuple(T2 v2) {

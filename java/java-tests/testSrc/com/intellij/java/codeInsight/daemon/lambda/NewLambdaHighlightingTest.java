@@ -132,7 +132,7 @@ class NewLambdaHighlightingTest extends LightJavaCodeInsightFixtureTestCase5 {
   @Test void testInferTypeParametersFromFunctionalInterfaceInputs() { doTest(); }
   @Test void testGroundTargetTypeWhenAbstractMethodInSuperclass() { doTest(); }
   @Test void testNestedLambdasWithInferenceOfReturnTypeInTheLatestLambda() { doTest(); }
-  @Test void testCapturedWildcardNotOpenedDuringInference() { doTest(); }
+  @Test void testCapturedWildcardOpenedForStandaloneArgument() { doTest(); }
   @Test void testIgnoreStandaloneExpressionsInLambdaReturnForNestedCalls() { doTest(); }
   @Test void testArrayNotAFunctionalInterface() { doTest(); }
   @Test void testRawSubstitutionForInterfaceMethod() { doTest(); }

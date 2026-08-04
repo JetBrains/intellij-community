@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.resolve.graphInference.constraints;
 
+import com.intellij.codeInsight.TypeNullability;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.openapi.util.Pair;
@@ -8,6 +9,7 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.JavaResolveResult;
 import com.intellij.psi.LambdaUtil;
 import com.intellij.psi.PsiCall;
+import com.intellij.psi.PsiCapturedWildcardType;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiConditionalExpression;
@@ -41,10 +43,37 @@ import java.util.Set;
 
 public class ExpressionCompatibilityConstraint extends InputOutputConstraintFormula {
   private final PsiExpression myExpression;
+  /**
+   * True when the expression occupies an argument position of a method call.
+   * <p>
+   * javac performs the method check on the upper bound of an actual argument type (a long-standing simplification,
+   * see JDK-6391995): the captured wildcard type of a standalone argument is replaced with its upper bound before
+   * constraints are generated. Without that, an inference variable gets instantiated to a captured wildcard which
+   * then leaks into the type of the enclosing call and makes javac-compilable code look erroneous.
+   */
+  private final boolean myMethodArgument;
 
   public ExpressionCompatibilityConstraint(@NotNull PsiExpression expression, @NotNull PsiType type) {
+    this(expression, type, false);
+  }
+
+  public ExpressionCompatibilityConstraint(@NotNull PsiExpression expression, @NotNull PsiType type, boolean methodArgument) {
     super(type);
     myExpression = expression;
+    myMethodArgument = methodArgument;
+  }
+
+  /**
+   * Same as {@link TypeConversionUtil#uncapture}, but keeps the nullability the capture has after capture conversion.
+   * The upper bound only carries the nullability written on the wildcard, while capture conversion additionally intersects it
+   * with the declared bound of the captured type parameter, see {@link PsiCapturedWildcardType#getCaptureConvertedNullability()}.
+   * Here the uncaptured type becomes a bound of an inference variable and thus ends up in the inferred type argument,
+   * so dropping that intersection would report {@code NotNullBounded<? extends @Nullable Lib>} elements as nullable.
+   */
+  private static @NotNull PsiType uncaptureArgumentType(@NotNull PsiType type) {
+    if (!(type instanceof PsiCapturedWildcardType)) return type;
+    TypeNullability nullability = ((PsiCapturedWildcardType)type).getCaptureConvertedNullability();
+    return TypeConversionUtil.uncapture(type).withNullability(nullability);
   }
 
   @Override
@@ -81,6 +110,9 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
         if (exprType instanceof PsiDisjunctionType) {
           exprType = ((PsiDisjunctionType)exprType).getLeastUpperBound();
         }
+        if (myMethodArgument) {
+          exprType = uncaptureArgumentType(exprType);
+        }
 
         constraints.add(new TypeCompatibilityConstraint(myT, exprType));
       }
@@ -92,7 +124,7 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
     if (myExpression instanceof PsiParenthesizedExpression) {
       final PsiExpression expression = ((PsiParenthesizedExpression)myExpression).getExpression();
       if (expression != null && !InferenceSession.ignoreLambdaConstraintTree(expression)) {
-        constraints.add(new ExpressionCompatibilityConstraint(expression, myT));
+        constraints.add(new ExpressionCompatibilityConstraint(expression, myT, myMethodArgument));
         return true;
       }
     }
@@ -100,12 +132,12 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
     if (myExpression instanceof PsiConditionalExpression) {
       final PsiExpression thenExpression = ((PsiConditionalExpression)myExpression).getThenExpression();
       if (thenExpression != null && !InferenceSession.ignoreLambdaConstraintTree(thenExpression)) {
-        constraints.add(new ExpressionCompatibilityConstraint(thenExpression, myT));
+        constraints.add(new ExpressionCompatibilityConstraint(thenExpression, myT, myMethodArgument));
       }
 
       final PsiExpression elseExpression = ((PsiConditionalExpression)myExpression).getElseExpression();
       if (elseExpression != null && !InferenceSession.ignoreLambdaConstraintTree(elseExpression)) {
-        constraints.add(new ExpressionCompatibilityConstraint(elseExpression, myT));
+        constraints.add(new ExpressionCompatibilityConstraint(elseExpression, myT, myMethodArgument));
       }
       return true;
     }
@@ -113,7 +145,7 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
     if (myExpression instanceof PsiSwitchExpression) {
       PsiUtil.getSwitchResultExpressions((PsiSwitchExpression)myExpression).forEach(expression -> {
         if (!InferenceSession.ignoreLambdaConstraintTree(expression)) {
-          constraints.add(new ExpressionCompatibilityConstraint(expression, myT));
+          constraints.add(new ExpressionCompatibilityConstraint(expression, myT, myMethodArgument));
         }
       });
       return true;

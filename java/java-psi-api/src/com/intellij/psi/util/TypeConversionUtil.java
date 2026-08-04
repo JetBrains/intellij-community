@@ -635,8 +635,11 @@ public final class TypeConversionUtil {
     return PsiTypes.booleanType().equals(type) || PsiTypes.booleanType().equals(PsiPrimitiveType.getUnboxedType(type));
   }
 
+  /**
+   * @return the upper bound of the given type when it is a captured wildcard, the type itself otherwise
+   */
   @Contract(value = "null -> null", pure = true)
-  private static PsiType uncapture(PsiType type) {
+  public static PsiType uncapture(PsiType type) {
     while (type instanceof PsiCapturedWildcardType) {
       type = ((PsiCapturedWildcardType)type).getUpperBound();
     }
