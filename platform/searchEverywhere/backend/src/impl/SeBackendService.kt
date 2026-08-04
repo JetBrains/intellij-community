@@ -302,6 +302,10 @@ class SeBackendService(val project: Project, private val coroutineScope: Corouti
     val providersHolder = getProvidersHolder(session, dataContextId)
     if (providersHolder == null) return false
 
+    val providerIds = providerIds.filter { providerId ->
+      providersHolder.get(providerId, isAllTab)?.canBeShownInFindResults() == true
+    }
+
     SeFindToolWindowManager(project).openInFindToolWindow(
       providerIds, params, isAllTab, providersHolder, projectId,
     )
