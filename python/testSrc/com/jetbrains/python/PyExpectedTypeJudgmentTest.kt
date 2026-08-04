@@ -1208,4 +1208,11 @@ class PyExpectedTypeJudgmentTest : PyCodeInsightTestCase() {
         foo(idx async for idx in asyncgen())
     #       └ EXPECTED_TYPE int
     """.trimIndent())
+
+  @TestFor(issues = ["PY-91341"])
+  @Test
+  fun `Sequence unpacking with shorter list literal on rhs`() = test("""
+    a, b = [1]
+    #      ^^^ EXPECTED_TYPE Iterable[Unknown]
+    """.trimIndent())
 }
