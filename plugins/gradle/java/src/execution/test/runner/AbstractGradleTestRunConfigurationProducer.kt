@@ -56,7 +56,6 @@ abstract class AbstractGradleTestRunConfigurationProducer<E : PsiElement, Ex : P
     setUniqueNameIfNeeded(project, configuration)
     configuration.settings.externalProjectPath = externalProjectPath
     configuration.settings.taskNames = tasksAndArguments.tokens
-    configuration.settings.scriptParameters = ""
 
     JavaRunConfigurationExtensionManager.instance.extendCreatedConfiguration(configuration, location)
     return true
@@ -99,7 +98,9 @@ abstract class AbstractGradleTestRunConfigurationProducer<E : PsiElement, Ex : P
         runConfiguration.name = suggestConfigurationName(context, element, elements)
         setUniqueNameIfNeeded(project, runConfiguration)
         runConfiguration.settings.taskNames = chosenTasksAndArguments.flatMap { it.tokens }
-        runConfiguration.settings.scriptParameters = if (chosenTasksAndArguments.size > 1) "--continue" else ""
+        if (chosenTasksAndArguments.size > 1) {
+          runConfiguration.settings.addScriptParameterIfAbsent(CONTINUE_OPTION)
+        }
 
         super.onFirstRun(configuration, context, startRunnable)
       }

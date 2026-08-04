@@ -7,6 +7,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
+import com.intellij.util.execution.ParametersListUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.execution.GradleRunnerUtil
 import org.jetbrains.plugins.gradle.execution.build.CachedModuleDataFinder
@@ -109,10 +110,30 @@ fun <T> ExternalSystemTaskExecutionSettings.applyTestConfiguration(
 
   externalProjectPath = projectPath
   taskNames = testRunConfigurations.entries.flatMap { it.key + it.value }
-  scriptParameters = if (testRunConfigurations.size > 1) "--continue" else ""
+  if (testRunConfigurations.size > 1) {
+    addScriptParameterIfAbsent(CONTINUE_OPTION)
+  }
 
   return true
 }
+
+@ApiStatus.Internal
+fun ExternalSystemTaskExecutionSettings.addScriptParameterIfAbsent(option: String) {
+  val parameters = scriptParameters?.trim() ?: ""
+  if (parameters.isEmpty()) {
+    scriptParameters = option
+    return
+  }
+  if (option in ParametersListUtil.parse(parameters)) {
+    return
+  }
+  scriptParameters = "$parameters $option"
+}
+
+/**
+ * The Gradle option that makes all chosen test tasks run even if one of them fails.
+ */
+internal const val CONTINUE_OPTION: String = "--continue"
 
 fun String.escapeIfNeeded() = when {
   contains(' ') -> "'$this'"
