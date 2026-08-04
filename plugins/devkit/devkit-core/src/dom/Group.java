@@ -24,6 +24,12 @@ public interface Group extends ActionContainer, ActionOrGroup {
   @NotNull
   GenericAttributeValue<Boolean> getSearchable();
 
+  /**
+   * On an {@code overrides="true"} group: the replacement instance adopts the children accumulated by the replaced group.
+   */
+  @NotNull
+  GenericAttributeValue<Boolean> getKeepContent();
+
   @NotNull
   @Attribute("class")
   @ExtendClass(value = "com.intellij.openapi.actionSystem.ActionGroup",

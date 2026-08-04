@@ -96,11 +96,17 @@ public class PluginXmlDomInspectionActionHighlightingTest extends PluginXmlDomIn
     myFixture.addClass("package foo.bar; public class BarAction extends com.intellij.openapi.actionSystem.AnAction {}");
     myFixture.addClass("""
                          package foo.bar;
-                         
+
                          public class GroupWithoutCanBePerformed extends com.intellij.openapi.actionSystem.ActionGroup {
                          }
                          """);
 
     myFixture.testHighlighting("ActionGroupWithoutCanBePerformed.xml");
+  }
+
+  public void testGroupKeepContent() {
+    myFixture.addClass("package foo.bar; public class BarAction extends com.intellij.openapi.actionSystem.AnAction {}");
+
+    myFixture.testHighlighting("GroupKeepContent.xml");
   }
 }
