@@ -349,6 +349,16 @@ class KotlinLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvide
                     "BLOCK_COMMENT_ADD_SPACE"
                 )
             }
+            SettingsType.LANGUAGE_SPECIFIC -> {
+                // Rendered by KDocFormattingPanel (the "KDoc" tab).
+                consumer.showStandardOptions("WRAP_COMMENTS")
+
+                showCustomOption(
+                    KotlinCodeStyleSettings::KDOC_PRESERVE_LINE_FEEDS,
+                    KotlinBundle.message("formatter.checkbox.text.preserve.line.feeds"),
+                    KDocFormattingPanel.getOtherGroup(),
+                )
+            }
             else -> consumer.showStandardOptions()
         }
     }

@@ -117,6 +117,7 @@
       "variable_annotation_wrap": "off",
       "visual_guides": [],
       "while_on_new_line": false,
+      "wrap_comments": false,
       "wrap_elvis_expressions": 1,
       "wrap_expression_body_functions": 0,
       "wrap_first_method_in_call_chain": false
