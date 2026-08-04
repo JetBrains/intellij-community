@@ -1139,6 +1139,19 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
     }
   }
 
+  /**
+   * Reports a method type parameter of an override whose bound narrows the nullable bound inherited from
+   * the corresponding super-method type parameter:
+   * <pre>{@code
+   * @NullMarked
+   * interface Filter<T extends @Nullable Object> { <U extends T> void take(U in); }
+   *
+   * @NullMarked
+   * interface Narrowed extends Filter<@Nullable Object> {
+   *   <U> void take(U in);  // reported: U is bounded by Object, while Filter's U accepts null
+   * }
+   * }</pre>
+   */
   private void checkTypeParameterBounds(@NotNull PsiMethod method,
                                        @NotNull ProblemsHolder holder,
                                        @NotNull List<? extends PsiMethod> superMethods) {
