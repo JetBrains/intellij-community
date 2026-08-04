@@ -287,6 +287,7 @@
     <orderEntry type="module" module-name="intellij.groovy.tests.main" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.exploratory.tests.main" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.propertyBased.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.groovy.propertyBased.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.searchEverywhereMl.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.lsp.impl.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.mermaid.tests" scope="TEST" />

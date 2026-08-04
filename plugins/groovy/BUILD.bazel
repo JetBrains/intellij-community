@@ -399,7 +399,6 @@ jvm_library(
         "//java/unscramble:unscramble_test_lib",
         "//platform/execution",
         "//platform/execution:execution_test_lib",
-        "@lib//:jet_check",
         "//platform/forms_rt:java-guiForms-rt",
         "//platform/forms_rt:java-guiForms-rt_test_lib",
         "//java/java-frontback-psi-api:frontback-psi",

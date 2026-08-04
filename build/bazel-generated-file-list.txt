@@ -1181,6 +1181,7 @@ plugins/groovy/groovy-uast-tests
 plugins/groovy/intellij.groovy.copyright
 plugins/groovy/jps-plugin
 plugins/groovy/langInjection
+plugins/groovy/property-tests
 plugins/groovy/rt
 plugins/groovy/rt-constants
 plugins/groovy/rt/classLoader
