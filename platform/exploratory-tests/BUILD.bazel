@@ -29,8 +29,6 @@ jvm_library(
         ":exploratory-tests-main",
         "//platform/bootstrap/coroutine",
         "//platform/bootstrap/coroutine:coroutine_test_lib",
-        "//plugins/groovy/property-tests:propertyBased-tests",
-        "//plugins/groovy/property-tests:propertyBased-tests_test_lib",
         "//java/compiler:compiler-tests",
         "//java/compiler:compiler-tests_test_lib",
         "//java/java-tests:tests",
