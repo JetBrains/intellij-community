@@ -46,6 +46,7 @@ jvm_library(
         "//platform/projectModel-api:projectModel",
         "//platform/ide-core",
         "//platform/eel-nioFs-impl",
+        "//platform/util:util-ui",
     ],
 )
 
@@ -79,6 +80,7 @@ jvm_library(
         "//platform/projectModel-api:projectModel_test_lib",
         "//platform/ide-core:ide-core_test_lib",
         "//platform/eel-nioFs-impl:eel-nioFs-impl_test_lib",
+        "//platform/util:util-ui_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.ide.impl.wsl` end
