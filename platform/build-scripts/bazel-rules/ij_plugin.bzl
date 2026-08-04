@@ -40,7 +40,7 @@ This is an experimental rule, its API will change, please do not migrate the plu
 """,
     attrs = {
         "_packager": attr.label(
-            default = Label("//platform/build-scripts/ij-plugin-rules/ij-plugin-packager:ij-plugin-packager"),
+            default = Label("//platform/build-scripts/bazel-rules/ij-plugin-packager:ij-plugin-packager"),
             executable = True,
             cfg = "exec",
         ),
