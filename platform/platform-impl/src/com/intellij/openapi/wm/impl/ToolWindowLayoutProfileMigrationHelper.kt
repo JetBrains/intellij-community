@@ -4,7 +4,7 @@ package com.intellij.openapi.wm.impl
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService
+import com.intellij.openapi.wm.ex.ProjectFrameTypeService
 import com.intellij.toolWindow.ToolWindowLayoutApplyMode
 import com.intellij.toolWindow.ToolWindowLayoutProfile
 import com.intellij.toolWindow.ToolWindowLayoutProfileService
@@ -17,11 +17,11 @@ internal data class ProjectFrameToolWindowLayoutProfile(
 )
 
 internal fun resolveProjectFrameToolWindowLayoutProfile(
+  projectFrameTypeId: String?,
   project: Project,
   isNewUi: Boolean,
 ): ProjectFrameToolWindowLayoutProfile? {
-  val uiPolicy = service<ProjectFrameCapabilitiesService>().getUiPolicy(project) ?: return null
-  val profileId = uiPolicy.toolWindowLayoutProfileId ?: return null
+  val profileId = service<ProjectFrameTypeService>().getToolWindowLayoutProfileId(projectFrameTypeId) ?: return null
   val profile = service<ToolWindowLayoutProfileService>().getProfile(project = project, profileId = profileId, isNewUi = isNewUi)
                 ?: return null
   return ProjectFrameToolWindowLayoutProfile(profileId = profileId, profile = profile)

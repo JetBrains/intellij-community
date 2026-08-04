@@ -12,6 +12,10 @@ import com.intellij.testFramework.junit5.fixture.projectFixture
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
+/**
+ * Sibling of the platform-impl test of the same name. It lives here because only the lang-impl test application has a
+ * base layout that actually contains Project View, so `register="false"` is asserted against a non-empty layout.
+ */
 @TestApplication
 class ProjectFrameToolWindowLayoutProfileServiceTest {
   private val project by projectFixture()
@@ -26,7 +30,6 @@ class ProjectFrameToolWindowLayoutProfileServiceTest {
       listOf(
         ProjectFrameToolWindowLayoutBean().apply {
           id = "dedicated"
-          frameType = "DEDICATED"
           applyMode = ToolWindowLayoutApplyMode.FORCE_ONCE
           migrationVersion = 4
           toolWindows = listOf(

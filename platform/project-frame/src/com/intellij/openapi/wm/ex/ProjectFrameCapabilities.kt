@@ -60,10 +60,13 @@ enum class ProjectFrameCapability {
 }
 
 /**
- * Optional startup UI policy for a project frame.
+ * Optional startup focus/visibility policy for a project frame.
  *
  * This policy is consumed during frame/toolwindow initialization to adjust initial focus and
  * visibility (for example, select a specific Project View pane or activate/hide toolwindows).
+ *
+ * It is resolved from a [Project], so it cannot be consulted before one exists. Static per-frame-type
+ * policy — including the toolwindow layout profile — is declared by [ProjectFrameTypeBean] instead.
  */
 @Internal
 @Experimental
@@ -76,18 +79,11 @@ data class ProjectFrameUiPolicy(
 
   /** Toolwindow ids to hide after startup activation. */
   val toolWindowIdsToHideOnStartup: Set<String> = emptySet(),
-
-  /**
-   * Toolwindow layout profile id used to seed project frame layout on first open (when no
-   * project-specific toolwindow layout has been persisted yet).
-   */
-  val toolWindowLayoutProfileId: String? = null,
 ) {
   fun isEmpty(): Boolean {
     return projectPaneToActivateId == null &&
            startupToolWindowIdToActivate == null &&
-           toolWindowIdsToHideOnStartup.isEmpty() &&
-           toolWindowLayoutProfileId == null
+           toolWindowIdsToHideOnStartup.isEmpty()
   }
 }
 
