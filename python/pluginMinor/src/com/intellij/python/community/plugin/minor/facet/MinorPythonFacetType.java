@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.community.plugin.minor.facet;
 
 import com.intellij.facet.Facet;
@@ -20,7 +20,7 @@ import javax.swing.Icon;
 import java.util.List;
 
 @ApiStatus.Internal
-public final class MinorPythonFacetType extends FacetType<MinorPythonFacet, PythonFacetConfiguration> {
+final class MinorPythonFacetType extends FacetType<MinorPythonFacet, PythonFacetConfiguration> {
   private static final @NonNls String ID = "Python";
 
   public static MinorPythonFacetType getInstance() {

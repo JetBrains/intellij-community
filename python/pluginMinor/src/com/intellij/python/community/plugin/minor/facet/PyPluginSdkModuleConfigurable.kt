@@ -8,13 +8,11 @@ import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.community.plugin.impl.facet.PythonFacetUtil
-import com.jetbrains.python.PyInternalExecApi
 import com.jetbrains.python.configuration.PyActiveSdkConfigurable
 import com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable
 import com.jetbrains.python.module.PyModuleService
 import com.jetbrains.python.sdk.removeTransferredRoots
 import com.jetbrains.python.sdk.transferRoots
-import com.jetbrains.python.showErrorDialog
 import org.jetbrains.annotations.ApiStatus
 
 internal class PyPluginSdkModuleConfigurable(project: Project?) : PyActiveSdkModuleConfigurable(project) {
@@ -32,7 +30,7 @@ internal class PyPluginSdkModuleConfigurable(project: Project?) : PyActiveSdkMod
         // getSdk() must also read from the facet to keep isModified() consistent.
         val facet = FacetManager.getInstance(module).getFacetByType(MinorPythonFacet.ID)
         return facet?.configuration?.sdk
-          ?: PyModuleService.getInstance(module.project).findPythonSdk(module)
+               ?: PyModuleService.getInstance(module.project).findPythonSdk(module)
       }
     }
   }
@@ -57,9 +55,11 @@ private fun setSdkToFacetImpl(item: Sdk?, module: Module) {
   }
 }
 
-private fun setFacetSdk(facet: MinorPythonFacet,
-                        item: Sdk?,
-                        module: Module) {
+private fun setFacetSdk(
+  facet: MinorPythonFacet,
+  item: Sdk?,
+  module: Module,
+) {
   removeTransferredRoots(module, facet.configuration.sdk)
   facet.configuration.sdk = item
   transferRoots(module, item)
@@ -68,9 +68,11 @@ private fun setFacetSdk(facet: MinorPythonFacet,
   PythonFacetUtil.updateLibrary(module, facet.configuration)
 }
 
-private fun addFacet(facetManager: FacetManager,
-                     sdk: Sdk?,
-                     module: Module) {
+private fun addFacet(
+  facetManager: FacetManager,
+  sdk: Sdk?,
+  module: Module,
+) {
   val facet = facetManager.addFacet(
     MinorPythonFacetType.getInstance(), "Python facet", null)
   setFacetSdk(facet, sdk, module)
