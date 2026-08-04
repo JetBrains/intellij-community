@@ -1,15 +1,12 @@
 package org.jetbrains.jewel.ui.component
 
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableIntState
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
@@ -19,9 +16,13 @@ import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import kotlin.time.Duration
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import org.jetbrains.jewel.foundation.theme.JewelTheme
+import org.jetbrains.jewel.foundation.util.JewelLogger
 import org.jetbrains.jewel.ui.component.styling.CircularProgressStyle
 import org.jetbrains.jewel.ui.theme.circularProgressStyle
 
@@ -71,24 +72,13 @@ private fun CircularProgressIndicatorImpl(
 ) {
     val defaultColor = if (JewelTheme.isDark) Color(0xFF6F737A) else Color(0xFFA8ADBD)
     val color = style.color.takeOrElse { defaultColor }
-    val framesCount = spinnerSegmentOpacities.size
-    val frameTimeMillis = style.frameTime.inWholeMilliseconds.toInt()
-
-    val transition = rememberInfiniteTransition("CircularProgressIndicator")
-    val rotationRatio by
-        transition.animateFloat(
-            initialValue = 0f,
-            targetValue = 1f,
-            animationSpec =
-                infiniteRepeatable(
-                    animation = tween(easing = LinearEasing, durationMillis = frameTimeMillis * framesCount),
-                    repeatMode = RepeatMode.Restart,
-                ),
-        )
+    val frameIndex = rememberSpinnerFrameIndex(style.frameTime)
 
     Canvas(modifier = modifier.size(iconSize)) {
-        val frameIndex = (rotationRatio * framesCount).toInt() % framesCount
-        val snappedRotation = frameIndex * FULL_ROTATION_DEGREES / framesCount
+        // Reading the frame index inside the draw lambda, rather than in the composable scope, keeps invalidations
+        // scoped to the draw phase. Since the index only changes once per animation frame, we also avoid redrawing
+        // on every display frame, which is what an animated float value would have caused.
+        val snappedRotation = frameIndex.intValue * degreesPerSegment
 
         val diameter = size.minDimension
         val rectWidth = diameter * 2f / ICON_VIEW_BOX_SIZE
@@ -98,14 +88,19 @@ private fun CircularProgressIndicatorImpl(
         val segmentSize = Size(rectWidth, rectHeight)
 
         rotate(degrees = snappedRotation, pivot = center) {
-            for (i in 0 until framesCount) {
-                rotate(degrees = -i * FULL_ROTATION_DEGREES / framesCount, pivot = center) {
+            for (i in spinnerSegmentOpacities.indices) {
+                val alpha = spinnerSegmentOpacities[i]
+
+                // Fully transparent segments still cost time to draw, but are invisible: skip them
+                if (alpha == 0f) continue
+
+                rotate(degrees = -i * degreesPerSegment, pivot = center) {
                     drawRoundRect(
                         color = color,
                         topLeft = segmentTopLeft,
                         size = segmentSize,
                         cornerRadius = cornerRadius,
-                        alpha = spinnerSegmentOpacities[i],
+                        alpha = alpha,
                     )
                 }
             }
@@ -113,7 +108,37 @@ private fun CircularProgressIndicatorImpl(
     }
 }
 
+/**
+ * Drives the spinner animation by ticking an integer frame index once every [frameTime].
+ *
+ * Compared to running a float-valued animation and quantising it at draw time, this only invalidates when the value
+ * actually changes, instead of on every display frame.
+ */
+@Composable
+private fun rememberSpinnerFrameIndex(frameTime: Duration): MutableIntState {
+    val frameIndex = remember { mutableIntStateOf(0) }
+
+    LaunchedEffect(frameTime) {
+        // A non-positive frame time would turn the loop below into a busy loop; show a static spinner instead.
+        if (frameTime <= Duration.ZERO) {
+            JewelLogger.getInstance("CircularProgressIndicator")
+                .warn(
+                    "Non-positive frameTime received. Indicator will be static until a positive duration is provided."
+                )
+            return@LaunchedEffect
+        }
+
+        while (isActive) {
+            delay(frameTime)
+            frameIndex.intValue = (frameIndex.intValue + 1) % spinnerSegmentOpacities.size
+        }
+    }
+
+    return frameIndex
+}
+
 private const val FULL_ROTATION_DEGREES = 360f
 private const val ICON_VIEW_BOX_SIZE = 16f
 
-private val spinnerSegmentOpacities = listOf(1f, 0.93f, 0.78f, 0.69f, 0.62f, 0.48f, 0.38f, 0f)
+private val spinnerSegmentOpacities = floatArrayOf(1f, 0.93f, 0.78f, 0.69f, 0.62f, 0.48f, 0.38f, 0f)
+private val degreesPerSegment = FULL_ROTATION_DEGREES / spinnerSegmentOpacities.size
