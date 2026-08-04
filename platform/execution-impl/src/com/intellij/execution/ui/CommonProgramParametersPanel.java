@@ -51,7 +51,7 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
   private Module myModuleContext = null;
   private boolean myHasModuleMacro;
   protected final Map<String, String> myMacrosMap = new HashMap<>();
-  private final @Nullable Project myProject;
+  protected final @Nullable Project myProject;
 
   /**
    * @deprecated Use {@link #CommonProgramParametersPanel(boolean init, Project project)} instead, pass {@code null} only for a default project

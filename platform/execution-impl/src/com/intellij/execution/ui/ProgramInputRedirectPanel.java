@@ -4,6 +4,7 @@ package com.intellij.execution.ui;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.InputRedirectAware;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtil;
@@ -25,10 +26,19 @@ public final class ProgramInputRedirectPanel extends JPanel implements PanelWith
 
   private final TextFieldWithBrowseButton myInputFile = new TextFieldWithBrowseButton();
 
+  /**
+   * @deprecated Use {@link #ProgramInputRedirectPanel(Project)}, always pass the project explicitly, {@code null} only
+   * for the default project.
+   */
+  @Deprecated
   public ProgramInputRedirectPanel() {
+    this(null);
+  }
+
+  public ProgramInputRedirectPanel(@Nullable Project project) {
     super(new BorderLayout(UIUtil.DEFAULT_HGAP, 2));
     var descriptor = FileChooserDescriptorFactory.createSingleFileDescriptor().withEnvironmentRestricted(true);
-    myInputFile.addBrowseFolderListener(null, descriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
+    myInputFile.addBrowseFolderListener(project, descriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
     add(myInputFile, BorderLayout.CENTER);
     myInputFile.setEnabled(false);
     add(myCheckBox, BorderLayout.WEST);

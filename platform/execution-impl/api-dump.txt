@@ -487,6 +487,7 @@ f:com.intellij.execution.ui.CommonParameterFragments
 c:com.intellij.execution.ui.CommonProgramParametersPanel
 - javax.swing.JPanel
 - com.intellij.ui.PanelWithAnchor
+- pf:myProject:com.intellij.openapi.project.Project
 - <init>():V
 - <init>(com.intellij.openapi.project.Project):V
 - <init>(Z):V
@@ -518,6 +519,7 @@ f:com.intellij.execution.ui.ProgramInputRedirectPanel
 - javax.swing.JPanel
 - com.intellij.ui.PanelWithAnchor
 - <init>():V
+- <init>(com.intellij.openapi.project.Project):V
 - applyTo(com.intellij.execution.InputRedirectAware$InputRedirectOptions):V
 - getComponent():com.intellij.openapi.ui.TextFieldWithBrowseButton
 - reset(com.intellij.execution.InputRedirectAware$InputRedirectOptions):V
