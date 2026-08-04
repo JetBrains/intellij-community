@@ -18,6 +18,7 @@ import com.intellij.platform.ijent.IjentUnavailableException
 import com.intellij.platform.ijent.ParentOfIjentScopes
 import com.intellij.platform.ijent.getIjentGrpcArgv
 import com.intellij.platform.ijent.spi.IjentSessionMediatorUtils.readLineOrThrow
+import com.intellij.platform.ijent.tcp.MutualTlsCertificates
 import com.intellij.platform.ijent.tcp.TcpDeployInfo
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
@@ -72,7 +73,12 @@ abstract class IjentDeployingOverShellProcessStrategy(
 
   protected sealed interface ExecutionStrategy {
     data object Default : ExecutionStrategy
-    data class Tcp(val deployInfo: TcpDeployInfo) : ExecutionStrategy
+
+    /**
+     * [tlsCertificates] intentionally has no default value: every deployer must state explicitly whether the TCP socket
+     * of IJent is protected with mutual TLS or is left plaintext and unauthenticated.
+     */
+    data class Tcp(val deployInfo: TcpDeployInfo, val tlsCertificates: MutualTlsCertificates?) : ExecutionStrategy
   }
 
   protected open val executionStrategy: ExecutionStrategy = ExecutionStrategy.Default
@@ -143,7 +149,7 @@ abstract class IjentDeployingOverShellProcessStrategy(
     val targetPlatform = getTargetPlatform()
     return getMyContext().execCommand {
       when (val strategy = executionStrategy) {
-        is ExecutionStrategy.Tcp -> execIjentWithTcp(binaryPath, strategy.deployInfo, targetPlatform)
+        is ExecutionStrategy.Tcp -> execIjentWithTcp(binaryPath, strategy.deployInfo, targetPlatform, strategy.tlsCertificates)
         else -> execIjent(binaryPath, targetPlatform)
       }
     }
@@ -179,10 +185,25 @@ private class ShellProcessWrapper(
 ) {
   @ThrowsChecked(EelSendChannelException::class)
   suspend fun write(data: String) {
+    write(data, sensitive = false)
+  }
+
+  /**
+   * Same as [write], but the payload never reaches the log, because it carries a private key.
+   */
+  @ThrowsChecked(EelSendChannelException::class)
+  suspend fun writeSensitive(data: String) {
+    write(data, sensitive = true)
+  }
+
+  @ThrowsChecked(EelSendChannelException::class)
+  private suspend fun write(data: String, sensitive: Boolean) {
     @Suppress("NAME_SHADOWING")
     val data = if (data.endsWith("\n")) data else "$data\n"
     LOG.debug {
-      val debugData = data.replace(Regex("\n\n+")) { "<\\n ${it.value.length} times>\n" }
+      val debugData =
+        if (sensitive) "<TLS bootstrap data, ${data.length} bytes>"
+        else data.replace(Regex("\n\n+")) { "<\\n ${it.value.length} times>\n" }
       "Executing a script inside the shell: $debugData"
     }
     withContext(Dispatchers.IO) {
@@ -514,7 +535,14 @@ private suspend fun DeployingContextAndShell.createMediator(
   remotePathToBinary: String,
   joinedCmd: String,
   targetPlatform: EelPlatform.Posix,
+  tlsCertificates: MutualTlsCertificates? = null,
 ): IjentSessionProcessMediator {
+  // IJent reads the PEM blocks from its stdin before it binds the socket, and the shell hands the heredoc to it while parsing `exec`.
+  // The delimiter is quoted, hence the shell performs no expansion inside the payload, and it starts with `~`, a character that never
+  // appears in a PEM document, so no line of the payload can accidentally terminate the heredoc.
+  val tlsBootstrap =
+    if (tlsCertificates != null) " <<'$TLS_HEREDOC_DELIMITER'\n${tlsCertificates.serverBootstrapPem()}$TLS_HEREDOC_DELIMITER"
+    else ""
   val commandLineArgs = context.run {
     val loginShell = getLoginShellCmd(targetPlatform)?.let { "\"${'$'}($it)\"" } ?: "''"
     """
@@ -522,9 +550,14 @@ private suspend fun DeployingContextAndShell.createMediator(
     | export SHELL=$loginShell;
     | if [ -z "${'$'}SHELL" ]; then export SHELL='/bin/sh' ; fi;
     | exec "${'$'}SHELL" -c ${posixQuote(joinedCmd)}
-    """.trimMargin()
+    """.trimMargin() + tlsBootstrap
   }
-  process.write(commandLineArgs)
+  if (tlsCertificates != null) {
+    process.writeSensitive(commandLineArgs)
+  }
+  else {
+    process.write(commandLineArgs)
+  }
   return process.extractProcess()
 }
 
@@ -533,11 +566,13 @@ private suspend fun DeployingContextAndShell.execIjentWithTcp(
   remotePathToBinary: String,
   deployInfo: TcpDeployInfo,
   targetPlatform: EelPlatform.Posix,
+  tlsCertificates: MutualTlsCertificates?,
 ): IjentSessionProcessMediator {
   val joinedCmd = getIjentGrpcArgv(remotePathToBinary,
                                    selfDeleteOnExit = true,
-                                   deployInfo = deployInfo).joinToString(" ")
-  return createMediator(remotePathToBinary, joinedCmd, targetPlatform)
+                                   deployInfo = deployInfo,
+                                   useTLS = tlsCertificates != null).joinToString(" ")
+  return createMediator(remotePathToBinary, joinedCmd, targetPlatform, tlsCertificates)
 }
 
 /**
@@ -559,6 +594,8 @@ private suspend fun DeployingContextAndShell.execIjentWithTcp(
  */
 private val BUGGY_DASH_BUFFER_FILLER: String get() = "\n".repeat(8192)
 private val LOG = IjentLog.getInstance<IjentDeployingOverShellProcessStrategy>()
+
+private const val TLS_HEREDOC_DELIMITER: String = "~IJENT_TLS_BOOTSTRAP"
 
 private val SHELL_UNSAFE_CHARACTERS: Set<Char> = setOf(
   '|', '&', ';', '<', '>', '(', ')', '$', '`', '\\', '"', '\'', ' ', '\t', '\n', '*', '?', '[', '#', '~', '=', '%',
