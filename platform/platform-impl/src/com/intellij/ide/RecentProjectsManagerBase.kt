@@ -40,6 +40,7 @@ import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.WindowManager
+import com.intellij.openapi.wm.ex.ProjectFrameTypeService
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.FrameInfo
 import com.intellij.openapi.wm.impl.IDE_FRAME_EVENT_LOG
@@ -656,10 +657,12 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
       return false
     }
 
+    // resolve once, outside the lock - a hidden project only reopens if its frame type opts in
+    val frameTypes = serviceAsync<ProjectFrameTypeService>()
     synchronized(stateLock) {
       // FIXME do we really want to make this method non-idempotent?
       state.forceReopenProjects = false
-      return state.additionalInfo.values.any { canReopenProject(it) }
+      return state.additionalInfo.values.any { canReopenProject(it, frameTypes) }
     }
   }
 
@@ -672,8 +675,10 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
       return false
     }
 
+    // resolve once, outside the lock - a hidden project only reopens if its frame type opts in
+    val frameTypes = serviceAsync<ProjectFrameTypeService>()
     val openPaths = synchronized(stateLock) {
-      state.additionalInfo.entries.filter { canReopenProject(it.value) }
+      state.additionalInfo.entries.filter { canReopenProject(it.value, frameTypes) }
     }
     if (openPaths.isEmpty()) {
       return false
@@ -825,12 +830,13 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
     return true
   }
 
-  private fun canReopenProject(info: RecentProjectMetaInfo): Boolean {
-    return info.opened && !info.hidden
+  private fun canReopenProject(info: RecentProjectMetaInfo, frameTypes: ProjectFrameTypeService): Boolean {
+    return info.opened && (!info.hidden || frameTypes.canReopenWhenHidden(info.projectFrameTypeId))
   }
 
   /**
-   * Do not reopen a project on restart and do not show it in the recent projects list
+   * Do not show a project in the recent projects list. Such a project is also not reopened on restart, unless its
+   * project-frame type opts in with `reopenWhenHidden` (see `com.intellij.projectFrameType`).
    */
   fun setProjectHidden(project: Project, hidden: Boolean) {
     val path = getProjectPath(project)?.invariantSeparatorsPathString ?: return

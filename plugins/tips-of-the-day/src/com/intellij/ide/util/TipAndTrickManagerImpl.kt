@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.wm.ex.isBackgroundActivitiesSuppressedSync
 import com.intellij.ui.GotItTooltipService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -54,6 +55,9 @@ internal class TipAndTrickManagerImpl : TipAndTrickManager {
     return Registry.`is`("tips.of.the.day.force.show", false)
            || (GeneralSettings.getInstance().isShowTipsOnStartup
                && !TipAndTrickManager.DISABLE_TIPS_FOR_PROJECT.get(project, false)
+               // frames that suppress background activities (LightEdit, welcome experience, the AIR dedicated frame)
+               // are not places to interrupt with a tip - and unlike the user data above, this survives a reopen
+               && !isBackgroundActivitiesSuppressedSync(project)
                && !GotItTooltipService.getInstance().isFirstRun
                && (openedDialog?.isVisible != true)
                && !TipsUsageManager.getInstance().wereTipsShownToday())
