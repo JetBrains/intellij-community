@@ -7,6 +7,7 @@ import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.jetbrains.python.inspections.dependencies.DependenciesPsiProvider
 import com.jetbrains.python.inspections.dependencies.DependencyMap
 import com.intellij.python.requirements.parser.PyRequirementParser
+import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.psi.getStringOrNull
 import com.jetbrains.python.requirements.getPythonSdk
 import org.toml.lang.TomlLanguage
@@ -37,12 +38,14 @@ internal class LegacyPoetryDependenciesPsiProvider : DependenciesPsiProvider<Tom
       }
       .flatMap { it.children.filterIsInstance<TomlKeyValue>() }
       .mapNotNull { keyValue ->
+        val name = keyValue.key.text
         val versionString =
           (keyValue.value as? TomlLiteral)?.getStringOrNull()
           ?: return@mapNotNull null
 
-        (PyRequirementParser.fromLine("${keyValue.key.text}${versionString}")
-         ?: PyRequirementParser.fromLine(keyValue.key.text))
+        val normalizedName = PyPackageName.normalizePackageName(name)
+        (PyRequirementParser.fromLine("$name$versionString")?.takeIf { it.name == normalizedName }
+         ?: PyRequirementParser.fromLine(name))
           ?.let { pyRequirement -> pyRequirement to keyValue }
       }
       .toMap()
