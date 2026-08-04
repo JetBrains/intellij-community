@@ -14,8 +14,8 @@ internal class IdeKotlinCombinableSourceAndClassRootsScopeMergeStrategy : Kotlin
     override fun uniteScopes(scopes: List<CombinableSourceAndClassRootsScope>, project: Project): List<GlobalSearchScope> {
         @Suppress("UNCHECKED_CAST")
         return when {
-            scopes.size <= 1 -> return scopes as List<GlobalSearchScope>
-            else -> listOf(CombinedSourceAndClassRootsScope.Companion.create(scopes, project))
+            scopes.size <= 1 -> scopes as List<GlobalSearchScope>
+            else -> listOf(CombinedSourceAndClassRootsScope.create(scopes, project))
         }
     }
 }

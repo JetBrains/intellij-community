@@ -52,7 +52,7 @@ abstract class IdeKotlinModuleDependentsProvider(protected val project: Project)
                     // No dependents need to be provided for SDK modules (see `KotlinModuleDependentsProvider`).
                     return emptySet()
                 }
-                return buildSet { getDirectDependentsForLibraryNonSdkModule(module, this) }
+                buildSet { getDirectDependentsForLibraryNonSdkModule(module, this) }
             }
 
             is KaLibrarySourceModule -> getDirectDependents(module.binaryLibrary)
