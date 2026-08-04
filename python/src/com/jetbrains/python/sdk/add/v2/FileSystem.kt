@@ -68,6 +68,7 @@ import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.ToolCommandSpec
 import com.jetbrains.python.sdk.ToolProbeResult
+import com.jetbrains.python.sdk.ToolSearchPath
 import com.jetbrains.python.sdk.asBinToExecute
 import com.jetbrains.python.sdk.associatedModulePath
 import com.jetbrains.python.sdk.createSdk
@@ -76,7 +77,6 @@ import com.jetbrains.python.sdk.impl.PySdkBundle
 import com.jetbrains.python.sdk.impl.resolvePythonBinary
 import com.jetbrains.python.sdk.impl.resolvePythonHome
 import com.jetbrains.python.sdk.isSystemWide
-import com.jetbrains.python.sdk.resolveToolSearchPaths
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import com.jetbrains.python.target.PythonLanguageRuntimeConfiguration
 import com.jetbrains.python.target.ui.TargetPanelExtension
@@ -315,10 +315,10 @@ data class EelFileSystem(
   }
 
   override suspend fun detectTool(
-    toolName: String,
-    additionalSearchPaths: List<PathHolder.Eel>,
+    toolSpec: ToolCommandSpec,
     filter: (PathHolder.Eel) -> Boolean,
   ): PathHolder.Eel? = withContext(Dispatchers.IO) {
+    val toolName = toolSpec.toolName
     val fromPath = eelApi.exec.where(toolName)
       ?.asNioPath()
       ?.let { PathHolder.Eel(it) }
@@ -328,6 +328,7 @@ data class EelFileSystem(
     val binaryNames =
       if (eelApi.platform.isWindows) listOf("$toolName.exe", "$toolName.bat")
       else listOf(toolName)
+    val additionalSearchPaths = resolveToolSearchPaths(toolSpec)
     for (path in additionalSearchPaths) {
       assert(path.path.getEelDescriptor() == eelApi.descriptor) {
         "Additional search paths should be on the same descriptor as EelFileSystem API, but $path isn't on $eelApi"
@@ -349,8 +350,7 @@ data class EelFileSystem(
   ): PyResult<Map<String, ToolProbeResult<PathHolder.Eel>>> = withContext(Dispatchers.IO) {
     val result = linkedMapOf<String, ToolProbeResult<PathHolder.Eel>>()
     for (toolSpec in toolSpecs) {
-      val resolvedSearchPaths = resolveToolSearchPaths(toolSpec)
-      val path = detectTool(toolSpec.toolName, resolvedSearchPaths) ?: continue
+      val path = detectTool(toolSpec) ?: continue
       val versionOutput = ExecService().execGetStdout(getBinaryToExec(path), Args("--version")).successOrNull
       result[toolSpec.toolName] = ToolProbeResult(path, versionOutput)
     }
@@ -383,6 +383,7 @@ data class EelFileSystem(
 data class TargetFileSystem(
   val targetEnvironmentConfiguration: TargetEnvironmentConfiguration,
   private val pythonLanguageRuntimeConfiguration: PythonLanguageRuntimeConfiguration,
+  private val targetProbeWorkingDirectory: Path? = null,
 ) : FileSystem<PathHolder.Target> {
   override val isReadOnly: Boolean
     get() = !PythonInterpreterTargetEnvironmentFactory.isMutable(targetEnvironmentConfiguration)
@@ -398,6 +399,7 @@ data class TargetFileSystem(
   private lateinit var home: PathHolder.Target
   private val toolProbeCache = ToolProbeCache<ToolCommandSpec, ToolProbeResult<PathHolder.Target>>()
   private val targetUserInfoLock = Mutex()
+  private var detectedEnvironments: List<TargetEnvironmentProbe>? = null
 
   override fun parsePath(raw: String): PyResult<PathHolder.Target> {
     return PyResult.success(PathHolder.Target(raw))
@@ -415,7 +417,7 @@ data class TargetFileSystem(
   ) {
     val targetType = targetEnvironmentConfiguration.getTargetType()
     if (targetType is BrowsableTargetEnvironmentType) {
-      val descriptor = FileChooserDescriptorFactory.singleFile().withTitle(browseTitle)
+      val descriptor = FileChooserDescriptorFactory.singleFileOrDir().withTitle(browseTitle)
       val hints = TargetBrowserHints(showLocalFsInBrowser = true, descriptor)
 
       val actionListener = targetType.createBrowser(
@@ -612,12 +614,21 @@ data class TargetFileSystem(
     return PathHolder.Target(targetPath)
   }
 
-  // TODO PY-87712 Support detection for remotes
   override suspend fun detectEnvironments(
     workingDir: Path,
     uiInfoGetter: (PathHolder.Target) -> PyToolUIInfo?,
   ): List<DetectedSelectableInterpreter<PathHolder.Target>> {
-    return emptyList()
+    probeTools(ADD_INTERPRETER_TOOL_COMMAND_SPECS).orLogException(LOG) ?: return emptyList()
+    val environments = targetUserInfoLock.withLock { detectedEnvironments.orEmpty() }
+    return environments.mapNotNull { environment ->
+      val pythonInfo = environment.python.toPythonInfo() ?: return@mapNotNull null
+      DetectedSelectableInterpreter(
+        homePath = environment.path,
+        pythonInfo = pythonInfo,
+        isBase = false,
+        ui = uiInfoGetter(environment.path),
+      )
+    }
   }
 
   private suspend fun which(cmd: String): PathHolder.Target? {
@@ -627,13 +638,18 @@ data class TargetFileSystem(
   }
 
   override suspend fun detectTool(
-    toolName: String,
-    additionalSearchPaths: List<PathHolder.Target>,
+    toolSpec: ToolCommandSpec,
     filter: (PathHolder.Target) -> Boolean,
   ): PathHolder.Target? = withContext(Dispatchers.IO) {
+    val toolName = toolSpec.toolName
+    if (toolSpec in ADD_INTERPRETER_TOOL_COMMAND_SPECS) {
+      val probeResult = probeTools(ADD_INTERPRETER_TOOL_COMMAND_SPECS).orLogException(LOG)
+      if (probeResult != null) return@withContext probeResult[toolName]?.path
+    }
     val fromWhich = which(toolName)?.takeIf(filter)
     if (fromWhich != null) return@withContext fromWhich
 
+    val additionalSearchPaths = resolveToolSearchPaths(toolSpec)
     for (path in additionalSearchPaths) {
       val candidate = parsePath("${path.pathString}/$toolName").successOrNull
         ?.takeIf { filter(it) && fileExists(it) }
@@ -650,7 +666,7 @@ data class TargetFileSystem(
 
     val probes = toolProbeCache.getOrLoad(toolSpecs) loader@{ missingSpecs ->
       val pythonPath = getPythonPathToProbe()
-      val snapshot = probeTargetTools(missingSpecs, pythonPath).getOr { return@loader it }
+      val snapshot = probeTargetTools(missingSpecs, pythonPath, targetProbeWorkingDirectory).getOr { return@loader it }
       updateFromProbe(snapshot, pythonPath)
       PyResult.success(snapshot.tools)
     }.getOr { return@withContext it }
@@ -693,17 +709,22 @@ data class TargetFileSystem(
       if (pythonPath != null && cachedPython != null) {
         systemPythonCache.putIfAbsent(pythonPath, cachedPython)
       }
+      if (detectedEnvironments == null) {
+        detectedEnvironments = snapshot.environments
+      }
     }
   }
 
   private fun TargetPythonProbe.toCachedSystemPython(path: PathHolder.Target): CachedSystemPython? {
     return when (this) {
       TargetPythonProbe.NotExecutable -> CachedSystemPython.NotExecutable
-      is TargetPythonProbe.Executable -> {
-        val languageLevel = getLanguageLevelFromVersionStringSafe(versionOutput.trim()) ?: return null
-        CachedSystemPython.Executable(createSystemPython(path, PythonInfo(languageLevel, freeThreaded)))
-      }
+      is TargetPythonProbe.Executable -> toPythonInfo()?.let { CachedSystemPython.Executable(createSystemPython(path, it)) }
     }
+  }
+
+  private fun TargetPythonProbe.Executable.toPythonInfo(): PythonInfo? {
+    val languageLevel = getLanguageLevelFromVersionStringSafe(versionOutput.trim()) ?: return null
+    return PythonInfo(languageLevel, freeThreaded)
   }
 
   override suspend fun getFullPath(prefixEnvVar: String, pathComponents: List<String>): PathHolder.Target? {
@@ -822,4 +843,14 @@ internal suspend fun <P : PathHolder> FileSystem<P>.getExistingSelectableInterpr
       }
     }
   allValidSdks
+}
+
+private suspend fun <P : PathHolder> FileSystem<P>.resolveToolSearchPaths(toolSpec: ToolCommandSpec): List<P> {
+  return toolSpec.searchPathsFor(platformAndRoot.platform).mapNotNull { searchPath ->
+    when (searchPath) {
+      is ToolSearchPath.AbsolutePath -> parsePath(searchPath.path).successOrNull
+      is ToolSearchPath.RelativePath -> getFullPath(searchPath.prefixEnvVar, searchPath.pathComponents)
+      is ToolSearchPath.RelativePathFromHome -> getFullPathFromHome(searchPath.pathComponents)
+    }
+  }
 }

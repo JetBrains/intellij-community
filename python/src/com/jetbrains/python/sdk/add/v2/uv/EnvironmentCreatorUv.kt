@@ -140,7 +140,6 @@ internal class EnvironmentCreatorUv<P : PathHolder>(
         installAction = createInstallFix(errorSink)
       )
 
-      // TODO PY-87712 Add banner if the venv does exist at the specified location
       venvPathField = validatablePathField(
         fileSystem = model.fileSystem,
         pathValidator = model.uvViewModel.uvVenvValidator,

@@ -11,13 +11,14 @@ import com.intellij.python.pytools.PyToolManager
 import com.intellij.python.pytools.PyToolManagerProvider
 import com.intellij.python.pytools.configuration.ConfigurablePyTool
 import com.intellij.python.pytools.getToolVersion
+import com.intellij.python.requirements.PyPackageVersionNormalizer
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrNull
-import com.intellij.python.requirements.PyPackageVersionNormalizer
 import com.jetbrains.python.packaging.repository.PyPiPackageRepository
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
+import com.jetbrains.python.sdk.add.v2.detectTool
 import com.jetbrains.python.sdk.add.v2.toFileSystem
 import com.jetbrains.python.sdk.impl.PySdkBundle
 import com.jetbrains.python.sdk.installExecutableViaPythonScript

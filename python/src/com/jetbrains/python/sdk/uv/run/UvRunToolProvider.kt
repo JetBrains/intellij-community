@@ -30,7 +30,6 @@ internal class UvRunToolProvider : PySdkRunToolProvider<UvSdkFlavorData, UvSdkFl
   ): PyRunToolParameters {
     val env = mutableMapOf<String, String>()
     val uvExecutable = getUvExecutable(fileSystem, flavorData.uvPath)?.toString()
-    // TODO PY-87712 Duplicated code for setting up uv envs
     val pythonPath = fileSystem.parsePath(sdkHome).getOrThrow()
     val venvPath = fileSystem.resolvePythonHome(pythonPath).toString()
     env += "VIRTUAL_ENV" to venvPath

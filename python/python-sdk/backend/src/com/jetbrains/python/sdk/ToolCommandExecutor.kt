@@ -45,11 +45,7 @@ data class ToolCommandExecutor(
   suspend fun <P : PathHolder> detectToolExecutable(
     fileSystem: FileSystem<P>,
     filter: (P) -> Boolean,
-  ): P? {
-    val toolSpec = toCommandSpec()
-    val resolvedSearchPaths = fileSystem.resolveToolSearchPaths(toolSpec)
-    return fileSystem.detectTool(toolSpec.toolName, resolvedSearchPaths, filter)
-  }
+  ): P? = fileSystem.detectTool(toCommandSpec(), filter)
 
   fun toCommandSpec(): ToolCommandSpec = ToolCommandSpec(toolName, KNOWN_SEARCH_PATHS + additionalSearchPaths)
 

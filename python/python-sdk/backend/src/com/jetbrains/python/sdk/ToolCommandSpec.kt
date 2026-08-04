@@ -5,7 +5,6 @@ import com.intellij.execution.Platform
 import com.intellij.execution.target.FullPathOnTarget
 import com.intellij.openapi.util.NlsSafe
 import com.jetbrains.python.PyInternalExecApi
-import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import org.jetbrains.annotations.ApiStatus
 
@@ -26,18 +25,6 @@ data class ToolProbeResult<P : PathHolder>(
   val path: P,
   val versionOutput: String?,
 )
-
-@ApiStatus.Internal
-@PyInternalExecApi
-suspend fun <P : PathHolder> FileSystem<P>.resolveToolSearchPaths(toolSpec: ToolCommandSpec): List<P> {
-  return toolSpec.searchPathsFor(platformAndRoot.platform).mapNotNull { searchPath ->
-    when (searchPath) {
-      is ToolSearchPath.AbsolutePath -> parsePath(searchPath.path).successOrNull
-      is ToolSearchPath.RelativePath -> getFullPath(searchPath.prefixEnvVar, searchPath.pathComponents)
-      is ToolSearchPath.RelativePathFromHome -> getFullPathFromHome(searchPath.pathComponents)
-    }
-  }
-}
 
 /**
  * Represents a location to search for a tool executable.

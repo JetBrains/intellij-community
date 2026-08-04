@@ -288,7 +288,6 @@ internal class UvPackageManager internal constructor(
     return PyProjectToml.parseCached(module.project, pyProjectFile.virtualFile)?.project?.name ?: module.name
   }
 
-  // TODO PY-87712 Double check for remotes
   override suspend fun resolveDependencyFilesTree(): List<PyDependenciesFile> {
     val rootFile = getRootDependenciesFile() ?: return emptyList()
     val rootPyProjectToml = (rootFile as? PyProjectTomlFile) ?: return listOf(rootFile)
