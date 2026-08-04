@@ -20,6 +20,7 @@ import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.EelExecApi.EnvironmentVariablesException
+import com.intellij.platform.eel.EelMachine
 import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.eel.EelPathBoundDescriptor
 import com.intellij.platform.eel.EelTunnelsApi
@@ -33,9 +34,10 @@ import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
-import com.intellij.platform.eel.provider.toEelApi
-import com.intellij.platform.eel.provider.utils.EelPathTransfer
+import com.intellij.platform.eel.provider.getResolvedEelMachine
+import com.intellij.platform.eel.provider.resolveEelMachine
 import com.intellij.platform.eel.provider.utils.EelFileTransferAttributesStrategy
+import com.intellij.platform.eel.provider.utils.EelPathTransfer
 import com.intellij.platform.eel.provider.utils.asEelChannel
 import com.intellij.platform.eel.provider.utils.consumeAsEelChannel
 import com.intellij.platform.eel.provider.utils.copy
@@ -145,7 +147,9 @@ class EelTargetEnvironmentRequest(
     override val asTargetConfig: TargetEnvironmentConfiguration = this
 
     override fun getTargetPathIfLocalPathIsOnTarget(probablyPathOnTarget: Path): FullPathOnTarget? {
-      return probablyPathOnTarget.asEelPath().takeIf { it.descriptor == descriptor }?.toString()
+      val eelPath = probablyPathOnTarget.asEelPath()
+      val targetMachine = descriptor.getResolvedEelMachine()
+      return eelPath.takeIf { it.descriptor == descriptor || targetMachine?.ownsDescriptor(it.descriptor) == true }?.toString()
     }
 
     override fun getState(): PersistentState {
@@ -188,9 +192,13 @@ class EelTargetEnvironment(override val request: EelTargetEnvironmentRequest) : 
   private val myTargetPortBindings: MutableMap<TargetPortBinding, ResolvedPortBinding> = HashMap()
   private val myLocalPortBindings: MutableMap<LocalPortBinding, ResolvedPortBinding> = ConcurrentHashMap()
   private val acceptors = ConcurrentLinkedQueue<EelTunnelsApi.ConnectionAcceptor>()
+  private val descriptor = request.configuration.descriptor
+  private val eelMachine = runBlockingMaybeCancellable {
+    descriptor.resolveEelMachine()
+  }
 
   private val eel = runBlockingMaybeCancellable {
-    request.configuration.descriptor.toEelApi()
+    eelMachine.toEelApi(descriptor)
   }
 
   private val forwardingScope by lazy { service<EelTargetScope>().scope.childScope("Eel target forwarding scope: ${request.configuration.descriptor}") }
@@ -206,11 +214,11 @@ class EelTargetEnvironment(override val request: EelTargetEnvironmentRequest) : 
 
   init {
     request.uploadVolumes.forEach { uploadRoot ->
-      myUploadVolumes[uploadRoot] = EelVolume.createFor(eel, uploadRoot, request.uploadVolumeFilters[uploadRoot])
+      myUploadVolumes[uploadRoot] = EelVolume.createFor(eel, eelMachine, uploadRoot, request.uploadVolumeFilters[uploadRoot])
     }
 
     request.downloadVolumes.forEach { downloadRoot ->
-      myDownloadVolumes[downloadRoot] = EelVolume.createFor(eel, downloadRoot)
+      myDownloadVolumes[downloadRoot] = EelVolume.createFor(eel, eelMachine, downloadRoot)
     }
 
     request.targetPortBindings.forEach { targetPortBinding ->
@@ -317,6 +325,7 @@ class EelTargetEnvironment(override val request: EelTargetEnvironmentRequest) : 
     companion object {
       private fun createFor(
         eel: EelApi,
+        eelMachine: EelMachine,
         localPathGetter: () -> Path,
         targetPathGetter: () -> TargetPath,
         filter: ((Path) -> Boolean)?,
@@ -326,7 +335,7 @@ class EelTargetEnvironment(override val request: EelTargetEnvironmentRequest) : 
         val remoteRoot = when (val targetRootPath = targetPathGetter()) {
           is TargetPath.Temporary -> {
             val localEelPath = localRootPath.asEelPath()
-            if (localEelPath.descriptor == eel.descriptor) {
+            if (localEelPath.descriptor == eel.descriptor || eelMachine.ownsDescriptor(localEelPath.descriptor)) {
               localEelPath.toString()
             }
             else {
@@ -347,16 +356,16 @@ class EelTargetEnvironment(override val request: EelTargetEnvironmentRequest) : 
         return EelVolume(eel, filter, localRootPath, remoteRoot)
       }
 
-      fun createFor(eel: EelApi, uploadRoot: UploadRoot, filter: ((Path) -> Boolean)?): EelVolume {
-        return createFor(eel, { uploadRoot.localRootPath }, { uploadRoot.targetRootPath }, filter)
+      fun createFor(eel: EelApi, eelMachine: EelMachine, uploadRoot: UploadRoot, filter: ((Path) -> Boolean)?): EelVolume {
+        return createFor(eel, eelMachine, { uploadRoot.localRootPath }, { uploadRoot.targetRootPath }, filter)
       }
 
-      fun createFor(eel: EelApi, downloadRoot: DownloadRoot): EelVolume {
+      fun createFor(eel: EelApi, eelMachine: EelMachine, downloadRoot: DownloadRoot): EelVolume {
         val localRootPath =
           downloadRoot.localRootPath
           ?: FileUtil.createTempDirectory("intellij-eel-target.", "").toPath()
 
-        return createFor(eel, { localRootPath }, { downloadRoot.targetRootPath }, null)
+        return createFor(eel, eelMachine, { localRootPath }, { downloadRoot.targetRootPath }, null)
       }
     }
   }
