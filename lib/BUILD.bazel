@@ -14357,6 +14357,21 @@ jvm_import(
 )
 
 copy_file(
+    name = "org.xerial.snappy/snappy-java-1.1.10.7.jar_copy",
+    src = "@org_xerial_snappy-snappy-java-1_1_10_7_http//file",
+    out = "org.xerial.snappy/snappy-java-1.1.10.7.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-xerial-snappy-java-xerial-snappy-java",
+    jar = "@org_xerial_snappy-snappy-java-1_1_10_7_http//file",
+    source_jar = "@org_xerial_snappy-snappy-java-1_1_10_7-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
     name = "org.apache.ws.xmlrpc/xmlrpc-2.0.1.jar_copy",
     src = "@org_apache_ws_xmlrpc-xmlrpc-2_0_1_http//file",
     out = "org.apache.ws.xmlrpc/xmlrpc-2.0.1.jar",

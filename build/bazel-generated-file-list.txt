@@ -572,6 +572,7 @@ libraries/tuweni/toml
 libraries/velocity
 libraries/winp
 libraries/xerces
+libraries/xerial-snappy-java
 libraries/xml-rpc
 libraries/xstream
 libraries/xtext-xbase

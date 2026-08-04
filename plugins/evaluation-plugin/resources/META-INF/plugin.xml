@@ -42,6 +42,7 @@
 
   <content>
     <module name="intellij.libraries.clikt" loading="embedded"/>
+    <module name="intellij.libraries.xerial.snappy.java" loading="embedded"/>
   </content>
 
   <dependencies>
