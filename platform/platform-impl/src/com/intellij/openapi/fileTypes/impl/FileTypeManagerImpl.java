@@ -917,15 +917,9 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     FileType temporarilyFixedFileType = getTemporarilyFixedFileType(virtualFile);
     if (temporarilyFixedFileType != null) return temporarilyFixedFileType;
 
-    FileTypeOverrider[] overriders = fileTypeOverriderCache;
-    if (overriders == null) {
-      fileTypeOverriderCache = overriders = FileTypeOverrider.EP_NAME.getExtensions();
-    }
-    for (FileTypeOverrider overrider : overriders) {
-      FileType overriddenFileType = overrider.getOverriddenFileType(virtualFile);
-      if (overriddenFileType != null) {
-        return overriddenFileType;
-      }
+    FileType overriddenFileType = getByOverrides(virtualFile);
+    if (overriddenFileType != null) {
+      return overriddenFileType;
     }
 
     FileType fileType = getByFile(virtualFile);
@@ -944,6 +938,23 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       cached.fileTypes().put(vfid.getId(), result);
     }
     return result;
+  }
+
+  private @Nullable FileType getByOverrides(@NotNull VirtualFile virtualFile) {
+    FileTypeOverrider[] overriders = fileTypeOverriderCache;
+    if (overriders == null) {
+      overriders = FileTypeOverrider.EP_NAME.getExtensions();
+      fileTypeOverriderCache = overriders;
+    }
+
+    for (FileTypeOverrider overrider : overriders) {
+      FileType overriddenFileType = overrider.getOverriddenFileType(virtualFile);
+      if (overriddenFileType != null) {
+        return overriddenFileType;
+      }
+    }
+
+    return null;
   }
 
   private FileType getTemporarilyFixedFileType(@NotNull VirtualFile file) {
