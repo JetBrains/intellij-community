@@ -436,6 +436,20 @@ public class DefaultActionGroup extends ActionGroup {
     incrementModificationStamp();
   }
 
+  /**
+   * Appends {@code other}'s children after this group's own children, keeping not-yet-anchored
+   * children pending with their original constraints. Unlike {@link #copyFromGroup} existing
+   * children, presentation and popup state are preserved.
+   */
+  @ApiStatus.Internal
+  public synchronized void mergeFrom(@NotNull DefaultActionGroup other) {
+    mySortedChildren.addAll(other.mySortedChildren);
+    myPendingActions.addAll(other.myPendingActions);
+    myConstraints.putAll(other.myConstraints);
+    myActionIds.putAll(other.myActionIds);
+    incrementModificationStamp();
+  }
+
   @Override
   public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
     if (e == null) reportGetChildrenForNullEvent();

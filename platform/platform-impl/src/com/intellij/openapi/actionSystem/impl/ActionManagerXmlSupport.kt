@@ -75,6 +75,7 @@ internal const val PROJECT_TYPE = "project-type"
 internal const val OVERRIDE_TEXT_ELEMENT_NAME = "override-text"
 internal const val SYNONYM_ELEMENT_NAME = "synonym"
 internal const val OVERRIDES_ATTR_NAME = "overrides"
+internal const val KEEP_CONTENT_ATTR_NAME = "keep-content"
 internal const val DEACTIVATED_TIMER_DELAY = 5000
 internal const val TIMER_DELAY = 500
 internal const val UPDATE_DELAY_AFTER_TYPING = 500
