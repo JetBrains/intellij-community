@@ -1,6 +1,15 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "kt_javac_options")
 
+jps_test(
+    name = "ide-impl-tests_test",
+    timeout = "moderate",
+    env = {"JB_TEST_JAR": "ide-impl-tests_test_lib.jar"},
+    tags = ["community-aggregator"],
+    runtime_deps = [":ide-impl-tests_test_lib"],
+)
+### skip generation section `test intellij.platform.ide.impl.tests`
+
 ### auto-generated section `build intellij.platform.ide.impl` start
 kt_javac_options(
     name = "custom-javac-options",
@@ -717,10 +726,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.platform.ide.impl.tests` end
-
-### auto-generated section `test intellij.platform.ide.impl.tests` start
-jps_test(
-    name = "ide-impl-tests_test",
-    runtime_deps = [":ide-impl-tests_test_lib"],
-)
-### auto-generated section `test intellij.platform.ide.impl.tests` end
