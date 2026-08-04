@@ -5,6 +5,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.community.common.tools.ToolId
 import com.intellij.python.pyproject.dependencies.spi.PyDependencyGroupLocator
 import com.intellij.python.pyproject.model.internal.DefaultPyProjectManager
+import com.intellij.python.pyproject.psi.spi.PyProjectTomlPathLocator
 import com.jetbrains.python.PyToolUIInfo
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.pySdkAdditionalData
@@ -15,7 +16,7 @@ import org.apache.tuweni.toml.TomlTable
  * Manager provides various specific extensions to `pyproject.toml` (i.e.: uv-specific) and coupled with python SDK with additional data.
  * It can also be created by [forSdk].
  */
-interface PyProjectManager : PyProjectCreator, PyDependencyGroupLocator {
+interface PyProjectManager : PyProjectCreator, PyDependencyGroupLocator, PyProjectTomlPathLocator {
   companion object {
     internal val EP = ExtensionPointName.create<PyProjectManager>("com.intellij.python.pyproject.model.pyprojectmanager")
 

@@ -1,0 +1,6 @@
+[project]
+name = "inline-root"
+version = "0.1.0"
+
+[tool.uv]
+workspace = { members = ["packages/lib-a"] }

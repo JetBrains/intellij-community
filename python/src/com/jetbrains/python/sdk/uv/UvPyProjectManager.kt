@@ -15,6 +15,8 @@ import com.intellij.python.pyproject.model.spi.PyProjectManager
 import com.intellij.python.pyproject.model.spi.PyProjectTomlProject
 import com.intellij.python.pyproject.model.spi.PySdkDependencyGroupSupport
 import com.intellij.python.pyproject.model.spi.TomlDependencySpecification
+import com.intellij.python.pyproject.psi.spi.PyProjectTomlPathValue
+import com.intellij.python.pyproject.psi.spi.isPathDependencyKey
 import com.intellij.python.pytools.runtime.PyToolRuntime
 import com.intellij.python.uv.backend.UV_TOOL
 import com.intellij.python.uv.backend.runtime.createUvToolRuntime
@@ -97,7 +99,7 @@ internal class UvPyProjectManager : PyProjectManager, PyProjectCreator by ToolBa
     // simply treated as having no sources instead of aborting the whole workspace model sync.
     val memberToUvSourceTable = entries
       .mapNotNull { (projectName, toml) ->
-        toml.pyProjectToml.toml.safeGet<TomlTable>("tool.uv.sources", unquotedDottedKey = true).successOrNull?.let { projectName to it }
+        toml.pyProjectToml.toml.safeGet<TomlTable>(UV_SOURCES, unquotedDottedKey = true).successOrNull?.let { projectName to it }
       }
       .toMap()
 
@@ -153,10 +155,36 @@ internal class UvPyProjectManager : PyProjectManager, PyProjectCreator by ToolBa
   }
 
   override fun getTomlDependencySpecifications(): List<TomlDependencySpecification> = listOf(
-    TomlDependencySpecification.PathDependency("tool.uv.sources"),
+    TomlDependencySpecification.PathDependency(UV_SOURCES),
     TomlDependencySpecification.Pep621Dependency("tool.uv.dev-dependencies"),
   )
+
+  /**
+   * uv path values, made navigable by `PyProjectTomlPathReferenceContributor` (PY-90384):
+   *
+   * ```toml
+   * [tool.uv.workspace]
+   * members = ["sub-projects/sub-project-a"]  # -> the member directory
+   *
+   * [tool.uv.sources]
+   * vendored = { path = "vendor/vendored-lib" }
+   * ```
+   *
+   * All three spellings of the workspace table (`[tool.uv.workspace]`, `[tool.uv] workspace = { … }` and the
+   * dotted `workspace.members`) arrive here as the same key path, so one comparison covers them.
+   */
+  override fun resolveTomlPath(keyPath: List<String>): PyProjectTomlPathValue? = when {
+    keyPath == WORKSPACE_MEMBERS_KEY || keyPath == WORKSPACE_EXCLUDE_KEY -> PyProjectTomlPathValue()
+    // A path source may point at an sdist / wheel rather than at a project directory.
+    getTomlDependencySpecifications().isPathDependencyKey(keyPath) -> PyProjectTomlPathValue(acceptFiles = true)
+    else -> null
+  }
 }
+
+private const val UV_SOURCES = "tool.uv.sources"
+private const val UV_WORKSPACE = "tool.uv.workspace"
+private val WORKSPACE_MEMBERS_KEY = "$UV_WORKSPACE.members".split('.')
+private val WORKSPACE_EXCLUDE_KEY = "$UV_WORKSPACE.exclude".split('.')
 
 // Slightly more permissive than PEP 508 IDENTIFIER (allows leading underscores & consecutive separators),
 // but sufficient here since dependency names are already validated by uv.
@@ -193,7 +221,7 @@ private data class SourceTableWithOwner(val table: TomlTable, val ownerRoot: Pat
 private fun getWorkspaceMembers(toml: TomlTable): WorkspaceInfo? {
   // PY-91089: safeGet instead of getTable/getArrayOrEmpty, which throw TomlInvalidTypeException when
   // the key holds an unexpected type (e.g. the `[[tool.uv.workspace]]` array typo, or `members = "x"`).
-  val workspace = toml.safeGet<TomlTable>("tool.uv.workspace", unquotedDottedKey = true).successOrNull ?: return null
+  val workspace = toml.safeGet<TomlTable>(UV_WORKSPACE, unquotedDottedKey = true).successOrNull ?: return null
   val members = workspace.safeGet<TomlArray>("members").successOrNull?.asMatchers ?: emptyList()
   val exclude = workspace.safeGet<TomlArray>("exclude").successOrNull?.asMatchers ?: emptyList()
   if (members.isEmpty()) return null

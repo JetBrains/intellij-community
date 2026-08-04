@@ -50,6 +50,9 @@
     <!-- Claim pyproject.toml as TOML file belonging to the Python plugin so that the
          plugin advertiser doesn't promote unrelated third-party plugins (PY-90131). -->
     <fileType name="TOML" fileNames="pyproject.toml"/>
+    <!-- Navigation for uv workspace members, Poetry packages and path dependencies (PY-90384). -->
+    <psi.referenceContributor language="TOML"
+                              implementation="com.intellij.python.pyproject.psi.PyProjectTomlPathReferenceContributor"/>
   </extensions>
 
   <extensions defaultExtensionNs="Pythonid">
