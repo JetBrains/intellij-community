@@ -18,6 +18,7 @@ import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.use
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.platform.buildView.BuildViewApi
@@ -90,34 +91,34 @@ private class FrontendBuildViewManager(private val project: Project, private val
   }
 
   private suspend fun waitForToolWindow() {
-    if (!isToolWindowRegistered()) {
+    val toolWindowManager = ToolWindowManager.getInstance(project)
+    if (!isToolWindowRegistered(toolWindowManager)) {
       LOG.info("Waiting for tool window registration")
-      suspendCancellableCoroutine { continuation ->
-        val disposable = Disposer.newDisposable("FrontendBuildViewManager.waitForToolWindow")
-        fun checkDone() {
-          if (isToolWindowRegistered()) {
-            Disposer.dispose(disposable)
-            continuation.resumeWith(Result.success(Unit))
+      Disposer.newDisposable("FrontendBuildViewManager.waitForToolWindow").use { disposable ->
+        suspendCancellableCoroutine { continuation ->
+          fun checkDone() {
+            if (isToolWindowRegistered(toolWindowManager)) {
+              continuation.resumeWith(Result.success(Unit))
+            }
           }
-        }
-        val connection = project.messageBus.connect(disposable)
-        connection.subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
-          override fun toolWindowsRegistered(ids: List<String>, toolWindowManager: ToolWindowManager) {
-            checkDone()
-          }
+          val connection = project.messageBus.connect(disposable)
+          connection.subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
+            override fun toolWindowsRegistered(ids: List<String>, toolWindowManager: ToolWindowManager) {
+              checkDone()
+            }
 
-          override fun stateChanged(toolWindowManager: ToolWindowManager) {
-            checkDone()
-          }
-        })
-        checkDone() // just in case, since toolWindowsRegistered might be fired not on EDT
-        continuation.invokeOnCancellation {
-          Disposer.dispose(disposable)
+            override fun stateChanged(toolWindowManager: ToolWindowManager) {
+              checkDone()
+            }
+          })
+          checkDone() // just in case, since toolWindowsRegistered might be fired not on EDT
         }
       }
       LOG.info("Tool window registered")
     }
   }
 
-  private fun isToolWindowRegistered() = ToolWindowManager.getInstance(project).getToolWindow(BuildContentManager.TOOL_WINDOW_ID) != null
+  private fun isToolWindowRegistered(toolWindowManager: ToolWindowManager): Boolean {
+    return toolWindowManager.getToolWindow(BuildContentManager.TOOL_WINDOW_ID) != null
+  }
 }
