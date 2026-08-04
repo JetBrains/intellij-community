@@ -1,4 +1,4 @@
-<idea-plugin visibility="internal">
+<idea-plugin visibility="internal" xmlns:xi="http://www.w3.org/2001/XInclude">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.libraries.aalto.xml"/>
@@ -147,4 +147,5 @@
       </components>
     </obsoleteStorage>
   </extensions>
+  <xi:include href="intellij.platform.configurationStore.impl.actions.xml"/>
 </idea-plugin>

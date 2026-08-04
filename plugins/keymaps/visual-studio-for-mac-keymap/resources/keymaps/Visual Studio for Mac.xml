@@ -120,12 +120,14 @@
   <action id="SearchEverywhere">
     <keyboard-shortcut first-keystroke="meta PERIOD" />
   </action>
+  <action id="CollapseSelection"/>
   <action id="ReplaceInPath">
     <keyboard-shortcut first-keystroke="alt shift meta F" />
   </action>
   <action id="Replace">
     <keyboard-shortcut first-keystroke="alt meta F" />
   </action>
+  <action id="IntroduceField"/>
   <action id="CodeCompletion">
     <keyboard-shortcut first-keystroke="control SPACE" />
   </action>

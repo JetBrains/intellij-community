@@ -186,12 +186,9 @@
   {kind: "pluginId", id: "com.intellij.modules.lang", moduleKind: "shared"},
 
   {kind: "xmlDescriptorFile", moduleName: "intellij.platform.resources", descriptorRelativePath: "src/META-INF/PlatformLangPlugin.xml", moduleKind: "shared"},
-  {kind: "xmlDescriptorFile", moduleName: "intellij.platform.resources", descriptorRelativePath: "src/idea/PriorityEditorLangActions.xml", moduleKind: "shared"},
   {kind: "xmlDescriptorFile", moduleName: "intellij.platform.resources", descriptorRelativePath: "src/idea/PlatformActions.xml", moduleKind: "shared"},
-  {kind: "xmlDescriptorFile", moduleName: "intellij.platform.resources", descriptorRelativePath: "src/META-INF/PlatformExecutionActions.xml", moduleKind: "shared"},
   {kind: "xmlDescriptorFile", moduleName: "intellij.platform.resources", descriptorRelativePath: "src/idea/ExecutionActions.xml", moduleKind: "shared"},
   {kind: "xmlDescriptorFile", moduleName: "intellij.platform.resources", descriptorRelativePath: "src/idea/LangActions.xml", moduleKind: "shared"},
-  {kind: "xmlDescriptorFile", moduleName: "intellij.platform.resources", descriptorRelativePath: "src/idea/UsageViewActions.xml", moduleKind: "shared"},
   {kind: "xmlDescriptorFile", moduleName: "intellij.platform.resources", descriptorRelativePath: "src/idea/ProblemsViewActions.xml", moduleKind: "shared"},
   {kind: "xmlDescriptorFile", moduleName: "intellij.platform.resources", descriptorRelativePath: "src/META-INF/Core.xml", moduleKind: "shared"},
   {kind: "xmlDescriptorFile", moduleName: "intellij.platform.resources", descriptorRelativePath: "src/META-INF/CoreImpl.xml", moduleKind: "shared"},

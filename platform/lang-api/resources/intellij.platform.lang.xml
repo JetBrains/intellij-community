@@ -1,4 +1,4 @@
-<idea-plugin visibility="public">
+<idea-plugin visibility="public" xmlns:xi="http://www.w3.org/2001/XInclude">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.libraries.fastutil"/>
@@ -288,4 +288,5 @@
     <projectService serviceImplementation="com.intellij.openapi.roots.ui.configuration.ProjectSettingsService" open="true"/>
   </extensions>
 
+  <xi:include href="intellij.platform.lang.actions.xml"/>
 </idea-plugin>

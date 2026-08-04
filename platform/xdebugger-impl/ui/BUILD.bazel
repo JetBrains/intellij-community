@@ -280,6 +280,8 @@ jvm_library(
         "//libraries/fastutil:fastutil_test_lib",
         "//platform/forms_rt:java-guiForms-rt",
         "//platform/forms_rt:java-guiForms-rt_test_lib",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/editor-ui-api:editor-ui_test_lib",
         "//platform/testFramework",
         "//platform/testFramework:testFramework_test_lib",
         "//libraries/junit4",

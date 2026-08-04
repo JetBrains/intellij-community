@@ -379,6 +379,7 @@
   <action id="SaveAll">
     <keyboard-shortcut first-keystroke="control shift S"/>
   </action>
+  <action id="SaveAs"/>
   <action id="SaveDocument">
     <keyboard-shortcut first-keystroke="control S" />
   </action>

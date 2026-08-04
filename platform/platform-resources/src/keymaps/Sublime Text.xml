@@ -145,6 +145,7 @@
   <action id="SelectNextOccurrence">
     <keyboard-shortcut first-keystroke="control d"/>
   </action>
+  <action id="SendEOF"/>
   <!--END SELECTION-->
   <!--FIND-->
   <action id="Find">

@@ -1,4 +1,4 @@
-<idea-plugin visibility="internal">
+<idea-plugin visibility="internal" xmlns:xi="http://www.w3.org/2001/XInclude">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.libraries.fastutil"/>
@@ -21,4 +21,5 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.ide.ImportOldConfigsUsagesCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.ide.OldDirectoryCleaner$Stats"/>
   </extensions>
+  <xi:include href="intellij.platform.ide.initialConfigImport.actions.xml"/>
 </idea-plugin>

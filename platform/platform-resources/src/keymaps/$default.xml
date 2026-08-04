@@ -873,6 +873,9 @@
   <action id="SaveAll">
     <keyboard-shortcut first-keystroke="control S"/>
   </action>
+  <action id="SaveAs">
+    <keyboard-shortcut first-keystroke="control shift S"/>
+  </action>
   <action id="$Delete">
     <keyboard-shortcut first-keystroke="DELETE"/>
   </action>

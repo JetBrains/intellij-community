@@ -1,4 +1,4 @@
-<idea-plugin visibility="public">
+<idea-plugin visibility="public" xmlns:xi="http://www.w3.org/2001/XInclude">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.libraries.caffeine"/>
@@ -176,4 +176,5 @@
     <applicationService serviceImplementation="com.intellij.ide.browsers.WebBrowserXmlService" open="true"/>
     <iconDescriptionBundle resourceBundle="messages.IdeBundle"/>
   </extensions>
+  <xi:include href="intellij.platform.ide.actions.xml"/>
 </idea-plugin>

@@ -12,8 +12,10 @@ fun readDescriptorFromBytesForTest(path: Path, isBundled: Boolean, input: ByteAr
   val loadingContext = PluginDescriptorLoadingContext()
   val pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER
   val dataLoader = object : DataLoader {
-    override fun load(path: String, pluginDescriptorSourceOnly: Boolean) = throw UnsupportedOperationException()
-    override fun toString() = throw UnsupportedOperationException()
+    override fun load(path: String, pluginDescriptorSourceOnly: Boolean): ByteArray? =
+      javaClass.classLoader.getResourceAsStream(path)?.use { it.readAllBytes() }
+
+    override fun toString() = "test classpath"
   }
   val rawBuilder = parsePluginXml(
     input = input,
