@@ -19,6 +19,8 @@ import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessor;
 import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessors;
+import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.lookup.LookupActionProvider;
 import com.intellij.codeInsight.lookup.LookupArranger;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -219,7 +221,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   private final EmptyLookupItem myDummyItem = new EmptyLookupItem(CommonBundle.message("tree.node.loading"), true);
   private boolean myFirstElementAdded = false;
   private boolean myShowIfMeaningless = false;
-  private final LookupDisplayStrategy myDisplayStrategy;
 
   final CoroutineScope coroutineScope = CoroutineScopeKt.CoroutineScope(SupervisorJob(null).plus(Dispatchers.getDefault()));
 
@@ -235,7 +236,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     myArranger = arranger;
     myPresentableArranger = arranger;
     this.editor.getColorsScheme().getFontPreferences().copyTo(myFontPreferences);
-    myDisplayStrategy = LookupDisplayStrategy.getStrategy(editor);
 
     DaemonCodeAnalyzer.getInstance(session.getProject()).disableUpdateByTimer(this);
 
@@ -279,7 +279,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
   @ApiStatus.Internal
   protected @NotNull Color getBackgroundColor() {
-    return myDisplayStrategy.getBackgroundColor();
+    return LookupCellRenderer.BACKGROUND_COLOR;
   }
 
   private @NotNull CollectionListModelWithBatchUpdate<LookupElement> getListModel() {
@@ -930,7 +930,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
   @ApiStatus.Internal
   protected void updateLocation(@NotNull Point p) {
-    myDisplayStrategy.updateLocation(this, editor, p);
+    HintManagerImpl.updateLocation(this, editor, p);
   }
 
   @Override
@@ -1026,7 +1026,14 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       delegateActionToEditor(IdeActions.ACTION_RENAME, null, actionEvent);
     }
     try {
-      myDisplayStrategy.showLookup(this, editor, p);
+      HintManagerImpl.getInstanceImpl().showEditorHint(
+        this,
+        editor,
+        p,
+        HintManager.HIDE_BY_ESCAPE | HintManager.UPDATE_BY_SCROLLING,
+        0,
+        false,
+        HintManagerImpl.createHintHint(editor, p, this, HintManager.UNDER).setRequestFocus(ScreenReader.isActive()).setAwtTooltip(false));
     }
     catch (Exception e) {
       LOG.error(e);
@@ -1463,7 +1470,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       myHidden = true;
 
       try {
-        myDisplayStrategy.hideLookup(this, editor);
+        hide(false);
 
         Disposer.dispose(this);
         ToolTipManager.sharedInstance().unregisterComponent(list);
