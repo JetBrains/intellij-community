@@ -152,7 +152,7 @@ public class InferenceIncorporationPhase {
         typeArgs = args.toArray(PsiType.EMPTY_ARRAY);
       }
       if (parameters.length != typeArgs.length) continue;
-      // JLS 18.4: the fresh variables B1..Bn substitute the captured type parameters P1..Pn inside the bounds.
+      // JLS 18.3.2: the fresh variables B1..Bn substitute the captured type parameters P1..Pn inside the bounds.
       // Map each captured type parameter to *its own* fresh variable so that a self-referential (F-bounded) parameter,
       // e.g. T in T extends Foo<T, U>, refers to this capture instead of leaking to a sibling capture of the same
       // wildcard through the session-global inference substitution, which is overwritten across captures that share
