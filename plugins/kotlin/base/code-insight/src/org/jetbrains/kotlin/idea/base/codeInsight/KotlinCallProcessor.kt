@@ -6,14 +6,15 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbols
 import org.jetbrains.kotlin.analysis.api.resolution.KaCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallInfo
 import org.jetbrains.kotlin.analysis.api.resolution.KaCompoundArrayAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaCompoundVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaDelegatedConstructorCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaForLoopCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
@@ -25,7 +26,6 @@ import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
-import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.kdoc.psi.api.KDoc
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtArrayAccessExpression
@@ -84,12 +84,6 @@ class FunctionCallTarget(
     override val symbol: KaFunctionSymbol
         get() = call.symbol
 }
-
-class DesugaredFunctionCallTarget(
-    override val caller: KtElement,
-    override val symbol: KaFunctionSymbol,
-    override val call: KaCall? = null
-) : TypedCallTarget<KaFunctionSymbol, KaFunctionSignature<KaFunctionSymbol>>
 
 interface KotlinCallTargetProcessor {
     /**
@@ -189,31 +183,12 @@ object KotlinCallProcessor {
 
     private fun handle(element: KtElement, processor: KotlinCallTargetProcessor): Boolean {
         analyze(element) {
-            fun handleSpecial(element: KtElement): Boolean {
-                val symbols = element.mainReference?.resolveToSymbols() ?: return true
-                for (symbol in symbols) {
-                    if (symbol !is KaFunctionSymbol) continue
-                    with(processor) {
-                        if (!processCallTarget(DesugaredFunctionCallTarget(element, symbol))) return false
-                    }
-                }
-                return true
-            }
-
-            if (element is KtForExpression) {
-                return handleSpecial(element)
-            }
-
-            if (element is KtDestructuringDeclarationEntry) {
-                return handleSpecial(element)
-            }
-
             val callInfo = element.resolveToCall()
             val call = callInfo?.successfulCallOrNull<KaCall>()
 
             return with(processor) {
                 if (call != null) {
-                    return processResolvedCall(processor, element, call)
+                    processResolvedCall(processor, element, call)
                 } else {
                     processUnresolvedCall(element, callInfo)
                 }
@@ -222,6 +197,7 @@ object KotlinCallProcessor {
     }
 
 
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     fun processResolvedCall(targetProcessor: KotlinCallTargetProcessor, element: KtElement, call: KaCall): Boolean {
         with(targetProcessor) {
@@ -240,6 +216,12 @@ object KotlinCallProcessor {
                 is KaCompoundArrayAccessCall -> {
                     processCallTarget(FunctionCallTarget(element, call.getterCall))
                     processCallTarget(FunctionCallTarget(element, call.setterCall))
+                }
+
+                is KaForLoopCall -> {
+                    processCallTarget(FunctionCallTarget(element, call.nextCall))
+                    processCallTarget(FunctionCallTarget(element, call.iteratorCall))
+                    processCallTarget(FunctionCallTarget(element, call.hasNextCall))
                 }
 
                 else -> true
