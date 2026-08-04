@@ -7,7 +7,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile
@@ -28,7 +27,6 @@ import com.intellij.testFramework.rules.ProjectModelExtension
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.tools.ide.metrics.benchmark.Benchmark.newBenchmark
 import com.intellij.tools.ide.metrics.benchmark.Benchmark.newBenchmarkWithVariableInputSize
-import com.intellij.util.indexing.testEntities.NonIndexableKindFileSetTestContributor
 import com.intellij.util.indexing.testEntities.NonIndexableTestEntity
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor
@@ -98,10 +96,8 @@ open class NonIndexableFileSearchPerformanceTest {
     val searchPattern = "ProjectRootEntity"
     val contributor = createContributor()
     newBenchmarkWithVariableInputSize("search \"$searchPattern\"", nonIndexableFilesCount) {
-      runReadActionBlocking { // improve performance of this benchmark by avoiding repeated acquisition of read locks
-        contributor.search(searchPattern, MockProgressIndicator())
-        nonIndexableFilesCount
-      }
+      contributor.search(searchPattern, createIndicator())
+      nonIndexableFilesCount
     }.start()
   }
 
@@ -126,7 +122,7 @@ open class NonIndexableFileSearchPerformanceTest {
     val searchScope = readAction { GlobalSearchScope.projectScope(project) }
     val contributor = createContributor(searchScope)
     newBenchmarkWithVariableInputSize("search \"$searchPattern\", only libraries, 'Project' scope", nonIndexableFilesCount) {
-      val items = contributor.search(searchPattern, MockProgressIndicator())
+      val items = contributor.search(searchPattern, createIndicator())
       assertThat(items).isEmpty()
       nonIndexableFilesCount
     }.start()
@@ -141,7 +137,7 @@ open class NonIndexableFileSearchPerformanceTest {
       // elementsLimit = 0, so when the first matching file is found, the search stops.
       // Because it actually searches for `elementsLimit + 1` files
       val elementsLimit = 0
-      contributor.search(searchPattern, MockProgressIndicator(), elementsLimit)
+      contributor.search(searchPattern, createIndicator(), elementsLimit)
       nonIndexableFilesCount
     }.start()
   }
@@ -154,7 +150,7 @@ open class NonIndexableFileSearchPerformanceTest {
       // elementsLimit = 0, so when the first matching file is found, the search stops.
       // Because it actually searches for `elementsLimit + 1` files
       val elementsLimit = 0
-      contributor.search(filename, MockProgressIndicator(), elementsLimit)
+      contributor.search(filename, createIndicator(), elementsLimit)
       nonIndexableFilesCount
     }.start()
   }
@@ -167,10 +163,12 @@ open class NonIndexableFileSearchPerformanceTest {
       // elementsLimit = 0, so when the first matching file is found, the search stops.
       // Because it actually searches for `elementsLimit + 1` files
       val elementsLimit = 0
-      contributor.search(filename, MockProgressIndicator(), elementsLimit)
+      contributor.search(filename, createIndicator(), elementsLimit)
     }.start()
   }
 
+
+  private fun createIndicator() = MockProgressIndicator().also { it.start() }
 
   private fun createContributor(scope: SearchScope = GlobalSearchScope.projectScope(project)): NonIndexableFilesSEContributor {
     val event = TestActionEvent.createTestEvent(SimpleDataContext.getProjectContext(project))
