@@ -193,7 +193,7 @@ public class JavaCoverageSuite extends BaseCoverageSuite {
     myExcludePatterns = readFilters(element, EXCLUDED_FILTER);
 
     if (myRunner == null) {
-      myRunner = CoverageRunner.getInstance(IDEACoverageRunner.class); //default
+      myRunner = CoverageRunner.getInstance(JavaCoverageRunner.DEFAULT_RUNNER_CLASS);
     }
   }
 

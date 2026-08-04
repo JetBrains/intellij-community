@@ -47,6 +47,8 @@ import java.util.function.Supplier;
  * @author Roman.Chernyatchik
  */
 public abstract class JavaCoverageRunner extends CoverageRunner {
+  public static final Class<JaCoCoCoverageRunner> DEFAULT_RUNNER_CLASS = JaCoCoCoverageRunner.class;
+
   private static final String JAVA_COVERAGE_AGENT_AGENT_PATH = "java.test.agent.lib.path";
 
   @Override

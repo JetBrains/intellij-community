@@ -22,6 +22,7 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.ui.classFilter.ClassFilter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import org.jdom.Element
 import org.junit.Assert
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -43,7 +44,7 @@ class CoverageRunConfigTest : CoverageIntegrationBaseTest() {
     coverageConfig as JavaCoverageEnabledConfiguration
 
     Assert.assertFalse(coverageConfig.isTrackTestFolders)
-    Assert.assertTrue(coverageConfig.coverageRunner is IDEACoverageRunner)
+    Assert.assertTrue(coverageConfig.coverageRunner is JaCoCoCoverageRunner)
     val includeConfigPattens = coverageConfig.patterns!!
     Assert.assertEquals(1, includeConfigPattens.size)
     Assert.assertEquals("foo.*", includeConfigPattens[0])
@@ -55,9 +56,9 @@ class CoverageRunConfigTest : CoverageIntegrationBaseTest() {
 
     Assert.assertTrue(suite.isBranchCoverage)
     Assert.assertFalse(suite.isCoverageByTestEnabled)
-    Assert.assertTrue(suite.isCoverageByTestApplicable)
+    Assert.assertFalse(suite.isCoverageByTestApplicable)
     Assert.assertFalse(suite.isTrackTestFolders)
-    Assert.assertTrue(suite.runner is IDEACoverageRunner)
+    Assert.assertTrue(suite.runner is JaCoCoCoverageRunner)
     Assert.assertTrue(suite.coverageEngine is JavaCoverageEngine)
     val includePattens = suite.includeFilters!!
     Assert.assertNotSame(includeConfigPattens, includePattens)
@@ -73,6 +74,39 @@ class CoverageRunConfigTest : CoverageIntegrationBaseTest() {
   @Test
   fun `test run with intellij coverage creates report and aggregated coverage tree stats`() =
     doTestRunWithCoverage(requireNotNull(CoverageRunner.getInstance(IDEACoverageRunner::class.java)))
+
+  @Test
+  fun `test explicit intellij coverage runner is persisted`() {
+    val runManager = RunManager.getInstance(project)
+    val runConfig = runManager.findConfigurationByName("foo in integration")?.configuration as RunConfigurationBase<*>
+    val coverageConfig = CoverageEnabledConfiguration.getOrCreate(runConfig) as JavaCoverageEnabledConfiguration
+
+    val defaultElement = Element("extension")
+    coverageConfig.writeExternal(defaultElement)
+    Assert.assertNull(defaultElement.getAttributeValue("runner"))
+
+    val ideaRunner = requireNotNull(CoverageRunner.getInstance(IDEACoverageRunner::class.java))
+    coverageConfig.coverageRunner = ideaRunner
+    val ideaElement = Element("extension")
+    coverageConfig.writeExternal(ideaElement)
+    Assert.assertEquals(ideaRunner.id, ideaElement.getAttributeValue("runner"))
+
+    val restored = JavaCoverageEnabledConfiguration(runConfig)
+    restored.readExternal(ideaElement)
+    Assert.assertSame(ideaRunner, restored.coverageRunner)
+  }
+
+  @Test
+  fun `test suite without runner uses jacoco`() {
+    val element = Element("suite")
+      .setAttribute("FILE_PATH", SIMPLE_JACOCO_REPORT_PATH)
+      .setAttribute("MODIFIED", "0")
+    val suite = JavaCoverageSuite(JavaCoverageEngine.getInstance())
+
+    suite.readExternal(element)
+
+    Assert.assertTrue(suite.runner is JaCoCoCoverageRunner)
+  }
 
   private fun doTestRunWithCoverage(coverageRunner: CoverageRunner): Unit = runBlocking {
     val projectDir = requireNotNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(getProjectDirOrFile(true)))

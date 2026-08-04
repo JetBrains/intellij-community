@@ -34,7 +34,7 @@ class JavaCoverageOptionsProvider : PersistentStateComponent<JavaCoverageOptions
   }
 
   class State {
-    internal var myRunnerId: String? = CoverageRunner.getInstance(IDEACoverageRunner::class.java).id
+    internal var myRunnerId: String? = CoverageRunner.getInstance(JavaCoverageRunner.DEFAULT_RUNNER_CLASS).id
     internal var myBranchCoverage: Boolean = true
     internal var myTestTracking: Boolean = false
     internal var myTestModulesCoverage: Boolean = false

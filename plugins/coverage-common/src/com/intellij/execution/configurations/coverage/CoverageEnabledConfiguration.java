@@ -210,6 +210,7 @@ public abstract class CoverageEnabledConfiguration implements JDOMExternalizable
     final String runnerId = element.getAttributeValue(COVERAGE_RUNNER);
     if (runnerId != null) {
       myRunnerId = runnerId;
+      myCachedRunner = null;
     }
   }
 
