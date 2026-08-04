@@ -17,7 +17,7 @@ version = "$codegenApiVersion.$codegenImplMajorVersion.$codegenImplMinorVersion"
 repositories {
   mavenCentral()
   maven {
-    url = uri("https://packages.jetbrains.team/maven/p/ij/intellij-dependencies")
+    url = uri("https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies")
   }
 }
 
