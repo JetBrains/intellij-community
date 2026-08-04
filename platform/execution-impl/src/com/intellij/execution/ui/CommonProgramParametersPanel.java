@@ -105,7 +105,9 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
     // for backward compatibility: com.microsoft.tooling.msservices.intellij.azure:3.0.11
     myWorkingDirectoryField = new TextFieldWithBrowseButton();
 
-    var descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor().withTitle(ExecutionBundle.message("select.working.directory.message"));
+    var descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
+      .withTitle(ExecutionBundle.message("select.working.directory.message"))
+      .withEnvironmentRestricted(true);
     myWorkingDirectoryField.addBrowseFolderListener(myProject, descriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
     myWorkingDirectoryComponent = LabeledComponent.create(myWorkingDirectoryField, ExecutionBundle.message("run.configuration.working.directory.label"));
 
