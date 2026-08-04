@@ -186,6 +186,16 @@ public class Maven3XProjectResolver {
                                                   ? createRepositorySessionForMavenResolverV2_x(request, rawSession)
                                                   : createRepositorySessionForMavenResolverV1((DefaultRepositorySystemSession)rawSession);
 
+      if (resolverV2) {
+        // The MavenSession created in executeWithMavenSession holds the raw resolver-2.x session, which does not carry
+        // IntelliJ's WorkspaceReader (unlike resolver 1.x, where the very session held by MavenSession is customized in place).
+        // Rebind the LegacySupport session to the customized one so that Maven lifecycle extensions (afterProjectsRead)
+        // can resolve reactor artifacts via IntelliJ's WorkspaceReader instead of Maven's default reactor reader.
+        LegacySupport legacySupport = myEmbedder.getComponent(LegacySupport.class);
+        mavenSession = new MavenSession(mavenSession.getContainer(), repositorySession, mavenSession.getRequest(), mavenSession.getResult());
+        legacySupport.setSession(mavenSession);
+      }
+
       List<ProjectBuildingResult> buildingResults = myTelemetry.callWithSpan("getProjectBuildingResults " + files.size(), () ->
         getProjectBuildingResults(request, files));
 
