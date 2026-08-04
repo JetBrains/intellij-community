@@ -1,0 +1,7 @@
+// "Remove @JvmExposeBoxed annotation" "true"
+// WITH_STDLIB
+@file:OptIn(ExperimentalStdlibApi::class)
+
+@JvmE<caret>xposeBoxed fun foo(x: Int) {}
+
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.inspections.RemoveAnnotationFix

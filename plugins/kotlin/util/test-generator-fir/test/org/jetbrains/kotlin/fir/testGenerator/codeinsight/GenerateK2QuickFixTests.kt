@@ -113,6 +113,7 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             model("$idea/quickfix/insertDelegationCall", pattern = pattern)
             model("$idea/quickfix/isEnumEntry", pattern = pattern)
             model("$idea/quickfix/javaClassOnCompanion", pattern = pattern)
+            model("$idea/quickfix/jvmExposeBoxed", pattern = pattern)
             model("$idea/quickfix/kdocMissingDocumentation", pattern = pattern)
             model("$idea/quickfix/kotlinTimeToJavaInstant", pattern = pattern)
             model("$idea/quickfix/lateinit", pattern = pattern)

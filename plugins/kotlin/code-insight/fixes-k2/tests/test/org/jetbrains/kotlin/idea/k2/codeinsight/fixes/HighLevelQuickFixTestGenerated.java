@@ -9904,6 +9904,99 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/jvmExposeBoxed")
+    public static class JvmExposeBoxed extends AbstractHighLevelQuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("canBeReplacedWithJvmName.kt")
+        public void testCanBeReplacedWithJvmName() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/jvmExposeBoxed/canBeReplacedWithJvmName.kt");
+        }
+
+        @TestMetadata("canBeReplacedWithJvmNameNotAvailable.kt")
+        public void testCanBeReplacedWithJvmNameNotAvailable() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/jvmExposeBoxed/canBeReplacedWithJvmNameNotAvailable.kt");
+        }
+
+        @TestMetadata("cannotBeTheSame.kt")
+        public void testCannotBeTheSame() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/jvmExposeBoxed/cannotBeTheSame.kt");
+        }
+
+        @TestMetadata("cannotBeTheSameAsJvmNameChange.kt")
+        public void testCannotBeTheSameAsJvmNameChange() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/jvmExposeBoxed/cannotBeTheSameAsJvmNameChange.kt");
+        }
+
+        @TestMetadata("cannotBeTheSameAsJvmNameRemove.kt")
+        public void testCannotBeTheSameAsJvmNameRemove() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/jvmExposeBoxed/cannotBeTheSameAsJvmNameRemove.kt");
+        }
+
+        @TestMetadata("cannotBeTheSameSpecialCharacters.kt")
+        public void testCannotBeTheSameSpecialCharacters() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/jvmExposeBoxed/cannotBeTheSameSpecialCharacters.kt");
+        }
+
+        @TestMetadata("cannotExposeLocals.kt")
+        public void testCannotExposeLocals() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/jvmExposeBoxed/cannotExposeLocals.kt");
+        }
+
+        @TestMetadata("cannotExposeOpenAbstract.kt")
+        public void testCannotExposeOpenAbstract() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/jvmExposeBoxed/cannotExposeOpenAbstract.kt");
+        }
+
+        @TestMetadata("cannotExposePrivate.kt")
+        public void testCannotExposePrivate() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/jvmExposeBoxed/cannotExposePrivate.kt");
+        }
+
+        @TestMetadata("cannotExposeReified.kt")
+        public void testCannotExposeReified() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/jvmExposeBoxed/cannotExposeReified.kt");
+        }
+
+        @TestMetadata("cannotExposeSuspend.kt")
+        public void testCannotExposeSuspend() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/jvmExposeBoxed/cannotExposeSuspend.kt");
+        }
+
+        @TestMetadata("cannotExposeSynthetic.kt")
+        public void testCannotExposeSynthetic() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/jvmExposeBoxed/cannotExposeSynthetic.kt");
+        }
+
+        @TestMetadata("inapplicableWithName.kt")
+        public void testInapplicableWithName() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/jvmExposeBoxed/inapplicableWithName.kt");
+        }
+
+        @TestMetadata("requiresNameAdd.kt")
+        public void testRequiresNameAdd() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/jvmExposeBoxed/requiresNameAdd.kt");
+        }
+
+        @TestMetadata("requiresNameAddSpecialCharacters.kt")
+        public void testRequiresNameAddSpecialCharacters() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/jvmExposeBoxed/requiresNameAddSpecialCharacters.kt");
+        }
+
+        @TestMetadata("requiresNameRemove.kt")
+        public void testRequiresNameRemove() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/jvmExposeBoxed/requiresNameRemove.kt");
+        }
+
+        @TestMetadata("uselessJvmExposeBoxed.kt")
+        public void testUselessJvmExposeBoxed() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/jvmExposeBoxed/uselessJvmExposeBoxed.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/quickfix/kdocMissingDocumentation")
     public static class KdocMissingDocumentation extends AbstractHighLevelQuickFixTest {
         private void runTest(String testDataFilePath) throws Exception {
