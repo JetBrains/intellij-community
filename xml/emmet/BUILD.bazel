@@ -126,11 +126,6 @@ jvm_provided_library(
     lib = "//fleet/rpc",
 )
 
-jvm_provided_library(
-    name = "platform_kernel_rpc_provided",
-    lib = "//platform/kernel/rpc",
-)
-
 jvm_library(
     name = "emmet",
     srcs = glob(
@@ -153,6 +148,7 @@ jvm_library(
         "@lib//:jetbrains-annotations",
         "@lib//:kotlin-stdlib-provided",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+        "//platform/kernel/rpc",
         ":platform_core_provided",
         ":platform_analysis-impl_provided",
         ":xml_psi_provided",
@@ -178,7 +174,6 @@ jvm_library(
         ":platform_project_project_provided",
         ":libraries_kotlinx_serialization_core_provided",
         ":fleet_rpc_provided",
-        ":platform_kernel_rpc_provided",
     ],
 )
 
@@ -247,7 +242,6 @@ jvm_library(
         "//libraries/kotlinx/serialization/core:core_test_lib",
         "//fleet/rpc",
         "//fleet/rpc:rpc_test_lib",
-        "//platform/kernel/rpc",
         "//platform/kernel/rpc:rpc_test_lib",
     ],
 )
