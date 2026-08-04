@@ -5,8 +5,8 @@ import com.intellij.ide.projectView.impl.ProjectViewPane
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.project.Project
-import com.intellij.platform.projectView.frontend.impl.pane.FrontendProjectViewPaneTreeModel
-import com.intellij.platform.projectView.frontend.impl.pane.Node
+import com.intellij.platform.projectView.frontend.impl.FrontendProjectViewPaneTreeModel
+import com.intellij.platform.projectView.frontend.impl.Node
 import com.intellij.platform.projectView.pane.FrontendProjectViewPaneAggregator
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.Dispatchers

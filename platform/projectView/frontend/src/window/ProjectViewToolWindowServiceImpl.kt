@@ -24,7 +24,7 @@ import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.platform.projectView.actions.ProjectViewActionSupport
 import com.intellij.platform.projectView.frontend.actions.ProjectViewActionSupportImpl
 import com.intellij.platform.projectView.frontend.actions.SplitProjectViewAutoscrollFromSource
-import com.intellij.platform.projectView.frontend.impl.pane.TreeBasedFrontendProjectViewPane
+import com.intellij.platform.projectView.frontend.impl.TreeBasedFrontendProjectViewPane
 import com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPane
 import com.intellij.platform.projectView.pane.FrontendProjectViewPaneAggregator
 import com.intellij.platform.projectView.pane.ProjectViewNodePath
