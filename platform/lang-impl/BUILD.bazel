@@ -40,7 +40,7 @@ jvm_library(
     deps = [
         # do not sort,
         "//platform/boot",
-        "//platform/kernel/rpc",
+        "//platform/kernel/rpc.lite",
         "//platform/core-api:core",
         "//platform/diff-api:diff",
         "//platform/editor-ui-api:editor-ui",
@@ -180,7 +180,7 @@ jvm_library(
         # do not sort,
         ":lang-impl",
         "//platform/boot:boot_test_lib",
-        "//platform/kernel/rpc:rpc_test_lib",
+        "//platform/kernel/rpc.lite:rpc.lite_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/diff-api:diff_test_lib",
         "//platform/editor-ui-api:editor-ui_test_lib",

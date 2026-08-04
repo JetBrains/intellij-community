@@ -33,7 +33,7 @@ internal class FrontendRemoteTopicListenersRegistry(cs: CoroutineScope) {
   init {
     cs.launch {
       durable {
-        RemoteTopicApi.getInstance().subscribe().collect { eventDto ->
+        RemoteTopicApi.awaitInstance().subscribe().collect { eventDto ->
           runCatching {
             if (eventDto.projectId == null) {
               val appListeners = applicationTopicsListeners[eventDto.topicId]
