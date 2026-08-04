@@ -52,7 +52,7 @@ internal class TerminalOsc8HyperlinksEndToEndTest {
   @Test
   fun `OSC8 hyperlink is reported on the content update event`() = runSessionTest { session, connector ->
     val collector = TerminalOutputEventCollector(session, this)
-    connector.write("x ${osc8("https://jetbrains.com", "JB")} y")
+    connector.feed("x ${osc8("https://jetbrains.com", "JB")} y")
 
     val event = collector.awaitEvent<TerminalContentUpdatedEvent> { it.osc8Hyperlinks.isNotEmpty() }
     val link = event.osc8Hyperlinks.single()
@@ -69,7 +69,7 @@ internal class TerminalOsc8HyperlinksEndToEndTest {
       }
     }
 
-    connector.write("before ${osc8("https://example.com", "link text")} after")
+    connector.feed("before ${osc8("https://example.com", "link text")} after")
 
     val link = awaitOsc8Hyperlink(model)
     assertThat(link.uri).isEqualTo("https://example.com")

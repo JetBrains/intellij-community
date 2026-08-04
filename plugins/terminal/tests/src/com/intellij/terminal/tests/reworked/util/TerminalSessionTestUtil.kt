@@ -100,7 +100,7 @@ internal object TerminalSessionTestUtil {
 
   /**
    * Creates the production [TerminalSession] backed by an in-memory [LoopbackTtyConnector]
-   * instead of a real shell process. Write raw ANSI/VT sequences to [LoopbackTtyConnector.write]
+   * instead of a real shell process. Write raw ANSI/VT sequences to [LoopbackTtyConnector.feed]
    * and observe the resulting events in [TerminalSession.getOutputFlow].
    *
    * The session uses [TerminalProcessType.NON_SHELL], so shell integration and working directory
