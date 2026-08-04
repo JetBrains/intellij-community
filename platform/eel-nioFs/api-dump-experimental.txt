@@ -52,7 +52,6 @@ f:com.intellij.platform.eel.provider.EelPathDescriptorKt
 - sf:createTemporaryDirectory(com.intellij.platform.eel.EelApi,java.lang.String,java.lang.String,Z):java.nio.file.Path
 - bs:createTemporaryDirectory$default(com.intellij.platform.eel.EelApi,java.lang.String,java.lang.String,Z,I,java.lang.Object):java.nio.file.Path
 - f:expandUserHome(com.intellij.platform.eel.EelDescriptor,java.lang.String):java.nio.file.Path
-- sf:getActualPath(java.nio.file.Path):java.nio.file.Path
 - sf:getHomePath(com.intellij.platform.eel.EelDescriptor):java.nio.file.Path
 - sf:getNioPath(java.lang.String,com.intellij.platform.eel.EelDescriptor):java.nio.file.Path
 - sf:getUriLocalToEel(java.nio.file.Path):java.net.URI

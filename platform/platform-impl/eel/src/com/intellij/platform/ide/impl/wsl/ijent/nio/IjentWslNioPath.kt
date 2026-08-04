@@ -3,7 +3,7 @@ package com.intellij.platform.ide.impl.wsl.ijent.nio
 
 import com.intellij.platform.core.nio.fs.BasicFileAttributesHolder2
 import com.intellij.platform.core.nio.fs.MultiRoutingFsPath
-import com.intellij.platform.eel.provider.utils.EelPathUtils.getActualPath
+import com.intellij.platform.eel.provider.utils.impl.getActualWslPath
 import com.intellij.platform.eel.provider.utils.impl.ijentToLocal
 import com.intellij.platform.eel.provider.utils.impl.localToIjent
 import com.intellij.platform.ide.impl.wsl.WSL_PREFIXES
@@ -36,7 +36,7 @@ internal class IjentWslNioPath(
     }
   }
 
-  val actualPath: Path = getActualPath(presentablePath)
+  val actualPath: Path = getActualWslPath(presentablePath)
 
   override fun getFileSystem(): IjentWslNioFileSystem = fileSystem
 

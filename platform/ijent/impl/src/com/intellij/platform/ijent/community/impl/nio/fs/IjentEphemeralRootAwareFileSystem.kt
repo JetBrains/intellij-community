@@ -9,12 +9,11 @@ import com.intellij.platform.core.nio.fs.MultiRoutingFsPath
 import com.intellij.platform.core.nio.fs.RoutingAwareFileSystemProvider
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelOsFamily
-import com.intellij.platform.eel.channels.EelDelicateApi
 import com.intellij.platform.eel.provider.EelDescriptorOwner
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.utils.EelPathTransfer
-import com.intellij.platform.eel.provider.utils.EelPathUtils
 import com.intellij.platform.eel.provider.utils.WindowsPathUtils
+import com.intellij.platform.eel.provider.utils.impl.getActualWslPath
 import com.intellij.platform.eel.provider.utils.impl.ijentToLocal
 import com.intellij.platform.eel.provider.utils.impl.localToIjent
 import com.intellij.platform.ijent.community.impl.nio.AbsoluteIjentNioPath
@@ -67,7 +66,7 @@ class IjentEphemeralRootAwarePath(
 ) : Path, BasicFileAttributesHolder2.Impl(originalPath.getCachedFileAttributesAndWrapToDosAttributesAdapterIfNeeded()) {
   override fun getFileSystem(): FileSystem = fileSystem
 
-  val actualPath: Path = EelPathUtils.getActualPath(originalPath)
+  val actualPath: Path = getActualWslPath(originalPath)
 
   override fun invalidate() {
     originalPath.invalidate()
