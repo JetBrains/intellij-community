@@ -18,36 +18,58 @@ import java.io.IOException
 import java.nio.file.Path
 import kotlin.io.path.absolutePathString
 
-@Suppress("SpellCheckingInspection")
-private val virtualEnvVars = listOf(
-  "PATH", "PS1", "VIRTUAL_ENV", "PYTHONHOME", "PROMPT", "_OLD_VIRTUAL_PROMPT",
-  "_OLD_VIRTUAL_PYTHONHOME", "_OLD_VIRTUAL_PATH", "CONDA_SHLVL", "CONDA_PROMPT_MODIFIER",
-  "CONDA_PREFIX", "CONDA_DEFAULT_ENV",
-  "GDAL_DATA", "PROJ_LIB", "JAVA_HOME", "JAVA_LD_LIBRARY_PATH"
-)
+/**
+ * Variables that differ between the reference and the activated shell read for reasons unrelated to
+ * activation, so they must not be mistaken for part of the activation delta:
+ *  - `PWD`/`OLDPWD` are working-directory-derived (the activated read runs in the script's directory);
+ *  - `_`/`SHLVL` are per-invocation shell bookkeeping.
+ *
+ * This cannot catch a genuinely non-deterministic value exported by a user's shell rc (a timestamp, a
+ * random token): no static list can, and the whitelist this replaced dropped such variables anyway.
+ *
+ * No Windows entries are needed: `cmd.exe` exports no such bookkeeping, and its hidden per-drive
+ * current-directory variables (`=C:`, …) are filtered out by [com.intellij.util.ReadEnv] before the diff.
+ */
+private val nonActivationEnvVars = setOf("_", "SHLVL", "PWD", "OLDPWD")
 
 /**
- * Filter envs that are set up by the activate script, adding other variables from the different shell can break the actual shell.
+ * Reads the environment set up by the activation [Activatable.Script].
+ *
+ * The login shell is read twice — once plain, once after sourcing the activation script — and only the
+ * variables the script added or changed are returned. Diffing against a reference shell keeps whatever the
+ * script exports (conda `activate.d` hooks routinely set arbitrary package-specific variables, PY-71917)
+ * while not leaking the reader shell's own variables into the target process, which could break it.
  */
 internal fun Activatable.Script.readPythonEnvironment(): Map<String, String> {
-  val command = if (scriptPath.getEelDescriptor().osFamily == EelOsFamily.Windows) {
-    ShellEnvironmentReader.winShellCommand(scriptPath, args)
-  }
-  else {
-    ShellEnvironmentReader.shellCommand(systemDefaultShell?.path?.toString(), scriptPath, false, args)
-  }
-  command.environment().putAll(EnvironmentUtil.getEnvironmentMap())
+  val isWindows = scriptPath.getEelDescriptor().osFamily == EelOsFamily.Windows
 
-  val env = try {
-    ShellEnvironmentReader.readEnvironment(command, 0).first
+  fun readShellEnv(script: Activatable.Script?): Map<String, String> {
+    val command = if (isWindows) {
+      ShellEnvironmentReader.winShellCommand(script?.scriptPath, script?.args)
+    }
+    else {
+      ShellEnvironmentReader.shellCommand(systemDefaultShell?.path?.toString(), script?.scriptPath, false, script?.args)
+    }
+    command.environment().putAll(EnvironmentUtil.getEnvironmentMap())
+    return ShellEnvironmentReader.readEnvironment(command, 0).first
+  }
+
+  return try {
+    activationEnvDelta(referenceEnv = readShellEnv(null), activatedEnv = readShellEnv(this))
   }
   catch (e: IOException) {
     logger<Activatable.Script>().warn("Couldn't read shell environment: ${e.message}")
-    mutableMapOf()
+    emptyMap()
   }
-
-  return env.filterKeys { k -> virtualEnvVars.any { it.equals(k, true) } }
 }
+
+/**
+ * The variables the activation script is responsible for: those [activatedEnv] adds or changes relative to
+ * [referenceEnv], minus [nonActivationEnvVars] noise. Extracted from [readPythonEnvironment] so the diff can
+ * be tested without spawning a shell.
+ */
+internal fun activationEnvDelta(referenceEnv: Map<String, String>, activatedEnv: Map<String, String>): Map<String, String> =
+  activatedEnv.filter { (key, value) -> key !in nonActivationEnvVars && referenceEnv[key] != value }
 
 
 /**
