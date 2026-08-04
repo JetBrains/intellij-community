@@ -9,17 +9,28 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * {@link FileType} which is determined by the particular {@link VirtualFile}.
- * For example, a text file located in the "META-INF/services" directory should be treated as of SPI file type.
+ * {@link FileType} which is determined by the particular {@link VirtualFile} rather than by its name.
  * <p>
- * <p/>As an implementation example, see com.intellij.spi.SPIFileType
+ * This is the way to go when a raw file name is not enough to tell the file type,
+ * and the decision requires knowing the full path or some other, trickier condition. For example:
+ * <ul>
+ *   <li>the location matters: an arbitrarily named text file is of the SPI file type only when it is located in a {@code META-INF/services} directory;</li>
+ *   <li>the surroundings matter: a {@code *.metadata.json} file is Angular metadata only when a matching {@code *.d.ts} file sits next to it;</li>
+ *   <li>the set of names is not known upfront: it comes from user settings, an installed bundle, or the project model.</li>
+ * </ul>
+ *
+ * <p>
+ * DO NOT USE this interface if your file type can be figured out by a raw file name.
+ * Use {@link com.intellij.openapi.fileTypes.impl.FileTypeBean#fileNames} or {@link com.intellij.openapi.fileTypes.impl.FileTypeBean#patterns}
+ *
  * <p>
  * <i>
- *   N.B. Please use with extreme caution.
- *   Since this is a code-only approach to detecting a file type,
- *   it's impossible to say upfront that exactly files are affected, and thus it's easy to break other file types.
- *   If possible, pattern-match your file types via {@link com.intellij.openapi.fileTypes.FileTypeManager#associate} instead.
+ * N.B. Please use with extreme caution.
+ * Since this is a code-only approach to detecting a file type,
+ * it's impossible to say upfront that exactly files are affected, and thus it's easy to break other file types.
+ * If possible, pattern-match your file types via {@link com.intellij.openapi.fileTypes.FileTypeManager#associate} instead.
  * </i>
+ * </p>
  */
 public interface FileTypeIdentifiableByVirtualFile extends FileType {
   /**
