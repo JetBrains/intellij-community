@@ -355,7 +355,7 @@ object PyExpectedTypeJudgement {
         val tupleElementTypes = ArrayList<PyType?>()
         for (idx in 0 until lhs.elements.size) {
           val lhsElem = lhs.elements[idx]
-          val rhsElem = if (rhs is PySequenceExpression) rhs.elements[idx] else null
+          val rhsElem = if (rhs is PySequenceExpression) rhs.elements.getOrNull(idx) else null
           val elemType = fromLhs(lhsElem, rhsElem, ctx)
           tupleElementTypes.add(elemType)
         }
