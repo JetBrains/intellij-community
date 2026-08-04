@@ -113,7 +113,8 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
   }
 
   override suspend fun getInstalledPlugins(): List<PluginUiModel> {
-    return InstalledPluginsState.getInstance().installedPlugins.map { PluginUiModelAdapter(it) }.withSource()
+    val state = InstalledPluginsState.getInstance()
+    return (state.installedPlugins + state.updatedPluginDescriptors).map { PluginUiModelAdapter(it) }.withSource()
   }
 
   override suspend fun getPlugin(id: PluginId): PluginUiModel? {
@@ -788,7 +789,8 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
   }
 
   override suspend fun isRestartRequired(sessionId: String): Boolean {
-    return findSession(sessionId)?.needRestart == true || InstalledPluginsState.getInstance().installedPlugins.isNotEmpty()
+    val state = InstalledPluginsState.getInstance()
+    return findSession(sessionId)?.needRestart == true || state.installedPlugins.isNotEmpty() || state.updatedPlugins.isNotEmpty()
   }
 
   override suspend fun setPluginsAutoUpdateEnabled(enabled: Boolean) {

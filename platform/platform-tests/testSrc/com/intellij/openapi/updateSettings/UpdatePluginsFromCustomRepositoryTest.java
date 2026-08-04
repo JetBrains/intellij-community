@@ -22,9 +22,26 @@ import static com.intellij.openapi.updateSettings.impl.PluginUpdateCandidateDeci
 import static com.intellij.openapi.updateSettings.impl.PluginUpdateCandidateDecision.AcceptUpdateToLowerVersionForBrokenOrIncompatiblePlugin;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 public class UpdatePluginsFromCustomRepositoryTest extends BareTestFixtureTestCase {
+  @Test
+  public void testRestartedUpdateKeepsPendingDescriptor() throws Exception {
+    Path descriptorPath = Path.of(
+      PlatformTestUtil.getPlatformTestDataPath(),
+      "updates/customRepositories/onlyCompatiblePluginsAreChecked/plugin1.xml"
+    );
+    IdeaPluginDescriptorImpl descriptor = PluginDescriptorLoadUtilsKt.readDescriptorFromBytesForTest(
+      descriptorPath, false, Files.readAllBytes(descriptorPath), PluginId.getId("UpdatePluginsFromCustomRepositoryTest")
+    );
+    InstalledPluginsState state = new InstalledPluginsState();
+
+    state.onPluginInstall(descriptor, true, true);
+
+    assertSame(descriptor, state.getUpdatedPluginDescriptors().iterator().next());
+  }
+
   @Test
   public void testOnlyCompatiblePluginsAreChecked() throws Exception {
     Map<PluginId, PluginDownloader> toUpdate = new LinkedHashMap<>();
