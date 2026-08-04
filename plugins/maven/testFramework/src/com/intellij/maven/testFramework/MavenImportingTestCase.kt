@@ -189,7 +189,6 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     return pom
   }
 
-  @Throws(Exception::class)
   override fun setUp() {
     isAutoReloadEnabled = false
     VfsRootAccess.allowRootAccess(getTestRootDisposable(), PathManager.getConfigPath())
@@ -226,7 +225,6 @@ abstract class MavenImportingTestCase : MavenTestCase() {
 
   protected open fun initProjectManager(): Boolean = true
 
-  @Throws(Exception::class)
   override fun tearDown() {
     runAll(
       ThrowableRunnable<Throwable> {
@@ -643,7 +641,6 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     )
   }
 
-  @Throws(Exception::class)
   protected fun executeGoal(relativePath: String?, goal: String) {
     val dir = projectRoot.findFileByRelativePath(relativePath!!)
     val rp = MavenRunnerParameters(true, dir!!.getPath(), null as String?, listOf(goal), emptyList())
