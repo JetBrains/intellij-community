@@ -23,7 +23,6 @@
   {kind: "moduleId", id: "com.intellij.jetbrains.client", moduleKind: "frontend"},
   {kind: "moduleId", id: "com.intellij.jetbrains.client.git", moduleKind: "frontend"},
   {kind: "moduleId", id: "intellij.cwm.frontend", moduleKind: "frontend"},
-  {kind: "moduleId", id: "intellij.cwm.connection.frontend.split", moduleKind: "frontend"},
 
   {kind: "moduleId", id: "intellij.platform.backend", moduleKind: "backend"},
   {kind: "moduleId", id: "intellij.platform.backend.split", moduleKind: "backend"},
