@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.patterns.PlatformPatterns
+import com.intellij.psi.ElementManipulators
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
@@ -28,10 +29,11 @@ import org.intellij.plugins.markdown.lang.references.backtick.BacktickReference
 
 private const val ID = "[a-zA-Z_$][a-zA-Z0-9_$]*+"
 private const val DOT_QUALIFIED_TAIL = "(?:\\.$ID)++"
-private const val MEMBER_SEPARATOR_WITH_OPTIONAL_NAME = "[#.](?:$ID)?"
+private const val MEMBER_SEPARATOR_WITH_OPTIONAL_NAME = "[#.](?:$ID)?(?:\\([^)]*\\))?"
+private const val OPTIONAL_CALL_SUFFIX = "(?:\\([^)]*\\))?"
 
 private val FQN_LIKE_PATTERN = Regex(
-  "^$ID(?:$DOT_QUALIFIED_TAIL(?:$MEMBER_SEPARATOR_WITH_OPTIONAL_NAME)?|$MEMBER_SEPARATOR_WITH_OPTIONAL_NAME)$"
+  "^$ID(?:$DOT_QUALIFIED_TAIL(?:$MEMBER_SEPARATOR_WITH_OPTIONAL_NAME)?|$MEMBER_SEPARATOR_WITH_OPTIONAL_NAME)$OPTIONAL_CALL_SUFFIX$"
 )
 
 internal class JvmBacktickReferenceContributor : PsiReferenceContributor() {
@@ -70,10 +72,11 @@ internal class JvmBacktickReferenceContributor : PsiReferenceContributor() {
         private fun String.getSplitIndex(): Int {
           var splitIndex = this.indexOf('#')
           if (splitIndex >= 0) return splitIndex
-          if (this.last() == '.') return this.length - 1
+          val memberEnd = this.indexOf('(').takeIf { it >= 0 } ?: length
+          if (memberEnd > 0 && this[memberEnd - 1] == '.') return memberEnd - 1
 
-          splitIndex = this.lastIndexOf('.')
-          if (this.looksLikeClassName()) return splitIndex
+          splitIndex = this.lastIndexOf('.', memberEnd - 1)
+          if (this.substring(0, memberEnd).looksLikeClassName()) return splitIndex
           val capitalIndex = this.indexOfFirst { it.isUpperCase() }
           return if (capitalIndex != -1 && capitalIndex < splitIndex) splitIndex else -1
         }
@@ -91,11 +94,7 @@ internal class JvmBacktickReferenceContributor : PsiReferenceContributor() {
           val classReferences = provider.getReferencesByString(className, codeSpan, contentRange.startOffset)
           if (splitIndex < 0) return classReferences
           if (!content.looksLikeClassName()) return classReferences
-          return ArrayUtil.append(
-            classReferences,
-            BacktickReference(codeSpan, TextRange(contentRange.startOffset, contentRange.startOffset + splitIndex)),
-            PsiReference::class.java
-          )
+          return arrayOf(BacktickReference(codeSpan, TextRange(contentRange.startOffset, contentRange.startOffset + splitIndex)))
         }
 
         // Approximation to detect if the content is a class (capital letter) or package (lowercase letter)
@@ -124,10 +123,18 @@ internal class JvmBacktickReferenceContributor : PsiReferenceContributor() {
       val psiClasses = getClasses()
       if (psiClasses.isEmpty()) return ResolveResult.EMPTY_ARRAY
 
-      val methodOrFieldName = value
+      val methodOrFieldName = value.substringBefore('(')
+      val hasArguments = value.contains('(')
       val results = mutableListOf<PsiElement>()
       psiClasses.forEach { psiClass ->
-        results.addAll(psiClass.findMethodsByName(methodOrFieldName, false))
+        val methods = psiClass.findMethodsByName(methodOrFieldName, false)
+        if (!hasArguments) {
+          results.addAll(methods)
+        } else {
+          val arguments = value.substringAfter('(').removeSuffix(")")
+          val argumentCount = if (arguments.isBlank()) 0 else arguments.split(',').size
+          methods.firstOrNull { it.parameterList.parametersCount == argumentCount }?.let(results::add)
+        }
         psiClass.findFieldByName(methodOrFieldName, false)?.let { results.add(it) }
       }
       return results.map { PsiElementResolveResult(it) }.toTypedArray()
@@ -143,6 +150,18 @@ internal class JvmBacktickReferenceContributor : PsiReferenceContributor() {
         results.addAll(psiClass.fields.toList())
       }
       return results.distinctBy { it.name }.toTypedArray()
+    }
+
+    override fun handleElementRename(newElementName: String): PsiElement {
+      val codeSpan = element as MarkdownCodeSpan
+      val contentRange = codeSpan.getContentRange()!!
+      val content = contentRange.substring(codeSpan.text)
+      val memberRange = rangeInElement.shiftLeft(contentRange.startOffset)
+      val memberName = value.substringBefore('(')
+      return ElementManipulators.handleContentChange(
+        codeSpan,
+        content.replaceRange(memberRange.startOffset, memberRange.startOffset + memberName.length, newElementName),
+      )
     }
 
     private fun getClasses(): Array<PsiClass> {

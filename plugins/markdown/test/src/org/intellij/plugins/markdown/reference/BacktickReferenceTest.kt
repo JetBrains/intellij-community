@@ -132,6 +132,22 @@ class BacktickReferenceTest : BasePlatformTestCase() {
   }
 
   @Test
+  fun `test renaming qualified class without member separator preserves package`() {
+    val javaClass = createSampleClass()
+    myFixture.configureByText("some.md", "Call `com.example.Sample`")
+    myFixture.renameElement(javaClass, "RenamedSample")
+    myFixture.checkResult("Call `com.example.RenamedSample`")
+  }
+
+  @Test
+  fun `test renaming class without member separator preserves code span markers`() {
+    val javaClass = createJavaClass()
+    myFixture.configureByText("some.md", "Call ``JavaClass``")
+    myFixture.renameElement(javaClass, "RenamedJavaClass")
+    myFixture.checkResult("Call ``RenamedJavaClass``")
+  }
+
+  @Test
   fun `test renaming file referenced from code span without backtick preserves delimiter`() {
     val document = createFile("document.md", "See `file.md`")
     val target = createFile("file.md")
@@ -217,6 +233,129 @@ class BacktickReferenceTest : BasePlatformTestCase() {
   fun `test qualified name with dot resolves to method`() {
     val method = createSampleClass().findMethodsByName("doStuff", false).single()
     assertResolvesTo("Call `com.example.Sample.doSt<caret>uff`", method)
+  }
+
+  @Test
+  fun `test short class name with member separator resolves class and method`() {
+    val javaClass = createFile(
+      "JavaClass.java",
+      """
+        class JavaClass {
+          public void methodName() {}
+        }
+      """.trimIndent()
+    ).children.single { it is PsiClass } as PsiClass
+    val method = javaClass.findMethodsByName("methodName", false).single()
+
+    assertResolvesTo("Call `JavaCla<caret>ss#methodName`", javaClass)
+    assertResolvesTo("Call `JavaClass#met<caret>hodName`", method)
+    assertResolvesTo("Call `JavaCla<caret>ss.methodName`", javaClass)
+    assertResolvesTo("Call `JavaClass.methodNa<caret>me`", method)
+  }
+
+  @Test
+  fun `test short class name with unknown member does not resolve member`() {
+    val javaClass = createFile(
+      "JavaClass.java",
+      """
+        class JavaClass {
+          public void anotherMethodName() {}
+        }
+      """.trimIndent()
+    ).children.single { it is PsiClass } as PsiClass
+
+    assertResolvesTo("Call `JavaCla<caret>ss#methodName`", javaClass)
+    assertNull(configureAndGetReferenceAtCaret("Call `JavaClass#met<caret>hodName`")?.resolve())
+    assertResolvesTo("Call `JavaCla<caret>ss.methodName`", javaClass)
+    assertNull(configureAndGetReferenceAtCaret("Call `JavaClass.methodNa<caret>me`")?.resolve())
+  }
+
+  @Test
+  fun `test method reference with parentheses resolves methods`() {
+    val javaClass = createFile(
+      "JavaClass.java",
+      """
+        class JavaClass {
+          public void methodName() {}
+          public void methodName(int argument) {}
+          public void methodName(int first, int second) {}
+        }
+      """.trimIndent()
+    ).children.single { it is PsiClass } as PsiClass
+    val noArgumentsMethod = javaClass.findMethodsByName("methodName", false).single { it.parameterList.parametersCount == 0 }
+    val oneArgumentMethod = javaClass.findMethodsByName("methodName", false).single { it.parameterList.parametersCount == 1 }
+    val twoArgumentsMethod = javaClass.findMethodsByName("methodName", false).single { it.parameterList.parametersCount == 2 }
+
+    assertResolvesTo("Call `JavaClass.methodNa<caret>me()`", noArgumentsMethod)
+    assertResolvesTo("Call `JavaClass.methodNa<caret>me(argument)`", oneArgumentMethod)
+    assertResolvesTo("Call `JavaClass.methodNa<caret>me(foo.bar)`", oneArgumentMethod)
+    assertResolvesTo("Call `JavaClass.methodNa<caret>me(first, second)`", twoArgumentsMethod)
+    assertNull(configureAndGetReferenceAtCaret("Call `JavaClass.methodNa<caret>me(first, second, third)`")?.resolve())
+    assertResolvesTo("Call `JavaCla<caret>ss.methodName()`", javaClass)
+  }
+
+  @Test
+  fun `test empty parentheses do not resolve parameterized-only method`() {
+    createFile(
+      "JavaClass.java",
+      """
+        class JavaClass {
+          public void methodName(int argument) {}
+        }
+      """.trimIndent()
+    )
+
+    assertNull(configureAndGetReferenceAtCaret("Call `JavaClass.methodNa<caret>me()`")?.resolve())
+  }
+
+  @Test
+  fun `test renaming member referenced by short class name updates markdown`() {
+    val javaClass = createFile(
+      "JavaClass.java",
+      """
+        class JavaClass {
+          public void methodName() {}
+        }
+      """.trimIndent()
+    ).children.single { it is PsiClass } as PsiClass
+    val method = javaClass.findMethodsByName("methodName", false).single()
+    myFixture.configureByText("some.md", "Call `JavaClass#methodName`")
+
+    myFixture.renameElement(method, "renamedMethod")
+    myFixture.checkResult("Call `JavaClass#renamedMethod`")
+  }
+
+  @Test
+  fun `test renaming method with parentheses preserves parentheses`() {
+    val javaClass = createFile(
+      "JavaClass.java",
+      """
+        class JavaClass {
+          public void methodName() {}
+        }
+      """.trimIndent()
+    ).children.single { it is PsiClass } as PsiClass
+    val method = javaClass.findMethodsByName("methodName", false).single()
+    myFixture.configureByText("some.md", "Call `JavaClass.methodName()`")
+
+    myFixture.renameElement(method, "renamedMethod")
+    myFixture.checkResult("Call `JavaClass.renamedMethod()`")
+  }
+
+  @Test
+  fun `test renaming class referenced by short class name updates markdown`() {
+    val javaClass = createFile(
+      "JavaClass.java",
+      """
+        class JavaClass {
+          public void methodName() {}
+        }
+      """.trimIndent()
+    ).children.single { it is PsiClass } as PsiClass
+    myFixture.configureByText("some.md", "Call `JavaClass.methodName`")
+
+    myFixture.renameElement(javaClass, "RenamedJavaClass")
+    myFixture.checkResult("Call `RenamedJavaClass.methodName`")
   }
 
   @Test

@@ -12,6 +12,7 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.psi.ElementManipulators
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementResolveResult
 import com.intellij.psi.PsiNamedElement
@@ -51,6 +52,18 @@ class BacktickReference(element: MarkdownCodeSpan, range: TextRange) :
   override fun multiResolve(incompleteCode: Boolean): Array<ResolveResult> {
     val file = element.containingFile
     return ResolveCache.getInstance(file.project).resolveWithCaching(this, Resolver, true, incompleteCode, file)
+  }
+
+  override fun handleElementRename(newElementName: String): PsiElement {
+    val contentRange = element.getContentRange() ?: return element
+    if (rangeInElement == contentRange) return super.handleElementRename(newElementName)
+
+    val content = contentRange.substring(element.text)
+    val relativeRange = rangeInElement.shiftLeft(contentRange.startOffset)
+    return ElementManipulators.handleContentChange(
+      element,
+      content.replaceRange(relativeRange.startOffset, relativeRange.endOffset, newElementName),
+    )
   }
 
   private fun tryResolve(): Array<ResolveResult> {
