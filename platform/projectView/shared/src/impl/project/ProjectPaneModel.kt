@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:OptIn(ExperimentalAtomicApi::class)
 
-package com.intellij.platform.projectView.backend.impl.project
+package com.intellij.platform.projectView.impl.project
 
 import com.intellij.ide.projectView.ViewSettings
 import com.intellij.ide.projectView.impl.AbstractProjectTreeStructure
@@ -12,37 +12,31 @@ import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode
 import com.intellij.openapi.module.isQualifiedModuleNamesEnabled
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.platform.projectView.backend.ProjectViewBackendBundle
+import com.intellij.platform.projectView.ProjectViewBundle
 import com.intellij.platform.projectView.impl.DefaultTreeStructurePsiExtractor
 import com.intellij.platform.projectView.impl.ProjectViewPaneViewSettings
 import com.intellij.platform.projectView.impl.ProjectViewPsiExtractor
 import com.intellij.platform.projectView.impl.TreeStructureBasedProjectViewPaneModel
 import com.intellij.platform.projectView.impl.TreeStructureProjectViewNode
 import com.intellij.platform.projectView.pane.ProjectViewPaneId
-import com.intellij.platform.projectView.pane.ProjectViewPaneModel
-import com.intellij.platform.projectView.pane.ProjectViewPaneProvider
 import com.intellij.platform.projectView.pane.SuspendingBackendProjectViewPaneStateAccessor
 import com.intellij.platform.projectView.pane.projectViewPaneId
 import com.intellij.platform.projectView.settings.ProjectViewPaneOption
 import com.intellij.platform.projectView.settings.ProjectViewPaneSettingsAccessor
 import com.intellij.util.PlatformUtils
+import org.jetbrains.annotations.ApiStatus
 import kotlin.concurrent.atomics.AtomicBoolean
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 
-internal class ProjectPaneProvider : ProjectViewPaneProvider {
-  override suspend fun createPanes(project: Project): List<ProjectViewPaneModel> {
-    return listOf(ProjectPaneModel(project))
-  }
-}
-
-internal class ProjectPaneModel(project: Project) : TreeStructureBasedProjectViewPaneModel(project) {
+@ApiStatus.Internal
+class ProjectPaneModel(project: Project) : TreeStructureBasedProjectViewPaneModel(project) {
   private val hasSeveralTopLevelModuleNodes = AtomicBoolean(false)
 
   override val psi: ProjectViewPsiExtractor<TreeStructureProjectViewNode> = DefaultTreeStructurePsiExtractor(project)
 
   override suspend fun id(): ProjectViewPaneId = projectViewPaneId(ProjectViewPane.ID)
 
-  override suspend fun presentableName(): @NlsSafe String = ProjectViewBackendBundle.message("project.view.pane.project.title")
+  override suspend fun presentableName(): @NlsSafe String = ProjectViewBundle.message("project.view.pane.project.title")
 
   override suspend fun order(): Int = 0
 
