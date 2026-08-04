@@ -84,11 +84,7 @@ interface FileSystem<P : PathHolder> {
   fun normalizePathToRemote(path: P): P
 
   suspend fun detectEnvironments(workingDir: Path, uiInfoGetter: (P) -> PyToolUIInfo?): List<DetectedSelectableInterpreter<P>>
-  suspend fun detectTool(
-    toolName: String,
-    additionalSearchPaths: List<P> = listOf(),
-    filter: (P) -> Boolean = { true },
-  ): P?
+  suspend fun detectTool(toolSpec: ToolCommandSpec, filter: (P) -> Boolean = { true }): P?
 
   suspend fun probeTools(toolSpecs: List<ToolCommandSpec>): PyResult<Map<String, ToolProbeResult<P>>>
 

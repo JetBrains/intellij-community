@@ -82,7 +82,6 @@ fun PythonExecution.buildTargetedCommandLine(
 
   if (runTool != null) {
     applyRunToolAsync(commandLineBuilder, runTool)
-    // TODO PY-87712 maybe need proper handling of envs (duplicates?)
     runTool.envs.forEach { (k, v) ->
       commandLineBuilder.addEnvironmentVariable(k, v)
     }

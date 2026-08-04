@@ -18,6 +18,7 @@ import com.jetbrains.python.packaging.PyPackageVersionNormalizer
 import com.jetbrains.python.packaging.repository.PyPiPackageRepository
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
+import com.jetbrains.python.sdk.add.v2.detectTool
 import com.jetbrains.python.sdk.add.v2.toFileSystem
 import com.jetbrains.python.sdk.impl.PySdkBundle
 import com.jetbrains.python.sdk.installExecutableViaPythonScript

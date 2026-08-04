@@ -11,7 +11,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
 /**
- * TODO PY-87712 Should drop as a whole
+ * TODO PY-91452 Should drop as a whole
  * uvWorkingDirectory - workingDirectory in PythonSdkAdditionalData
  * usePip - can be deduced based on requirementsFile in PythonSdkAdditionalData
  * venvPath - sdkHome
