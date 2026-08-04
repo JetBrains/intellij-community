@@ -60,6 +60,8 @@ jvm_library(
         "//platform/lang-core",
         "@lib//:kotlinc-kotlin-jps-common-provided",
         "//plugins/kotlin/base/compiler-configuration",
+        "//plugins/kotlin/code-insight/inspections-k2:kotlin-codeInsight-inspections",
+        "//plugins/kotlin/project-configuration",
         ":libraries_kotlinc_libraries-kotlinc-kotlin-compiler-fir_provided",
     ],
 )
@@ -106,6 +108,8 @@ jvm_library(
         "//platform/lang-core:lang-core_test_lib",
         "@lib//:kotlinc-kotlin-jps-common-provided",
         "//plugins/kotlin/base/compiler-configuration:compiler-configuration_test_lib",
+        "//plugins/kotlin/code-insight/inspections-k2:kotlin-codeInsight-inspections_test_lib",
+        "//plugins/kotlin/project-configuration:project-configuration_test_lib",
     ],
 )
 ### auto-generated section `build intellij.compose.ide.plugin.k2` end

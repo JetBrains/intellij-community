@@ -53,5 +53,7 @@
     <orderEntry type="module" module-name="intellij.platform.lang.core" />
     <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlin-jps-common" level="project" />
     <orderEntry type="module" module-name="intellij.kotlin.base.compilerConfiguration" />
+    <orderEntry type="module" module-name="intellij.kotlin.codeInsight.inspections" />
+    <orderEntry type="module" module-name="intellij.kotlin.projectConfiguration" />
   </component>
 </module>

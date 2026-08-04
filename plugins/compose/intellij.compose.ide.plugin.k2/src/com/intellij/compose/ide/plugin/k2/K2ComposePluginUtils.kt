@@ -2,6 +2,10 @@
 package com.intellij.compose.ide.plugin.k2
 
 import com.intellij.compose.ide.plugin.shared.COMPOSABLE_ANNOTATION_CLASS_ID
+import com.intellij.compose.ide.plugin.shared.COMPOSE_PLUGIN_ARTIFACT_ID
+import com.intellij.compose.ide.plugin.shared.COMPOSE_PLUGIN_GROUP_ID
+import com.intellij.compose.ide.plugin.shared.COMPOSE_RUNTIME_ARTIFACT_ID
+import com.intellij.compose.ide.plugin.shared.COMPOSE_RUNTIME_GROUP_ID
 import com.intellij.compose.ide.plugin.shared.REMEMBER_IN_COMPOSITION_CLASS_ID
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.externalSystem.model.DataNode
@@ -12,6 +16,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.psi.PsiManager
+import com.intellij.util.PathUtil
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotated
@@ -25,12 +30,14 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
+import org.jetbrains.kotlin.idea.configuration.KotlinLibraryVersionProvider
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.plugins.gradle.execution.build.CachedModuleDataFinder
 import org.jetbrains.plugins.gradle.model.GradleExtension
+import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData
 import org.jetbrains.plugins.gradle.service.project.data.GradleExtensionsDataService
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import kotlin.io.path.Path
@@ -59,6 +66,46 @@ private fun isComposeCompilerPluginPath(pathString: String): Boolean {
 
 private fun getGradleExtensions(moduleDataNode: DataNode<*>): List<GradleExtension>? =
   ExternalSystemApiUtil.find(moduleDataNode, GradleExtensionsDataService.KEY)?.data?.extensions
+
+/**
+ * Resolves the Compose runtime library version from the Compose Gradle plugin
+ * version found in the buildscript classpath.
+ */
+internal class K2ComposeRuntimeLibraryVersionProvider : KotlinLibraryVersionProvider {
+  override fun getVersion(module: Module, groupId: String, artifactId: String): String? {
+    if (groupId != COMPOSE_RUNTIME_GROUP_ID || artifactId != COMPOSE_RUNTIME_ARTIFACT_ID) return null
+
+    val moduleNode = CachedModuleDataFinder.findMainModuleData(module) ?: return null
+
+    val classpathData = ExternalSystemApiUtil.find(moduleNode, BuildScriptClasspathData.KEY)?.data ?: return null
+
+    // The build script classpath of a subproject is prefixed with the entries inherited from its parent project
+    // (see GradleBuildScriptClasspathModelBuilder.collectClasspathEntries), so iterate backwards to let the version
+    // declared closest to this module win.
+    return classpathData.classpathEntries.asReversed()
+      .asSequence()
+      .flatMap { it.classesFile.asSequence() }
+      .firstNotNullOfOrNull(::extractComposePluginVersion)
+  }
+
+  /**
+   * Extracts `<version>` from a `compose-gradle-plugin` jar path, supporting both the Gradle cache layout
+   * (`…/org.jetbrains.compose/compose-gradle-plugin/<version>/…`) and the Maven repository layout
+   * (`…/org/jetbrains/compose/compose-gradle-plugin/<version>/…`).
+   */
+  private fun extractComposePluginVersion(path: String): String? {
+    val normalizedPath = PathUtil.toSystemIndependentName(path)
+
+    return sequenceOf(
+      "${COMPOSE_PLUGIN_GROUP_ID}/${COMPOSE_PLUGIN_ARTIFACT_ID}/",
+      "${COMPOSE_PLUGIN_GROUP_ID.replace('.', '/')}/${COMPOSE_PLUGIN_ARTIFACT_ID}/",
+    ).firstNotNullOfOrNull { marker ->
+      normalizedPath.substringAfter(marker, "")
+        .substringBefore('/')
+        .takeIf(String::isNotBlank)
+    }
+  }
+}
 
 internal val Module.buildScriptKtFile: KtFile?
   get() {
