@@ -305,17 +305,15 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
   }
 
   private suspend fun loadDetails(descriptor: PluginUiModel): PluginUiModel? {
+    if (descriptor.detailsLoaded) {
+      return descriptor
+    }
     if (descriptor.isFromMarketplace) {
-      if (descriptor.detailsLoaded) {
-        return descriptor
+      val model = coroutineToIndicator { MarketplaceRequests.getInstance().loadPluginDetails(descriptor, it) }
+      if (model != null) {
+        return model
       }
-      else {
-        val model = coroutineToIndicator { MarketplaceRequests.getInstance().loadPluginDetails(descriptor, it) }
-        if (model != null) {
-          return model
-        }
-        return null
-      }
+      return null
     }
     else {
       val builder = PluginUiModelBuilderFactory.getInstance().createBuilder(descriptor.pluginId)
