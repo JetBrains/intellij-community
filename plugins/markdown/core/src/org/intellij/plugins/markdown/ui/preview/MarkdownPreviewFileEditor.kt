@@ -3,6 +3,7 @@ package org.intellij.plugins.markdown.ui.preview
 
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.EDT
@@ -112,6 +113,7 @@ class MarkdownPreviewFileEditor(
         val context = SimpleDataContext.builder()
           .setParent(DataManager.getInstance().getDataContext(event.component))
           .add(PREVIEW_POPUP_POINT, RelativePoint.fromScreen(event.locationOnScreen))
+          .add(PlatformCoreDataKeys.FILE_EDITOR, this@MarkdownPreviewFileEditor)
           .build()
         val group = requireNotNull(ActionUtil.getActionGroup("Markdown.PreviewGroup"))
         val popup = JBPopupFactory.getInstance().createActionGroupPopup(
