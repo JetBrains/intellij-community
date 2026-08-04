@@ -16,6 +16,8 @@ private fun loadRequiredResources() {
 suspend fun main() {
   loadRequiredResources()
   MermaidInitializationManager.initializeIfNeeded()
+  installDiagramPanning()
+  installZoomLevelEditing()
   when {
     isStandaloneEnvironment() -> viewerMain()
     else -> markdownExtensionMain()

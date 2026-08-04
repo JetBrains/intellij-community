@@ -30,12 +30,13 @@ external class ResizeObserver(callback: (entries: Array<ResizeObserverEntry>, ob
 }
 
 /**
- * Emits when `<body>`'s width changes (debounced, either direction). Used by the markdown extension
- * to re-render diagrams, whose SVGs are pinned to their render-time `max-width`. A [ResizeObserver]
- * is used rather than a window "resize" event, which an off-screen browser may not deliver.
+ * Emits when `<body>`'s width changes (debounced), carrying `true` when the preview grew wider. Used by the
+ * markdown extension to re-render diagrams, whose SVGs are pinned to their render-time `max-width`; the
+ * direction decides which zoomed diagrams keep their size. A [ResizeObserver] is used rather than a window
+ * "resize" event, which an off-screen browser may not deliver.
  */
 @OptIn(FlowPreview::class)
-fun bodyWidthChangeEvents(): Flow<Unit> = callbackFlow {
+fun bodyWidthChangeEvents(): Flow<Boolean> = callbackFlow {
   val target = window.document.body ?: window.document.documentElement ?: return@callbackFlow
   var lastWidth = -1.0
   val observer = ResizeObserver { entries, _ ->
@@ -44,8 +45,9 @@ fun bodyWidthChangeEvents(): Flow<Unit> = callbackFlow {
       lastWidth = width // first callback is the initial size; nothing to re-render yet
     }
     else if (abs(width - lastWidth) >= MIN_WIDTH_CHANGE) {
+      val widened = width > lastWidth
       lastWidth = width
-      trySend(Unit)
+      trySend(widened)
     }
   }
   observer.observe(target)

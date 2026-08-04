@@ -1,8 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.mermaid.markdown.preview
 
+import com.intellij.mermaid.markdown.jcef.MERMAID_STANDALONE_BODY_CLASS
+import com.intellij.mermaid.markdown.jcef.MERMAID_WRAPPER_CLASS
 import com.intellij.mermaid.markdown.jcef.MermaidBrowserExtension
+import com.intellij.mermaid.markdown.jcef.ZOOM_ICONS_STYLESHEET
+import com.intellij.mermaid.markdown.jcef.buildZoomIconStylesheet
 import com.intellij.mermaid.markdown.jcef.determineMermaidTheme
+import com.intellij.mermaid.markdown.jcef.mermaidZoomControlsHtml
 import com.intellij.mermaid.markdown.preview.MermaidPreviewStaticServer.Companion.guessContentType
 import com.intellij.mermaid.markdown.preview.MermaidPreviewStaticServer.Companion.obtainStaticIndexUrl
 import com.intellij.openapi.application.ApplicationInfo
@@ -24,6 +29,7 @@ import org.jetbrains.io.FileResponses
 import org.jetbrains.io.send
 import java.nio.ByteBuffer
 import java.util.Date
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
 
 internal class MermaidPreviewStaticServer : HttpRequestHandler() {
@@ -47,13 +53,15 @@ internal class MermaidPreviewStaticServer : HttpRequestHandler() {
     <html lang="en">
       <head>
         <title>Mermaid Diagram Preview</title>
-        <link rel="stylesheet" href="index.css">
-        <link rel="stylesheet" href="mermaid.css">
-        <script src="mermaid-theme.js"></script>
-        <script src="mermaid.js"></script>
+        <link rel="stylesheet" href="index.css?v=${versionOf("index.css")}">
+        <link rel="stylesheet" href="mermaid.css?v=${versionOf("mermaid.css")}">
+        <link rel="stylesheet" href="$ZOOM_ICONS_STYLESHEET?v=${versionOf(ZOOM_ICONS_STYLESHEET)}">
+        <script src="mermaid-theme.js?v=${versionOf("mermaid-theme.js")}"></script>
+        <script src="mermaid.js?v=${versionOf("mermaid.js")}"></script>
       </head>
-      <body>
-        <div class="language-mermaid">
+      <body class="$MERMAID_STANDALONE_BODY_CLASS">
+        <div class="language-mermaid $MERMAID_WRAPPER_CLASS">
+          ${mermaidZoomControlsHtml()}
           <div id="diagram-container" class="mermaid"></div>
         </div>
       </body>
@@ -62,11 +70,20 @@ internal class MermaidPreviewStaticServer : HttpRequestHandler() {
     return content
   }
 
+  private fun versionOf(name: String): String {
+    resourceVersions[name]?.let { return it }
+    val bytes = obtainResource(name) ?: return "0"
+    val version = Integer.toHexString(bytes.contentHashCode())
+    if (name in JAR_BACKED_RESOURCES) resourceVersions[name] = version
+    return version
+  }
+
   private fun obtainResource(name: String): ByteArray? {
     return when (name) {
       "index.html" -> buildIndexContent().toByteArray()
       "index.css" -> PreviewThemeStyles.createStylesheet().toByteArray()
       "mermaid-theme.js" -> """window["mermaidTheme"] = "${determineMermaidTheme()}";""".toByteArray()
+      ZOOM_ICONS_STYLESHEET -> buildZoomIconStylesheet().toByteArray()
       else -> obtainWebApplicationResource(name)
     }
   }
@@ -89,7 +106,7 @@ internal class MermaidPreviewStaticServer : HttpRequestHandler() {
       context.channel(),
       ByteBuffer.wrap(content),
       guessContentType(resourceName),
-      cacheable = resourceName !in themeDependentResources
+      cacheable = resourceName !in neverCachedResources
     )
     return true
   }
@@ -102,13 +119,23 @@ internal class MermaidPreviewStaticServer : HttpRequestHandler() {
     private const val prefixPath = "/$endpointPrefix"
 
     /**
-     * Theme-generated resources ([PreviewThemeStyles], [determineMermaidTheme]) referenced by a stable relative URL.
-     * Served no-store: otherwise a 304 revalidation after a theme change would keep serving the stale copy.
+     * Resources referenced by a stable relative URL and served no-store. The theme-generated ones
+     * ([PreviewThemeStyles], [determineMermaidTheme]) because a 304 revalidation after a theme change would
+     * keep serving the stale copy; `index.html` because it carries every other resource's `?v=`, so a cached
+     * copy of it pins the whole page to the bundle and stylesheets of whenever it was cached.
      */
-    private val themeDependentResources = setOf("index.css", "mermaid-theme.js")
+    private val neverCachedResources = setOf("index.html", "index.css", "mermaid-theme.js")
 
-    /** Bumped per [obtainStaticIndexUrl] call: a unique URL forces a real reload instead of a JCEF no-op / bfcache restore. */
-    private val navigationCounter = AtomicLong()
+    /**
+     * Bumped per [obtainStaticIndexUrl] call: a unique URL forces a real reload instead of a JCEF no-op /
+     * bfcache restore. Seeded per session so those URLs cannot repeat across IDE restarts, which the
+     * browser's disk cache outlives.
+     */
+    private val navigationCounter = AtomicLong(System.currentTimeMillis())
+
+    private val JAR_BACKED_RESOURCES = setOf("mermaid.js", "mermaid.css")
+
+    private val resourceVersions = ConcurrentHashMap<String, String>()
 
     @JvmStatic
     fun getInstance(): MermaidPreviewStaticServer {

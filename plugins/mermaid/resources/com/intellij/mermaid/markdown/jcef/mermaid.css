@@ -10,3 +10,124 @@
     margin-left: auto;
     margin-right: auto;
 }
+
+.mermaid {
+    overflow: auto;
+}
+
+body:not(.mermaid-standalone) .mermaid-wrapper[data-zoomed] > .mermaid {
+    max-height: 80vh;
+}
+
+.mermaid-wrapper[data-zoomed] > .mermaid {
+    cursor: grab;
+}
+
+.mermaid-wrapper[data-zoomed] > .mermaid.mermaid-panning {
+    cursor: grabbing;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.mermaid-zoom-anchor {
+    position: sticky;
+    top: 4px;
+    z-index: 1;
+    height: 0;
+    display: flex;
+    justify-content: flex-end;
+    align-items: flex-start;
+}
+
+body:not(.mermaid-standalone) .mermaid-wrapper {
+    position: relative;
+}
+
+body:not(.mermaid-standalone) .mermaid-zoom-anchor {
+    position: absolute;
+    top: -12px;
+    right: -12px;
+    height: auto;
+}
+
+.mermaid-zoom {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 2px;
+    border-radius: 4px;
+    background-color: rgba(127, 127, 127, 0.12);
+    opacity: 0;
+    transition: opacity 0.15s ease-in-out;
+    font: 10px "JetBrains Mono", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+}
+
+.mermaid-wrapper:hover .mermaid-zoom,
+.mermaid-zoom:focus-within {
+    opacity: 1;
+}
+
+.mermaid-zoom-hidden {
+    display: none;
+}
+
+.mermaid-zoom-level {
+    width: 4em;
+    padding: 0;
+    border: none;
+    border-radius: 3px;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: center;
+    opacity: 0.8;
+}
+
+.mermaid-zoom-level:focus {
+    outline: 1px solid currentColor;
+    opacity: 1;
+}
+
+.mermaid-zoom-button {
+    position: relative;
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    border: none;
+    border-radius: 3px;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+}
+
+.mermaid-zoom-button:hover:not([disabled]) {
+    background-color: rgba(127, 127, 127, 0.25);
+}
+
+.mermaid-zoom-button:hover:not([disabled])::before {
+    opacity: 1;
+}
+
+.mermaid-zoom-button[disabled] {
+    opacity: 0.35;
+    cursor: default;
+}
+
+.mermaid-zoom-button::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 16px;
+    height: 16px;
+    transform: translate(-50%, -50%);
+    background-color: currentColor;
+    opacity: 0.7;
+    mask-repeat: no-repeat;
+    mask-position: center;
+    mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    -webkit-mask-size: contain;
+}
+

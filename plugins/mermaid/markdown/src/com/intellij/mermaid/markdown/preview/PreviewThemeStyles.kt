@@ -5,13 +5,22 @@ import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl
+import com.intellij.ide.ui.UISettingsUtils
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.ui.jcef.JBCefApp
 import com.intellij.ui.jcef.JBCefScrollbarsHelper
+import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import java.awt.Color
 
-@Suppress("UnstableApiUsage")
+private fun previewFontFamily(): String = "\"${JBFont.label().family}\", sans-serif"
+
+private const val RESERVE_SCROLLBAR = "html { overflow-y: scroll; }"
+
+private fun scrollbarThumbInsetPx(): Int =
+  (JBCefApp.normalizeScaledSize(3) * UISettingsUtils.getInstance().currentIdeScale).toInt()
+
+@Suppress("UnstableApiUsage", "CssInvalidPropertyValue", "CssUnusedSymbol")
 object PreviewThemeStyles {
   fun createStylesheet(): String {
     val scheme = obtainColorScheme()
@@ -20,9 +29,17 @@ object PreviewThemeStyles {
     val backgroundColor = scheme.defaultBackground.webRgba()
     // language=CSS
     return """
+    $RESERVE_SCROLLBAR
+
     body {
+      margin: 4px;
       background-color: ${backgroundColor};
+      font-family: ${previewFontFamily()};
       font-size: ${fontSize}px !important;
+    }
+
+    body.mermaid-standalone .mermaid-zoom-anchor {
+      margin-right: -${scrollbarThumbInsetPx()}px;
     }
 
     body, p  {
