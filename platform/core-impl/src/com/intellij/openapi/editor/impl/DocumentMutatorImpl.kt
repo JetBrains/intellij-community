@@ -62,7 +62,6 @@ internal abstract class DocumentMutatorImpl(
         newFragment = newFragment,
         newModStamp = DocumentModStamp.next(),
         clearLineFlags = false,
-        clearModTree = false,
       ),
       insertOffset, // TODO: refactor excessive params
       insertOffset,
@@ -205,7 +204,6 @@ internal abstract class DocumentMutatorImpl(
         newFragment = "",
         newModStamp = DocumentModStamp.next(),
         clearLineFlags = false,
-        clearModTree = false,
       ),
       startOffset, // TODO: refactor excessive params
       endOffset,

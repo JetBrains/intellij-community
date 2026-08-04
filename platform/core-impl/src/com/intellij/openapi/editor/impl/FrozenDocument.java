@@ -33,8 +33,7 @@ public class FrozenDocument implements DocumentEx {
       event.getOffset() + event.getOldLength(),
       event.getNewFragment(),
       newStamp,
-      /* clearLineFlags = */ event.isWholeTextReplaced(),
-      /* clearModTree = */ true,
+      event.isWholeTextReplaced(),
       originStartOffset,
       originStartOffset + originOldLength,
       event.getMoveOffset()

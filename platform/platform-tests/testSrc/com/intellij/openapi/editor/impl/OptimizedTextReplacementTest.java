@@ -27,7 +27,6 @@ public class OptimizedTextReplacementTest {
     assertEquals(3, patch.moveOffset());
     assertEquals(MOD_STAMP, patch.newModStamp());
     assertFalse(patch.clearLineFlags());
-    assertFalse(patch.clearModTree());
   }
 
   @Test

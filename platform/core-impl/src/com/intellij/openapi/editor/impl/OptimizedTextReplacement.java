@@ -107,7 +107,6 @@ public final class OptimizedTextReplacement { // TODO: refactor me
         initialNewFragment,
         newModStamp,
         patchClearLineFlags,
-        false,
         initialStartOffset,
         initialEndOffset,
         moveOffset
@@ -121,7 +120,6 @@ public final class OptimizedTextReplacement { // TODO: refactor me
         newFragment,
         newModStamp,
         patchClearLineFlags,
-        false,
         initialStartOffset,
         initialEndOffset,
         moveOffset

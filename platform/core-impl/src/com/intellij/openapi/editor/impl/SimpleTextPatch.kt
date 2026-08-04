@@ -9,14 +9,12 @@ internal open class SimpleTextPatch(
   private val newFragment: CharSequence,
   private val newModStamp: Long,
   private val clearLineFlags: Boolean,
-  private val clearModTree: Boolean,
 ) : DocumentTextPatch {
   final override fun startOffset(): Int = startOffset
   final override fun endOffset(): Int = endOffset
   final override fun newFragment(): CharSequence = newFragment
   final override fun newModStamp(): Long = newModStamp
   final override fun clearLineFlags(): Boolean = clearLineFlags
-  final override fun clearModTree(): Boolean = clearModTree
   override fun originStartOffset(): Int = startOffset
   override fun originEndOffset(): Int = endOffset
   override fun moveOffset(): Int = startOffset
@@ -31,7 +29,6 @@ internal open class SimpleTextPatch(
            ", moveOffset=${moveOffset()}" +
            ", newModStamp=${newModStamp()}" +
            ", clearLineFlags=${clearLineFlags()}" +
-           ", clearModTree=${clearModTree()}" +
            ")"
   }
 }
@@ -42,7 +39,6 @@ internal class ComplexTextPatch(
   newFragment: CharSequence,
   newModStamp: Long,
   clearLineFlags: Boolean,
-  clearModTree: Boolean,
   private val originStartOffset: Int,
   private val originEndOffset: Int,
   private val moveOffset: Int,
@@ -52,7 +48,6 @@ internal class ComplexTextPatch(
   newFragment,
   newModStamp,
   clearLineFlags,
-  clearModTree,
 ) {
   override fun originStartOffset(): Int = originStartOffset
   override fun originEndOffset(): Int = originEndOffset

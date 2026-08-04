@@ -132,7 +132,6 @@ internal class DocumentAspectTest {
         newFragment = "Z",
         newModStamp = before.modStamp() + 1,
         clearLineFlags = false,
-        clearModTree = false,
         originStartOffset = 1,
         originEndOffset = 4,
       )
@@ -238,7 +237,6 @@ internal class DocumentAspectTest {
         newFragment = fragment,
         newModStamp = snapshot.modStamp() + 1,
         clearLineFlags = false,
-        clearModTree = false,
         originStartOffset = startOffset,
         originEndOffset = endOffset,
       )

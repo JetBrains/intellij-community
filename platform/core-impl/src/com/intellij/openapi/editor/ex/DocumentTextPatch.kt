@@ -27,7 +27,6 @@ interface DocumentTextPatch { // TODO: implement DocumentEventImpl via DocumentT
   fun newFragment(): CharSequence
   fun newModStamp(): Long
   fun clearLineFlags(): Boolean
-  fun clearModTree(): Boolean
   fun originStartOffset(): Int
   fun originEndOffset(): Int
   fun moveOffset(): Int
@@ -41,7 +40,6 @@ interface DocumentTextPatch { // TODO: implement DocumentEventImpl via DocumentT
       newFragment: CharSequence,
       newModStamp: Long,
       clearLineFlags: Boolean,
-      clearModTree: Boolean,
     ): DocumentTextPatch {
       return SimpleTextPatch(
         startOffset,
@@ -49,7 +47,6 @@ interface DocumentTextPatch { // TODO: implement DocumentEventImpl via DocumentT
         newFragment,
         newModStamp,
         clearLineFlags,
-        clearModTree,
       )
     }
 
@@ -60,7 +57,6 @@ interface DocumentTextPatch { // TODO: implement DocumentEventImpl via DocumentT
       newFragment: CharSequence,
       newModStamp: Long,
       clearLineFlags: Boolean,
-      clearModTree: Boolean,
       originStartOffset: Int,
       originEndOffset: Int,
       moveOffset: Int = startOffset,
@@ -74,7 +70,6 @@ interface DocumentTextPatch { // TODO: implement DocumentEventImpl via DocumentT
           newFragment,
           newModStamp,
           clearLineFlags,
-          clearModTree,
           originStartOffset,
           originEndOffset,
           moveOffset,
@@ -86,7 +81,6 @@ interface DocumentTextPatch { // TODO: implement DocumentEventImpl via DocumentT
         newFragment,
         newModStamp,
         clearLineFlags,
-        clearModTree,
       )
     }
   }

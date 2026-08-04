@@ -164,7 +164,6 @@ internal abstract class ElfRealSync(
         newFragment = changeEvent.newFragment,
         newModStamp = DocumentModStamp.next(),
         clearLineFlags = change.patch.clearLineFlags() || rebasedEvent.isWholeTextReplaced,
-        clearModTree = false,
         originStartOffset = initialStartOffset,
         originEndOffset = initialStartOffset + initialOldLength,
       ),
