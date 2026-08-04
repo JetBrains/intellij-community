@@ -1,14 +1,10 @@
 package com.intellij.lambda.testFramework.junit
 
+import com.intellij.ide.starter.ide.IdeRunMode
 import com.intellij.util.containers.orNull
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.platform.commons.util.AnnotationUtils
 import java.lang.reflect.AnnotatedElement
-
-/** List of available IDE modes (monolith, split) */
-enum class IdeRunMode {
-  MONOLITH, SPLIT
-}
 
 fun getModesToRun(annotatedElement: AnnotatedElement?): List<IdeRunMode> {
   if (annotatedElement == null) return emptyList()

@@ -1,5 +1,6 @@
 package com.intellij.lambda.testFramework.junit
 
+import com.intellij.ide.starter.ide.IdeRunMode
 import com.intellij.openapi.diagnostic.fileLogger
 import org.junit.platform.engine.EngineDiscoveryRequest
 import org.junit.platform.engine.EngineExecutionListener

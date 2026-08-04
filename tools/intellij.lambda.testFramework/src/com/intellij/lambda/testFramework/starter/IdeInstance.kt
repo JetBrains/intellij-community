@@ -1,13 +1,11 @@
 package com.intellij.lambda.testFramework.starter
 
-import com.intellij.ide.starter.config.ConfigurationStorage
-import com.intellij.ide.starter.config.splitMode
+import com.intellij.ide.starter.ide.IdeRunMode
 import com.intellij.ide.starter.ide.isRemDevContext
 import com.intellij.ide.starter.runner.IDERunContext
 import com.intellij.ide.starter.runner.Starter
 import com.intellij.ide.starter.runner.events.IdeLaunchEvent
 import com.intellij.ide.starter.utils.catchAll
-import com.intellij.lambda.testFramework.junit.IdeRunMode
 import com.intellij.lambda.testFramework.utils.IdeWithLambda
 import com.intellij.lambda.testFramework.utils.runIdeWithLambda
 import com.intellij.openapi.diagnostic.logger
@@ -48,7 +46,7 @@ object IdeInstance {
       stopIde()
       currentIdeMode = runMode
       currentIdeConfig = IdeStartConfig.current
-      ConfigurationStorage.splitMode(currentIdeMode == IdeRunMode.SPLIT)
+      currentIdeMode.applyToConfiguration()
 
       EventsBus.subscribe(IdeInstance) { event: IdeLaunchEvent ->
         if (event.runContext.testContext.isRemDevContext()) {

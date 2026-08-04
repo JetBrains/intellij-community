@@ -1,5 +1,6 @@
 package com.intellij.lambda.testFramework.junit
 
+import com.intellij.ide.starter.ide.IdeRunMode
 import org.junit.platform.engine.ConfigurationParameters
 import org.junit.platform.engine.TestDescriptor
 import org.junit.platform.engine.TestSource
