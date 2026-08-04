@@ -3,49 +3,50 @@ package com.jetbrains.python.packaging.toolwindow.ui
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.actions.BigPopupUI
-import com.intellij.python.pytools.PyTool
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry
-import com.intellij.ui.components.panels.Wrapper
-import com.intellij.ui.components.SearchFieldWithExtension
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.WindowStateService
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.python.processOutput.common.ProcessOutputQuery
 import com.intellij.python.processOutput.common.sendProcessOutputQuery
+import com.intellij.python.pytools.PyTool
+import com.intellij.python.requirements.PyPackageVersionNormalizer
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBList
+import com.intellij.ui.components.SearchFieldWithExtension
 import com.intellij.ui.components.fields.ExtendableTextComponent
+import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.python.PyBundle.message
+import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.statistics.PythonPackagesToolwindowStatisticsCollector
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
+import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.findFirstPythonSdk
 import com.jetbrains.python.sdk.findModuleForSdk
-import com.jetbrains.python.sdk.ModuleOrProject
-import com.jetbrains.python.packaging.PyPackageName
-import com.intellij.python.requirements.PyPackageVersionNormalizer
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.io.IOException
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
@@ -83,11 +84,27 @@ internal class PyInstallPackageDialog(private val project: Project) : BigPopupUI
   )
   private val resultsList = PyInstallDialogResultsList(
     project, packagingService,
-    onPackageSelected = { name, repo -> versionPanel.selectPackage(name, repo) },
+    onPackageSelected = { name, repo -> versionPanel.selectPackage(name, repo); refreshInstallControl() },
     onCommandSelected = { cmd -> mySearchField.text = "$cmd "; mySearchField.requestFocusInWindow() },
     onSelectionCleared = { versionPanel.clearSelection() },
     onResultsUpdated = { _ -> },
   )
+
+  /** Identity of an install target: the mode plus its payload (package name, URL/path, or command). */
+  private data class InstallTarget(val mode: DialogMode, val id: String)
+
+  /**
+   * Targets whose install we started and is still running. Package "installed" state is not stored —
+   * it is read live from the package manager (so transitive dependencies and real versions are
+   * always current).
+   */
+  private val installingTargets = HashSet<InstallTarget>()
+
+  /**
+   * Location (URL/path) targets that finished successfully. Unlike packages, these have no name to
+   * look up in the manager, so their completion is tracked here to show "Installed".
+   */
+  private val finishedLocationInstalls = HashSet<InstallTarget>()
 
   /**
    * File-chooser descriptor for the "Browse for a local distribution" action in the search field.
@@ -152,7 +169,9 @@ internal class PyInstallPackageDialog(private val project: Project) : BigPopupUI
     listScrollPane = scroll
     resultsList.attachToScroll(scroll)
     val refocus = object : MouseAdapter() {
-      override fun mousePressed(e: MouseEvent) { mySearchField.requestFocusInWindow() }
+      override fun mousePressed(e: MouseEvent) {
+        mySearchField.requestFocusInWindow()
+      }
     }
     resultsList.list.addMouseListener(refocus)
     scroll.viewport.addMouseListener(refocus)
@@ -274,6 +293,9 @@ internal class PyInstallPackageDialog(private val project: Project) : BigPopupUI
       ViewType.FULL -> Unit
     }
     showPopup()
+    // Render installed state for already-installed packages up front (no-op until the SDK is ready —
+    // ensureSdkInitialized refreshes once it loads).
+    refreshInstalledState()
     SwingUtilities.invokeLater {
       SwingUtilities.getRootPane(versionPanel.installButton)?.defaultButton = versionPanel.installButton
     }
@@ -412,6 +434,7 @@ internal class PyInstallPackageDialog(private val project: Project) : BigPopupUI
       val sdk = readAction { project.findFirstPythonSdk() }
                 ?: return@launch
       packagingService.initForSdk(sdk)
+      refreshInstalledState()
       withContext(Dispatchers.EDT) {
         updatePlaceholder()
         val q = mySearchField.text.trim()
@@ -548,6 +571,9 @@ internal class PyInstallPackageDialog(private val project: Project) : BigPopupUI
     versionPanel.installButton.isEnabled = view.installButtonEnabled
     versionPanel.installButton.isVisible = view.installButtonVisible
     bottomContainer.isVisible = view.bottomContainerVisible
+    // Overlay the tracked per-target state (spinner / installed) on top of the base button the view
+    // just set. Runs before refreshPopupSize so the swapped-in control is measured.
+    refreshInstallControl()
 
     if (strategy.collapseToShort(context)) updateViewType(ViewType.SHORT)
     refreshPopupSize()
@@ -566,6 +592,59 @@ internal class PyInstallPackageDialog(private val project: Project) : BigPopupUI
   }
 
   /**
+   * Identity of the install target the bottom bar currently represents, or `null` if none (search
+   * mode with no selected package). Packages carry their normalized name; URL/path and command
+   * installs carry their raw text — the [InstallTarget.mode] keeps the three kinds distinct.
+   */
+  private fun currentTarget(): InstallTarget? = when (currentMode) {
+    DialogMode.SEARCH -> versionPanel.selectedPackageName?.let { InstallTarget(DialogMode.SEARCH, PyPackageName.from(it).name) }
+    DialogMode.DIRECT_INSTALL -> InstallTarget(DialogMode.DIRECT_INSTALL, directInstallText)
+    DialogMode.COMMAND -> InstallTarget(DialogMode.COMMAND, mySearchField.text.trim())
+  }
+
+  /**
+   * Installed version of the currently selected package, read live from the package manager's
+   * snapshot (updated by `installPackage`, so it reflects fresh installs and transitive deps), or
+   * `null` when the package isn't installed / not applicable.
+   */
+  private fun installedVersionOfSelected(): String? {
+    val name = versionPanel.selectedPackageName?.let { PyPackageName.from(it).name } ?: return null
+    val sdk = packagingService.currentSdk ?: return null
+    return PythonPackageManager.forSdk(project, sdk).listInstalledPackagesSnapshot()
+      .firstOrNull { it.name == name }?.version?.takeIf { it.isNotEmpty() }
+  }
+
+  /** Renders the bottom-bar control for the current target: installing (ours) → installed (from the manager) → installable. */
+  private fun refreshInstallControl() {
+    val target = currentTarget()
+    if (target == null) {
+      versionPanel.hideInstallStatus()
+      return
+    }
+    if (target in installingTargets) {
+      versionPanel.applyInstallControlState(InstallControlState.INSTALLING, null)
+      return
+    }
+    // Packages: installed state + version read live from the manager. Location installs: no name to
+    // look up, so fall back to the local "finished" set (version unknown → plain "Installed").
+    val installedVersion = if (currentMode == DialogMode.SEARCH) installedVersionOfSelected() else null
+    val installed = installedVersion != null || target in finishedLocationInstalls
+    val state = if (installed) InstallControlState.INSTALLED else InstallControlState.INSTALLABLE
+    versionPanel.applyInstallControlState(state, installedVersion)
+  }
+
+  /** Warms up the manager's installed-packages snapshot, then re-renders (state/version are read live). */
+  private fun refreshInstalledState() {
+    packagingService.serviceScope.launch {
+      val sdk = packagingService.currentSdk ?: return@launch
+      PythonPackageManager.forSdk(project, sdk).listInstalledPackages() // waits for init so the snapshot is populated
+      withContext(Dispatchers.EDT) {
+        if (::popup.isInitialized && !popup.isDisposed) refreshInstallControl()
+      }
+    }
+  }
+
+  /**
    * Runs an install/command [block] in the service scope under a fresh trace.
    *
    * [block] returns `true` on success and `false` on failure. The dialog stays open after a
@@ -574,15 +653,38 @@ internal class PyInstallPackageDialog(private val project: Project) : BigPopupUI
    * pull focus away from the dialog (PY-89838 follow-up).
    */
   private fun runWithTrace(@Nls title: String, block: suspend () -> Boolean) {
+    // No install target means nothing to run (search mode with no selected package); bail out.
+    // Captured now (press time) from the current mode/selection, since the selection may change
+    // before the async install finishes.
+    val target = currentTarget() ?: return
     val trace = com.jetbrains.python.TraceContext(title, null)
+    installingTargets.add(target)
+    refreshInstallControl()
+
     packagingService.serviceScope.launch {
       val success = withContext(trace) { block() }
-      if (!success) {
+      if (success) {
+        // Location installs can't be found in the manager by name, so remember completion locally
+        // (the completion handler below re-renders and picks it up as "Installed").
+        if (target.mode == DialogMode.DIRECT_INSTALL) {
+          withContext(Dispatchers.EDT) { finishedLocationInstalls.add(target) }
+        }
+      }
+      else {
+        // Failure keeps today's behavior: close the dialog and surface the logs.
         withContext(Dispatchers.EDT) { popup.cancel() }
         sendProcessOutputQuery(
           ProcessOutputQuery.OpenToolWindowByTraceUuid(trace.uuid.toString())
         )
       }
+    }.invokeOnCompletion {
+      ApplicationManager.getApplication().invokeLater(
+        {
+          installingTargets.remove(target)
+          if (::popup.isInitialized && !popup.isDisposed) refreshInstallControl()
+        },
+        ModalityState.any(),
+      )
     }
   }
 
