@@ -8,12 +8,16 @@ import kotlinx.serialization.Serializable
 internal data class ProjectViewNodeModelDTO(
   val id: Long,
   val presentationDTO: TreeNodePresentationDTO,
+  val pathElementType: String,
+  val pathElementId: String,
   val flags: Int,
 )
 
 internal fun ProjectViewNodeModelImpl<*>.toDTO(): ProjectViewNodeModelDTO = ProjectViewNodeModelDTO(
   id = id,
   presentationDTO = presentation.toDTO(),
+  pathElementType = pathElementType,
+  pathElementId = pathElementId,
   flags = flags,
 )
 
@@ -21,5 +25,7 @@ internal fun ProjectViewNodeModelDTO.toModel(): ProjectViewNodeModelImpl<*> = Pr
   maybeUserObject = null,
   id = id,
   presentation = presentationDTO.toPresentation() as TreeNodePresentationImpl,
+  pathElementType = pathElementType,
+  pathElementId = pathElementId,
   flags = flags,
 )

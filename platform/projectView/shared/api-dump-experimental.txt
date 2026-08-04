@@ -125,6 +125,8 @@
 - a:setCanNavigateToSource(Z):V
 - a:setIncludedInExpandAll(Z):V
 - a:setIsDirectory(Z):V
+- a:setPathElementId(java.lang.String):V
+- a:setPathElementType(java.lang.String):V
 *f:com.intellij.platform.projectView.pane.ProjectViewNodeModelKt
 - *sf:buildProjectViewNodeModel(J,java.lang.Object,kotlin.jvm.functions.Function1):com.intellij.platform.projectView.pane.BackendProjectViewNodeModel
 *:com.intellij.platform.projectView.pane.ProjectViewNodePath

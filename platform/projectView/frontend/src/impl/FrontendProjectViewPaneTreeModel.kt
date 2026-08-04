@@ -4,7 +4,6 @@ package com.intellij.platform.projectView.frontend.impl
 import com.intellij.ide.SelectInTarget
 import com.intellij.ide.projectView.NodeSortKey
 import com.intellij.ide.util.treeView.DefaultTreeModelWithCachedPresentation
-import com.intellij.ide.util.treeView.PathElementIdProvider
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -358,7 +357,7 @@ internal class FrontendProjectViewPaneTreeModel(
 
 internal class Node(
   model: ProjectViewNodeModel,
-) : DefaultMutableTreeNode(model), TreeNodeWithPresentation, PathElementIdProvider {
+) : DefaultMutableTreeNode(model), TreeNodeWithPresentation {
   val projectViewNode: ProjectViewNodeModelImpl<*>
     get() = userObject as ProjectViewNodeModelImpl<*>
 
@@ -373,8 +372,6 @@ internal class Node(
   override fun isLeaf(): Boolean {
     return projectViewNode.presentation.isLeaf
   }
-
-  override fun getPathElementId(): String = presentation.mainText
 
   override fun toString(): String = "{[${projectViewNode.id}] ${projectViewNode.presentation.mainText}}"
 }

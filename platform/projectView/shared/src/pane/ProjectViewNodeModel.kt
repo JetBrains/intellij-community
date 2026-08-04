@@ -7,7 +7,7 @@ import com.intellij.ui.treeStructure.TreeNodePresentationBuilder
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
-fun <T> buildProjectViewNodeModel(id: Long, userObject: T, build: (ProjectViewNodeModelBuilder) -> Unit): BackendProjectViewNodeModel<T> {
+fun <T : Any> buildProjectViewNodeModel(id: Long, userObject: T, build: (ProjectViewNodeModelBuilder) -> Unit): BackendProjectViewNodeModel<T> {
   val builder = ProjectViewNodeModelBuilderImpl(id, userObject)
   build(builder)
   return builder.build()
@@ -16,6 +16,8 @@ fun <T> buildProjectViewNodeModel(id: Long, userObject: T, build: (ProjectViewNo
 @ApiStatus.Experimental
 sealed interface ProjectViewNodeModelBuilder {
   fun buildPresentation(build: (TreeNodePresentationBuilder) -> Unit)
+  fun setPathElementType(pathElementType: String)
+  fun setPathElementId(pathElementId: String)
   fun setCanNavigate(canNavigate: Boolean)
   fun setCanNavigateToSource(canNavigateToSource: Boolean)
   fun setIncludedInExpandAll(includedInExpandAll: Boolean)

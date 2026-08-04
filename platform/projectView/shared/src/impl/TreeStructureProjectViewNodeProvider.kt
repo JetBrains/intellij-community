@@ -6,6 +6,7 @@ package com.intellij.platform.projectView.impl
 import com.intellij.ide.projectView.NodeSortKey
 import com.intellij.ide.projectView.impl.AbstractProjectTreeStructure
 import com.intellij.ide.projectView.impl.GroupByTypeComparator
+import com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.ide.util.treeView.AbstractTreeStructure
@@ -101,6 +102,13 @@ class TreeStructureProjectViewNodeProvider(
       buildProjectViewNodeModel(id, node) { nodeBuilder ->
         nodeBuilder.buildPresentation { presentationBuilder ->
           buildPresentation(presentationBuilder, node)
+        }
+        // A hack to make tree state save / restore work when switching from Light to Backend:
+        // project names are different for some reason, but because the root node is not even shown,
+        // we can treat any root nodes as equal for the purpose of re-expand.
+        if (node.elementDescriptor is ProjectViewProjectNode) {
+          nodeBuilder.setPathElementType("")
+          nodeBuilder.setPathElementId("")
         }
         nodeBuilder.setCanNavigate(node.canNavigate())
         nodeBuilder.setCanNavigateToSource(node.canNavigateToSource())

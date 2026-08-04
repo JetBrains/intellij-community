@@ -2,14 +2,18 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.projectView.pane
 
+import com.intellij.ide.util.treeView.PathElementIdProvider
+import com.intellij.ide.util.treeView.TreeState
 import com.intellij.ui.tree.TreeNodePresentationBuilderImpl
 import com.intellij.ui.treeStructure.TreeNodePresentationBuilder
 import com.intellij.ui.treeStructure.TreeNodePresentationImpl
 import org.jetbrains.annotations.ApiStatus
 
 
-internal class ProjectViewNodeModelBuilderImpl<T>(private val id: Long, private val userObject: T) : ProjectViewNodeModelBuilder {
+internal class ProjectViewNodeModelBuilderImpl<T : Any>(private val id: Long, private val userObject: T) : ProjectViewNodeModelBuilder {
   private val presentationBuilder = TreeNodePresentationBuilderImpl()
+  private var pathElementType: String? = null
+  private var pathElementId: String? = null
   private var canNavigate = false
   private var canNavigateToSource = false
   private var includedInExpandAll = false
@@ -17,6 +21,14 @@ internal class ProjectViewNodeModelBuilderImpl<T>(private val id: Long, private 
 
   override fun buildPresentation(build: (TreeNodePresentationBuilder) -> Unit) {
     build(presentationBuilder)
+  }
+
+  override fun setPathElementType(pathElementType: String) {
+    this.pathElementType = pathElementType
+  }
+
+  override fun setPathElementId(pathElementId: String) {
+    this.pathElementId = pathElementId
   }
 
   override fun setCanNavigate(canNavigate: Boolean) {
@@ -36,10 +48,18 @@ internal class ProjectViewNodeModelBuilderImpl<T>(private val id: Long, private 
   }
 
   fun build(): ProjectViewNodeModelImpl<T> {
+    val pathElementType = this.pathElementType
+                          ?: (userObject as? PathElementIdProvider)?.pathElementType
+                          ?: TreeState.defaultPathElementType(userObject)
+    val pathElementId = this.pathElementId
+                        ?: (userObject as? PathElementIdProvider)?.pathElementId
+                        ?: TreeState.defaultPathElementId(userObject)
     return ProjectViewNodeModelImpl(
       maybeUserObject = userObject,
       id = id,
       presentation = presentationBuilder.build(),
+      pathElementType = pathElementType,
+      pathElementId = pathElementId,
       canNavigate = canNavigate,
       canNavigateToSource = canNavigateToSource,
       isIncludedInExpandAll = includedInExpandAll,
@@ -53,12 +73,16 @@ data class ProjectViewNodeModelImpl<T>(
   private val maybeUserObject: T?,
   override val id: Long,
   override val presentation: TreeNodePresentationImpl,
+  private val pathElementType: String,
+  private val pathElementId: String,
   val flags: Int = 0,
-) : BackendProjectViewNodeModel<T> {
+) : BackendProjectViewNodeModel<T>, PathElementIdProvider {
   constructor(
     maybeUserObject: T?,
     id: Long,
     presentation: TreeNodePresentationImpl,
+    pathElementType: String,
+    pathElementId: String,
     canNavigate: Boolean,
     canNavigateToSource: Boolean,
     isIncludedInExpandAll: Boolean,
@@ -67,11 +91,21 @@ data class ProjectViewNodeModelImpl<T>(
     maybeUserObject,
     id,
     presentation,
+    pathElementType,
+    pathElementId,
     flags(canNavigate, canNavigateToSource, isIncludedInExpandAll, isDirectory),
   )
 
   override val userObject: T
     get() = checkNotNull(maybeUserObject) { "The user object is only available on the backend" }
+
+  override fun getPathElementType(): String {
+    return pathElementType
+  }
+
+  override fun getPathElementId(): String {
+    return pathElementId
+  }
 
   override fun canNavigate(): Boolean = (flags and FLAG_CAN_NAVIGATE) != 0
 
@@ -105,4 +139,4 @@ val SuperRootPresentation: TreeNodePresentationImpl = TreeNodePresentationBuilde
 }.build()
 
 @ApiStatus.Internal
-val SuperRootModel: ProjectViewNodeModel = ProjectViewNodeModelImpl(null, SUPER_ROOT_ID, SuperRootPresentation)
+val SuperRootModel: ProjectViewNodeModel = ProjectViewNodeModelImpl(null, SUPER_ROOT_ID, SuperRootPresentation, "", "")
