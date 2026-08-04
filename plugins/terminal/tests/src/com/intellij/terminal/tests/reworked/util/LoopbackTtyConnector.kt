@@ -3,44 +3,37 @@ package com.intellij.terminal.tests.reworked.util
 
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TtyConnector
-import java.io.PipedReader
-import java.io.PipedWriter
+import java.util.concurrent.BlockingQueue
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.LinkedBlockingQueue
 
 /**
- * In-memory [TtyConnector] for terminal tests that need no shell process.
+ * In-memory [TtyConnector] for terminal tests that need no process.
  *
- * Text passed to [write] is fed back through [read] into the terminal emulator as if a shell
- * produced it, so a test can drive the emulator with raw ANSI/VT sequences.
- *
- * The `ByteArray` [write] overload carries the emulator's own responses (device attributes,
- * cursor reports) and is ignored.
+ * Text passed to [feed] is routed through [read] into the terminal emulator as
+ * if a process produced it.
  */
 internal class LoopbackTtyConnector : TtyConnector {
-  private val writer = PipedWriter()
-
-  // The pipe buffer is large enough that test writes never block waiting for the emulator to catch up.
-  private val reader = PipedReader(writer, 65_536)
+  private val pipe: InMemoryPipe = InMemoryPipeImpl()
 
   private val closed = CountDownLatch(1)
 
   /**
-   * Test injection point: appends [string] to the buffer that [read] drains.
-   * Feeding, for example, `"[31mRED[0m"` makes the emulator render red "RED".
+   * Feeds [text] to the terminal emulator, as if the process printed it.
    */
-  override fun write(string: String?) {
-    if (string.isNullOrEmpty()) return
-    writer.write(string)
+  fun feed(text: String) {
+    pipe.write(text)
   }
 
-  /** Emulator responses (DA, cursor reports, etc.). Not relevant for these tests. */
-  override fun write(bytes: ByteArray) {
-    // no-op
-  }
+  /** Data for the process (key/mouse events; replies to queries) */
+  override fun write(string: String) {}
 
-  override fun read(buf: CharArray, offset: Int, length: Int): Int = reader.read(buf, offset, length)
+  /** Data for the process (key/mouse events; replies to queries) */
+  override fun write(bytes: ByteArray) {}
 
-  override fun ready(): Boolean = reader.ready()
+  override fun read(buf: CharArray, offset: Int, length: Int): Int = pipe.read(buf, offset, length)
+
+  override fun ready(): Boolean = pipe.ready()
 
   override fun isConnected(): Boolean = closed.count > 0
 
@@ -51,14 +44,84 @@ internal class LoopbackTtyConnector : TtyConnector {
 
   override fun getName(): String = "loopback"
 
-  override fun resize(termSize: TermSize) {
-    // no-op
-  }
+  override fun resize(termSize: TermSize) {}
 
   override fun close() {
     closed.countDown()
-    // After the writer is closed, [read] drains the buffered chars and then returns -1,
-    // so TtyBasedArrayDataStream stops the emulation.
-    writer.close()
+    // Stops the emulation: once the pipe is drained, [read] returns -1.
+    pipe.close()
+  }
+}
+
+/**
+ * In-memory pipe: [write] and [read] are connected, so one thread reads what another writes, in order.
+ *
+ * [read] and [ready] must be called from a single reading thread; [write] and [close] may be called
+ * from any thread.
+ */
+private interface InMemoryPipe {
+  /** Appends [text] for [read] to return; writing an empty string has no effect. */
+  fun write(text: String)
+
+  /** Blocks until some chars arrive; -1 after [close] once the written chars are drained. */
+  fun read(buf: CharArray, offset: Int, length: Int): Int
+
+  /** True when [read] would return without blocking. */
+  fun ready(): Boolean
+
+  /** After this, [read] returns the remaining written chars and then -1. */
+  fun close()
+}
+
+/**
+ *  [InMemoryPipe] over a [LinkedBlockingQueue]: [write] never blocks, and a waiting reader wakes immediately.
+ *
+ *  [java.io.PipedWriter]/[java.io.PipedReader] are not used because of their drawbacks:
+ *  - a reader blocked on an empty pipe notices new data only on its next one-second
+ *    poll — writes do not notify it, only `flush()` does (JDK-8014239);
+ *  - the pipe tracks its ends by thread, not by close: a read waiting on an empty pipe throws
+ *    `IOException("Write end dead")` once the last writing thread dies, so writes from short-lived
+ *    threads (pooled workers, a finished test phase) can break a waiting reader without anything
+ *    being closed;
+ *  - the buffer is bounded, so a write outrunning the reader blocks — and a writer
+ *    blocked on a full buffer can sleep up to a second after space frees (JDK-8073926).
+ */
+private class InMemoryPipeImpl : InMemoryPipe {
+  // Chunks of written text; the empty string marks the end of the stream ([write] never queues one).
+  private val chunks: BlockingQueue<String> = LinkedBlockingQueue()
+
+  // current / currentPos / eof are confined to the reading thread.
+  private var current: String = ""
+  private var currentPos: Int = 0
+  private var eof: Boolean = false
+
+  override fun write(text: String) {
+    if (text.isNotEmpty()) {
+      chunks.put(text)
+    }
+  }
+
+  override fun read(buf: CharArray, offset: Int, length: Int): Int {
+    if (eof) return -1
+    if (currentPos == current.length) {
+      current = chunks.take()
+      currentPos = 0
+      if (current.isEmpty()) {
+        eof = true
+        return -1
+      }
+    }
+    val count = minOf(length, current.length - currentPos)
+    current.toCharArray(buf, offset, currentPos, currentPos + count)
+    currentPos += count
+    return count
+  }
+
+  override fun ready(): Boolean {
+    return currentPos < current.length || chunks.peek()?.isNotEmpty() == true
+  }
+
+  override fun close() {
+    chunks.put("")
   }
 }
