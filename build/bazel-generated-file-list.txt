@@ -464,6 +464,7 @@ libraries/jcip
 libraries/jediterm-core
 libraries/jediterm-ui
 libraries/jettison
+libraries/jgit-ssh
 libraries/jgoodies/common
 libraries/jgoodies/forms
 libraries/jline

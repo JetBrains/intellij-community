@@ -11934,6 +11934,36 @@ jvm_import(
 )
 
 copy_file(
+    name = "org.eclipse.jgit/org.eclipse.jgit.ssh.apache-6.6.1.202309021850-r.jar_copy",
+    src = "@org_eclipse_jgit-org_eclipse_jgit_ssh_apache-6_6_1_202309021850-r_http//file",
+    out = "org.eclipse.jgit/org.eclipse.jgit.ssh.apache-6.6.1.202309021850-r.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-jgit-ssh-eclipse-jgit-ssh-apache",
+    jar = "@org_eclipse_jgit-org_eclipse_jgit_ssh_apache-6_6_1_202309021850-r_http//file",
+    source_jar = "@org_eclipse_jgit-org_eclipse_jgit_ssh_apache-6_6_1_202309021850-r-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "org.eclipse.jgit/org.eclipse.jgit.ssh.apache.agent-6.6.1.202309021850-r.jar_copy",
+    src = "@org_eclipse_jgit-org_eclipse_jgit_ssh_apache_agent-6_6_1_202309021850-r_http//file",
+    out = "org.eclipse.jgit/org.eclipse.jgit.ssh.apache.agent-6.6.1.202309021850-r.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-jgit-ssh-eclipse-jgit-ssh-apache-agent",
+    jar = "@org_eclipse_jgit-org_eclipse_jgit_ssh_apache_agent-6_6_1_202309021850-r_http//file",
+    source_jar = "@org_eclipse_jgit-org_eclipse_jgit_ssh_apache_agent-6_6_1_202309021850-r-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
     name = "com.jgoodies/jgoodies-common-1.4.0.jar_copy",
     src = "@com_jgoodies-jgoodies-common-1_4_0_http//file",
     out = "com.jgoodies/jgoodies-common-1.4.0.jar",
@@ -20172,36 +20202,6 @@ jvm_import(
     name = "search_everywhere_ml-typos-tests-ai-grazie-spell-gec-engine-local-jvm",
     jar = "@ai_grazie_spell-gec-spell-engine-local-0_8_184_http//file",
     source_jar = "@ai_grazie_spell-gec-spell-engine-local-0_8_184-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "org.eclipse.jgit/org.eclipse.jgit.ssh.apache-6.6.1.202309021850-r.jar_copy",
-    src = "@org_eclipse_jgit-org_eclipse_jgit_ssh_apache-6_6_1_202309021850-r_http//file",
-    out = "org.eclipse.jgit/org.eclipse.jgit.ssh.apache-6.6.1.202309021850-r.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "settings_repository-eclipse-jgit-ssh-apache",
-    jar = "@org_eclipse_jgit-org_eclipse_jgit_ssh_apache-6_6_1_202309021850-r_http//file",
-    source_jar = "@org_eclipse_jgit-org_eclipse_jgit_ssh_apache-6_6_1_202309021850-r-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "org.eclipse.jgit/org.eclipse.jgit.ssh.apache.agent-6.6.1.202309021850-r.jar_copy",
-    src = "@org_eclipse_jgit-org_eclipse_jgit_ssh_apache_agent-6_6_1_202309021850-r_http//file",
-    out = "org.eclipse.jgit/org.eclipse.jgit.ssh.apache.agent-6.6.1.202309021850-r.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "settings_repository-eclipse-jgit-ssh-apache-agent",
-    jar = "@org_eclipse_jgit-org_eclipse_jgit_ssh_apache_agent-6_6_1_202309021850-r_http//file",
-    source_jar = "@org_eclipse_jgit-org_eclipse_jgit_ssh_apache_agent-6_6_1_202309021850-r-sources_http//file",
     visibility = ["//visibility:public"],
 )
 

@@ -53,6 +53,7 @@
   <content namespace="jetbrains"/>
   <content>
     <module name="intellij.libraries.sshd.osgi" loading="embedded"/>
+    <module name="intellij.libraries.jgit.ssh" loading="embedded"/>
   </content>
 
   <extensions defaultExtensionNs="com.intellij">

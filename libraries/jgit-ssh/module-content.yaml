@@ -1,0 +1,8 @@
+- name: dist.all/lib/intellij.libraries.jgit.ssh.jar
+  modules:
+  - name: intellij.libraries.jgit.ssh
+    libraries:
+      eclipse.jgit.ssh.apache:
+      - name: $MAVEN_REPOSITORY$/org/eclipse/jgit/org.eclipse.jgit.ssh.apache/6/org.eclipse.jgit.ssh.apache-6.jar
+      eclipse.jgit.ssh.apache.agent:
+      - name: $MAVEN_REPOSITORY$/org/eclipse/jgit/org.eclipse.jgit.ssh.apache.agent/6/org.eclipse.jgit.ssh.apache.agent-6.jar

@@ -9353,6 +9353,34 @@ http_file(
 )
 
 http_file(
+    name = "org_eclipse_jgit-org_eclipse_jgit_ssh_apache-6_6_1_202309021850-r_http",
+    downloaded_file_path = "org.eclipse.jgit.ssh.apache-6.6.1.202309021850-r.jar",
+    sha256 = "cc379265edb2b74850156c16fefd7990281bf47e33fe7665e838f8b5fdb94755",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/eclipse/jgit/org.eclipse.jgit.ssh.apache/6.6.1.202309021850-r/org.eclipse.jgit.ssh.apache-6.6.1.202309021850-r.jar",
+)
+
+http_file(
+    name = "org_eclipse_jgit-org_eclipse_jgit_ssh_apache-6_6_1_202309021850-r-sources_http",
+    downloaded_file_path = "org.eclipse.jgit.ssh.apache-6.6.1.202309021850-r-sources.jar",
+    sha256 = "b84dd40c74729ab1db113f939b4b3cf9b05ae8ec3172e9b36de6136fd75a1ab3",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/eclipse/jgit/org.eclipse.jgit.ssh.apache/6.6.1.202309021850-r/org.eclipse.jgit.ssh.apache-6.6.1.202309021850-r-sources.jar",
+)
+
+http_file(
+    name = "org_eclipse_jgit-org_eclipse_jgit_ssh_apache_agent-6_6_1_202309021850-r_http",
+    downloaded_file_path = "org.eclipse.jgit.ssh.apache.agent-6.6.1.202309021850-r.jar",
+    sha256 = "4ddd0cf1a7ece350b33f0a6b865e8fb777c30a2282a0fbd1754020a4e06af481",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/eclipse/jgit/org.eclipse.jgit.ssh.apache.agent/6.6.1.202309021850-r/org.eclipse.jgit.ssh.apache.agent-6.6.1.202309021850-r.jar",
+)
+
+http_file(
+    name = "org_eclipse_jgit-org_eclipse_jgit_ssh_apache_agent-6_6_1_202309021850-r-sources_http",
+    downloaded_file_path = "org.eclipse.jgit.ssh.apache.agent-6.6.1.202309021850-r-sources.jar",
+    sha256 = "998dc72ea9de378d3a4a9cd09f38b68e74fb1f802291153ae307fb95544af331",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/eclipse/jgit/org.eclipse.jgit.ssh.apache.agent/6.6.1.202309021850-r/org.eclipse.jgit.ssh.apache.agent-6.6.1.202309021850-r-sources.jar",
+)
+
+http_file(
     name = "com_jgoodies-jgoodies-common-1_4_0_http",
     downloaded_file_path = "jgoodies-common-1.4.0.jar",
     sha256 = "efd986ec851c3a5cd57907e72f27d1af9c1e5b1874b07a8b778588646d71d9fc",
@@ -15629,34 +15657,6 @@ http_file(
     downloaded_file_path = "find-file-model-252.0.1-sources.jar",
     sha256 = "bb758035f8fa50e40de212810911f1b76f3201f144d4ea9a2c9d46c572e395d0",
     url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/searchEverywhere/model/find-file-model/252.0.1/find-file-model-252.0.1-sources.jar",
-)
-
-http_file(
-    name = "org_eclipse_jgit-org_eclipse_jgit_ssh_apache-6_6_1_202309021850-r_http",
-    downloaded_file_path = "org.eclipse.jgit.ssh.apache-6.6.1.202309021850-r.jar",
-    sha256 = "cc379265edb2b74850156c16fefd7990281bf47e33fe7665e838f8b5fdb94755",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/eclipse/jgit/org.eclipse.jgit.ssh.apache/6.6.1.202309021850-r/org.eclipse.jgit.ssh.apache-6.6.1.202309021850-r.jar",
-)
-
-http_file(
-    name = "org_eclipse_jgit-org_eclipse_jgit_ssh_apache-6_6_1_202309021850-r-sources_http",
-    downloaded_file_path = "org.eclipse.jgit.ssh.apache-6.6.1.202309021850-r-sources.jar",
-    sha256 = "b84dd40c74729ab1db113f939b4b3cf9b05ae8ec3172e9b36de6136fd75a1ab3",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/eclipse/jgit/org.eclipse.jgit.ssh.apache/6.6.1.202309021850-r/org.eclipse.jgit.ssh.apache-6.6.1.202309021850-r-sources.jar",
-)
-
-http_file(
-    name = "org_eclipse_jgit-org_eclipse_jgit_ssh_apache_agent-6_6_1_202309021850-r_http",
-    downloaded_file_path = "org.eclipse.jgit.ssh.apache.agent-6.6.1.202309021850-r.jar",
-    sha256 = "4ddd0cf1a7ece350b33f0a6b865e8fb777c30a2282a0fbd1754020a4e06af481",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/eclipse/jgit/org.eclipse.jgit.ssh.apache.agent/6.6.1.202309021850-r/org.eclipse.jgit.ssh.apache.agent-6.6.1.202309021850-r.jar",
-)
-
-http_file(
-    name = "org_eclipse_jgit-org_eclipse_jgit_ssh_apache_agent-6_6_1_202309021850-r-sources_http",
-    downloaded_file_path = "org.eclipse.jgit.ssh.apache.agent-6.6.1.202309021850-r-sources.jar",
-    sha256 = "998dc72ea9de378d3a4a9cd09f38b68e74fb1f802291153ae307fb95544af331",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/eclipse/jgit/org.eclipse.jgit.ssh.apache.agent/6.6.1.202309021850-r/org.eclipse.jgit.ssh.apache.agent-6.6.1.202309021850-r-sources.jar",
 )
 
 http_file(
