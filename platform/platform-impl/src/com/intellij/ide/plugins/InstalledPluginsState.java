@@ -42,6 +42,7 @@ public final class InstalledPluginsState {
   private final Map<PluginId, IdeaPluginDescriptor> myInstalledPlugins = new HashMap<>();
   private final Set<PluginId> myInstalledWithoutRestartPlugins = new HashSet<>();
   private final Set<PluginId> myUpdatedPlugins = new HashSet<>();
+  private final Map<PluginId, IdeaPluginDescriptor> myUpdatedPluginDescriptors = new HashMap<>();
   private final Set<PluginId> myUpdatedWithoutRestartPlugins = new HashSet<>();
   private final Set<PluginId> myUninstalledWithoutRestartPlugins = new HashSet<>();
   private final Set<String> myOutdatedPlugins = new HashSet<>();
@@ -86,6 +87,13 @@ public final class InstalledPluginsState {
   public @NotNull Collection<PluginId> getUpdatedPlugins() {
     synchronized (myLock) {
       return Collections.unmodifiableCollection(myUpdatedPlugins);
+    }
+  }
+
+  @ApiStatus.Internal
+  public @NotNull Collection<IdeaPluginDescriptor> getUpdatedPluginDescriptors() {
+    synchronized (myLock) {
+      return List.copyOf(myUpdatedPluginDescriptors.values());
     }
   }
 
@@ -165,6 +173,7 @@ public final class InstalledPluginsState {
       if (isUpdate) {
         if (restartNeeded) {
           myUpdatedPlugins.add(id);
+          myUpdatedPluginDescriptors.put(id, descriptor);
         }
         else {
           myUpdatedWithoutRestartPlugins.add(id);
