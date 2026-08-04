@@ -62,6 +62,7 @@
       "indent_size": 4,
       "indent_style": "space",
       "insert_whitespaces_in_simple_one_line_method": true,
+      "kdoc_preserve_line_feeds": true,
       "keep_blank_lines_before_right_brace": 2,
       "keep_blank_lines_in_code": 2,
       "keep_blank_lines_in_declarations": 2,

@@ -178,6 +178,234 @@ public abstract class K2FormatterTestGenerated extends AbstractK2FormatterTest {
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../idea/tests/testData/formatter/kdoc")
+        public static class Kdoc extends AbstractK2FormatterTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("ClassMembers.after.kt")
+            public void testClassMembers() throws Exception {
+                runTest("../../idea/tests/testData/formatter/kdoc/ClassMembers.after.kt");
+            }
+
+            @TestMetadata("EmptyBlockComment.after.kt")
+            public void testEmptyBlockComment() throws Exception {
+                runTest("../../idea/tests/testData/formatter/kdoc/EmptyBlockComment.after.kt");
+            }
+
+            @TestMetadata("EmptyKDoc.after.kt")
+            public void testEmptyKDoc() throws Exception {
+                runTest("../../idea/tests/testData/formatter/kdoc/EmptyKDoc.after.kt");
+            }
+
+            @TestMetadata("EmptyKDocWithoutAsterisk.after.kt")
+            public void testEmptyKDocWithoutAsterisk() throws Exception {
+                runTest("../../idea/tests/testData/formatter/kdoc/EmptyKDocWithoutAsterisk.after.kt");
+            }
+
+            @TestMetadata("EnumDeclarations.after.kt")
+            public void testEnumDeclarations() throws Exception {
+                runTest("../../idea/tests/testData/formatter/kdoc/EnumDeclarations.after.kt");
+            }
+
+            @TestMetadata("ExactlyAtMarginIsNotWrapped.after.kt")
+            public void testExactlyAtMarginIsNotWrapped() throws Exception {
+                runTest("../../idea/tests/testData/formatter/kdoc/ExactlyAtMarginIsNotWrapped.after.kt");
+            }
+
+            @TestMetadata("FenceIndentedUpToThreeSpaces.after.kt")
+            public void testFenceIndentedUpToThreeSpaces() throws Exception {
+                runTest("../../idea/tests/testData/formatter/kdoc/FenceIndentedUpToThreeSpaces.after.kt");
+            }
+
+            @TestMetadata("FenceInsideListItem.after.kt")
+            public void testFenceInsideListItem() throws Exception {
+                runTest("../../idea/tests/testData/formatter/kdoc/FenceInsideListItem.after.kt");
+            }
+
+            @TestMetadata("FenceInsideTagBlock.after.kt")
+            public void testFenceInsideTagBlock() throws Exception {
+                runTest("../../idea/tests/testData/formatter/kdoc/FenceInsideTagBlock.after.kt");
+            }
+
+            @TestMetadata("FenceTilde.after.kt")
+            public void testFenceTilde() throws Exception {
+                runTest("../../idea/tests/testData/formatter/kdoc/FenceTilde.after.kt");
+            }
+
+            @TestMetadata("FenceUnclosed.after.kt")
+            public void testFenceUnclosed() throws Exception {
+                runTest("../../idea/tests/testData/formatter/kdoc/FenceUnclosed.after.kt");
+            }
+
+            @TestMetadata("FenceWithInfoString.after.kt")
+            public void testFenceWithInfoString() throws Exception {
+                runTest("../../idea/tests/testData/formatter/kdoc/FenceWithInfoString.after.kt");
+            }
+
+            @TestMetadata("FencedCodeBlockNotReflowed.after.kt")
+            public void testFencedCodeBlockNotReflowed() throws Exception {
+                runTest("../../idea/tests/testData/formatter/kdoc/FencedCodeBlockNotReflowed.after.kt");
+            }
+
+            @TestMetadata("IndentedCodeBlockAfterList.after.kt")
+            public void testIndentedCodeBlockAfterList() throws Exception {
+                runTest("../../idea/tests/testData/formatter/kdoc/IndentedCodeBlockAfterList.after.kt");
+            }
+
+            @TestMetadata("IndentedCodeBlockDeepIndent.after.kt")
+            public void testIndentedCodeBlockDeepIndent() throws Exception {
+                runTest("../../idea/tests/testData/formatter/kdoc/IndentedCodeBlockDeepIndent.after.kt");
+            }
+
+            @TestMetadata("IndentedCodeBlockNotReflowed.after.kt")
+            public void testIndentedCodeBlockNotReflowed() throws Exception {
+                runTest("../../idea/tests/testData/formatter/kdoc/IndentedCodeBlockNotReflowed.after.kt");
+            }
+
+            @TestMetadata("IndentedMember.after.kt")
+            public void testIndentedMember() throws Exception {
+                runTest("../../idea/tests/testData/formatter/kdoc/IndentedMember.after.kt");
+            }
+
+            @TestMetadata("InlineCodeSpanIsNotSplit.after.kt")
+            public void testInlineCodeSpanIsNotSplit() throws Exception {
+                runTest("../../idea/tests/testData/formatter/kdoc/InlineCodeSpanIsNotSplit.after.kt");
+            }
+
+            @TestMetadata("InlineCodeSpanWithDoubleTicks.after.kt")
+            public void testInlineCodeSpanWithDoubleTicks() throws Exception {
+                runTest("../../idea/tests/testData/formatter/kdoc/InlineCodeSpanWithDoubleTicks.after.kt");
+            }
+
+            @TestMetadata("KDocBetweenDeclarations.after.kt")
+            public void testKDocBetweenDeclarations() throws Exception {
+                runTest("../../idea/tests/testData/formatter/kdoc/KDocBetweenDeclarations.after.kt");
+            }
+
+            @TestMetadata("KDocFormattingDisabled.after.kt")
+            public void testKDocFormattingDisabled() throws Exception {
+                runTest("../../idea/tests/testData/formatter/kdoc/KDocFormattingDisabled.after.kt");
+            }
+
+            @TestMetadata("KDocInObjectExpression.after.kt")
+            public void testKDocInObjectExpression() throws Exception {
+                runTest("../../idea/tests/testData/formatter/kdoc/KDocInObjectExpression.after.kt");
+            }
+
+            @TestMetadata("KDocOnHostAndLocalDeclaration.after.kt")
+            public void testKDocOnHostAndLocalDeclaration() throws Exception {
+                runTest("../../idea/tests/testData/formatter/kdoc/KDocOnHostAndLocalDeclaration.after.kt");
+            }
+
+            @TestMetadata("LinkNotSplit.after.kt")
+            public void testLinkNotSplit() throws Exception {
+                runTest("../../idea/tests/testData/formatter/kdoc/LinkNotSplit.after.kt");
+            }
+
+            @TestMetadata("LocalDeclarations.after.kt")
+            public void testLocalDeclarations() throws Exception {
+                runTest("../../idea/tests/testData/formatter/kdoc/LocalDeclarations.after.kt");
+            }
+
+            @TestMetadata("LongLinkWithSpacesIsNotSplit.after.kt")
+            public void testLongLinkWithSpacesIsNotSplit() throws Exception {
+                runTest("../../idea/tests/testData/formatter/kdoc/LongLinkWithSpacesIsNotSplit.after.kt");
+            }
+
+            @TestMetadata("LongUnbrokenLineIsNotWrapped.after.kt")
+            public void testLongUnbrokenLineIsNotWrapped() throws Exception {
+                runTest("../../idea/tests/testData/formatter/kdoc/LongUnbrokenLineIsNotWrapped.after.kt");
+            }
+
+            @TestMetadata("MarkdownHeadersAndBlockquote.after.kt")
+            public void testMarkdownHeadersAndBlockquote() throws Exception {
+                runTest("../../idea/tests/testData/formatter/kdoc/MarkdownHeadersAndBlockquote.after.kt");
+            }
+
+            @TestMetadata("MarkdownListNotMerged.after.kt")
+            public void testMarkdownListNotMerged() throws Exception {
+                runTest("../../idea/tests/testData/formatter/kdoc/MarkdownListNotMerged.after.kt");
+            }
+
+            @TestMetadata("MarkdownTable.after.kt")
+            public void testMarkdownTable() throws Exception {
+                runTest("../../idea/tests/testData/formatter/kdoc/MarkdownTable.after.kt");
+            }
+
+            @TestMetadata("NestedDeclarations.after.kt")
+            public void testNestedDeclarations() throws Exception {
+                runTest("../../idea/tests/testData/formatter/kdoc/NestedDeclarations.after.kt");
+            }
+
+            @TestMetadata("NestedMarkdownLists.after.kt")
+            public void testNestedMarkdownLists() throws Exception {
+                runTest("../../idea/tests/testData/formatter/kdoc/NestedMarkdownLists.after.kt");
+            }
+
+            @TestMetadata("NestedMarkdownListsReflowed.after.kt")
+            public void testNestedMarkdownListsReflowed() throws Exception {
+                runTest("../../idea/tests/testData/formatter/kdoc/NestedMarkdownListsReflowed.after.kt");
+            }
+
+            @TestMetadata("OneCharOverMarginIsWrapped.after.kt")
+            public void testOneCharOverMarginIsWrapped() throws Exception {
+                runTest("../../idea/tests/testData/formatter/kdoc/OneCharOverMarginIsWrapped.after.kt");
+            }
+
+            @TestMetadata("PreserveLineFeeds.after.kt")
+            public void testPreserveLineFeeds() throws Exception {
+                runTest("../../idea/tests/testData/formatter/kdoc/PreserveLineFeeds.after.kt");
+            }
+
+            @TestMetadata("PropertyAccessors.after.kt")
+            public void testPropertyAccessors() throws Exception {
+                runTest("../../idea/tests/testData/formatter/kdoc/PropertyAccessors.after.kt");
+            }
+
+            @TestMetadata("ReflowParagraph.after.kt")
+            public void testReflowParagraph() throws Exception {
+                runTest("../../idea/tests/testData/formatter/kdoc/ReflowParagraph.after.kt");
+            }
+
+            @TestMetadata("SingleLineKDoc.after.kt")
+            public void testSingleLineKDoc() throws Exception {
+                runTest("../../idea/tests/testData/formatter/kdoc/SingleLineKDoc.after.kt");
+            }
+
+            @TestMetadata("TopLevelDeclarations.after.kt")
+            public void testTopLevelDeclarations() throws Exception {
+                runTest("../../idea/tests/testData/formatter/kdoc/TopLevelDeclarations.after.kt");
+            }
+
+            @TestMetadata("UnattachedTopLevelKDoc.after.kt")
+            public void testUnattachedTopLevelKDoc() throws Exception {
+                runTest("../../idea/tests/testData/formatter/kdoc/UnattachedTopLevelKDoc.after.kt");
+            }
+
+            @TestMetadata("WrapAfterDoubleSpace.after.kt")
+            public void testWrapAfterDoubleSpace() throws Exception {
+                runTest("../../idea/tests/testData/formatter/kdoc/WrapAfterDoubleSpace.after.kt");
+            }
+
+            @TestMetadata("WrapDisabledByDefault.after.kt")
+            public void testWrapDisabledByDefault() throws Exception {
+                runTest("../../idea/tests/testData/formatter/kdoc/WrapDisabledByDefault.after.kt");
+            }
+
+            @TestMetadata("WrapLongDescription.after.kt")
+            public void testWrapLongDescription() throws Exception {
+                runTest("../../idea/tests/testData/formatter/kdoc/WrapLongDescription.after.kt");
+            }
+
+            @TestMetadata("WrapTagBlocks.after.kt")
+            public void testWrapTagBlocks() throws Exception {
+                runTest("../../idea/tests/testData/formatter/kdoc/WrapTagBlocks.after.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/formatter/modifierList")
         public static class ModifierList extends AbstractK2FormatterTest {
             private void runTest(String testDataFilePath) throws Exception {

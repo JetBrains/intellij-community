@@ -9,9 +9,10 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap
 import com.intellij.psi.impl.source.codeStyle.PreFormatProcessor
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.kdoc.lexer.KDocTokens
+import org.jetbrains.kotlin.psi.KtFile
 
 /**
- * This pre-processor is responsible for formatting KDoc comments.
+ * This pre-processor is responsible for formatting KDoc comments and stripping trailing whitespaces.
  * This class is mostly ported from the Java equivalent `com.intellij.psi.impl.source.codeStyle.FormatCommentsProcessor`.
  * See [CommentFormatter] for more information about capabilities and options.
  */
@@ -32,7 +33,8 @@ internal class FormatCommentsProcessor : PreFormatProcessor {
             return range
         }
 
-        return formatCommentsInner(element, range, CommentFormatter())
+        val ktFile = containingFile as? KtFile ?: return range
+        return formatCommentsInner(element, range, CommentFormatter(ktFile))
     }
 
     /**

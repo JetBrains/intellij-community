@@ -1,0 +1,366 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.formatter
+
+import org.jetbrains.kotlin.idea.KotlinLanguage
+
+/**
+ * Parser responsible for parsing KDocs and splitting the comment text into [Block]s and [Paragraph]s.
+ * A block potentially starts with a tag and contains several lines that are split into paragraphs by the parser.
+ * The parser allows for wrapping long lines of a paragraph to the next line.
+ *
+ * There are several settings that control how the parser behaves:
+ *  - `WRAP_COMMENTS`: Determines whether to wrap long lines in the KDoc. Without this enabled, the parser does nothing.
+ *  - `KDOC_PRESERVE_LINE_FEEDS`: Determines if custom line breaks within a paragraph are preserved.
+ *
+ * Mostly ported from the equivalent in Java: `com.intellij.psi.impl.source.codeStyle.javadoc.JDParser`
+ */
+internal class KDocParser(
+    private val codeStyleSettings: KotlinCommonCodeStyleSettings,
+) {
+
+    fun wrapComment(text: String, indent: String): String? {
+        if (!codeStyleSettings.WRAP_COMMENTS) return null
+        // Note: `/**/` is not a KDoc comment
+        if (!text.startsWith("/**") || !text.endsWith("*/") || text.length < 5) return null
+
+        val rootSettings = codeStyleSettings.rootSettings
+        val rightMargin = rootSettings.getRightMargin(KotlinLanguage.INSTANCE)
+        val preserveLineFeeds = rootSettings.kotlinCustomSettings.KDOC_PRESERVE_LINE_FEEDS
+        val wrapped = wrapKDocBody(text, rightMargin, indent, preserveLineFeeds)
+        return wrapped.takeIf { it != text }
+    }
+}
+
+/**
+ * A line is a single line in a [Block].
+ * If [isProtected] is true, the line is not wrapped.
+ */
+private data class Line(val text: String, val isProtected: Boolean)
+
+/**
+ * A block is an inseparable unit of a KDoc element.
+ * Each KDoc comment has at least one block, which is the starting block.
+ * A new block (other than the starting block) is introduced by a line that starts with a tag.
+ */
+private data class Block(val tag: String?, val lines: MutableList<Line> = mutableListOf())
+
+/**
+ * A paragraph is a flowing piece of [text] that might span multiple lines and can potentially be wrapped.
+ * If [isProtected] is true, the paragraph is not wrapped.
+ */
+private data class Paragraph(val text: String, val isProtected: Boolean)
+
+/**
+ * A fence is a set of characters that introduce a special markdown/code block in a KDoc.
+ * This class tracks the kind of fence and its length.
+ */
+private data class FenceInfo(val fenceChar: Char, val fenceLen: Int) {
+    fun isClosedBy(line: String): Boolean {
+        val closing = findCodeFence(line, opening = false) ?: return false
+        return fenceChar == closing.fenceChar && closing.fenceLen >= fenceLen
+    }
+}
+
+private fun wrapKDocBody(
+    commentText: String,
+    rightMargin: Int,
+    indent: String = "",
+    preserveLineFeeds: Boolean = true,
+): String {
+    val body = commentText.removePrefix("/**").removeSuffix("*/").trim()
+    val wasMultiline = commentText.indexOf('\n') >= 0
+    val blocks = splitIntoBlocks(destarLines(body))
+    val wrappedBlocks = blocks.map { wrapBlock(it, rightMargin, indent, preserveLineFeeds) }
+    return render(wrappedBlocks, indent, wasMultiline, rightMargin)
+}
+
+/**
+ * Strips the leading `*` and a single leading space of KDoc comment lines.
+ * Additionally, trailing whitespaces are also removed.
+ */
+private fun destarLines(body: String): List<String> = body.split("\n").map { rawLine ->
+    val withoutIndent = rawLine.trimStart()
+    val content = if (withoutIndent.startsWith("*")) {
+        withoutIndent.substring(1).removePrefix(" ")
+    } else {
+        withoutIndent
+    }
+    content.trimEnd()
+}
+
+
+private const val INDENTED_CODE_WIDTH = 4
+
+/**
+ * Width of the leading indent, counting a tab as 4 columns.
+ */
+private fun indentWidth(line: String): Int {
+    var width = 0
+    for (ch in line) {
+        when (ch) {
+            ' ' -> width++
+            '\t' -> width += INDENTED_CODE_WIDTH
+            else -> return width
+        }
+    }
+    return width
+}
+
+/**
+ * Splits destarred lines into an ordered list of blocks: a leading (possibly empty) description
+ * block followed by one block per `@tag` occurrence, in original order.
+ * A line is only treated as a tag boundary outside an open code fence.
+ */
+private fun splitIntoBlocks(destarredLines: List<String>): List<Block> {
+    val blocks = mutableListOf(Block(tag = null))
+    var currentFence: FenceInfo? = null
+    var inIndentedCode = false
+    var prevLineBlank = true
+    for (rawLine in destarredLines) {
+        val fenceForThisLine = currentFence ?: findCodeFence(rawLine, opening = true)
+        val isBlank = rawLine.isBlank()
+
+        // A Markdown-indented code block opens on a line indented by at least four columns, but only
+        // where it does not interrupt a paragraph, and it runs until a non-blank line removes the indent again.
+        inIndentedCode = when {
+            fenceForThisLine != null -> false
+            isBlank -> inIndentedCode
+            indentWidth(rawLine) >= INDENTED_CODE_WIDTH -> inIndentedCode || prevLineBlank
+            else -> false
+        }
+
+        val isProtected = fenceForThisLine != null || (inIndentedCode && !isBlank)
+        val startsNewTag = currentFence == null && rawLine.startsWith("@")
+
+        if (startsNewTag) {
+            val spaceIdx = rawLine.indexOfFirst { it == ' ' || it == '\t' }
+            val tag = if (spaceIdx == -1) rawLine.substring(1) else rawLine.substring(1, spaceIdx)
+            val rest = if (spaceIdx == -1) "" else rawLine.substring(spaceIdx).trim()
+            val newBlock = Block(tag)
+            newBlock.lines += Line(rest, isProtected = false)
+            blocks += newBlock
+        } else {
+            blocks.last().lines += Line(rawLine, isProtected)
+        }
+
+        currentFence = when {
+            currentFence == null -> fenceForThisLine
+            currentFence.isClosedBy(rawLine) -> null
+            else -> currentFence
+        }
+        prevLineBlank = isBlank
+    }
+    return blocks
+}
+
+/**
+ * Merges a block's lines into paragraphs.
+ * Note that blank lines and fenced/code content stand alone and are never reflowed.
+ * A Markdown construct line always starts a fresh paragraph.
+ *
+ * With [preserveLineFeeds] every line becomes its own paragraph, only lines exceeding the margin are wrapped.
+ */
+private fun splitIntoParagraphs(lines: List<Line>, preserveLineFeeds: Boolean): List<Paragraph> {
+    val result = mutableListOf<Paragraph>()
+    val sb = StringBuilder()
+
+    fun flush() {
+        if (sb.isNotEmpty()) {
+            result += Paragraph(sb.toString(), isProtected = false)
+            sb.setLength(0)
+        }
+    }
+
+    for ((line, isProtectedLine) in lines) {
+        when {
+            isProtectedLine -> {
+                flush()
+                result += Paragraph(line, isProtected = true)
+            }
+
+            line.isEmpty() -> {
+                flush()
+                result += Paragraph("", isProtected = false)
+            }
+
+            preserveLineFeeds -> result += Paragraph(line, isProtected = false)
+            else -> {
+                if (isStartOfMarkdownConstruct(line)) flush()
+                if (sb.isEmpty()) {
+                    sb.append(line)
+                } else {
+                    sb.append(' ').append(line.trim())
+                }
+            }
+        }
+    }
+    flush()
+    return result
+}
+
+private fun wrapBlock(block: Block, rightMargin: Int, indent: String, preserveLineFeeds: Boolean): Block {
+    val tagPrefixLength = if (block.tag != null) block.tag.length + 2 else 0 // "@" + tag + " "
+    val continuationPrefixLength = indent.length + 3 // " * "
+    val firstLineWidth = (rightMargin - continuationPrefixLength - tagPrefixLength).coerceAtLeast(1)
+    val continuationWidth = (rightMargin - continuationPrefixLength).coerceAtLeast(1)
+
+    val wrapped = mutableListOf<Line>()
+    var isFirstLine = true
+    for (paragraph in splitIntoParagraphs(block.lines, preserveLineFeeds)) {
+        if (paragraph.isProtected || paragraph.text.isEmpty()) {
+            wrapped += Line(paragraph.text, isProtected = paragraph.isProtected)
+            isFirstLine = false
+            continue
+        }
+        var remaining = paragraph.text
+        while (remaining.isNotEmpty()) {
+            val width = if (isFirstLine) firstLineWidth else continuationWidth
+            val wrapPos = computeWrapPosition(remaining, width)
+            wrapped += Line(remaining.take(wrapPos), isProtected = false)
+            remaining = remaining.drop(wrapPos + 1).trimStart() // + 1 to drop the space if it was there
+            isFirstLine = false
+        }
+    }
+    return block.copy(lines = wrapped)
+}
+
+/**
+ * Computes the position where a line should be wrapped if it should be at most [width] in length.
+ *
+ * A line may only be broken at a space that is outside a link reference like `[Foo][Bar]` and outside an
+ * inline code span like `val a = 5`.
+ * When there is no such space before [width], the search continues past it, and the line is allowed to run
+ * over the margin until the first opportunity is found.
+ */
+private fun computeWrapPosition(line: String, width: Int): Int {
+    if (line.length <= width) return line.length
+
+    var breakPoint = -1
+    var bracketBalance = 0
+    var codeSpanTicks = 0 // length of the opening backtick run, 0 when outside a code span
+
+    var i = 0
+    while (i < line.length && (i <= width || breakPoint < 0)) {
+        val c = line[i]
+        if (c == '`') {
+            var runLength = 0
+            // N backticks need to be closed by another N backticks after, so find out how many backticks there are
+            while (i < line.length && line[i] == '`') {
+                runLength++
+                i++
+            }
+            // Either open or close a code block. Only close if the amount of backticks matches.
+            when (codeSpanTicks) {
+                0 -> codeSpanTicks = runLength
+                runLength -> codeSpanTicks = 0
+            }
+            continue
+        }
+        when {
+            codeSpanTicks > 0 -> {} // No bracket matching required inside code blocks
+            c == '[' -> bracketBalance++
+            bracketBalance > 0 && c == ']' -> bracketBalance--
+            c == ' ' && bracketBalance == 0 -> breakPoint = i
+        }
+        i++
+    }
+
+    return if (breakPoint > 0) breakPoint else line.length
+}
+
+private fun render(
+    wrappedBlocks: List<Block>,
+    indent: String,
+    wasMultiline: Boolean,
+    rightMargin: Int,
+): String {
+    val physicalLines = mutableListOf<String>()
+    for ((tag, lines) in wrappedBlocks) {
+        lines.forEachIndexed { idx, line ->
+            physicalLines += when {
+                idx != 0 || tag == null -> line.text
+                line.text.isEmpty() -> "@$tag"
+                else -> "@$tag ${line.text}"
+            }
+        }
+    }
+    // An empty multi-line KDoc needs to keep its empty line, while a single-line KDoc should not gain an additional line
+    if (!wasMultiline && physicalLines.size == 1 && physicalLines[0].isEmpty()) physicalLines.clear()
+
+    val canStayInline = !wasMultiline && physicalLines.size <= 1 &&
+            indent.length + "/**  */".length + (physicalLines.firstOrNull()?.length ?: 0) <= rightMargin
+
+    if (canStayInline) {
+        return if (physicalLines.isEmpty()) "/** */" else "/** ${physicalLines[0]} */"
+    }
+
+    return buildString {
+        append("/**\n")
+        for (line in physicalLines) {
+            append(indent).append(" *")
+            if (line.isNotEmpty()) append(' ').append(line)
+            append('\n')
+        }
+        append(indent).append(" */")
+    }
+}
+
+private fun isStartOfMarkdownConstruct(line: String): Boolean {
+    val trimmed = line.trim()
+    return trimmed.startsWith(">") ||
+            trimmed.startsWith("---") ||
+            isStartOfMarkdownHeader(trimmed) ||
+            isMarkdownTableRow(trimmed) ||
+            isStartOfMarkdownListItem(trimmed)
+}
+
+private fun isStartOfMarkdownHeader(line: String): Boolean = line.startsWith("#")
+
+private fun isMarkdownTableRow(line: String): Boolean = line.startsWith("|") && line.count { it == '|' } > 1
+
+private val LIST_ITEM_PATTERN = Regex("^\\d+[).]")
+private fun isStartOfMarkdownListItem(line: String): Boolean =
+    line.startsWith("- ") || line.startsWith("+ ") || line.startsWith("* ") || LIST_ITEM_PATTERN.containsMatchIn(line)
+
+/**
+ * Detects an opening or closing Markdown code-block fence
+ */
+private fun findCodeFence(line: String, opening: Boolean): FenceInfo? {
+    if (line.length < 3) return null
+
+    var fenceFound = false
+    var infoString = false
+    var fenceLen = 0
+    var fenceChar = 0.toChar()
+
+    var i = 0
+    while (i < line.length) {
+        val ch = line[i]
+        if (!fenceFound) {
+            when (ch) {
+                ' ' -> if (i > 2) return null
+                '`', '~' -> {
+                    fenceFound = true
+                    fenceChar = ch
+                    fenceLen += 1
+                }
+
+                else -> return null
+            }
+        } else {
+            if (!infoString && ch == fenceChar) {
+                fenceLen += 1
+                i++
+                continue
+            }
+            if (fenceLen < 3) return null
+            infoString = true
+            if ((!opening && ch != ' ' && ch != '\t') || (opening && fenceChar == '`' && ch == '`')) {
+                return null
+            }
+        }
+        i++
+    }
+
+    return if (fenceLen >= 3) FenceInfo(fenceChar, fenceLen) else null
+}
