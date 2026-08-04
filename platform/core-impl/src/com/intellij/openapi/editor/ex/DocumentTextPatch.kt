@@ -61,26 +61,26 @@ interface DocumentTextPatch { // TODO: implement DocumentEventImpl via DocumentT
       originEndOffset: Int,
       moveOffset: Int = startOffset,
     ): DocumentTextPatch {
-      if (originStartOffset != startOffset ||
-          originEndOffset != endOffset ||
-          moveOffset != startOffset) {
-        return ComplexTextPatch(
+      if (originStartOffset == startOffset &&
+          originEndOffset == endOffset &&
+          moveOffset == startOffset) {
+        return simple(
           startOffset,
           endOffset,
           newFragment,
           newModStamp,
           clearLineFlags,
-          originStartOffset,
-          originEndOffset,
-          moveOffset,
         )
       }
-      return simple(
+      return ComplexTextPatch(
         startOffset,
         endOffset,
         newFragment,
         newModStamp,
         clearLineFlags,
+        originStartOffset,
+        originEndOffset,
+        moveOffset,
       )
     }
   }
