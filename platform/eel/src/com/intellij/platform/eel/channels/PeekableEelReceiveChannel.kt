@@ -175,6 +175,10 @@ suspend fun PeekableEelReceiveChannel.readUntil(
  * The line is read up to and including the next `\n`; a trailing `\r` (i.e. a `\r\n` sequence) is stripped. The line
  * terminator is not included in the result, and the data following it remains available for subsequent reads.
  *
+ * That pushback is what this is for -- reading a handshake or a header and leaving the rest of the stream to
+ * someone else. To read a channel to its end, use [com.intellij.platform.eel.provider.utils.lines], which reads
+ * ahead, but is faster.
+ *
  * @return the decoded line, or `null` if the end of the stream was reached and no data was read.
  */
 @ThrowsChecked(EelReceiveChannelException::class)
