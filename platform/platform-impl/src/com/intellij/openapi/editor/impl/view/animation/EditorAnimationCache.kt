@@ -7,6 +7,8 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.impl.EditorImageUtil.createEditorImage
 import com.intellij.openapi.editor.impl.EditorImageUtil.createImageGraphics
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.editor.impl.view.animation.EditorAnimationCacheStatistics.recordHit
+import com.intellij.openapi.editor.impl.view.animation.EditorAnimationCacheStatistics.recordMiss
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.paint.PaintUtil
 import com.intellij.ui.paint.use
@@ -119,7 +121,7 @@ internal class EditorAnimationCache private constructor(private val editor: Edit
     }
     val visibleRect = rect.visibleRectangle()?.growToPixelGrid(currentPixelGrid) ?: return false
     val entry = entries.findContaining(visibleRect)
-    if (entry == null) return false
+    if (entry == null) return recordMiss()
 
     (graphics.create() as Graphics2D).use { frameGraphics ->
       frameGraphics.clip(visibleRect)
@@ -128,7 +130,7 @@ internal class EditorAnimationCache private constructor(private val editor: Edit
       frameGraphics.composite = AlphaComposite.SrcOver
       editor.view.paintCaretFrame(frameGraphics)
     }
-    return true
+    return recordHit()
   }
 
   private fun ensureOpaqueContent(): Boolean {
