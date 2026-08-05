@@ -1,0 +1,44 @@
+{
+  "modules": {
+    "intellij.module": {
+      "productionTargets": [
+        "@community//module:module.jar"
+      ],
+      "productionJars": [
+        "out/bazel-out/jvm-fastbuild/bin/module/module.jar"
+      ],
+      "testTargets": [
+        "@community//module:module_test_lib.jar"
+      ],
+      "testJars": [
+        "out/bazel-out/jvm-fastbuild/bin/module/module_test_lib.jar"
+      ],
+      "exports": [],
+      "moduleLibraries": {}
+    },
+    "intellij.plugin": {
+      "productionTargets": [
+        "@community//plugin:plugin.jar"
+      ],
+      "productionJars": [
+        "out/bazel-out/jvm-fastbuild/bin/plugin/plugin.jar"
+      ],
+      "testTargets": [
+        "@community//plugin:plugin_test_lib.jar"
+      ],
+      "testJars": [
+        "out/bazel-out/jvm-fastbuild/bin/plugin/plugin_test_lib.jar"
+      ],
+      "exports": [],
+      "moduleLibraries": {}
+    }
+  },
+  "imlTargets": [
+    "@community//module:intellij.module.iml",
+    "@community//plugin:intellij.plugin.iml"
+  ],
+  "projectLibraries": {},
+  "pluginDistributionTargets": {
+    "intellij.plugin": "@community//plugin:plugin_plugin"
+  }
+}

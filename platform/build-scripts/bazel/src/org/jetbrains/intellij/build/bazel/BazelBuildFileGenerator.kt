@@ -438,17 +438,18 @@ internal class BazelBuildFileGenerator(
   fun generateModuleTargets(list: ModuleList, isCommunity: Boolean): List<ModuleTargets> {
     validateCustomModules(list)
 
+    val skipGenerationOfPluginTargets = shouldSkipGenerationOfPluginTargets()
     val targetsPerModule = mutableListOf<ModuleTargets>()
     for (module in (if (isCommunity) list.community else list.ultimate)) {
       if (generated.putIfAbsent(module, true) == null) {
         val buildTargetsBazel = BuildFile()
-        targetsPerModule.add(buildTargetsBazel.generateBuildTargets(module, list))
+        targetsPerModule.add(buildTargetsBazel.generateBuildTargets(module, list, skipGenerationOfPluginTargets))
       }
     }
     return targetsPerModule
   }
 
-  fun generateModuleBuildFiles(list: ModuleList, isCommunity: Boolean): ModuleGenerationResult {
+  fun generateModuleBuildFiles(list: ModuleList, isCommunity: Boolean, skipGenerationOfPluginTargets: Boolean): ModuleGenerationResult {
     validateCustomModules(list)
     val targetsPerModule = mutableListOf<ModuleTargets>()
     val fileToUpdater = LinkedHashMap<Path, BazelFileUpdater>()
@@ -466,7 +467,7 @@ internal class BazelBuildFileGenerator(
         }
 
         val buildTargetsBazel = BuildFile()
-        val moduleBuildTargets = buildTargetsBazel.generateBuildTargets(module, list)
+        val moduleBuildTargets = buildTargetsBazel.generateBuildTargets(module, list, skipGenerationOfPluginTargets)
 
         val imlTargetsBazel = BuildFile()
         imlTargetsBazel.exportFile(module.imlFile.relativeTo(module.bazelBuildFileDir).invariantSeparatorsPathString)
@@ -585,6 +586,7 @@ internal class BazelBuildFileGenerator(
     val productionJars: List<String>,
     val testTargets: List<String>,
     val testJars: List<String>,
+    val pluginDistributionTarget: String?,
   )
 
   private fun BuildFile.generateTestTargets(moduleDescriptor: ModuleDescriptor, moduleList: ModuleList) {
@@ -607,7 +609,7 @@ internal class BazelBuildFileGenerator(
     }
   }
 
-  private fun BuildFile.generateBuildTargets(moduleDescriptor: ModuleDescriptor, moduleList: ModuleList): ModuleTargets {
+  private fun BuildFile.generateBuildTargets(moduleDescriptor: ModuleDescriptor, moduleList: ModuleList, skipGenerationOfPluginTargets: Boolean): ModuleTargets {
     val module = moduleDescriptor.module
     val customModule = customModules[moduleDescriptor.module.name]
     val jvmTarget = getLanguageLevel(module)
@@ -775,6 +777,25 @@ internal class BazelBuildFileGenerator(
       renderDeps(deps = testDeps, target = this, resourceDependencies = emptyList(), forTests = true)
     }
 
+    val pluginDescriptorContentData = if (!skipGenerationOfPluginTargets) {
+      moduleDescriptor.resources.firstNotNullOfOrNull { descriptor -> parsePluginXmlContent(descriptor) }
+    }
+    else {
+      null
+    }
+    val pluginDistributionTarget = pluginDescriptorContentData?.let {
+      load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
+      target("ij_plugin") {
+        option("name", moduleDescriptor.targetName + "_plugin")
+        option("descriptor_module", ":${moduleDescriptor.targetName}")
+        if (pluginDescriptorContentData.contentModuleNames.isNotEmpty()) {
+          val contentModuleLabels = pluginDescriptorContentData.contentModuleNames.map { getBazelDependencyLabel(moduleList.getModuleDescriptor(it), moduleDescriptor) }
+          option("content_modules", contentModuleLabels.unsorted())
+        }
+      }
+      BazelLabel(moduleDescriptor.targetName + "_plugin", moduleDescriptor)
+    }
+
     val relativePathFromRoot = moduleDescriptor.relativePathFromProjectRoot.invariantSeparatorsPathString
     val bazelModuleRelativePath = if (moduleDescriptor.isCommunity) {
       if (relativePathFromRoot == "community") {
@@ -817,6 +838,7 @@ internal class BazelBuildFileGenerator(
       productionJars = productionCompileJars.map { getJarLocation(it) } + customModule?.additionalProductionJars.orEmpty(),
       testTargets = testCompileTargets.map { addPackagePrefix(it) },
       testJars = testCompileTargets.map { getJarLocation(it) },
+      pluginDistributionTarget = pluginDistributionTarget?.let { addPackagePrefix(it) },
     )
   }
 

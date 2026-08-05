@@ -79,6 +79,10 @@ internal class JpsModuleToBazel {
       println("Ultimate root: $ultimateRoot")
       println("M2 repo root: $m2Repo")
       println("Bazel output base: $bazelOutputBase")
+      val skipGenerationOfPluginTargets = shouldSkipGenerationOfPluginTargets()
+      if (skipGenerationOfPluginTargets) {
+        println("Generation of plugin targets is disabled")
+      }
 
       val projectDir = ultimateRoot ?: communityRoot
       val m2RepoPath = Path.of(m2Repo)
@@ -107,8 +111,8 @@ internal class JpsModuleToBazel {
       )
       val moduleList = generator.computeModuleList(m2RepoPath)
       // first, generate community to collect libs that used by community (to separate community and ultimate libs)
-      val communityResult = generator.generateModuleBuildFiles(moduleList, isCommunity = true)
-      val ultimateResult = generator.generateModuleBuildFiles(moduleList, isCommunity = false)
+      val communityResult = generator.generateModuleBuildFiles(moduleList, isCommunity = true, skipGenerationOfPluginTargets)
+      val ultimateResult = generator.generateModuleBuildFiles(moduleList, isCommunity = false, skipGenerationOfPluginTargets)
       generator.save(communityResult.moduleBuildFiles)
       generator.save(ultimateResult.moduleBuildFiles)
 
@@ -245,6 +249,7 @@ internal class JpsModuleToBazel {
       val modules: Map<String, TargetsFileModuleDescription>,
       val imlTargets: List<String>,
       val projectLibraries: Map<String, LibraryDescription>,
+      val pluginDistributionTargets: Map<String, String>,
     )
 
     fun saveTargets(
@@ -453,7 +458,13 @@ internal class JpsModuleToBazel {
         projectLibraries = libs.asSequence().distinctBy { it.target.jpsName }.mapNotNull {  // community project libraries are listed first, don't overwrite them with ultimate ones
           if (it.target.moduleLibraryModuleName != null) return@mapNotNull null
           return@mapNotNull it.target.jpsName to makeLibraryDescription(it)
-        }.toMap(TreeMap())
+        }.toMap(TreeMap()),
+        pluginDistributionTargets =
+          targets
+            .asSequence()
+            .mapNotNull { it.pluginDistributionTarget?.let { target -> it.moduleDescriptor.module.name to target } }
+            .sortedBy { it.first }
+            .toMap()
       )
 
       val fileContent = jsonSerializer.encodeToString(
@@ -516,6 +527,11 @@ private fun deleteOldFiles(projectDir: Path, generatedFiles: Set<Path>) {
   fileListFile.parent.createDirectories()
   Files.writeString(fileListFile, generatedFiles.joinToString("\n") { projectDir.relativize(it).invariantSeparatorsPathString })
 }
+
+/**
+ * This option is temporarily added to allow switching generation of plugin targets if it leads to problems
+ */
+internal fun shouldSkipGenerationOfPluginTargets(): Boolean = System.getenv("SKIP_GENERATION_OF_PLUGIN_TARGETS").toBoolean()
 
 internal fun loadJarRepositories(projectDir: Path): List<JarRepository> {
   val jarRepositoriesXml = JDOMUtil.load(projectDir.resolve(".idea/jarRepositories.xml"))
