@@ -32,6 +32,6 @@
       serviceInterface="com.intellij.platform.projectView.pane.FrontendProjectViewPaneAggregator"
       serviceImplementation="com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPaneAggregatorImpl"
     />
-    <selectInTargetProvider implementation="com.intellij.platform.projectView.frontend.actions.SplitProjectViewSelectInTargetProvider"/>
+    <projectViewSelectInTargetProvider implementation="com.intellij.platform.projectView.frontend.actions.SplitProjectViewSelectInTargetProvider"/>
   </extensions>
 </idea-plugin>

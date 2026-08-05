@@ -17,7 +17,7 @@ interface ProjectViewSelectInTargetProvider {
 }
 
 internal val ProjectViewSelectInTargetProviderEP: ExtensionPointName<ProjectViewSelectInTargetProvider> =
-  ExtensionPointName.create("com.intellij.selectInTargetProvider")
+  ExtensionPointName.create("com.intellij.projectViewSelectInTargetProvider")
 
 internal fun getProjectViewSelectInTargets(project: Project): Collection<SelectInTarget> {
   return buildList {
