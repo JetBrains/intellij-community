@@ -1,6 +1,5 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("LocalFileSystemEelUtil")
-
 package com.intellij.openapi.vfs.impl.local
 
 import com.intellij.openapi.util.io.FileAttributes
@@ -9,7 +8,6 @@ import com.intellij.openapi.util.io.FileTooBigException
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase.LOG
 import com.intellij.openapi.vfs.limits.FileSizeLimit
 import com.intellij.platform.eel.channels.EelDelicateApi
 import com.intellij.platform.eel.fs.EelFileInfo
@@ -45,7 +43,6 @@ import com.intellij.util.io.toByteArray
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
-import java.nio.file.AccessDeniedException
 import java.nio.file.AccessMode
 import java.nio.file.FileSystemException
 import java.nio.file.Files
@@ -95,65 +92,54 @@ fun readAttributesUsingEel(nioPath: Path): FileAttributes {
 }
 
 @ApiStatus.Internal
+fun getAttributeListingPaths(nioPath: Path): Pair<Path?, EelPath?> {
+  val eelDescriptor = nioPath.getEelDescriptor()
+  if (eelDescriptor === LocalEelDescriptor) {
+    return nioPath to null
+  }
+
+  @OptIn(EelDelicateApi::class)
+  val eelPath = nioPath.asEelPath(eelDescriptor)
+  val directAccessPath = (nioPath.fileSystem as? EelMountProvider)
+    ?.getMountRoot(eelPath)
+    ?.takeIf { eelPath.fsBlocking { it.canReadPermissionsDirectly(EelMountRoot.DirectAccessOptions.BasicAttributesAndWritable) } }
+    ?.transformPath(eelPath)
+  if (directAccessPath != null && directAccessPath.descriptor === LocalEelDescriptor) {
+    return directAccessPath.asNioPath() to null
+  }
+
+  return null to eelPath
+}
+
+@ApiStatus.Internal
 @VisibleForTesting
-fun listWithAttributesUsingEel(
-  nioPath: Path,
-  filter: Set<String>?,
-): Map<String, FileAttributes> {
-  try {
-    val eelDescriptor = nioPath.getEelDescriptor()
-    if (eelDescriptor === LocalEelDescriptor) {
-      return LocalFileSystemImpl.listWithAttributesImpl(nioPath, filter)
-    }
-    @OptIn(EelDelicateApi::class)
-    val eelPath = nioPath.asEelPath(eelDescriptor)
-    val directAccessPath = (nioPath.fileSystem as? EelMountProvider)?.getMountRoot(eelPath)?.takeIf {
-      eelPath.fsBlocking {
-        it.canReadPermissionsDirectly(EelMountRoot.DirectAccessOptions.BasicAttributesAndWritable)
-      }
-    }?.transformPath(eelPath)
-    if (directAccessPath != null && directAccessPath.descriptor === LocalEelDescriptor) {
-      return LocalFileSystemImpl.listWithAttributesImpl(directAccessPath.asNioPath(), filter)
-    }
+@Throws(IOException::class)
+fun listWithAttributesUsingEel(eelPath: EelPath, filter: Set<String>?): Map<String, FileAttributes> {
+  val expectedSize = filter?.size ?: 10
+  // we must return a 'normal' (=case-sensitive) map from this method (see the [BatchingFileSystem#listWithAttributes] contract)
+  val childrenWithAttributes = CollectionFactory.createFilePathMap<FileAttributes>(expectedSize,  /*caseSensitive: */true)
 
-    val expectedSize = filter?.size ?: 10
-    //We must return a 'normal' (=case-sensitive) map from this method, see BatchingFileSystem.listWithAttributes() contract:
-    val childrenWithAttributes = CollectionFactory.createFilePathMap<FileAttributes>(expectedSize,  /*caseSensitive: */true)
-
-    visitDirectory(eelPath, filter) { file: EelPath, attributes: EelFileInfo, eelFsApi: EelFileSystemApi ->
-      try {
-        val childAttributes = toVfs(file, attributes, eelFsApi)
-        childrenWithAttributes[file.fileName] = amendAttributes(childAttributes) { file.asNioPath() }
-      }
-      catch (e: Exception) {
-        LOG.debug(e)
-      }
-      true
+  visitDirectory(eelPath, filter) { file: EelPath, attributes: EelFileInfo, eelFsApi: EelFileSystemApi ->
+    try {
+      val childAttributes = toVfs(file, attributes, eelFsApi)
+      childrenWithAttributes[file.fileName] = amendAttributes(childAttributes) { file.asNioPath() }
     }
+    catch (e: Exception) {
+      @Suppress("removal", "DEPRECATION")
+      LocalFileSystemBase.LOG.debug(e)
+    }
+    true
+  }
 
-    return childrenWithAttributes
-  }
-  catch (e: AccessDeniedException) {
-    LOG.debug(e)
-  }
-  catch (e: NoSuchFileException) {
-    LOG.debug(e)
-  }
-  catch (e: IOException) {
-    LOG.warn(e)
-  }
-  catch (e: RuntimeException) {
-    LOG.warn(e)
-  }
-  return emptyMap()
+  return childrenWithAttributes
 }
 
 /**
  * Prefetches remote directory trees for VFS refresh and runs [block] with the
  * prefetch cache installed in the thread context. The cache propagates automatically
- * to child threads via [IntelliJContextElement] (through context-propagating executors).
+ * to child threads via [com.intellij.concurrency.IntelliJContextElement] (through context-propagating executors).
  *
- * If no remote roots are found among [roots], [block] is called directly without prefetch.
+ * If no remote roots are found among [roots], [block] is called directly without prefetching.
  */
 @ApiStatus.Internal
 fun withPrefetchForRemoteRoots(roots: Collection<@JvmWildcard VirtualFile>, block: () -> Unit) {
@@ -168,10 +154,9 @@ fun withPrefetchForRemoteRoots(roots: Collection<@JvmWildcard VirtualFile>, bloc
       if (descriptor === LocalEelDescriptor) return@mapNotNull null
       @OptIn(EelDelicateApi::class)
       val eelPath = nioPath.asEelPath(descriptor)
-      // Skip FS root — prefetching entire remote filesystem is wasteful,
-      // VFS refresh from root only checks cached children anyway
+      // skip FS root — prefetching entire remote filesystem is wasteful; VFS refresh from root only checks cached children anyway
       if (eelPath.parent == null) return@mapNotNull null
-      // Skip paths with direct local mount — they bypass gRPC entirely
+      // skip paths with direct local mount — they bypass gRPC entirely
       if ((nioPath.fileSystem as? EelMountProvider)?.getMountRoot(eelPath) != null) return@mapNotNull null
       descriptor to eelPath
     }
@@ -194,11 +179,13 @@ fun withPrefetchForRemoteRoots(roots: Collection<@JvmWildcard VirtualFile>, bloc
     }.toElement()
   }
   catch (e: Exception) {
-    LOG.warn("Failed to prefetch remote roots for VFS refresh", e)
+    @Suppress("removal", "DEPRECATION")
+    LocalFileSystemBase.LOG.warn("Failed to prefetch remote roots for VFS refresh", e)
     null
   }
   if (element != null) {
-    LOG.info("VFS refresh prefetch: ${element.size} directories cached for ${remoteRoots.size} remote roots")
+    @Suppress("removal", "DEPRECATION")
+    LocalFileSystemBase.LOG.info("VFS refresh prefetch: ${element.size} directories cached for ${remoteRoots.size} remote roots")
     val context = com.intellij.concurrency.currentThreadContext() + element
     com.intellij.concurrency.installThreadContext(context, replace = true, block)
   }
@@ -281,7 +268,6 @@ internal fun fetchCaseSensitivityUsingEel(eelPath: EelPath): FileAttributes.Case
     eelPath
   }
 
-
   return eelPathToCheck.fsBlocking {
     val eelApi = eelPathToCheck.descriptor.toEelApi()
     val stat = eelApi.fs.stat(eelPathToCheck).doNotResolve().eelIt().getOr {
@@ -314,11 +300,11 @@ private suspend fun toVfs(eelPath: EelPath, eelFileInfo: EelFileInfo, eelFsApi: 
   }
 
   val isSymLink = eelFileInfo.type is EelPosixFileInfo.Type.Symlink
-  return when {
-    eelFsApi is EelFileSystemPosixApi && resolvedFileInfo is EelPosixFileInfo -> {
+  return when (eelFsApi) {
+    is EelFileSystemPosixApi if resolvedFileInfo is EelPosixFileInfo -> {
       resolvedFileInfo.toVfs(resolvedFileInfo.isWritable(eelFsApi), isSymLink)
     }
-    eelFsApi is EelFileSystemWindowsApi && resolvedFileInfo is EelWindowsFileInfo -> {
+    is EelFileSystemWindowsApi if resolvedFileInfo is EelWindowsFileInfo -> {
       resolvedFileInfo.toVfs(!resolvedFileInfo.permissions.isReadOnly, isSymLink)
     }
     else -> error("EelFileInfo ${resolvedFileInfo} does not belong to EelFileSystemApi ${eelFsApi}")
