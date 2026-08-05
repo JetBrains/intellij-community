@@ -553,9 +553,6 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
         return pyType;
       }
     }
-    if (target instanceof PyFile) {
-      return Ref.create(new PyModuleType((PyFile)target));
-    }
     if (target instanceof PyFunction function) {
       final PyDecoratorList decoratorList = function.getDecoratorList();
       if (decoratorList != null) {
@@ -593,8 +590,8 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     }
     if (target instanceof PsiDirectory dir) {
       final PsiFile file = dir.findFile(PyNames.INIT_DOT_PY);
-      if (file != null) {
-        return getTypeFromTarget(file, context, anchor);
+      if (file instanceof PyFile pyFile) {
+        return Ref.create(context.getType(pyFile));
       }
       if (PyUtil.isPackage(dir, anchor)) {
         final PsiFile containingFile = anchor.getContainingFile();
