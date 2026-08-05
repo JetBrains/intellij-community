@@ -874,6 +874,34 @@ internal class PluginDependenciesTest {
     }
 
     @Test
+    fun `soft compatibility dependency bypasses module visibility check`() {
+      plugin("provider") {
+        content(namespace = "jetbrains") {
+          module("provider.private", ModuleLoadingRuleValue.REQUIRED) {
+            packagePrefix = "provider.private"
+            moduleVisibility = ModuleVisibilityValue.PRIVATE
+          }
+        }
+      }.installAt(pluginDirPath)
+      plugin("consumer") {}.installAt(pluginDirPath)
+
+      val pluginSet = PluginSetTestBuilder.fromPath(pluginDirPath)
+        .withCompatibilityDependenciesForRemainingCandidatesProvider { descriptor, _ ->
+          if (descriptor.pluginId == PluginId.getId("consumer")) {
+            sequenceOf(DependencyRef.of(PluginModuleId("provider.private", PluginModuleId.JETBRAINS_NAMESPACE)))
+          }
+          else {
+            emptySequence()
+          }
+        }
+        .build()
+
+      val consumer = pluginSet.getEnabledPlugin("consumer")
+      val privateModule = pluginSet.getEnabledModule("provider.private")
+      assertThat(consumer).hasExactDirectParentClassloaders(privateModule)
+    }
+
+    @Test
     fun `legacy plugin gets implicit java dependency when all modules marker is present`() {
       // marker enables implicit dependencies for legacy plugins
       plugin("com.intellij.modules.all") {}.installAt(pluginDirPath)

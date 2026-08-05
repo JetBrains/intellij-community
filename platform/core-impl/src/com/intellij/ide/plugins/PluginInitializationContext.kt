@@ -83,6 +83,10 @@ interface PluginInitializationContext {
    *
    * This method is called for every remaining candidate descriptor.
    *
+   * Dependencies produced by this method bypass content module visibility checks. This is intentional: the method is a product-level compatibility
+   * mechanism which may restore access that existed before a module was extracted. Implementations are responsible for only providing dependencies
+   * for which bypassing visibility is appropriate.
+   *
    * Note that producing additional dependencies here still may cause exclusions (e.g., if a dependency cycle appears).
    *
    * Note that eventually every implicit dependency that is added through this method should become explicit in the affected plugins.
