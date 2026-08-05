@@ -25,19 +25,19 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.sample
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.terminal.view.TerminalContentChangeEvent
 import org.jetbrains.plugins.terminal.view.TerminalOutputModel
 import org.jetbrains.plugins.terminal.view.TerminalOutputModelListener
 import org.jetbrains.plugins.terminal.view.TerminalOutputOsc8Hyperlink
 import java.util.concurrent.atomic.AtomicLong
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * Installs rendering of OSC8 hyperlinks ([TerminalOutputOsc8Hyperlink]) captured by the emulator
@@ -58,6 +58,7 @@ import java.util.concurrent.atomic.AtomicLong
  * OSC8 links have no hyperlink context menu. That is a known limitation, not a failure mode.
  */
 @ApiStatus.Internal
+@OptIn(FlowPreview::class)
 fun installOsc8HyperlinksProcessing(
   project: Project,
   outputModel: TerminalOutputModel,
@@ -65,13 +66,13 @@ fun installOsc8HyperlinksProcessing(
   // Shared with the filter-based hyperlinks of the same editor (see [installHyperlinksProcessing]).
   applier: EditorTextDecorationApplier,
   coroutineScope: CoroutineScope,
-): FrontendOsc8HyperlinksFacade {
-  // Counts the output model changes seen and the changes already reflected in the editor decorations.
+) {
+  // Counts the output model changes seen; a change to this value triggers a reconciliation.
   // The output model's own modification stamp can't be used here: an update that only drops an OSC8
   // escape leaves the text (and therefore the stamp) untouched, but still needs a reconciliation.
-  // [observedChanges] starts ahead of [reconciledChanges] so that the initial content, if any, gets reconciled too.
+  // The initial value is arbitrary: only changes to it matter, and the first
+  // sample tick reconciles whatever content, if any, is already present.
   val observedChanges = MutableStateFlow(1L)
-  val reconciledChanges = MutableStateFlow(0L)
   val renderer = Osc8HyperlinksRenderer(project, outputModel, applier)
 
   outputModel.addListener(coroutineScope.asDisposable(), object : TerminalOutputModelListener {
@@ -98,33 +99,15 @@ fun installOsc8HyperlinksProcessing(
     }
   }, coroutineScope.asDisposable())
 
-  // The reconciliation reads the model and mutates the editor markup, so it must run on the EDT
-  // and outside the output model's own content-change notification; collecting the StateFlow
-  // also coalesces bursts of changes.
+  // The reconciliation reads the model and mutates the editor markup, so it must run
+  // on the EDT and outside the output model's own content-change notification.
+  // Sampling the StateFlow also limits reconciliation to once every DELAY,
+  // no matter how many changes arrive in between.
   // Can't use Dispatchers.UI because the editor markup can require locks.
   coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement() + CoroutineName("Terminal OSC8 hyperlinks")) {
-    observedChanges.collect { observed ->
-      // `observed` was captured before the pass: changes arriving during it are not reported as reconciled.
+    observedChanges.sample(DELAY).collect {
       renderer.reconcile()
-      reconciledChanges.value = observed
     }
-  }
-
-  return FrontendOsc8HyperlinksFacade(observedChanges, reconciledChanges)
-}
-
-@ApiStatus.Internal
-class FrontendOsc8HyperlinksFacade internal constructor(
-  private val observedChanges: StateFlow<Long>,
-  private val reconciledChanges: Flow<Long>,
-) {
-  /**
-   * Suspends until every output model change made so far is reflected in the editor decorations.
-   */
-  @TestOnly
-  suspend fun awaitReconciled() {
-    val target = observedChanges.value
-    reconciledChanges.first { it >= target }
   }
 }
 
@@ -202,3 +185,5 @@ private class Osc8HyperlinksRenderer(
     }?.hyperlinkInfo
   }
 }
+
+private val DELAY: Duration = 500.milliseconds
