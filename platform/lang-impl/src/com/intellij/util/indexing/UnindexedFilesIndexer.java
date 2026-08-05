@@ -201,6 +201,8 @@ public final class UnindexedFilesIndexer extends DumbModeTask {
       exception = e;
     }
 
+    ProgressManager.checkCanceled();
+
     try {
       projectDumbIndexingHistory.addProviderStatistics(fileSet.getStatistics());
     }
