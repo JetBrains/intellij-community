@@ -262,6 +262,38 @@ class DecompressorTest {
     testNoTraversal(decompressor, dir, dir.resolve("rogue"))
   }
 
+  @Test fun noComposedSymlinkChainTraversalInZip(@TempDir tempDir: Path) {
+    assumeSymLinkCreationIsSupported()
+
+    val zip = tempDir.resolve("test.zip")
+    ZipArchiveOutputStream(zip.outputStream()).use {
+      writeEntry(it, "a/l2", link = "l1/..")
+      writeEntry(it, "a/l1", link = "..")
+      writeEntry(it, "a/l2/evil/")
+    }
+
+    val decompressor = Decompressor.Zip(zip).withZipExtensions().escapingSymlinkPolicy(
+      Decompressor.EscapingSymlinkPolicy.DISALLOW)
+    val dir = tempDir.resolve("unpacked")
+    testNoTraversal(decompressor, dir, tempDir.resolve("evil"))
+  }
+
+  @Test fun noComposedSymlinkChainTraversalInTar(@TempDir tempDir: Path) {
+    assumeSymLinkCreationIsSupported()
+
+    val tar = tempDir.resolve("test.tar")
+    TarArchiveOutputStream(tar.outputStream()).use {
+      writeEntry(it, "a/l2", link = "l1/..")
+      writeEntry(it, "a/l1", link = "..")
+      writeEntry(it, "a/l2/evil.txt")
+    }
+
+    val decompressor = Decompressor.Tar(tar).escapingSymlinkPolicy(
+      Decompressor.EscapingSymlinkPolicy.DISALLOW)
+    val dir = tempDir.resolve("unpacked")
+    testNoTraversal(decompressor, dir, tempDir.resolve("evil.txt"))
+  }
+
   @Test fun prefixPathsFilesInZip(@TempDir tempDir: Path) {
     val zip = tempDir.resolve("test.zip")
     ZipOutputStream(zip.outputStream()).use {
