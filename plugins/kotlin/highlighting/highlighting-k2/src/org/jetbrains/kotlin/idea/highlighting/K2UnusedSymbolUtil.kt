@@ -95,7 +95,6 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.isInheritable
 import org.jetbrains.kotlin.idea.codeinsight.utils.isReferenceToBuiltInEnumFunction
 import org.jetbrains.kotlin.idea.codeinsight.utils.isSynthesizedFunction
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.isCheapEnoughToSearchUsages
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.isExplicitlyIgnoredByName
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.RemoveUnusedVariableFix
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchParameters
@@ -116,6 +115,7 @@ import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtConstructor
 import org.jetbrains.kotlin.psi.KtContainerNodeForControlStructureBody
+import org.jetbrains.kotlin.psi.KtContextParameterList
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtEnumEntry
@@ -176,16 +176,18 @@ object K2UnusedSymbolUtil {
         if (declaration.isScriptTopLevelPublicDeclaration()) return false
         // never mark companion object as unused (there are too many reasons it can be needed for)
         if (declaration is KtObjectDeclaration && declaration.isCompanion()) return false
-
         if (declaration is KtParameter) {
-            // nameless parameters like `(Type) -> Unit` or `_` make no sense to highlight
-            if (declaration.isExplicitlyIgnoredByName()) return false
+            // nameless parameters like `(Type) -> Unit` make no sense to highlight
             // functional type params like `fun foo(u: (usedParam: Type) -> Unit)` shouldn't be highlighted because they could be implicitly used by lambda arguments
+            if (declaration.parent is KtContextParameterList) {
+                val owner = (declaration.parent as KtContextParameterList).ownerDeclaration
+                if (owner !is KtNamedFunction && owner !is KtProperty) return false
+            }
             if (declaration.isFunctionTypeParameter) return false
-            val ownerFunction = declaration.ownerDeclaration
-            if (ownerFunction?.hasModifier(KtTokens.EXTERNAL_KEYWORD) == true) return false
-            var containingClass = ownerFunction?.containingClassOrObject
-            if (ownerFunction is KtConstructor<*>) {
+            val ownerDeclaration = declaration.ownerDeclaration
+            if (ownerDeclaration?.hasModifier(KtTokens.EXTERNAL_KEYWORD) == true) return false
+            var containingClass = ownerDeclaration?.containingClassOrObject
+            if (ownerDeclaration is KtConstructor<*>) {
                 // constructor parameters of data class are considered used because they are implicitly used in equals() (???)
                 if (containingClass != null) {
                     if (containingClass.isData()) return false
@@ -197,15 +199,15 @@ object K2UnusedSymbolUtil {
                     }
                     if (isExpectedOrActual(containingClass)) return false
                 }
-            } else if (ownerFunction is KtFunction) {
-                if (ownerFunction.name == null) {
+            } else if (ownerDeclaration is KtCallableDeclaration) {
+                if (ownerDeclaration.name == null) {
                     return false
                 }
-                if (ownerFunction.hasModifier(KtTokens.OPERATOR_KEYWORD)) {
+                if (ownerDeclaration.hasModifier(KtTokens.OPERATOR_KEYWORD)) {
                     // operator parameters are hardcoded to be used since they can't be removed at will, because operator convention would break
                     return false
                 }
-                if (isEffectivelyAbstractFunction(ownerFunction) || isExpectedOrActual(ownerFunction)) {
+                if (isEffectivelyAbstractCallable(ownerDeclaration) || isExpectedOrActual(ownerDeclaration)) {
                     return false
                 }
 
@@ -238,8 +240,8 @@ object K2UnusedSymbolUtil {
                 modifierList.hasModifier(KtTokens.EXPECT_KEYWORD) || modifierList.hasModifier(KtTokens.ACTUAL_KEYWORD))
     }
 
-    private fun isEffectivelyAbstractFunction(ownerFunction: KtFunction): Boolean {
-        val modifierList = ownerFunction.modifierList
+    private fun isEffectivelyAbstractCallable(ownerDeclaration: KtCallableDeclaration): Boolean {
+        val modifierList = ownerDeclaration.modifierList
         if (modifierList != null && (modifierList.hasModifier(KtTokens.ABSTRACT_KEYWORD)
                     || modifierList.hasModifier(KtTokens.EXPECT_KEYWORD)
                     || modifierList.hasModifier(KtTokens.OVERRIDE_KEYWORD)
@@ -247,7 +249,7 @@ object K2UnusedSymbolUtil {
         ) { // maybe one of the overriders does use this parameter
             return true
         }
-        return ownerFunction.containingClass()?.isInterface() == true
+        return ownerDeclaration.containingClass()?.isInterface() == true
     }
 
     private fun KtNamedDeclaration.isScriptTopLevelPublicDeclaration(): Boolean

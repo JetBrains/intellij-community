@@ -5,9 +5,15 @@ package org.jetbrains.kotlin.idea.codeinsight.intentions.contexts
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
+import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
+import org.jetbrains.kotlin.analysis.api.symbols.KaContextParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.unwrapSmartCasts
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeSignatureProcessor
@@ -19,10 +25,13 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtContextParameterList
+import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtParameterList
 import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
 import org.jetbrains.kotlin.utils.addToStdlib.lastIsInstanceOrNull
@@ -127,4 +136,50 @@ object ContextParameterUtils {
         val symbol = call.calleeExpression?.mainReference?.resolveToSymbol() as? KaFunctionSymbol ?: return false
         return symbol.callableId?.asSingleFqName() == FqName("kotlin.context")
     }
+
+    /**
+     * Returns the subset of [contextParameters] that are actually consumed inside [body],
+     * either via a direct reference to a context parameter or as an implicit context argument
+     * of a resolved call.
+     */
+    context(session: KaSession)
+    fun consumedContextParameters(
+        body: KtExpression,
+        contextParameters: List<KaContextParameterSymbol>,
+    ): Set<KaContextParameterSymbol> {
+        val allParameters = contextParameters.toSet()
+        if (allParameters.isEmpty()) return emptySet()
+
+        // Cheap pre-filter: a *direct* reference to a context parameter must use its name.
+        val parameterNames = allParameters.mapTo(mutableSetOf()) { it.name.asString() }
+
+        val consumed = mutableSetOf<KaContextParameterSymbol>()
+
+        body.forEachDescendantOfType<KtSimpleNameExpression> { node ->
+            if (consumed.size == allParameters.size) return@forEachDescendantOfType
+
+            // Only pay for resolveToSymbol() when the name can possibly match a parameter.
+            if (node.getReferencedName() in parameterNames) {
+                val direct = node.mainReference.resolveToSymbol()
+                if (direct is KaContextParameterSymbol && direct in allParameters) {
+                    consumed += direct
+                    return@forEachDescendantOfType
+                }
+            }
+
+            val appliedSymbol = node.resolveToCall()
+                ?.successfulCallOrNull<KaCallableMemberCall<*, *>>()
+                ?.partiallyAppliedSymbol
+                ?: return@forEachDescendantOfType
+
+            appliedSymbol.contextArguments.forEach { arg ->
+                val symbol = (arg.unwrapSmartCasts() as? KaImplicitReceiverValue)?.symbol
+                if (symbol is KaContextParameterSymbol && symbol in allParameters) {
+                    consumed += symbol
+                }
+            }
+        }
+        return consumed
+    }
+
 }

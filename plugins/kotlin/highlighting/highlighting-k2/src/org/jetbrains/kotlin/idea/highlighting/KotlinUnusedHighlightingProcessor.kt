@@ -59,6 +59,7 @@ import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassBody
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtConstructor
+import org.jetbrains.kotlin.psi.KtContextParameterList
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtEnumEntry
 import org.jetbrains.kotlin.psi.KtExperimentalApi
@@ -208,7 +209,7 @@ internal class KotlinUnusedHighlightingProcessor(private val ktFile: KtFile) {
         val namedElements: MutableList<KtNamedDeclaration> = mutableListOf()
         val namedElementVisitor = object : KtVisitorVoid() {
             override fun visitNamedDeclaration(declaration: KtNamedDeclaration) {
-                if (declaration.isExplicitlyIgnoredByName()) return
+                if (declaration.isExplicitlyIgnoredByName() && declaration.parent !is KtContextParameterList) return
                 namedElements.add(declaration)
             }
         }

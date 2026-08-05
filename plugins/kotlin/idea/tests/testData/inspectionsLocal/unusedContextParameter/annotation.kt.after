@@ -1,0 +1,8 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+annotation class Marker
+fun foo() {}
+
+@Marker
+fun test() {
+    foo()
+}

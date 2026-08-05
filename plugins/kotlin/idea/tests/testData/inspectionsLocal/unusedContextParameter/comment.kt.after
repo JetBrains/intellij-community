@@ -1,0 +1,7 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+fun foo() {}
+
+// keep this doc comment
+fun test() {
+    foo()
+}

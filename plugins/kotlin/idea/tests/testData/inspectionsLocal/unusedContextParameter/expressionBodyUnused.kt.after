@@ -1,0 +1,2 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+fun test(): Int = 42

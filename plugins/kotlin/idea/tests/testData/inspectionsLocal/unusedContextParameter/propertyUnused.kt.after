@@ -1,0 +1,2 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+val prop: Int get() = 42
