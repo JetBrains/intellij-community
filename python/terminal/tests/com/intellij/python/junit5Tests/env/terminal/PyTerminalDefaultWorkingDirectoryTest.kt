@@ -8,10 +8,9 @@ import com.intellij.python.junit5Tests.framework.env.pySdkFixture
 import com.intellij.python.terminal.pyTerminalDefaultWorkingDirectory
 import com.intellij.python.test.env.junit5.pyVenvFixture
 import com.intellij.testFramework.common.timeoutRunBlocking
-import com.intellij.testFramework.junit5.fixture.moduleFixture
+import com.intellij.python.junit5Tests.framework.pyModuleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
-import com.jetbrains.python.PyNames
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -37,8 +36,7 @@ class PyTerminalDefaultWorkingDirectoryTest {
 
   // A module backed by its own venv.
   private val moduleWithSdkDir = tempPathFixture(prefix = "subproject_with_venv")
-  private val moduleWithSdk = projectFixture.moduleFixture(moduleWithSdkDir, addPathToSourceRoot = true,
-                                                           moduleTypeId = PyNames.PYTHON_MODULE_ID)
+  private val moduleWithSdk = projectFixture.pyModuleFixture(moduleWithSdkDir, addPathToSourceRoot = true)
 
   @Suppress("unused") // creates the venv and assigns it to moduleWithSdk
   private val venvFixture = pySdkFixture().pyVenvFixture(
@@ -49,12 +47,11 @@ class PyTerminalDefaultWorkingDirectoryTest {
 
   // A module without any Python SDK.
   private val moduleWithoutSdkDir = tempPathFixture(prefix = "subproject_without_venv")
-  private val moduleWithoutSdk = projectFixture.moduleFixture(moduleWithoutSdkDir, addPathToSourceRoot = true,
-                                                              moduleTypeId = PyNames.PYTHON_MODULE_ID)
+  private val moduleWithoutSdk = projectFixture.pyModuleFixture(moduleWithoutSdkDir, addPathToSourceRoot = true)
 
   // A module that is not a Python module (default empty module type).
   private val nonPythonModuleDir = tempPathFixture(prefix = "subproject_non_python")
-  private val nonPythonModule = projectFixture.moduleFixture(nonPythonModuleDir, addPathToSourceRoot = true)
+  private val nonPythonModule = projectFixture.pyModuleFixture(nonPythonModuleDir, addPathToSourceRoot = true)
 
   private suspend fun createFile(dir: Path, name: String) = withContext(Dispatchers.IO) {
     val path = dir.resolve(name)

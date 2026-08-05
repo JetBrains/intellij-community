@@ -9,7 +9,7 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
 import com.intellij.python.junit5Tests.framework.env.pySdkFixture
 import com.intellij.python.test.env.junit5.pyVenvFixture
-import com.intellij.testFramework.junit5.fixture.moduleFixture
+import com.intellij.python.junit5Tests.framework.pyModuleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.jetbrains.python.sdk.renameSdk
@@ -28,8 +28,8 @@ import org.junit.jupiter.api.Test
 @PyEnvTestCase
 class PythonSdkRenameTest {
   private val projectFixture = projectFixture()
-  private val moduleAFixture = projectFixture.moduleFixture(tempPathFixture(), addPathToSourceRoot = true)
-  private val moduleBFixture = projectFixture.moduleFixture(tempPathFixture(), addPathToSourceRoot = true)
+  private val moduleAFixture = projectFixture.pyModuleFixture(tempPathFixture(), addPathToSourceRoot = true)
+  private val moduleBFixture = projectFixture.pyModuleFixture(tempPathFixture(), addPathToSourceRoot = true)
 
   // A venv registered in the project JDK table but not associated with any module; each test wires up the references it needs.
   private val venvFixture = pySdkFixture().pyVenvFixture(where = tempPathFixture(), addToSdkTable = true)

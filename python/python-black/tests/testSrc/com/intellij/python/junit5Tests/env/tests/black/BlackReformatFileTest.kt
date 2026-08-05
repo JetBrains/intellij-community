@@ -17,9 +17,8 @@ import com.intellij.python.black.configuration.BlackFormatterConfiguration
 import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
 import com.intellij.python.junit5Tests.framework.env.pySdkFixture
 import com.intellij.python.pytools.PyToolsState
-import com.intellij.python.pytools.configuration.ExecutableDiscoveryMode
 import com.intellij.testFramework.common.timeoutRunBlocking
-import com.intellij.testFramework.junit5.fixture.moduleFixture
+import com.intellij.python.junit5Tests.framework.pyModuleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import kotlinx.coroutines.Dispatchers
@@ -36,7 +35,7 @@ internal class BlackReformatFileTest {
   companion object {
     val tempPathFixture = tempPathFixture()
     val projectFixture = projectFixture(tempPathFixture, openAfterCreation = true)
-    val moduleFixture = projectFixture.moduleFixture(tempPathFixture, addPathToSourceRoot = true)
+    val moduleFixture = projectFixture.pyModuleFixture(tempPathFixture, addPathToSourceRoot = true)
     val sdkFixture = pySdkFixture().pyEnvSdkFixture(moduleFixture)
 
     @JvmStatic

@@ -32,7 +32,7 @@ import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
 import com.intellij.testFramework.junit5.fixture.TestFixture
-import com.intellij.testFramework.junit5.fixture.moduleFixture
+import com.intellij.python.junit5Tests.framework.pyModuleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.intellij.testFramework.junit5.fixture.testFixture
@@ -81,7 +81,7 @@ import java.nio.file.Path as NioPath
 internal class DependenciesPsiProviderTest {
   private val tempPathFixture = tempPathFixture()
   private val projectFixture = projectFixture(tempPathFixture, openAfterCreation = true)
-  private val moduleFixture = projectFixture.moduleFixture(tempPathFixture, addPathToSourceRoot = true)
+  private val moduleFixture = projectFixture.pyModuleFixture(tempPathFixture, addPathToSourceRoot = true)
 
   private val sdkFixture = pySdkFixture()
 

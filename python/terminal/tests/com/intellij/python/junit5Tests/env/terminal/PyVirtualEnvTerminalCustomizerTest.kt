@@ -24,7 +24,7 @@ import com.intellij.python.junit5Tests.framework.winLockedFile.deleteCheckLockin
 import com.intellij.python.terminal.PyVirtualEnvTerminalCustomizer
 import com.intellij.python.test.env.junit5.pyVenvFixture
 import com.intellij.testFramework.common.timeoutRunBlocking
-import com.intellij.testFramework.junit5.fixture.moduleFixture
+import com.intellij.python.junit5Tests.framework.pyModuleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.intellij.util.system.LowLevelLocalMachineAccess
@@ -69,7 +69,7 @@ import kotlin.time.Duration.Companion.minutes
 class PyVirtualEnvTerminalCustomizerTest {
   private val projectFixture = projectFixture()
   private val tempDirFixture = tempPathFixture(prefix = "some_path_with_underscores")
-  private val moduleFixture = projectFixture.moduleFixture(tempDirFixture, addPathToSourceRoot = true)
+  private val moduleFixture = projectFixture.pyModuleFixture(tempDirFixture, addPathToSourceRoot = true)
 
   @Suppress("unused") // we need venv
   private val venvFixture = pySdkFixture().pyVenvFixture(

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.junit5Tests.env.tests.interpreters
 
 import com.intellij.openapi.application.edtWriteAction
@@ -13,7 +13,7 @@ import com.intellij.python.community.interpreters.executeHelper
 import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
 import com.intellij.python.junit5Tests.framework.env.pySdkFixture
 import com.intellij.python.test.env.junit5.pyVenvFixture
-import com.intellij.testFramework.junit5.fixture.moduleFixture
+import com.intellij.python.junit5Tests.framework.pyModuleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.jetbrains.python.sdk.pySdkAdditionalData
@@ -39,7 +39,7 @@ class InterpreterServiceShowCaseTest {
   private val invalidSdkFixture by sdkFixture.pyVenvFixture(tempPathFixture(prefix = "invalid"), addToSdkTable = true, moduleFixture = null)
   private val sdkFixtureAnotherPath by sdkFixture.pyVenvFixture(tempPathFixture(prefix = "anotherpath"), addToSdkTable = true, moduleFixture = null)
 
-  private val moduleFixture = projectFixture().moduleFixture()
+  private val moduleFixture = projectFixture().pyModuleFixture()
 
 
   @Test
