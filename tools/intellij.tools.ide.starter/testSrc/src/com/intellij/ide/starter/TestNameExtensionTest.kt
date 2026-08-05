@@ -34,5 +34,7 @@ class TestNameExtensionTest {
   @Test
   fun `hyphenate test name preserves path segments`() {
     "SlowFileOpeningTest/fileOpeningWithDelay".hyphenateTestName() shouldBe "slow-file-opening-test/file-opening-with-delay"
+    "FrontendOwnedFileEditorHistoryTest/recent files reopen and focus frontend owned editor".hyphenateTestName() shouldBe
+      "frontend-owned-file-editor-history-test/recent-files-reopen-and-focus-frontend-owned-editor"
   }
 }

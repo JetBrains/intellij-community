@@ -155,7 +155,8 @@ internal class IgnoreOnIdeErrorExtension :
     val method: java.lang.reflect.Method? = context.testMethod.orElse(null)
     return if (method != null) {
       method.getAnnotationsByType(IgnoreOnIdeError::class.java).toList()
-    } else {
+    }
+    else {
       emptyList()
     }
   }
@@ -194,7 +195,7 @@ internal class IgnoreOnIdeErrorExtension :
     val runContexts: MutableList<IDERunContext> = CopyOnWriteArrayList()
 
     fun collectErrors(): List<Error> =
-      runContexts.flatMap { ErrorReporterToCI.collectErrors(it.logsDir) }
+      runContexts.flatMap { ErrorReporterToCI.collectErrors(it) }
   }
 
   companion object {

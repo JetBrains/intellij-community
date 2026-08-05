@@ -47,13 +47,11 @@ import org.kodein.di.newInstance
 import org.w3c.dom.Element
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.Paths
 import java.util.Base64
 import javax.xml.xpath.XPath
 import javax.xml.xpath.XPathConstants
 import javax.xml.xpath.XPathFactory
 import kotlin.io.path.ExperimentalPathApi
-import kotlin.io.path.copyTo
 import kotlin.io.path.copyToRecursively
 import kotlin.io.path.createDirectories
 import kotlin.io.path.createFile
@@ -62,8 +60,6 @@ import kotlin.io.path.div
 import kotlin.io.path.exists
 import kotlin.io.path.extension
 import kotlin.io.path.isRegularFile
-import kotlin.io.path.listDirectoryEntries
-import kotlin.io.path.name
 import kotlin.io.path.notExists
 import kotlin.io.path.readBytes
 import kotlin.io.path.readText
@@ -808,23 +804,6 @@ open class IDETestContext(
     applyVMOptionsPatch {
       addSystemProperty("kotest.assertions.collection.enumerate.size", Int.MAX_VALUE)
     }
-
-  fun collectJBRDiagnosticFiles(javaProcessId: Long) {
-    if (javaProcessId == 0L) return
-    val userHome = System.getProperty("user.home")
-    val pathUserHome = Paths.get(userHome)
-    val javaErrorInIdeaFile = pathUserHome.resolve("java_error_in_idea_$javaProcessId.log")
-    val jbrErrFile = pathUserHome.resolve("jbr_err_pid$javaProcessId.log")
-    if (javaErrorInIdeaFile.exists()) {
-      javaErrorInIdeaFile.copyTo(paths.jbrDiagnostic.resolve(javaErrorInIdeaFile.name).createParentDirectories())
-    }
-    if (jbrErrFile.exists()) {
-      jbrErrFile.copyTo(paths.jbrDiagnostic.resolve(jbrErrFile.name).createParentDirectories())
-    }
-    if (paths.jbrDiagnostic.exists() && paths.jbrDiagnostic.listDirectoryEntries().isNotEmpty()) {
-      publishArtifact(paths.jbrDiagnostic)
-    }
-  }
 
   fun acceptNonTrustedCertificates(): IDETestContext {
     writeConfigFile("options/certificates.xml", """

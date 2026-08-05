@@ -38,6 +38,7 @@ class TimeoutAnalyzerTest {
     Mockito.lenient().doReturn(logsDir).`when`(reportingData).logsDir
     Mockito.lenient().doReturn(reportingData).`when`(runContextMock).lastIdeReportingData
     Mockito.lenient().doReturn(listOf(reportingData)).`when`(runContextMock).registeredIdeReportingData()
+    Mockito.lenient().doReturn(listOf(reportingData)).`when`(runContextMock).ideReportingDataFromCurrentToOldest()
   }
 
   @Test

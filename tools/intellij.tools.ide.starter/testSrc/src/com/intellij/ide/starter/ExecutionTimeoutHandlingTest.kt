@@ -39,7 +39,7 @@ class ExecutionTimeoutHandlingTest {
       )
     }
     catch (e: ExecTimeoutException) {
-      val ciFailureDetails = DetailsOnCI.instance.getLinkToCIArtifacts(runContext!!)?.let { "Link on CI artifacts ${it}" }
+      val ciFailureDetails = DetailsOnCI.instance.getLinkToCIArtifacts(runContext!!.lastIdeReportingData)?.let { "Link on CI artifacts ${it}" }
       e.message.shouldBe(
         "Timeout of IDE run '$testName' for $timeout" + System.lineSeparator() + (ciFailureDetails ?: "")
       )

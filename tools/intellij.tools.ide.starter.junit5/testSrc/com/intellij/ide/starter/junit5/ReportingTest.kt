@@ -2,7 +2,7 @@ package com.intellij.ide.starter.junit5
 
 import com.intellij.ide.starter.junit5.config.KillOutdatedProcessesAfterEach
 import com.intellij.ide.starter.report.DetailsOnCI
-import com.intellij.ide.starter.runner.IDERunContext
+import com.intellij.ide.starter.runner.IDEReportingData
 import com.intellij.ide.starter.utils.FileSystem.getFileOrDirectoryPresentableSize
 import com.intellij.ide.starter.utils.formatSize
 import com.intellij.platform.testFramework.teamCity.convertToHashCodeWithOnlyLetters
@@ -17,9 +17,8 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import org.junit.jupiter.params.provider.ValueSource
-import org.mockito.Mock
-import org.mockito.Mockito
-import org.mockito.junit.jupiter.MockitoExtension
+import org.mockito.Mockito.doReturn
+import org.mockito.Mockito.mock
 import java.io.File
 import java.nio.charset.Charset
 import java.nio.file.Files
@@ -27,7 +26,6 @@ import java.util.stream.Stream
 import kotlin.io.path.div
 import kotlin.random.Random
 
-@ExtendWith(MockitoExtension::class)
 @ExtendWith(KillOutdatedProcessesAfterEach::class)
 class ReportingTest {
   private lateinit var currentTestInfo: TestInfo
@@ -44,7 +42,8 @@ class ReportingTest {
         Arguments.of("repository-cd183e2b", "repository-<NUM>"),
         Arguments.of("cd183e2b-repository", "<NUM>-repository"),
         Arguments.of("repository-cd183e2b-repository", "repository-<NUM>-repository"),
-        Arguments.of("Library 'org.jetbrains.kotlin:kotlin-tooling-core:1.9.20-dev-6566' resolution failed", "Library 'org.jetbrains.kotlin:kotlin-tooling-core:<NUM>.<NUM>.<NUM>-dev-<NUM>' resolution failed"),
+        Arguments.of("Library 'org.jetbrains.kotlin:kotlin-tooling-core:1.9.20-dev-6566' resolution failed",
+                     "Library 'org.jetbrains.kotlin:kotlin-tooling-core:<NUM>.<NUM>.<NUM>-dev-<NUM>' resolution failed"),
         Arguments.of("Unhandled exception in [Kernel@vlg56bursheg4flie1tq, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], " +
                      "reteState=kotlinx.coroutines.flow.StateFlowImpl@5ccddd20, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@5ccddd20)), " +
                      "DbSourceContextElement(kernel Kernel@vlg56bursheg4flie1tq), ComponentManager(ApplicationImpl@702643297), " +
@@ -131,8 +130,6 @@ class ReportingTest {
     folder.getFileOrDirectoryPresentableSize().shouldBe("5 B")
   }
 
-  @Mock
-  private lateinit var runContextMock: IDERunContext
   private val ciMessagePrefix = "You can find logs and other useful info in CI artifacts under the path"
 
   @Test
@@ -140,26 +137,32 @@ class ReportingTest {
     val testName = currentTestInfo.run {
       testClass.get().name + "." + testMethod.get().name
     }
-    Mockito.doReturn(testName).`when`(runContextMock).contextName
-
-    val details = DetailsOnCI.instance.getDetails(runContext = runContextMock, error = null)
-    details.shouldBe("""
+    val failureDetails = DetailsOnCI.instance.getDetails(createIdeReportingData(testName))
+    failureDetails.shouldBe("""
       Test: $testName
       $ciMessagePrefix ${testName.replaceSpecialCharactersWithHyphens()}
     """.trimIndent())
   }
 
+  @ParameterizedTest
   @ValueSource(strings = ["param 1", "param 2"])
   fun `validate parametrized tests error message generation`(param: String) {
     val testName = currentTestInfo.run {
       testClass.get().name + "." + testMethod.get().name + "($param)"
     }
-    Mockito.doReturn(testName).`when`(runContextMock).contextName
-
-    val details = DetailsOnCI.instance.getDetails(runContext = runContextMock, error = null)
-    details.shouldBe("""
+    val ideReportingData = createIdeReportingData(testName)
+    val failureDetails = DetailsOnCI.instance.getDetails(ideReportingData)
+    failureDetails.shouldBe("""
       Test: $testName
       $ciMessagePrefix ${testName.replaceSpecialCharactersWithHyphens()}
     """.trimIndent())
   }
+
+  private fun createIdeReportingData(testName: String): IDEReportingData {
+    val artifacts = mock(IDEReportingData::class.java)
+    doReturn(testName).`when`(artifacts).humanReadableTestName
+    doReturn(testName.replaceSpecialCharactersWithHyphens()).`when`(artifacts).artifactPath
+    return artifacts
+  }
+
 }

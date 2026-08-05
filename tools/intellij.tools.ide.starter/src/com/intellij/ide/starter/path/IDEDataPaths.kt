@@ -43,7 +43,6 @@ open class IDEDataPaths(
   val configDir = ((inMemoryRoot ?: testHome) / "config").createDirectories()
   val systemDir = ((inMemoryRoot ?: testHome) / "system").createDirectories()
   val pluginsDir = (testHome / "plugins").createDirectories()
-  val jbrDiagnostic = (testHome / "jbrDiagnostic").createDirectories()
   open val eventLogMetadataDir = (configDir / "event-log-metadata").createDirectories()
   open val eventLogDataDir = (systemDir / "event-log-data").createDirectories()
 

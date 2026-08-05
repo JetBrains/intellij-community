@@ -21,7 +21,6 @@ import com.intellij.ide.starter.runner.events.StopProfilerEvent
 import com.intellij.ide.starter.telemetry.TestTelemetryService
 import com.intellij.ide.starter.telemetry.computeWithSpan
 import com.intellij.openapi.util.io.NioFiles
-import com.intellij.platform.testFramework.teamCity.TeamCityReporter
 import com.intellij.tools.ide.starter.bus.EventsBus
 import com.intellij.tools.ide.util.common.logError
 import com.intellij.tools.ide.util.common.logOutput
@@ -45,7 +44,8 @@ class LocalIDEProcess : IDEProcess {
       val stderr = getStderr()
       var ideProcessId: Long? = null
       var isRunSuccessful = true
-      val ciDetails = DetailsOnCI.instance.getLinkToCIArtifacts(this)?.let { "Link on CI artifacts ${it}" }
+      fun ciFailureDetails(ideReportingData: IDEReportingData): String? =
+        DetailsOnCI.instance.getLinkToCIArtifacts(ideReportingData)?.let { "Link on CI artifacts $it" }
 
       try {
         testContext.setProviderMemoryOnlyOnLinux()
@@ -93,7 +93,12 @@ class LocalIDEProcess : IDEProcess {
               }
               getIdeProcessIdWithRetry(process.toProcessInfo(), runContext)?.let {
                 ideProcessId = it
-                startCollectThreadDumpsLoop(logsDir, IDEProcessHandle(process), jdkHome, startConfig.workDir, it, "ide")
+                startCollectThreadDumpsLoop({ lastIdeReportingData.logsDir },
+                                            IDEProcessHandle(process),
+                                            jdkHome,
+                                            startConfig.workDir,
+                                            it,
+                                            "ide")
               }
             },
             onBeforeKilled = { process, pid ->
@@ -102,7 +107,8 @@ class LocalIDEProcess : IDEProcess {
                 logOutput("BeforeKilled: $processPresentableName")
                 (ideProcessId ?: getIdeProcessIdWithRetry(process.toProcessInfo(), runContext))?.let {
                   ideProcessId = it
-                  captureDiagnosticOnKill(logsDir, jdkHome, startConfig, it, snapshotsDir)
+                  val artifactsForDiagnostics = lastIdeReportingData
+                  captureDiagnosticOnKill(artifactsForDiagnostics.logsDir, jdkHome, startConfig, it, artifactsForDiagnostics.snapshotsDir)
                 }
                 EventsBus.postAndWaitProcessing(IdeBeforeKillEvent(this, process, pid))
                 if (testContext.profilerType != ProfilerType.NONE) {
@@ -117,7 +123,10 @@ class LocalIDEProcess : IDEProcess {
         span.end()
         logOutput("IDE run $contextName completed in $executionTime")
 
-        return IDEStartResult(runContext = this, executionTime = executionTime, exitCode = exitCode, vmOptionsDiff = startConfig.vmOptionsDiff())
+        return IDEStartResult(runContext = this,
+                              executionTime = executionTime,
+                              exitCode = exitCode,
+                              vmOptionsDiff = startConfig.vmOptionsDiff())
       }
       catch (_: ExecTimeoutException) {
         if (expectedKill) {
@@ -132,11 +141,11 @@ class LocalIDEProcess : IDEProcess {
             throw ExecTimeoutException(
               error.messageText + System.lineSeparator() +
               error.stackTraceContent + System.lineSeparator() +
-              (ciDetails ?: ""))
+              (ciFailureDetails(lastIdeReportingData) ?: ""))
           }
           else {
-            throw ExecTimeoutException("Timeout of IDE run '$contextName' for $runTimeout" + System.lineSeparator() + (ciDetails
-                                                                                                                       ?: ""))
+            throw ExecTimeoutException("Timeout of IDE run '$contextName' for $runTimeout" + System.lineSeparator() +
+                                       (ciFailureDetails(lastIdeReportingData) ?: ""))
           }
         }
       }
@@ -147,7 +156,7 @@ class LocalIDEProcess : IDEProcess {
       }
       catch (exception: Throwable) {
         isRunSuccessful = false
-        throw Exception(getErrorMessage(exception, ciDetails), exception)
+        throw Exception(getErrorMessage(exception, ciFailureDetails(lastIdeReportingData)), exception)
       }
       finally {
         try {
@@ -157,10 +166,8 @@ class LocalIDEProcess : IDEProcess {
             if (isRunSuccessful) {
               validateVMOptionsWereSet(this)
             }
-            ideProcessId?.let { testContext.collectJBRDiagnosticFiles(it) }
+            ideProcessId?.let { lastIdeReportingData.collectJBRDiagnosticFiles(it) }
 
-            val link = DetailsOnCI.instance.getLinkToCIArtifacts(this)
-            TeamCityReporter.reportTestMetadata(testName = null, type = TeamCityReporter.MetadataType.LINK, flowId = null, name = "Link to Logs and artifacts", value = link.toString())
             (CIServer.instance as? TeamCityCIServer)?.addBisectMetadata()
             ErrorReporter.instance.reportErrorsAsFailedTests(this)
           }
