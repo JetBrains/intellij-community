@@ -4,8 +4,6 @@ package org.jetbrains.idea.maven.search;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.QueryExecutorBase;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -19,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.references.MavenModulePsiReference;
+import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 import java.nio.file.InvalidPathException;
@@ -82,14 +81,10 @@ final class MavenModuleReferenceSearcher extends QueryExecutorBase<PsiReference,
     return references;
   }
 
-  private static void processModule(@NotNull Project project,
-                                    @NotNull Module module,
+  private static void processProject(@NotNull Project project,
+                                    @NotNull MavenProject mavenProject,
                                     @NotNull PsiDirectory directory,
                                     @NotNull Processor<? super PsiReference> consumer) {
-    var projectsManager = MavenProjectsManager.getInstance(project);
-    if (!projectsManager.isInitialized() || !projectsManager.isMavenizedModule(module)) return;
-    var mavenProject = projectsManager.findProject(module);
-    if (null == mavenProject) return;
     var pomFile = mavenProject.getFile();
     var mavenModel = ReadAction.compute(() -> MavenDomUtil.getMavenDomProjectModel(project, pomFile));
     if (null == mavenModel) return;
@@ -105,9 +100,10 @@ final class MavenModuleReferenceSearcher extends QueryExecutorBase<PsiReference,
   public void processQuery(ReferencesSearch.@NotNull SearchParameters queryParameters, @NotNull Processor<? super PsiReference> consumer) {
     if (queryParameters.getElementToSearch() instanceof PsiDirectory directory) {
       var project = queryParameters.getProject();
-      var modules = ModuleManager.getInstance(project).getModules();
-      for (var module : modules) {
-        processModule(project, module, directory, consumer);
+      var projectsManager = MavenProjectsManager.getInstance(project);
+      if (!projectsManager.isInitialized()) return;
+      for (var mavenProject : projectsManager.getProjects()) {
+        processProject(project, mavenProject, directory, consumer);
       }
     }
   }
