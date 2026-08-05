@@ -546,6 +546,7 @@ libraries/opentelemetry-extension-kotlin
 libraries/opentelemetry-sdk-autoconfigure-spi
 libraries/opentelemetry-semconv
 libraries/oro-matcher
+libraries/oshi-core
 libraries/plexus-utils
 libraries/protobuf
 libraries/proxy-vole

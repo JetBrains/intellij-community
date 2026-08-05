@@ -1,8 +1,3 @@
-- name: lib/github.oshi.core.jar
-  library: github.oshi.core
-  files:
-  - name: $MAVEN_REPOSITORY$/com/github/oshi/oshi-core/6/oshi-core-6.jar
-  reason: <- intellij.performanceTesting
 - name: lib/intellij.driver.client.jar
   contentModules:
   - name: intellij.driver.client

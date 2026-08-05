@@ -63,7 +63,7 @@
     <orderEntry type="module" module-name="intellij.tools.ide.starter.bus" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.eel.provider" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.jbr" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="github.oshi.core" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.oshi.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.execution" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.guiForms.rt" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl.shared" scope="TEST" />
@@ -75,6 +75,7 @@
     <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit5.params" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.misc.plugin" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.performanceTesting" />
 </module>

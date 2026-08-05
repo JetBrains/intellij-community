@@ -24,6 +24,7 @@ import org.jetbrains.intellij.build.productLayout.deps.collectResolvableModules
 import org.jetbrains.intellij.build.productLayout.deps.readExistingTestPluginDependencies
 import org.jetbrains.intellij.build.productLayout.deps.resolveAllowedMissingPluginIds
 import org.jetbrains.intellij.build.productLayout.discovery.TEST_PRODUCT_CLASS_NAME
+import org.jetbrains.intellij.build.productLayout.isModuleSetPluginModuleName
 import org.jetbrains.intellij.build.productLayout.model.error.DslTestPluginOwner
 import org.jetbrains.intellij.build.productLayout.pipeline.ComputeContext
 import org.jetbrains.intellij.build.productLayout.pipeline.DataSlot
@@ -180,6 +181,16 @@ private fun buildTestPluginDependencyPlan(
         includeTestSources = true,
       )
       if (resolvableProdOwners.isEmpty()) {
+        continue
+      }
+
+      // A library module owned by a module-set wrapper plugin must be depended on by name, not through its owner:
+      // a wrapper is only a packaging container, and products are free to take its content modules directly instead
+      // of bundling it (JetBrains Client and Android Studio do that for intellij.libraries.oshi.core, while Rider
+      // bundles intellij.libraries.misc.plugin). Gating on the wrapper breaks the products that inline the module.
+      if (dependency.value.startsWith(LIB_MODULE_PREFIX) &&
+          resolvableProdOwners.all { isModuleSetPluginModuleName(it.name.value) }) {
+        moduleDepsFromContent.add(dependency)
         continue
       }
 

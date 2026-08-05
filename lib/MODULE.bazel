@@ -2206,20 +2206,6 @@ http_file(
 )
 
 http_file(
-    name = "com_github_oshi-oshi-core-6_9_2_http",
-    downloaded_file_path = "oshi-core-6.9.2.jar",
-    sha256 = "7a572731c8076e27135b9a57cf166bb43c09909407f5b0853100d7efe9fcb7ee",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/oshi/oshi-core/6.9.2/oshi-core-6.9.2.jar",
-)
-
-http_file(
-    name = "com_github_oshi-oshi-core-6_9_2-sources_http",
-    downloaded_file_path = "oshi-core-6.9.2-sources.jar",
-    sha256 = "a6c01b2134f8f46ca24c50d6131a487326425e9fd3b2fa7a202f4b034536ca94",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/oshi/oshi-core/6.9.2/oshi-core-6.9.2-sources.jar",
-)
-
-http_file(
     name = "com_android_tools_smali-smali-baksmali-3_0_3_http",
     downloaded_file_path = "smali-baksmali-3.0.3.jar",
     sha256 = "ffd6f3fbba2453440e4c04add42b9f903d84151b5b71f7e6bbb181d8096397a4",
@@ -10806,6 +10792,20 @@ http_file(
     downloaded_file_path = "oro-2.0.8-sources.jar",
     sha256 = "b4c4929e937d0464807f4a17e3a0f46f69148514edb303981a41b3e5b2a815d2",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/oro/oro/2.0.8/oro-2.0.8-sources.jar",
+)
+
+http_file(
+    name = "com_github_oshi-oshi-core-6_9_2_http",
+    downloaded_file_path = "oshi-core-6.9.2.jar",
+    sha256 = "7a572731c8076e27135b9a57cf166bb43c09909407f5b0853100d7efe9fcb7ee",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/oshi/oshi-core/6.9.2/oshi-core-6.9.2.jar",
+)
+
+http_file(
+    name = "com_github_oshi-oshi-core-6_9_2-sources_http",
+    downloaded_file_path = "oshi-core-6.9.2-sources.jar",
+    sha256 = "a6c01b2134f8f46ca24c50d6131a487326425e9fd3b2fa7a202f4b034536ca94",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/oshi/oshi-core/6.9.2/oshi-core-6.9.2-sources.jar",
 )
 
 http_file(

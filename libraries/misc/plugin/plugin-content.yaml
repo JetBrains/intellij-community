@@ -31,6 +31,12 @@
       opencsv:
       - name: $MAVEN_REPOSITORY$/com/opencsv/opencsv/5/opencsv-5.jar
       - name: $MAVEN_REPOSITORY$/commons-beanutils/commons-beanutils/1/commons-beanutils-1.jar
+- name: lib/modules/intellij.libraries.oshi.core.jar
+  contentModules:
+  - name: intellij.libraries.oshi.core
+    libraries:
+      github.oshi.core:
+      - name: $MAVEN_REPOSITORY$/com/github/oshi/oshi-core/6/oshi-core-6.jar
 - name: lib/modules/intellij.libraries.xstream.jar
   contentModules:
   - name: intellij.libraries.xstream
