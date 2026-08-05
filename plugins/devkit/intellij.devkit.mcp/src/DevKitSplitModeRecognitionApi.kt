@@ -5,6 +5,7 @@ import com.intellij.mcpserver.mcpFail
 import com.intellij.mcpserver.project
 import com.intellij.mcpserver.util.resolveInProject
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiManager
 import kotlinx.coroutines.currentCoroutineContext
@@ -19,22 +20,16 @@ internal suspend fun recognizeSplitModeModuleKindForPath(descriptorPath: String)
   val project = currentCoroutineContext().project
   val resolvedDescriptorPath = project.resolveInProject(descriptorPath)
   val descriptorVirtualFile = VirtualFileManager.getInstance().findFileByNioPath(resolvedDescriptorPath)
-                             ?: VirtualFileManager.getInstance().refreshAndFindFileByNioPath(resolvedDescriptorPath)
-                             ?: mcpFail("File not found: $descriptorPath")
+                              ?: VirtualFileManager.getInstance().refreshAndFindFileByNioPath(resolvedDescriptorPath)
+                              ?: mcpFail("File not found: $descriptorPath")
 
-  val service = SplitModeApiRestrictionsService.getInstance(project)
-  service.scheduleLoadRestrictions()
-  withTimeoutOrNull(5.seconds) {
-    while (!service.isLoaded()) {
-      delay(50.milliseconds)
-    }
-  } ?: mcpFail("Timed out waiting for split-mode module restrictions to load")
+  loadSplitModeRestrictions(project)
 
   val recognizedKind = readAction {
     val psiFile = PsiManager.getInstance(project).findFile(descriptorVirtualFile)
                   ?: mcpFail("Psi file not found: $descriptorPath")
     recognizeSplitModeModuleKind(psiFile)
-      ?: mcpFail("Descriptor is not an IntelliJ plugin XML file or no IntelliJ module was found: $descriptorPath")
+    ?: mcpFail("Descriptor is not an IntelliJ plugin XML file or no IntelliJ module was found: $descriptorPath")
   }
 
   return DevKitMcpToolset.RecognizeIjModuleKindResult(
@@ -43,4 +38,26 @@ internal suspend fun recognizeSplitModeModuleKindForPath(descriptorPath: String)
     kindId = recognizedKind.kind.id,
     reasoning = recognizedKind.reasoning,
   )
+}
+
+internal suspend fun recognizeSplitModeApiKind(apiName: String): DevKitMcpToolset.RecognizeSplitModeApiKindResult {
+  val project = currentCoroutineContext().project
+  val service = loadSplitModeRestrictions(project)
+  val apiKind = service.getCodeApiKind(apiName, null)
+  return DevKitMcpToolset.RecognizeSplitModeApiKindResult(
+    apiName = apiName,
+    kindId = apiKind?.id,
+    hint = service.getCodeApiHint(apiName),
+  )
+}
+
+internal suspend fun loadSplitModeRestrictions(project: Project): SplitModeApiRestrictionsService {
+  val service = SplitModeApiRestrictionsService.getInstance(project)
+  service.scheduleLoadRestrictions()
+  withTimeoutOrNull(5.seconds) {
+    while (!service.isLoaded()) {
+      delay(50.milliseconds)
+    }
+  } ?: mcpFail("Timed out waiting for split-mode module restrictions to load")
+  return service
 }

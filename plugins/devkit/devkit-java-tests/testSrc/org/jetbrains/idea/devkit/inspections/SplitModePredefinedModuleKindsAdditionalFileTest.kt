@@ -7,7 +7,7 @@ import org.jetbrains.idea.devkit.inspections.remotedev.analysis.SplitModeApiRest
 import org.junit.Assert
 
 private const val PREDEFINED_MODULE_KINDS_PROJECT_RELATIVE_PATH =
-  "community/plugins/devkit/devkit-core/resources/remotedevInspectionData/PredefinedModuleKinds.json"
+  "community/plugins/devkit/devkit-core/resources/remotedevInspectionData/PredefinedModuleKinds.json5"
 
 internal class SplitModePredefinedModuleKindsSourceModeTest : BasePlatformTestCase() {
   fun testProjectPredefinedModuleKindsOverrideBundledListWhenProjectModeEnabled() {
@@ -15,7 +15,8 @@ internal class SplitModePredefinedModuleKindsSourceModeTest : BasePlatformTestCa
       "project",
       """
         [
-          {"moduleName": "custom.split.mode.frontend", "moduleKind": "frontend"}
+          // JSON5 project overrides are accepted.
+          {kind: 'moduleId', id: 'custom.split.mode.frontend', moduleKind: 'frontend'},
         ]
       """.trimIndent(),
     ) { service ->
@@ -49,7 +50,7 @@ internal class SplitModePredefinedModuleKindsSourceModeTest : BasePlatformTestCa
       "project",
       """
         [
-          {"moduleName": "custom.split.mode.frontend", "moduleKind": "frontend"}
+          {kind: 'moduleId', id: 'custom.split.mode.frontend', moduleKind: 'frontend'},
         ]
       """.trimIndent(),
     ) { service ->
@@ -65,7 +66,7 @@ internal class SplitModePredefinedModuleKindsSourceModeTest : BasePlatformTestCa
         PREDEFINED_MODULE_KINDS_PROJECT_RELATIVE_PATH,
         """
           [
-            {"moduleName": "custom.split.mode.backend", "moduleKind": "backend"}
+            {kind: 'moduleId', id: 'custom.split.mode.backend', moduleKind: 'backend'},
           ]
         """.trimIndent(),
       )

@@ -123,6 +123,7 @@ jvm_library(
         "//libraries/jackson/jackson",
         "//libraries/jackson/databind",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+        "//platform/workspace/jps",
     ],
 )
 
@@ -231,6 +232,7 @@ jvm_library(
         "//libraries/jackson/jackson:jackson_test_lib",
         "//libraries/jackson/databind:databind_test_lib",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+        "//platform/workspace/jps:jps_test_lib",
     ],
 )
 ### auto-generated section `build intellij.devkit.core` end

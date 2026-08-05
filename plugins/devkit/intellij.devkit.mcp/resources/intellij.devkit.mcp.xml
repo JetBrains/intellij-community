@@ -1,13 +1,21 @@
 <idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <module name="intellij.java.backend"/>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <plugin id="com.intellij.mcpServer"/>
+    <module name="intellij.java.backend"/>
     <module name="intellij.devkit.core"/>
     <module name="intellij.devkit.scaffolding"/>
     <module name="intellij.java.psi"/>
-    <!-- endregion -->
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.json"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.analysis.impl"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.ide.progress"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.projectModel"/>
   </dependencies>
+  <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij.mcpServer">
     <mcpToolset implementation="com.intellij.devkit.mcp.DevKitMcpToolset" />

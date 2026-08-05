@@ -21,6 +21,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.dom.ContentDescriptor.ModuleDescriptor
 import org.jetbrains.idea.devkit.dom.index.PluginIdDependenciesIndex
+import org.jetbrains.idea.devkit.inspections.remotedev.analysis.ApiUsagePolicy
 import org.jetbrains.idea.devkit.inspections.remotedev.analysis.ModuleAnalysis
 import org.jetbrains.idea.devkit.inspections.remotedev.analysis.ResolvedModuleKind
 import org.jetbrains.idea.devkit.inspections.remotedev.analysis.SplitModeAnalysisFlags
@@ -187,7 +188,7 @@ internal object SplitModeInspectionUtil {
       restrictionsService.getPredefinedModuleKind(module, ideaPlugin = ideaPlugin)
     }
 
-    return predefinedModuleKind != null
+    return predefinedModuleKind != null && predefinedModuleKind.apiUsagePolicy == ApiUsagePolicy.DEFAULT
   }
 
   fun shouldSuppressForSingleModuleExternalPlugin(file: PsiFile): Boolean {

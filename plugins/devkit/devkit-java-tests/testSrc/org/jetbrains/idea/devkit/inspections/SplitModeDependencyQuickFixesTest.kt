@@ -55,8 +55,12 @@ internal class SplitModeDependencyQuickFixesTest : JavaCodeInsightFixtureTestCas
     )
     myFixture.configureFromExistingVirtualFile(pluginXml.virtualFile)
 
-    launchActionAndWait("Make module 'unique.module.name.quick.fix.1' work in 'frontend' only") {
-      getModuleDependencyNames(pluginXml).contains("intellij.platform.frontend")
+    val intention = myFixture.findSingleIntention("Make module 'unique.module.name.quick.fix.1' work in 'frontend' only")
+    myFixture.checkPreviewAndLaunchAction(intention)
+    timeoutRunBlocking {
+      waitUntil("Quick fix was not applied", 5.seconds) {
+        getModuleDependencyNames(pluginXml).contains("intellij.platform.frontend")
+      }
     }
 
     val result = myFixture.file.text
@@ -293,7 +297,7 @@ internal class SplitModeDependencyQuickFixesTest : JavaCodeInsightFixtureTestCas
             <module name="intellij.platform.core"/>
           </dependencies>
           <extensions defaultExtensionNs="com.intellij">
-            <applicationConfigurable<caret>/>
+            <annotator<caret>/>
           </extensions>
         </idea-plugin>
       """.trimIndent()

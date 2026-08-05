@@ -130,6 +130,8 @@ jvm_library(
         "//java/compiler:compiler-tests_test_lib",
         "//java/testFramework",
         "//java/testFramework:testFramework_test_lib",
+        "//plugins/junit",
+        "//plugins/junit:junit_test_lib",
         "//xml/dom-tests",
         "//xml/dom-tests:dom-tests_test_lib",
         "//plugins/properties:properties-backend",
