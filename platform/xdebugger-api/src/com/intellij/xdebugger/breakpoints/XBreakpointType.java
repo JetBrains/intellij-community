@@ -11,6 +11,7 @@ import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -212,6 +213,7 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
    * Override to return {@code true} while this type is newly added — the add-breakpoint "+" popup then shows a "New"
    * badge on its item (time-limited on the client: it disappears about a month after the user first sees it).
    */
+  @ApiStatus.Internal
   public boolean isNewBadgeVisible() {
     return false;
   }
