@@ -2,6 +2,7 @@
 package com.intellij.platform
 
 import com.intellij.CommonBundle
+import com.intellij.conversion.ModuleSettings.MODULE_ROOT_MANAGER_COMPONENT
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.application.EDT
@@ -29,6 +30,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.invariantSeparatorsPathString
+import kotlin.io.path.readText
 
 private val LOG = logger<ModuleAttachProcessor>()
 
@@ -47,7 +49,9 @@ class ModuleAttachProcessor : ProjectAttachProcessor() {
            projectDir.directoryStreamIfExists({ path: Path ->
                                                 path.fileName.toString().endsWith(ModuleManagerEx.IML_EXTENSION)
                                               }) { stream ->
-             stream.any()
+             stream.any { imlFile ->
+               imlFile.readText().contains(MODULE_ROOT_MANAGER_COMPONENT)
+             }
            } ?: false
   }
 
