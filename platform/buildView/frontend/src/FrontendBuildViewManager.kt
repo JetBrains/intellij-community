@@ -7,6 +7,7 @@ import com.intellij.build.BuildContentId
 import com.intellij.build.BuildContentManager
 import com.intellij.build.BuildId
 import com.intellij.build.BuildViewEvent
+import com.intellij.idea.AppMode
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
@@ -93,6 +94,10 @@ private class FrontendBuildViewManager(private val project: Project, private val
   private suspend fun waitForToolWindow() {
     val toolWindowManager = ToolWindowManager.getInstance(project)
     if (!isToolWindowRegistered(toolWindowManager)) {
+      if (AppMode.isMonolith()) {
+        LOG.error("Tool window is not registered") // in monolith this is unexpected, but not critical
+        return
+      }
       LOG.info("Waiting for tool window registration")
       Disposer.newDisposable("FrontendBuildViewManager.waitForToolWindow").use { disposable ->
         suspendCancellableCoroutine { continuation ->
