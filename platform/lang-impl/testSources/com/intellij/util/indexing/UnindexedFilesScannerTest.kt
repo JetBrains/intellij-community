@@ -32,6 +32,7 @@ import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.registerExtension
 import com.intellij.testFramework.runInEdtAndWait
+import com.intellij.util.ExceptionUtil
 import com.intellij.util.application
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.indexing.diagnostic.ProjectScanningHistory
@@ -396,10 +397,14 @@ class UnindexedFilesScannerTest {
     results.assertIndexerIndexedNoFiles("An index whose input filter fails must not index anything", brokenIndexer)
   }
 
-  /** Intercepts the LOG.error reports caused by [throwableClass], so that the expected failures don't fail the test */
+  /**
+   * Intercepts the LOG.error reports caused by [throwableClass], so that the expected failures don't fail the test.
+   * The reported throwable may be a wrapper (e.g. a PluginException blaming the plugin the index belongs to), hence the check
+   * by the causes, and not by the type of the reported throwable itself.
+   */
   private fun tolerateErrorsCausedBy(throwableClass: Class<out Throwable>): LoggedErrorProcessor = object : LoggedErrorProcessor() {
     override fun processError(category: String, message: String, details: Array<String>, t: Throwable?): Set<Action> {
-      return if (throwableClass.isInstance(t)) Action.NONE else Action.ALL
+      return if (t != null && ExceptionUtil.causedBy(t, throwableClass)) Action.NONE else Action.ALL
     }
   }
 

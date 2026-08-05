@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
+import com.intellij.diagnostic.PluginException
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.getOrHandleException
 import com.intellij.openapi.diagnostic.logger
@@ -117,7 +118,8 @@ internal class RequiredIndexesEvaluator(private val registeredIndexes: Registere
     }.getOrHandleException { t ->
       val message = "Index '${indexId.name}': input filter failed on '${indexedFile.fileName}', the index is skipped for this file"
       if (brokenInputFiltersReported.add(indexId)) {
-        LOG.error("$message. Files will keep being skipped by this index, but this is reported only once", t)
+        LOG.error(PluginException("$message. Files will keep being skipped by this index, so the plugin is not fully functional. " +
+                                  "This is reported only once. Consider disabling the plugin: ${indexId.pluginId}", t, indexId.pluginId))
       }
       else {
         LOG.debug(t) { message }
