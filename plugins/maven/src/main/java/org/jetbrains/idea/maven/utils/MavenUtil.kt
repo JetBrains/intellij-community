@@ -22,6 +22,8 @@ import com.intellij.openapi.application.PathManager.getSystemDir
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.application.impl.LaterInvocator
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager.Companion.getInstance
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkException
@@ -65,6 +67,7 @@ import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.Registry.Companion.`is`
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vfs.DiskQueryRelay
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
@@ -87,6 +90,7 @@ import com.intellij.psi.PsiManager
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.ArrayUtil
 import com.intellij.util.DisposeAwareRunnable
+import com.intellij.util.ExceptionUtil
 import com.intellij.util.FileContentUtilCore
 import com.intellij.util.Function
 import com.intellij.util.NullableFunction
@@ -476,10 +480,10 @@ object MavenUtil {
 
   fun <T, U> mapToList(map: Map<T?, U?>): List<Pair<T?, U?>?> {
     return ContainerUtil.map<Map.Entry<T?, U?>?, Pair<T?, U?>?>(map.entries,
-                                                                               Function { tuEntry: Map.Entry<T?, U?>? ->
-                                                                                 Pair.create<T?, U?>(
-                                                                                   tuEntry!!.key, tuEntry.value)
-                                                                               })
+                                                                Function { tuEntry: Map.Entry<T?, U?>? ->
+                                                                  Pair.create<T?, U?>(
+                                                                    tuEntry!!.key, tuEntry.value)
+                                                                })
   }
 
   @JvmStatic
@@ -1403,8 +1407,38 @@ object MavenUtil {
   @Throws(IOException::class, JDOMException::class)
   private fun getDomRootElement(file: Path?): Element? {
     if (file == null) return null
-    Files.newInputStream(file).use { stream ->
-      return JDOMUtil.load(InputStreamReader(stream, StandardCharsets.UTF_8))
+    return MavenSettingsDomReader.getInstance().read(file)
+  }
+
+  @Service(Service.Level.APP)
+  private class MavenSettingsDomReader {
+    private val relay: DiskQueryRelay<Path, Element?> = DiskQueryRelay { file ->
+      Files.newInputStream(file).use { stream ->
+        JDOMUtil.load(InputStreamReader(stream, StandardCharsets.UTF_8))
+      }
+    }
+
+    @Throws(IOException::class, JDOMException::class)
+    fun read(file: Path): Element? {
+      try {
+        return relay.accessDiskWithCheckCanceled(file)
+      }
+      catch (e: RuntimeException) {
+        // accessDiskWithCheckCanceled propagates Future.get() failures via ExceptionUtil.rethrow,
+        // which wraps the ExecutionException in a RuntimeException. Restore the original cause
+        // so callers can match on IOException/JDOMException.
+        val cause = (e.cause as? ExecutionException)?.cause ?: throw e
+        ExceptionUtil.rethrowUnchecked(cause)
+        when (cause) {
+          is IOException -> throw cause
+          is JDOMException -> throw cause
+          else -> throw e
+        }
+      }
+    }
+
+    companion object {
+      fun getInstance(): MavenSettingsDomReader = service<MavenSettingsDomReader>()
     }
   }
 
