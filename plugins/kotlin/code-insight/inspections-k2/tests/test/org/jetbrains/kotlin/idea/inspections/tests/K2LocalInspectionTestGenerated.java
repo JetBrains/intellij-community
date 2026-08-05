@@ -23873,6 +23873,46 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 runTest("testData/inspectionsLocal/uselessCallOnCollection/FilterNotNullOnSet.kt");
             }
 
+            @TestMetadata("FilterTrue.kt")
+            public void testFilterTrue() throws Exception {
+                runTest("testData/inspectionsLocal/uselessCallOnCollection/FilterTrue.kt");
+            }
+
+            @TestMetadata("FilterTrueOnSequence.kt")
+            public void testFilterTrueOnSequence() throws Exception {
+                runTest("testData/inspectionsLocal/uselessCallOnCollection/FilterTrueOnSequence.kt");
+            }
+
+            @TestMetadata("FilterTrueTail.kt")
+            public void testFilterTrueTail() throws Exception {
+                runTest("testData/inspectionsLocal/uselessCallOnCollection/FilterTrueTail.kt");
+            }
+
+            @TestMetadata("FilterTrueTailOnSequence.kt")
+            public void testFilterTrueTailOnSequence() throws Exception {
+                runTest("testData/inspectionsLocal/uselessCallOnCollection/FilterTrueTailOnSequence.kt");
+            }
+
+            @TestMetadata("FilterTrueWithLabeledReturn.kt")
+            public void testFilterTrueWithLabeledReturn() throws Exception {
+                runTest("testData/inspectionsLocal/uselessCallOnCollection/FilterTrueWithLabeledReturn.kt");
+            }
+
+            @TestMetadata("FilterTrueWithLabeledReturnOnSequence.kt")
+            public void testFilterTrueWithLabeledReturnOnSequence() throws Exception {
+                runTest("testData/inspectionsLocal/uselessCallOnCollection/FilterTrueWithLabeledReturnOnSequence.kt");
+            }
+
+            @TestMetadata("FilterTrueWithNonLocalLabeledReturn.kt")
+            public void testFilterTrueWithNonLocalLabeledReturn() throws Exception {
+                runTest("testData/inspectionsLocal/uselessCallOnCollection/FilterTrueWithNonLocalLabeledReturn.kt");
+            }
+
+            @TestMetadata("FilterTrueWithNonLocalLabeledReturnOnSequence.kt")
+            public void testFilterTrueWithNonLocalLabeledReturnOnSequence() throws Exception {
+                runTest("testData/inspectionsLocal/uselessCallOnCollection/FilterTrueWithNonLocalLabeledReturnOnSequence.kt");
+            }
+
             @TestMetadata("MapIndexedNotNullTo.kt")
             public void testMapIndexedNotNullTo() throws Exception {
                 runTest("testData/inspectionsLocal/uselessCallOnCollection/MapIndexedNotNullTo.kt");

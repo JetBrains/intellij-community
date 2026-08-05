@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.isClassType
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
@@ -19,16 +20,21 @@ import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeArgumentWithVariance
+import org.jetbrains.kotlin.analysis.api.types.fullyExpandedType
 import org.jetbrains.kotlin.analysis.api.types.isNullable
 import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
-import org.jetbrains.kotlin.analysis.api.types.fullyExpandedType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.utils.ConvertLambdaToReferenceUtils.singleStatementOrNull
+import org.jetbrains.kotlin.idea.codeinsight.utils.callExpression
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.AssociateFunctionUtil.lambda
+import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtLabeledExpression
 import org.jetbrains.kotlin.psi.KtLambdaExpression
+import org.jetbrains.kotlin.psi.KtPsiUtil
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
 import org.jetbrains.kotlin.psi.KtReturnExpression
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
@@ -47,6 +53,9 @@ open class UselessCallOnCollectionInspection : AbstractUselessCallInspection() {
         UselessFilterConversion(topLevelCallableId("kotlin.sequences", "filterNotNull")),
         UselessFilterConversion(topLevelCallableId("kotlin.collections", "filterIsInstance")),
         UselessFilterConversion(topLevelCallableId("kotlin.sequences", "filterIsInstance")),
+
+        UselessFilterTrueConversion(topLevelCallableId("kotlin.collections", "filter")),
+        UselessFilterTrueConversion(topLevelCallableId("kotlin.sequences", "filter")),
 
         UselessMapNotNullConversion(topLevelCallableId("kotlin.collections", "mapNotNull"), replacementName = "map"),
         UselessMapNotNullConversion(topLevelCallableId("kotlin.sequences", "mapNotNull"), replacementName = "map"),
@@ -99,6 +108,52 @@ open class UselessCallOnCollectionInspection : AbstractUselessCallInspection() {
                 ProblemHighlightType.LIKE_UNUSED_SYMBOL,
                 isOnTheFly,
                 fix
+            )
+        }
+    }
+
+    protected inner class UselessFilterTrueConversion(
+        override val targetCallableId: CallableId,
+    ) : QualifiedFunctionCallConversion {
+        context(_: KaSession)
+        override fun createProblemDescriptor(
+            manager: InspectionManager,
+            expression: KtQualifiedExpression,
+            calleeExpression: KtExpression,
+            isOnTheFly: Boolean
+        ): ProblemDescriptor? {
+            val lambda = expression.callExpression?.lambda() ?: return null
+
+            val statement = lambda.singleStatementOrNull() ?: return null
+
+            when (statement) {
+                is KtReturnExpression -> {
+                    val returnExpression = statement.returnedExpression ?: return null
+                    val dep = KtPsiUtil.deparenthesize(returnExpression)
+                    if (!KtPsiUtil.isTrueConstant(dep)) return null
+
+                    val label = statement.getTargetLabel() ?: return null
+                    val resolved = label.mainReference.resolveToSymbol()?.psi ?: return null
+                    if (!resolved.isEquivalentTo(lambda.functionLiteral))
+                        return null
+                }
+
+                else -> {
+                    val dep = KtPsiUtil.deparenthesize(statement)
+                    if (!KtPsiUtil.isTrueConstant(dep)) return null
+                }
+            }
+
+            return manager.createProblemDescriptor(
+                expression,
+                TextRange(
+                    expression.operationTokenNode.startOffset - expression.startOffset,
+                    expression.endOffset - expression.startOffset,
+                ),
+                KotlinBundle.message("redundant.call.on.collection.type"),
+                ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+                isOnTheFly,
+                RemoveUselessCallFix()
             )
         }
     }
