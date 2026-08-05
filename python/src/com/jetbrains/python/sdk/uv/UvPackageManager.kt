@@ -66,9 +66,9 @@ internal class UvPackageManager internal constructor(
   override val cliSpecs: List<PythonManagerCliSpec> = listOf(
     PythonManagerCliSpec("uv", { UvPyTool.getInstance().resolveExecutable(EelFileSystem(localEel))?.path })
   )
-  override val treeProvider = CachedDependencyTreeProvider {
+  override val treeProvider = CachedDependencyTreeProvider(fetchOutput = {
     withUv { uv -> uv.listProjectStructureTree() }.getOrNull()
-  }
+  })
   override val dependenciesFilesRelativePaths: List<Path>
     get() = listOf(
       Path.of(PY_PROJECT_TOML),

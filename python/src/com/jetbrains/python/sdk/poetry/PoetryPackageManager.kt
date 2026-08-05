@@ -58,9 +58,9 @@ internal class PoetryPackageManager(project: Project, sdk: Sdk) : PythonPackageM
   override val cliSpecs: List<PythonManagerCliSpec> = listOf(
     PythonManagerCliSpec("poetry", { PoetryPyTool.getInstance().resolveExecutable(EelFileSystem(localEel))?.path })
   )
-  override val treeProvider = CachedDependencyTreeProvider {
+  override val treeProvider = CachedDependencyTreeProvider(fetchOutput = {
     runPoetryWithSdk(sdk, "show", "--tree").getOrNull()
-  }
+  })
   override val dependenciesFilesRelativePaths: List<Path>
     get() = listOf(
       Path.of(PY_PROJECT_TOML),
