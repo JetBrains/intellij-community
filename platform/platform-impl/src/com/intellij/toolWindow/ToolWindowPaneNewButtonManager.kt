@@ -9,6 +9,7 @@ import com.intellij.openapi.wm.WindowInfo
 import com.intellij.openapi.wm.impl.AbstractDroppableStripe
 import com.intellij.openapi.wm.impl.SquareStripeButton
 import com.intellij.openapi.wm.impl.ToolWindowImpl
+import com.intellij.toolWindow.extendedToolWindowsUi.ToolWindowExtension
 import com.intellij.ui.JBColor
 import com.intellij.ui.awt.DevicePoint
 import java.awt.BorderLayout
@@ -24,10 +25,8 @@ internal open class ToolWindowPaneNewButtonManager(paneId: String, isPrimary: Bo
   internal val left = ToolWindowLeftToolbar(paneId, isPrimary)
   internal val right = ToolWindowRightToolbar(paneId, isPrimary)
 
-  internal val topBar: ToolWindowHorizontalToolbar? =
-    if (ToolWindowExtension.exists) ToolWindowHorizontalToolbar(paneId, ToolWindowAnchor.TOP, isPrimary) else null
-  internal val bottomBar: ToolWindowHorizontalToolbar? =
-    if (ToolWindowExtension.exists) ToolWindowHorizontalToolbar(paneId, ToolWindowAnchor.BOTTOM, isPrimary) else null
+  internal val top: ToolWindowToolbar? = ToolWindowExtension.getInstance()?.createTopToolWindowToolbar(paneId, isPrimary)
+  internal val bottom: ToolWindowToolbar? = ToolWindowExtension.getInstance()?.createBottomToolWindowToolbar(paneId, isPrimary)
 
   private var showButtons = true
   private var isStripesOverlaid = false
@@ -48,8 +47,8 @@ internal open class ToolWindowPaneNewButtonManager(paneId: String, isPrimary: Bo
     left.bottomStripe.bottomAnchorDropAreaComponent = pane
     right.topStripe.bottomAnchorDropAreaComponent = pane
     right.bottomStripe.bottomAnchorDropAreaComponent = pane
-    topBar?.topStripe?.bottomAnchorDropAreaComponent = pane
-    bottomBar?.topStripe?.bottomAnchorDropAreaComponent = pane
+    top?.topStripe?.bottomAnchorDropAreaComponent = pane
+    bottom?.topStripe?.bottomAnchorDropAreaComponent = pane
   }
 
   override fun wrapWithControls(pane: ToolWindowPane): JComponent {
@@ -58,8 +57,8 @@ internal open class ToolWindowPaneNewButtonManager(paneId: String, isPrimary: Bo
       add(pane, BorderLayout.CENTER)
       add(left, BorderLayout.WEST)
       add(right, BorderLayout.EAST)
-      topBar?.let { add(it, BorderLayout.NORTH) }
-      bottomBar?.let { add(it, BorderLayout.SOUTH) }
+      top?.let { add(it, BorderLayout.NORTH) }
+      bottom?.let { add(it, BorderLayout.SOUTH) }
       InternalUICustomization.getInstance()?.configureToolWindowPane(this, this@ToolWindowPaneNewButtonManager)
     }
   }
@@ -79,10 +78,10 @@ internal open class ToolWindowPaneNewButtonManager(paneId: String, isPrimary: Bo
     right.isVisible = isRightVisible
     left.updateNamedState()
     right.updateNamedState()
-    topBar?.let {
+    top?.let {
       it.isVisible = visible && it.hasVisibleButtons()
     }
-    bottomBar?.let {
+    bottom?.let {
       it.isVisible = visible && it.hasVisibleButtons()
     }
     visibleToolbarsListeners.forEach { it(isLeftVisible, isRightVisible) }
@@ -136,8 +135,8 @@ internal open class ToolWindowPaneNewButtonManager(paneId: String, isPrimary: Bo
       preferred
     }
     else {
-      bottomBar?.getStripeFor(screenPoint)
-      ?: topBar?.getStripeFor(screenPoint)
+      bottom?.getStripeFor(screenPoint)
+      ?: top?.getStripeFor(screenPoint)
       ?: left.getStripeFor(screenPoint)
       ?: right.getStripeFor(screenPoint)
     }
@@ -225,11 +224,11 @@ internal open class ToolWindowPaneNewButtonManager(paneId: String, isPrimary: Bo
     }
   }
 
-  private fun getHorizontalToolbar(anchor: ToolWindowAnchor): ToolWindowHorizontalToolbar? {
+  private fun getHorizontalToolbar(anchor: ToolWindowAnchor): ToolWindowToolbar? {
     if (ToolWindowExtension.exists) {
       return when (anchor) {
-        ToolWindowAnchor.TOP -> topBar
-        ToolWindowAnchor.BOTTOM -> bottomBar
+        ToolWindowAnchor.TOP -> top
+        ToolWindowAnchor.BOTTOM -> bottom
         else -> null
       }
     }
@@ -237,7 +236,7 @@ internal open class ToolWindowPaneNewButtonManager(paneId: String, isPrimary: Bo
   }
 
   private fun allToolbars(): List<ToolWindowToolbar> {
-    return listOfNotNull(left, right, topBar, bottomBar)
+    return listOfNotNull(left, right, top, bottom)
   }
 
   override fun createStripeButton(toolWindow: ToolWindowImpl, info: WindowInfo, task: RegisterToolWindowTask?): StripeButtonManager {

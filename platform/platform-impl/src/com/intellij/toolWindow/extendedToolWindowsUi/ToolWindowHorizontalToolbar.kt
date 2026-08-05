@@ -1,10 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.toolWindow
+package com.intellij.toolWindow.extendedToolWindowsUi
 
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.impl.AbstractDroppableStripe
+import com.intellij.toolWindow.MoreSquareStripeButton
+import com.intellij.toolWindow.ToolWindowToolbar
 import com.intellij.ui.UIBundle
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import java.awt.Point
 import java.awt.Rectangle
@@ -12,7 +15,7 @@ import javax.swing.border.Border
 import kotlin.math.max
 
 /**
- * Used only when a [ToolWindowExtension] is present (see [ToolWindowPaneNewButtonManager])
+ * Keep this class outside the plugin to avoid a massive move from internal to [ApiStatus.Internal]
  */
 internal class ToolWindowHorizontalToolbar(paneId: String, anchor: ToolWindowAnchor, isPrimary: Boolean) :
   ToolWindowToolbar(isPrimary, anchor) {
@@ -47,7 +50,7 @@ internal class ToolWindowHorizontalToolbar(paneId: String, anchor: ToolWindowAnc
 
   override fun getStripeFor(anchor: ToolWindowAnchor): AbstractDroppableStripe = topStripe
 
-  override fun getStripeFor(screenPoint: Point): AbstractDroppableStripe? {
+  override fun getStripeFor(screenPoint: Point): StripeV2? {
     // Do NOT gate on isShowing here: an empty horizontal bar is invisible, but we must still allow dropping the first tool
     // window onto it. topStripe.containsPoint has a hidden-bar fallback (it measures against the always-showing content pane).
     return if (topStripe.containsPoint(screenPoint)) topStripe else null

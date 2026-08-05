@@ -6,7 +6,7 @@ import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.toolWindow.MoreSquareStripeButton
 import com.intellij.toolWindow.ResizeStripeManager
 import com.intellij.toolWindow.StripeButtonManager
-import com.intellij.toolWindow.ToolWindowExtension
+import com.intellij.toolWindow.extendedToolWindowsUi.ToolWindowExtension
 import com.intellij.ui.awt.DevicePoint
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.drag.DragButton

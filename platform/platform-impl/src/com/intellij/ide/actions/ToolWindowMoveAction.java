@@ -21,7 +21,7 @@ import com.intellij.openapi.wm.WindowInfo;
 import com.intellij.openapi.wm.impl.SquareStripeButton;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.toolWindow.ToolWindowDragHelper;
-import com.intellij.toolWindow.ToolWindowExtension;
+import com.intellij.toolWindow.extendedToolWindowsUi.ToolWindowExtension;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.UIBundle;
 import org.jetbrains.annotations.ApiStatus;

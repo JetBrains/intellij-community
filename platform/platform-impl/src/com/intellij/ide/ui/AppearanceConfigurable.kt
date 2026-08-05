@@ -51,7 +51,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.toolWindow.ResizeStripeManager
-import com.intellij.toolWindow.ToolWindowExtension
+import com.intellij.toolWindow.extendedToolWindowsUi.ToolWindowExtension
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.FontComboBox

@@ -9,7 +9,7 @@ import com.intellij.openapi.wm.impl.ToolWindowAnchorEnum
 import com.intellij.openapi.wm.impl.getAnchorEnum
 import com.intellij.openapi.wm.impl.isHorizontal
 import com.intellij.toolWindow.StripeButtonUi
-import com.intellij.toolWindow.ToolWindowExtension
+import com.intellij.toolWindow.extendedToolWindowsUi.ToolWindowExtension
 import com.intellij.ui.icons.toStrokeIcon
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBInsets

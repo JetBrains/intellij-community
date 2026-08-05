@@ -28,6 +28,7 @@ import com.intellij.openapi.wm.impl.ToolWindowImpl
 import com.intellij.openapi.wm.impl.isInternal
 import com.intellij.openapi.wm.impl.isOnTheLeftStripe
 import com.intellij.openapi.wm.safeToolWindowPaneId
+import com.intellij.toolWindow.extendedToolWindowsUi.ToolWindowExtension
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.MouseDragHelper

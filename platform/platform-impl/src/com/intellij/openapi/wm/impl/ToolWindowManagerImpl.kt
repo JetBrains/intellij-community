@@ -70,7 +70,7 @@ import com.intellij.toolWindow.ToolWindowButtonManager
 import com.intellij.toolWindow.ToolWindowDefaultLayoutManager
 import com.intellij.toolWindow.ToolWindowEntry
 import com.intellij.toolWindow.ToolWindowEventSource
-import com.intellij.toolWindow.ToolWindowExtension
+import com.intellij.toolWindow.extendedToolWindowsUi.ToolWindowExtension
 import com.intellij.toolWindow.ToolWindowPane
 import com.intellij.toolWindow.ToolWindowPaneNewButtonManager
 import com.intellij.toolWindow.ToolWindowProperty

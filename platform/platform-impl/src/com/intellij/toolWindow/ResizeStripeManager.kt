@@ -12,6 +12,7 @@ import com.intellij.openapi.ui.Splittable
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.impl.SquareStripeButton
+import com.intellij.toolWindow.extendedToolWindowsUi.ToolWindowExtension
 import com.intellij.ui.PopupHandler
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus

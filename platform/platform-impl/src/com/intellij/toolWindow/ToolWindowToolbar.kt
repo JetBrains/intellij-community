@@ -13,6 +13,7 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.AbstractDroppableStripe
 import com.intellij.openapi.wm.impl.LayoutData
 import com.intellij.openapi.wm.impl.SquareStripeButton
+import com.intellij.toolWindow.extendedToolWindowsUi.ToolWindowExtension
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.UIBundle
 import com.intellij.ui.components.JBPanel
@@ -40,8 +41,8 @@ abstract class ToolWindowToolbar(private val isPrimary: Boolean, val anchor: Too
   /**
    * With the ToolWindowExtension the bottomStripe is unused
    */
-  internal abstract val bottomStripe: AbstractDroppableStripe
-  internal abstract val topStripe: AbstractDroppableStripe
+  internal abstract val bottomStripe: StripeV2
+  internal abstract val topStripe: StripeV2
 
   internal abstract val moreButton: MoreSquareStripeButton
 
@@ -134,7 +135,7 @@ abstract class ToolWindowToolbar(private val isPrimary: Boolean, val anchor: Too
     return topStripe.getButtons().find { it.id == toolWindowId } ?: bottomStripe.getButtons().find { it.id == toolWindowId }
   }
 
-  internal open fun getStripeFor(screenPoint: Point): AbstractDroppableStripe? {
+  internal open fun getStripeFor(screenPoint: Point): StripeV2? {
     if (!isShowing) {
       return null
     }

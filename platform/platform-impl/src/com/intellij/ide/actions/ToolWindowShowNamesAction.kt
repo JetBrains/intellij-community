@@ -7,7 +7,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.KeepPopupOnPerform
 import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.toolWindow.ResizeStripeManager
-import com.intellij.toolWindow.ToolWindowExtension
+import com.intellij.toolWindow.extendedToolWindowsUi.ToolWindowExtension
 
 internal class ToolWindowShowNamesAction : DumbAwareToggleAction() {
   init {

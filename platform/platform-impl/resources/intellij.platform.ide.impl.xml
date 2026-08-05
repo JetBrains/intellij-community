@@ -195,7 +195,7 @@
     <extensionPoint qualifiedName="com.intellij.dialogInvocationPlace" beanClass="com.intellij.internal.statistic.collectors.fus.ui.DialogInvocationPlaceEP" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.defaultToolWindowLayout" interface="com.intellij.toolWindow.DefaultToolWindowLayoutExtension" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.toolWindowLayoutProfileProvider" interface="com.intellij.toolWindow.ToolWindowLayoutProfileProvider" dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.toolWindowExtension" interface="com.intellij.toolWindow.ToolWindowExtension" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.toolWindowExtension" interface="com.intellij.toolWindow.extendedToolWindowsUi.ToolWindowExtension" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.projectFrameToolWindowLayout" beanClass="com.intellij.toolWindow.ProjectFrameToolWindowLayoutBean" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.toolWindow.splitContentProvider" beanClass="com.intellij.toolWindow.ToolWindowSplitContentProviderBean" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.toolWindow.ToolWindowSplitContentProvider"/>

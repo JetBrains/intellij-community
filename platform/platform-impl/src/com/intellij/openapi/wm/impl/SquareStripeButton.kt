@@ -25,7 +25,7 @@ import com.intellij.openapi.wm.impl.SquareStripeButton.Companion.createMoveGroup
 import com.intellij.toolWindow.ResizeStripeManager
 import com.intellij.toolWindow.StripeButtonUi
 import com.intellij.toolWindow.ToolWindowEventSource
-import com.intellij.toolWindow.ToolWindowExtension
+import com.intellij.toolWindow.extendedToolWindowsUi.ToolWindowExtension
 import com.intellij.toolWindow.ToolWindowLeftToolbar
 import com.intellij.toolWindow.ToolWindowToolbar
 import com.intellij.ui.ColorUtil
