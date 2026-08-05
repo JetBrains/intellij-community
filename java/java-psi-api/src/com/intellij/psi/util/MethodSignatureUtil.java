@@ -18,7 +18,9 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.PsiTypeParameterList;
 import com.intellij.psi.PsiTypes;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashingStrategy;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +39,7 @@ public final class MethodSignatureUtil {
     new HashingStrategy<MethodSignature>() {
       @Override
       public int hashCode(final MethodSignature signature) {
-        return signature == null ? 0 : signature.hashCode();
+        return signature == null ? 0 : erasedSignatureHashCode(signature);
       }
 
       @Override
@@ -70,11 +72,74 @@ public final class MethodSignatureUtil {
   }
 
   public static boolean areErasedParametersEqual(@NotNull MethodSignature method1, @NotNull MethodSignature method2) {
-    PsiType[] erased1 = method1 instanceof MethodSignatureBase
-                        ? ((MethodSignatureBase)method1).getErasedParameterTypes() : calcErasedParameterTypes(method1);
-    PsiType[] erased2 = method2 instanceof MethodSignatureBase
-                        ? ((MethodSignatureBase)method2).getErasedParameterTypes() : calcErasedParameterTypes(method2);
-    return Arrays.equals(erased1, erased2);
+    PsiType[] erased1 = getErasedParameterTypes(method1);
+    PsiType[] erased2 = getErasedParameterTypes(method2);
+    return Arrays.equals(erased1, erased2) ||
+           differOnlyInTypeParameterBoundsOrder(method1, method2, erased1, erased2) && areSignaturesEqual(method1, method2);
+  }
+
+  /**
+   * The erasure of a type variable is the erasure of its leftmost bound (JLS 4.6), while the bound of a type parameter is an
+   * intersection type whose components may be listed in any order (JLS 8.4.4). Hence, two generic methods which differ only in
+   * the order of the bounds of their type parameters have the same signature, but different erasures; javac accepts such an
+   * override and generates a bridge method for it. Such methods are still override-equivalent, so they must be reported as
+   * erasure-equal, otherwise they end up in different buckets of an erased method signature map.
+   *
+   * @return true if every parameter whose erasure differs between the two signatures is a type parameter of the respective
+   * method, and the two type parameters declare the same bounds in a different order
+   */
+  private static boolean differOnlyInTypeParameterBoundsOrder(@NotNull MethodSignature method1,
+                                                              @NotNull MethodSignature method2,
+                                                              PsiType @NotNull [] erased1,
+                                                              PsiType @NotNull [] erased2) {
+    if (erased1.length != erased2.length) return false;
+    List<PsiTypeParameter> typeParameters1 = Arrays.asList(method1.getTypeParameters());
+    List<PsiTypeParameter> typeParameters2 = Arrays.asList(method2.getTypeParameters());
+    if (typeParameters1.isEmpty() || typeParameters1.size() != typeParameters2.size()) return false;
+    PsiType[] parameterTypes1 = method1.getParameterTypes();
+    PsiType[] parameterTypes2 = method2.getParameterTypes();
+    for (int i = 0; i < erased1.length; i++) {
+      if (Comparing.equal(erased1[i], erased2[i])) continue;
+      int index = typeParameters1.indexOf(resolveTypeParameter(parameterTypes1[i]));
+      if (index < 0 || index != typeParameters2.indexOf(resolveTypeParameter(parameterTypes2[i]))) return false;
+      if (!haveSameIntersectionBound(typeParameters1.get(index), typeParameters2.get(index))) return false;
+    }
+    return true;
+  }
+
+  private static @Nullable PsiTypeParameter resolveTypeParameter(@Nullable PsiType type) {
+    if (!(type instanceof PsiClassType)) return null;
+    return ObjectUtils.tryCast(((PsiClassType)type).resolve(), PsiTypeParameter.class);
+  }
+
+  private static boolean haveSameIntersectionBound(@NotNull PsiTypeParameter typeParameter1, @NotNull PsiTypeParameter typeParameter2) {
+    PsiClassType[] bounds1 = typeParameter1.getExtendsListTypes();
+    PsiClassType[] bounds2 = typeParameter2.getExtendsListTypes();
+    return bounds1.length > 1 && bounds1.length == bounds2.length &&
+           ContainerUtil.newHashSet(bounds1).equals(ContainerUtil.newHashSet(bounds2));
+  }
+
+  /**
+   * @return a hash code of the signature which is compatible with {@link #areErasedParametersEqual}. Only the method name, the
+   * number of parameters and the primitive parameter types are taken into account: the erasure of a reference parameter type may
+   * depend on the order in which the bounds of a type parameter are declared, which does not affect the erased signature.
+   */
+  public static int erasedSignatureHashCode(@NotNull MethodSignature signature) {
+    int hash = signature.getName().hashCode();
+    PsiType[] parameterTypes = signature.getParameterTypes();
+    hash = 31 * hash + parameterTypes.length;
+    for (int i = 0, length = Math.min(3, parameterTypes.length); i < length; i++) {
+      PsiType type = parameterTypes[i];
+      if (type instanceof PsiPrimitiveType) {
+        hash = 31 * hash + type.hashCode();
+      }
+    }
+    return hash;
+  }
+
+  private static PsiType @NotNull [] getErasedParameterTypes(@NotNull MethodSignature signature) {
+    return signature instanceof MethodSignatureBase
+           ? ((MethodSignatureBase)signature).getErasedParameterTypes() : calcErasedParameterTypes(signature);
   }
 
   public static PsiType @NotNull [] calcErasedParameterTypes(@NotNull MethodSignature signature) {
@@ -134,7 +199,14 @@ public final class MethodSignatureUtil {
                                                    @NotNull MethodSignature superSignature,
                                                    final PsiSubstitutor unifyingSubstitutor) {
     if (unifyingSubstitutor == null) return false;
-    if (!areErasedParametersEqual(subSignature, superSignature)) return false;
+    // Signatures may be equal (JLS 8.4.2) even when their erasures are not, see areErasedParametersEqual; otherwise unequal
+    // erasures are a cheap way to tell the signatures apart.
+    PsiType[] subErased = getErasedParameterTypes(subSignature);
+    PsiType[] superErased = getErasedParameterTypes(superSignature);
+    if (!Arrays.equals(subErased, superErased) &&
+        !differOnlyInTypeParameterBoundsOrder(subSignature, superSignature, subErased, superErased)) {
+      return false;
+    }
 
     final PsiType[] subParameterTypes = subSignature.getParameterTypes();
     final PsiType[] superParameterTypes = superSignature.getParameterTypes();

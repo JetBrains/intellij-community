@@ -197,7 +197,10 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   } 
   public void testMethodSignatureEquality() {
     doTest();
-  }    
+  }
+  public void testTypeParameterBoundsOrder() {
+    doTest();
+  }
   public void testInnerClassRef() {
     doTest();
   }             
