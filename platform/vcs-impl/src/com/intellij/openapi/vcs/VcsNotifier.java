@@ -10,12 +10,12 @@ import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.NotificationsManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.Cancellation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts.NotificationContent;
 import com.intellij.openapi.util.NlsContexts.NotificationTitle;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.vcs.console.VcsConsoleTabService;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -27,22 +27,6 @@ import static com.intellij.util.ui.UIUtil.BR;
 import static com.intellij.util.ui.UIUtil.LINE_SEPARATOR;
 
 public class VcsNotifier {
-
-  /**
-   * @deprecated Use {@link #importantNotification()} instead
-   */
-  @Deprecated
-  public static final NotificationGroup IMPORTANT_ERROR_NOTIFICATION =
-    Cancellation.forceNonCancellableSectionInClassInitializer(() -> importantNotification());
-
-  /**
-   * @deprecated Use {@link #standardNotification()} instead
-   */
-  @Deprecated
-  public static final NotificationGroup STANDARD_NOTIFICATION =
-    Cancellation.forceNonCancellableSectionInClassInitializer(() -> standardNotification());
-
-
   /**
    * {@link NotificationDisplayType#TOOL_WINDOW} balloon shown near the {@link com.intellij.openapi.wm.ToolWindowId#VCS} toolwindow button
    */
@@ -57,11 +41,13 @@ public class VcsNotifier {
     return NotificationGroupManager.getInstance().getNotificationGroup("Vcs Notifications");
   }
 
+  public static final String IMPORTANT_NOTIFICATION_GROUP_ID = "Vcs Important Notifications";
+
   /**
    * {@link NotificationDisplayType#STICKY_BALLOON} notification that is NOT hidden automatically on timer
    */
   public static @NotNull NotificationGroup importantNotification() {
-    return NotificationGroupManager.getInstance().getNotificationGroup("Vcs Important Notifications");
+    return NotificationGroupManager.getInstance().getNotificationGroup(IMPORTANT_NOTIFICATION_GROUP_ID);
   }
 
   /**
@@ -71,13 +57,13 @@ public class VcsNotifier {
     return NotificationGroupManager.getInstance().getNotificationGroup("Vcs Silent Notifications");
   }
 
-
   protected final @NotNull Project myProject;
 
   public static @NotNull VcsNotifier getInstance(@NotNull Project project) {
     return project.getService(VcsNotifier.class);
   }
 
+  @ApiStatus.Internal
   public VcsNotifier(@NotNull Project project) {
     myProject = project;
   }
