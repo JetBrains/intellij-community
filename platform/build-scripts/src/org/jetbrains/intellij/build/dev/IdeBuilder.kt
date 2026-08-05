@@ -669,7 +669,7 @@ internal suspend fun createProductProperties(
   }
 
   val className = if (System.getProperty("intellij.build.minimal").toBoolean()) {
-    "org.jetbrains.intellij.build.IjVoidProperties"
+    "org.jetbrains.intellij.build.IjLightProperties"
   }
   else {
     productConfiguration.className
