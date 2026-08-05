@@ -6,6 +6,7 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -70,6 +71,37 @@ class TerminalOutputPatternExtensionsTest : BasePlatformTestCase() {
     val expected = outputPattern("<s1>hello</s1> <s2>world</s2>\nfoo<cursor>bar")
     model.updateContent(0, expected)
     assertThat(model.toPattern()).isEqualTo(expected)
+  }
+
+  @Test
+  fun `model matches text with link`() = runOnEdt {
+    val model = TerminalTestUtil.createOutputModel()
+    model.updateContent(0, outputPattern("hello <a href=\"https://example.com\">world</a><cursor>"))
+    model.assertMatches(outputPattern("hello <a href=\"https://example.com\">world</a><cursor>"))
+  }
+
+  @Test
+  fun `model does not match different link uri`() = runOnEdt {
+    val model = TerminalTestUtil.createOutputModel()
+    model.updateContent(0, outputPattern("<cursor><a href=\"https://a\">hello</a>"))
+    assertThat(model.matches(outputPattern("<cursor><a href=\"https://b\">hello</a>"))).isFalse()
+  }
+
+  @Test
+  fun `model toPattern round-trip with link`() = runOnEdt {
+    val model = TerminalTestUtil.createOutputModel()
+    val expected = outputPattern("<s1>hi</s1> <a href=\"https://example.com\">there</a><cursor>!")
+    model.updateContent(0, expected)
+    assertThat(model.toPattern()).isEqualTo(expected)
+  }
+
+  @Test
+  fun `replaceContent with a pattern containing a link throws`() = runOnEdt {
+    val model = TerminalTestUtil.createOutputModel()
+    model.updateContent(0, outputPattern("hello world"))
+    assertThatThrownBy {
+      model.replaceContent(model.startOffset, model.textLength, outputPattern("<a href=\"https://example.com\">goodbye</a>"))
+    }.isInstanceOf(IllegalArgumentException::class.java)
   }
 
   @Test
