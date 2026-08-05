@@ -264,7 +264,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       return getQualifiedReferenceType(this, context, null);
     }
 
-    return PyTypeUtil.derefOrUnknown(getTypeFromTargets(context));
+    return getTypeFromTargets(context);
   }
 
   public static @Nullable PyType getQualifiedReferenceType(@NotNull PyReferenceExpression refExpr,
@@ -337,7 +337,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     };
   }
 
-  private @Nullable Ref<PyType> getTypeFromTargets(@NotNull TypeEvalContext context) {
+  private @Nullable PyType getTypeFromTargets(@NotNull TypeEvalContext context) {
     final PyResolveContext resolveContext = PyResolveContext.defaultContext(context);
 
     final PsiFile realFile = FileContextUtil.getContextFile(this);
@@ -345,13 +345,13 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       return getTypeFromTargets(PyUtil.multiResolveTopPriority(getReference(resolveContext)), context, this);
     }
 
-    return null;
+    return PyAnyType.getAny();
   }
 
-  private static @Nullable Ref<PyType> getTypeFromTargets(@NotNull List<@NotNull PsiElement> targets,
-                                                          @NotNull TypeEvalContext context,
-                                                          @NotNull PyQualifiedExpression anchor) {
-    final List<Ref<PyType>> members = new ArrayList<>();
+  private static @Nullable PyType getTypeFromTargets(@NotNull List<@NotNull PsiElement> targets,
+                                                     @NotNull TypeEvalContext context,
+                                                     @NotNull PyQualifiedExpression anchor) {
+    final List<PyType> members = new ArrayList<>();
     final var overloadMembers = new ArrayList<>();
     for (PsiElement target : targets) {
       if (target == anchor) {
@@ -370,10 +370,12 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       if (Ref.deref(member) instanceof PyOverloadType && target instanceof PyFunction function) {
         overloadMembers.addAll(PyiUtil.getOverloads(function, context));
       }
-      members.add(member);
+      if (member != null) {
+        members.add(member.get());
+      }
     }
 
-    return members.stream().collect(PyTypeUtil.toUnionFromRef());
+    return PyUnionType.union(members);
   }
 
   private static @NotNull ControlFlowTypeResult doGetQualifiedReferenceTypeByControlFlow(@NotNull PyReferenceExpression refExpr,
@@ -469,10 +471,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     var resolveResults = type.resolveMember(attrName, anchor, AccessDirection.READ, PyResolveContext.defaultContext(context));
     if (resolveResults != null) {
       List<PsiElement> resolvedElements = PyUtil.filterTopPriorityElements(resolveResults);
-      Ref<PyType> result = getTypeFromTargets(resolvedElements, context, anchor);
-      if (result != null) {
-        return result.get();
-      }
+      return getTypeFromTargets(resolvedElements, context, anchor);
     }
     return PyAnyType.getUnknown();
   }
@@ -624,15 +623,13 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     // Pre-warm the types of earlier definitions so the recursive evaluation below stays shallow (PY-89956).
     warmEarlierDefinitionTypes(context, anchor, flow, name, thisInstruction.num());
 
-    // null means empty set of possible types, Ref(null) means Any
-    final @Nullable Ref<PyType> typeOfEarlierDefinitions = StreamEx.of(defs)
+    // If earlier definitions were not found, variable may be unbound. Choose Unknown as type.
+    PyType deducedType = StreamEx.of(defs)
       .filter(def -> def.num() < thisInstruction.num())
       .map(def -> getTypeFromInstruction(context, anchor, def))
       .nonNull()
-      .collect(PyTypeUtil.toUnionFromRef());
-
-    // If earlier definitions were not found, variable may be unbound. Choose Unknown as type.
-    PyType deducedType = PyTypeUtil.derefOrUnknown(typeOfEarlierDefinitions);
+      .map(r -> Objects.requireNonNull(r).get())
+      .collect(PyTypeUtil.toUnion());
 
     final boolean foundPrefixCall = defsResult.foundPrefixCall();
     final var laterDefs = StreamEx.of(defs).filter(def -> def.num() > thisInstruction.num()).toList();
@@ -643,30 +640,27 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     for (int i = 0; i < 50; i++) {
       final var t = deducedType;
       final @Nullable Ref<PyType> typeOfLaterDefinitions = context.assumeType(anchor, deducedType, ctx -> {
-        var collect = new ArrayList<Ref<PyType>>();
+        var types = new ArrayList<PyType>();
         for (var def : laterDefs) {
           PyType type = null;
           if (t != null && ctx instanceof TypeEvalContextImpl.AssumptionContext assumptionCtx) {
             type = assumptionCtx.getKnownTypeForInstruction(anchor, t, def.num());
           }
-          @Nullable Ref<PyType> typeRef;
           if (type == null) {
-            typeRef = getTypeFromInstruction(ctx, anchor, def);
+            @Nullable Ref<PyType> typeRef = getTypeFromInstruction(ctx, anchor, def);
             if (typeRef != null) {
               PyType typeFromInstruction = typeRef.get();
               if (t != null && typeFromInstruction != null && ctx instanceof TypeEvalContextImpl.AssumptionContext assumptionCtx) {
                 assumptionCtx.setKnownTypeForInstruction(anchor, t, def.num(), typeFromInstruction);
               }
+              types.add(typeFromInstruction);
             }
           }
           else {
-            typeRef = Ref.create(type);
-          }
-          if (typeRef != null) {
-            collect.add(typeRef);
+            types.add(type);
           }
         }
-        return collect.stream().collect(PyTypeUtil.toUnionFromRef());
+        return types.isEmpty() ? null : Ref.create(PyUnionType.union(types));
       });
 
       if (typeOfLaterDefinitions == null) {
@@ -752,8 +746,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     final PyElement element = augAssignment != null ? augAssignment : anchor;
     final PyDefUseUtil.LatestDefsResult defsResult = PyDefUseUtil.getLatestDefs(scopeOwner, name, element, true, false, context);
     final List<Instruction> defs = defsResult.defs();
-    // null means empty set of possible types, Ref(null) means Any
-    final @Nullable Ref<PyType> combinedType = StreamEx.of(defs)
+    final PyType combinedType = StreamEx.of(defs)
       .map(instr -> {
         if (instr.getElement() == anchor) {
           // exclude recursive definition (example: type of 'i++' inside a loop)
@@ -783,8 +776,9 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
         return null;
       })
       .nonNull()
-      .collect(PyTypeUtil.toUnionFromRef());
-    return new ControlFlowTypeResult(PyTypeUtil.derefOrUnknown(combinedType), defsResult.foundPrefixCall());
+      .map(r -> Objects.requireNonNull(r).get())
+      .collect(PyTypeUtil.toUnion());
+    return new ControlFlowTypeResult(combinedType, defsResult.foundPrefixCall());
   }
 
   public static @Nullable Ref<PyType> getReferenceTypeFromProviders(@NotNull PsiElement target,
