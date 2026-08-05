@@ -4,7 +4,7 @@ package com.intellij.platform.scopes
 import com.intellij.ide.rpc.DataContextId
 import com.intellij.ide.util.scopeChooser.ScopesFilterConditionType
 import com.intellij.platform.project.ProjectId
-import com.intellij.platform.rpc.RemoteApiProviderService
+import com.intellij.platform.rpc.lite.LiteRemoteApiProviderService
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.remoteApiDescriptor
@@ -29,7 +29,8 @@ interface ScopeModelRemoteApi : RemoteApi<Unit> {
   companion object {
     @JvmStatic
     suspend fun getInstance(): ScopeModelRemoteApi {
-      return RemoteApiProviderService.resolve(remoteApiDescriptor<ScopeModelRemoteApi>())
+      // TODO: IJPL-252054
+      return LiteRemoteApiProviderService.awaitConnectionAndResolve(remoteApiDescriptor<ScopeModelRemoteApi>())
     }
   }
 }
