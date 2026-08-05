@@ -20,7 +20,6 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executor
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.RejectedExecutionException
-import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 
 @ApiStatus.Internal
@@ -42,6 +41,11 @@ open class StatisticsFileEventLogger(
   private val eventWriter: FeatureUsageLogWriter<LogEvent>,
   private val eventLogDir: Path
 ) : StatisticsEventLogger, Disposable {
+  /**
+   * On the IntelliJ platform we currently must run event logging on a single thread because the `preEventWrite` hook
+   * in [com.intellij.internal.statistic.eventLog.validator.storage.FusComponentProvider] depends on the order of events.
+   * If we can do without the event timestamps of previous events, we could technically run event logging on a coroutine dispatcher.
+   */
   protected val logExecutor: ExecutorService = AppExecutorUtil.createBoundedApplicationPoolExecutor("StatisticsFileEventLogger", 1)
   private val escapeCharsInData: Boolean = StatisticsRecorderUtil.isCharsEscapingRequired(recorderId)
 
