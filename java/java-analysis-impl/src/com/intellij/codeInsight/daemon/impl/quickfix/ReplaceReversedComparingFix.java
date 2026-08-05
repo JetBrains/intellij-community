@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.CommonIntentionAction;
 import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInspection.CommonQuickFixBundle;
@@ -38,18 +39,25 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.Consumer;
 
 /**
- * Replaces {@code Comparator.comparing(keyExtractor).reversed()} with
- * {@code Comparator.comparing(keyExtractor, Comparator.reverseOrder())}.
- * <p>
- * The former is a common source of confusing inference errors: {@code reversed()} turns the {@code comparing()} call into
- * a standalone expression, so the type of the key extractor cannot be inferred from the target type anymore.
- * The latter keeps {@code comparing()} in the poly expression position, so the inference succeeds.
+ * Replaces a {@code reversed()} call on a comparator factory with an equivalent call passing
+ * {@code Comparator.reverseOrder()} to the factory:
+ * <ul>
+ *   <li>{@code Comparator.comparing(keyExtractor).reversed()} &rarr; {@code Comparator.comparing(keyExtractor, Comparator.reverseOrder())}</li>
+ *   <li>{@code Map.Entry.comparingByKey().reversed()} &rarr; {@code Map.Entry.comparingByKey(Comparator.reverseOrder())}</li>
+ *   <li>{@code Map.Entry.comparingByValue().reversed()} &rarr; {@code Map.Entry.comparingByValue(Comparator.reverseOrder())}</li>
+ * </ul>
+ * The former shape is a common source of confusing inference errors: {@code reversed()} turns the factory call into
+ * a standalone expression, so its type arguments cannot be inferred from the target type anymore.
+ * The latter keeps the factory call in the poly expression position, so the inference succeeds.
  */
 public final class ReplaceReversedComparingFix extends PsiUpdateModCommandAction<PsiMethodCallExpression> {
   private static final CallMatcher COMPARATOR_REVERSED =
     CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_COMPARATOR, "reversed").parameterCount(0);
   private static final CallMatcher COMPARATOR_COMPARING =
     CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_COMPARATOR, "comparing").parameterCount(1);
+  private static final CallMatcher ENTRY_COMPARING =
+    CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_MAP_ENTRY, "comparingByKey", "comparingByValue").parameterCount(0);
+  private static final CallMatcher COMPARATOR_FACTORY = CallMatcher.anyOf(COMPARATOR_COMPARING, ENTRY_COMPARING);
 
   private ReplaceReversedComparingFix(@NotNull PsiMethodCallExpression reversedCall) {
     super(reversedCall);
@@ -57,27 +65,29 @@ public final class ReplaceReversedComparingFix extends PsiUpdateModCommandAction
 
   @Override
   public @Nls @NotNull String getFamilyName() {
-    return CommonQuickFixBundle.message("fix.replace.with.x", "Comparator.comparing(..., Comparator.reverseOrder())");
+    return QuickFixBundle.message("replace.reversed.comparator.family.name");
   }
 
   @Override
   protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiMethodCallExpression reversedCall) {
-    if (!fixesTheCall(reversedCall)) return null;
-    return Presentation.of(getFamilyName()).withPriority(PriorityAction.Priority.HIGH);
+    PsiMethodCallExpression factoryCall = getFactoryCall(reversedCall);
+    if (factoryCall == null || !fixesTheCall(reversedCall)) return null;
+    return Presentation.of(CommonQuickFixBundle.message("fix.replace.with.x", replacementDescription(factoryCall)))
+      .withPriority(PriorityAction.Priority.HIGH);
   }
 
   @Override
   protected void invoke(@NotNull ActionContext context, @NotNull PsiMethodCallExpression reversedCall, @NotNull ModPsiUpdater updater) {
-    PsiMethodCallExpression comparingCall = getComparingCall(reversedCall);
-    if (comparingCall == null) return;
+    PsiMethodCallExpression factoryCall = getFactoryCall(reversedCall);
+    if (factoryCall == null) return;
     CommentTracker ct = new CommentTracker();
-    ct.markUnchanged(comparingCall);
-    PsiElement result = ct.replaceAndRestoreComments(reversedCall, replacementText(comparingCall));
+    ct.markUnchanged(factoryCall);
+    PsiElement result = ct.replaceAndRestoreComments(reversedCall, replacementText(factoryCall));
     JavaCodeStyleManager.getInstance(context.project()).shortenClassReferences(result);
   }
 
   /**
-   * Registers the fix for every argument having the {@code comparing(...).reversed()} shape.
+   * Registers the fix for every argument having the {@code comparatorFactory(...).reversed()} shape.
    * Whether the replacement actually makes the call compile is checked lazily,
    * in {@link #getPresentation(ActionContext, PsiMethodCallExpression)}.
    *
@@ -91,30 +101,36 @@ public final class ReplaceReversedComparingFix extends PsiUpdateModCommandAction
     PsiExpression[] arguments = anchor instanceof PsiExpression argument && argument.getParent() == list
                                 ? new PsiExpression[]{argument} : list.getExpressions();
     for (PsiExpression expression : arguments) {
-      if (PsiUtil.skipParenthesizedExprDown(expression) instanceof PsiMethodCallExpression call && getComparingCall(call) != null) {
+      if (PsiUtil.skipParenthesizedExprDown(expression) instanceof PsiMethodCallExpression call && getFactoryCall(call) != null) {
         sink.accept(new ReplaceReversedComparingFix(call));
       }
     }
   }
 
-  private static @Nullable PsiMethodCallExpression getComparingCall(@NotNull PsiMethodCallExpression reversedCall) {
+  private static @Nullable PsiMethodCallExpression getFactoryCall(@NotNull PsiMethodCallExpression reversedCall) {
     if (!COMPARATOR_REVERSED.test(reversedCall)) return null;
-    PsiMethodCallExpression comparingCall = MethodCallUtils.getQualifierMethodCall(reversedCall);
-    return COMPARATOR_COMPARING.test(comparingCall) ? comparingCall : null;
+    PsiMethodCallExpression factoryCall = MethodCallUtils.getQualifierMethodCall(reversedCall);
+    return COMPARATOR_FACTORY.test(factoryCall) ? factoryCall : null;
   }
 
-  private static @NotNull String replacementText(@NotNull PsiMethodCallExpression comparingCall) {
-    PsiExpression keyExtractor = comparingCall.getArgumentList().getExpressions()[0];
-    return comparingCall.getMethodExpression().getText() + "(" + keyExtractor.getText() + ", " +
+  private static @NotNull String replacementDescription(@NotNull PsiMethodCallExpression factoryCall) {
+    if (COMPARATOR_COMPARING.test(factoryCall)) return "Comparator.comparing(..., Comparator.reverseOrder())";
+    return "Map.Entry." + factoryCall.getMethodExpression().getReferenceName() + "(Comparator.reverseOrder())";
+  }
+
+  private static @NotNull String replacementText(@NotNull PsiMethodCallExpression factoryCall) {
+    PsiExpression[] arguments = factoryCall.getArgumentList().getExpressions();
+    String keyExtractor = arguments.length == 0 ? "" : arguments[0].getText() + ", ";
+    return factoryCall.getMethodExpression().getText() + "(" + keyExtractor +
            CommonClassNames.JAVA_UTIL_COMPARATOR + ".reverseOrder())";
   }
 
   /**
-   * @return true if the supplied call has the {@code comparing(...).reversed()} shape,
+   * @return true if the supplied call has the {@code comparatorFactory(...).reversed()} shape,
    * and performing the replacement removes all the compilation errors from the enclosing call
    */
   private static boolean fixesTheCall(@NotNull PsiMethodCallExpression reversedCall) {
-    if (getComparingCall(reversedCall) == null) return false;
+    if (getFactoryCall(reversedCall) == null) return false;
     PsiExpression argument = reversedCall;
     while (argument.getParent() instanceof PsiParenthesizedExpression parenthesized) {
       argument = parenthesized;
@@ -128,10 +144,10 @@ public final class ReplaceReversedComparingFix extends PsiUpdateModCommandAction
     if (listCopy == null) return false;
     PsiExpression argumentCopy = PsiUtil.skipParenthesizedExprDown(listCopy.getExpressions()[index]);
     if (!(argumentCopy instanceof PsiMethodCallExpression reversedCallCopy)) return false;
-    PsiMethodCallExpression comparingCallCopy = getComparingCall(reversedCallCopy);
-    if (comparingCallCopy == null) return false;
+    PsiMethodCallExpression factoryCallCopy = getFactoryCall(reversedCallCopy);
+    if (factoryCallCopy == null) return false;
     PsiExpression replacement = JavaPsiFacade.getElementFactory(call.getProject())
-      .createExpressionFromText(replacementText(comparingCallCopy), argumentCopy);
+      .createExpressionFromText(replacementText(factoryCallCopy), argumentCopy);
     argumentCopy.replace(replacement);
     if (hasErrors(callCopy)) return false;
     // the copy is detached from its original context, so the compatibility with the expected type must be checked separately
