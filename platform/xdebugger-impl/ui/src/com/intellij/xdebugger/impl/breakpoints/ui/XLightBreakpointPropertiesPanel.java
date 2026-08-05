@@ -370,18 +370,9 @@ public class XLightBreakpointPropertiesPanel implements XSuspendPolicyPanel.Dele
 
     XBreakpointCustomPropertiesPanel customTopPropertiesPanel = breakpointType.createCustomTopPropertiesPanel(project);
     if (customTopPropertiesPanel != null && (myShowAllOptions || isVisibleOnPopup(customTopPropertiesPanel))) {
-      myCustomTopPropertiesPanelWrapper.add(customTopPropertiesPanel.getComponent(), BorderLayout.CENTER);
+      myCustomTopMostPropertiesPanelWrapper.add(customTopPropertiesPanel.getComponent(), BorderLayout.CENTER);
       myCustomPanels.add(customTopPropertiesPanel);
-    }
-    else {
-      myCustomTopPropertiesPanelWrapper.getParent().remove(myCustomTopPropertiesPanelWrapper);
-    }
-
-    XBreakpointCustomPropertiesPanel customTopMostPropertiesPanel = breakpointType.createCustomTopMostPropertiesPanel(project);
-    if (customTopMostPropertiesPanel != null && (myShowAllOptions || isVisibleOnPopup(customTopMostPropertiesPanel))) {
-      myCustomTopMostPropertiesPanelWrapper.add(customTopMostPropertiesPanel.getComponent(), BorderLayout.CENTER);
-      myCustomPanels.add(customTopMostPropertiesPanel);
-      if (customTopMostPropertiesPanel.hidesBreakpointNameLabel()) {
+      if (customTopPropertiesPanel.hidesBreakpointNameLabel()) {
         // The panel opted to identify the breakpoint itself, so the generic name/description label is redundant.
         myBreakpointNameLabel.setVisible(false);
       }
