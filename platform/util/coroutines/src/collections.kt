@@ -130,7 +130,7 @@ suspend fun <X> Collection<X>.forEachConcurrent(
 @OptIn(ExperimentalTypeInference::class)
 suspend fun <T, R> Collection<T>.transformConcurrent(
   concurrency: Int = DEFAULT_CONCURRENCY,
-  @BuilderInference action: suspend TransformCollector<R>.(T) -> Unit,
+  action: suspend TransformCollector<R>.(T) -> Unit,
 ): Collection<R> {
   require(concurrency > 0)
   return channelFlow {
