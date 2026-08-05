@@ -656,13 +656,6 @@ final class RefreshWorker {
       }
     }
 
-    //if (scannedChildren == null && attributes.isDirectory()) {
-    //  var fakeChild = new FakeVirtualFile(parent, childName);
-    //  if (!parent.getFileSystem().hasChildren(fakeChild)) {
-    //    scannedChildren = new ScannedChildren(ChildInfo.EMPTY_ARRAY, true);
-    //  }
-    //}
-
     ChildInfo[] children = scannedChildren == null ? null : scannedChildren.children();
     boolean childrenComplete = scannedChildren != null && scannedChildren.childrenComplete();
     events.add(new VFileCreateEvent(REQUESTOR, parent, childName, attributes.isDirectory(), attributes, symlinkTarget, children, childrenComplete));

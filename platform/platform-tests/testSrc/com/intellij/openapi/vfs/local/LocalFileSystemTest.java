@@ -5,6 +5,7 @@ import com.intellij.core.CoreBundle;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeCoreBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.util.SystemInfo;
@@ -73,6 +74,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -1001,6 +1003,68 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
     );
   }
 
+  @Test
+  public void testRefreshNioFilesRefreshesMissingFileOutsideReadAction() throws IOException {
+    var directory = createLoadedDirectory();
+    var missingFile = directory.toNioPath().resolve("missing-file");
+    var newFile = Files.createFile(directory.toNioPath().resolve("new-file"));
+    assertThat(missingFile).doesNotExist();
+    assertNull(directory.findChild("new-file"));
+
+    var finishRunnableWasRun = new AtomicBoolean();
+    Runnable myFinishRunnable = () -> finishRunnableWasRun.set(true);
+    myFS.refreshNioFiles(List.of(missingFile, newFile), false, false, myFinishRunnable);
+
+    assertTrue(finishRunnableWasRun.get());
+    assertNotNull(directory.findChild("new-file"));
+  }
+
+  @Test
+  public void testRefreshNioFilesDoesNotRefreshMissingFileInsideReadAction() {
+    var directory = createLoadedDirectory();
+    var missingFile = directory.toNioPath().resolve("missing-file");
+    assertThat(missingFile).doesNotExist();
+
+    ReadAction.runBlocking(() -> {
+      assertTrue(ApplicationManager.getApplication().holdsReadLock());
+      ((LocalFileSystemImpl)myFS).refreshNioFilesInternal(List.of(missingFile));
+    });
+  }
+
+  @Test
+  public void testRefreshAndFindChildRefreshesFileNotCachedInVfs() throws IOException {
+    var directory = createLoadedDirectory();
+    var newFile = Files.createFile(directory.toNioPath().resolve("new-file"));
+    assertNull(directory.findChild("new-file"));
+
+    assertNotNull(directory.refreshAndFindChild("new-file"));
+    assertEquals(newFile, requireNonNull(directory.findChild("new-file")).toNioPath());
+  }
+
+  @Test
+  public void testRefreshAndFindChildRefreshesMissingFileOutsideReadAction() {
+    var directory = createLoadedDirectory();
+
+    assertNull(directory.refreshAndFindChild("missing-file"));
+  }
+
+  @Test
+  public void testRefreshAndFindChildDoesNotRefreshMissingFileInsideReadAction() {
+    var directory = createLoadedDirectory();
+
+    ReadAction.runBlocking(() -> {
+      assertTrue(ApplicationManager.getApplication().holdsReadLock());
+      assertNull(directory.refreshAndFindChild("missing-file"));
+    });
+  }
+
+  private VirtualDirectoryImpl createLoadedDirectory() {
+    var directory = (VirtualDirectoryImpl)myFS.refreshAndFindFileByNioFile(tempDir.newDirectoryPath("directory"));
+    assertNotNull(directory);
+    directory.getChildren();
+    return directory;
+  }
+
   private <T> void testRefreshFiles(
     Function<String, T> createDir,
     Function<String, T> createFile,
@@ -1044,7 +1108,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
     assertNotNull(findFile.apply(newFile));
     assertNotNull(findFile.apply(newFile2));
     assertNotNull(findFile.apply(deepFile));
-    assertThat(names).containsExactly("new_file.txt", "new_file_2.txt", "a");
+    assertThat(names).containsExactlyInAnyOrder("new_file.txt", "new_file_2.txt", "a");
     assertEquals(1, invocationsCount[0]);
   }
 

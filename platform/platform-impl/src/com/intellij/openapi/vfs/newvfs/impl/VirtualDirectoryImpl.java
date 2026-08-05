@@ -32,6 +32,7 @@ import com.intellij.psi.impl.PsiCachedValue;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.keyFMap.KeyFMap;
+import com.intellij.util.ui.EDT;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntSet;
@@ -55,7 +56,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.BiConsumer;
 
-import static com.intellij.openapi.vfs.newvfs.events.VFileEvent.REFRESH_REQUESTOR;
 import static com.intellij.util.SystemProperties.getBooleanProperty;
 import static com.intellij.util.SystemProperties.getIntProperty;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -421,43 +421,32 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   private @Nullable VirtualFileSystemEntry createChildAndFireCreationEvent(@NotNull String childName) {
     FakeVirtualFile fake = new FakeVirtualFile(this, childName);
+
+    // If file does not exist, do not run vfs refresh. It is required to avoid exception when running under read lock.
+    // Trying to do vfs refresh under read lock will result in exception, see [com.intellij.openapi.vfs.newvfs.RefreshQueueImpl.execute]
+    // Unfortunately, this method does not check for read action at the beginning, and does not call vfs refresh in all cases.
+    // So this check is required to keep compatibility, and keep old code running successfully
+    if ((ApplicationManager.getApplication().holdsReadLock() || EDT.isCurrentThreadEdt()) && fileSystem.getAttributes(fake) == null) {
+      return null;
+    }
+
     String canonicallyCasedName = fileSystem.getCanonicallyCasedName(fake);
 
-    VFileCreateEvent event = createCreateEvent(this, fake, canonicallyCasedName, fileSystem);
-
-    if (event == null) {
-      return null; // file does not exist on disk
-    }
-    RefreshQueue.getInstance().processEvents(/*async: */ false, List.of(event));
+    var session = RefreshQueue.getInstance().createSession(false, false, null);
+    session.addNewChildren(this, Collections.singleton(childName));
+    session.launch();
 
     VirtualFileSystemEntry child = findChild(canonicallyCasedName);
     if (child == null) {
-      LOG.warn(this + "/[" + childName + "|" + canonicallyCasedName + "]: exists (attributes: " + fileSystem.getAttributes(fake) + "), " +
-               "but somehow still absent after refresh (adopted: " + directoryData.getAdoptedNames() + ")");
+      var attributes = fileSystem.getAttributes(fake);
+      if (attributes != null) {
+        LOG.warn(this + "/[" + childName + "|" + canonicallyCasedName + "]: exists (attributes: " + attributes + "), " +
+                 "but somehow still absent after refresh (adopted: " + directoryData.getAdoptedNames() + ")");
+      }
     }
     return child;
   }
 
-  public static @Nullable VFileCreateEvent createCreateEvent(
-    @NotNull VirtualFile directory,
-    @NotNull FakeVirtualFile fakeChild,
-    @NotNull String canonicallyCasedName,
-    @NotNull NewVirtualFileSystem fileSystem
-  ) {
-    if (!directory.isDirectory()) {
-      throw new IllegalArgumentException("directory[" + directory + "] must be a directory");
-    }
-    var attributes = fileSystem.getAttributes(fakeChild);
-    if (attributes == null) {
-      return null;
-    }
-
-    var isDirectory = attributes.isDirectory();
-    var isEmptyDirectory = isDirectory && !fileSystem.hasChildren(fakeChild);
-    var symlinkTarget = attributes.isSymLink() ? fileSystem.resolveSymLink(fakeChild) : null;
-    var children = isEmptyDirectory ? ChildInfo.EMPTY_ARRAY : null;
-    return new VFileCreateEvent(REFRESH_REQUESTOR, directory, canonicallyCasedName, isDirectory, attributes, symlinkTarget, children);
-  }
 
   private void updateCaseSensitivityIfUnknown(@NotNull String childName) {
     PersistentFSImpl pFS = owningPersistentFS();

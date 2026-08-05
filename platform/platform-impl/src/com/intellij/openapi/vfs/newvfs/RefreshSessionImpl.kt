@@ -185,7 +185,6 @@ internal class RefreshSessionImpl internal constructor(
 
     var count = 0
     val events = ArrayList<VFileEvent?>()
-    events.addAll(myEvents)
     withPrefetchForRemoteRoots(refreshRoots) {
       do {
         if (myCanceled) break

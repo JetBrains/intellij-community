@@ -5,13 +5,16 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel
 import com.intellij.configurationStore.LISTEN_SCHEME_VFS_CHANGES_IN_TEST_MODE
 import com.intellij.configurationStore.StoreReloadManager
 import com.intellij.ide.highlighter.ProjectFileType
+import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.findVirtualFileOrDirectory
 import com.intellij.profile.codeInspection.PROFILE_DIR
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.project.stateStore
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.InitInspectionRule
+import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.createOrLoadProject
@@ -184,6 +187,8 @@ class ProjectInspectionManagerTest {
       assertThat(profileManager.currentProfile.name).isEqualTo("Project Default")
 
       val projectConfigDir = project.stateStore.directoryStorePath!!
+      // .idea must be indexable for vfs refresh to load its children
+      PsiTestUtil.addModule(project, JavaModuleType.getModuleType(), "test", projectConfigDir.parent.findVirtualFileOrDirectory()!!)
 
       // test creation of .idea/inspectionProfiles dir, not .idea itself
       projectConfigDir.createDirectories()
