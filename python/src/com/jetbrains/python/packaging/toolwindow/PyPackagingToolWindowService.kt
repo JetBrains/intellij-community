@@ -10,6 +10,7 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.module.Module
@@ -91,7 +92,10 @@ import org.jetbrains.annotations.Nls
 
 @Service(Service.Level.PROJECT)
 internal class PyPackagingToolWindowService(val project: Project, val serviceScope: CoroutineScope) : Disposable {
-  private var toolWindowPanel: PyPackagingToolWindowPanel? = null
+  // Written on EDT when the tool window builds its content, read from every background coroutine
+  // here. Volatile like `sdkContext` / `installedPackages`, otherwise a refresh already in flight
+  // when the panel is attached can still observe `null` and silently drop its render.
+  @Volatile private var toolWindowPanel: PyPackagingToolWindowPanel? = null
   @Volatile private var installedPackages: List<DisplayablePackage> = emptyList()
   private var searchJob: Job? = null
   private var currentQuery: String = ""
@@ -121,8 +125,22 @@ internal class PyPackagingToolWindowService(val project: Project, val serviceSco
   fun initialize(toolWindowPanel: PyPackagingToolWindowPanel) {
     this.toolWindowPanel = toolWindowPanel
     serviceScope.launch(Dispatchers.IO) {
-      val sdk = currentSdk ?: readAction { project.modules.firstNotNullOfOrNull { it.pythonSdk } }
-      initForSdk(sdk)
+      val sdkToOpenOn = resolvePackagesToolWindowSdk(project)
+      val boundSdk = sdkContext?.sdk
+      if (shouldReplayBoundSdk(boundSdk, sdkToOpenOn)) {
+        checkNotNull(boundSdk)
+        publishSdkToPanel(boundSdk)
+        withContext(Dispatchers.EDT) {
+          toolWindowPanel.contentVisible = true
+          // `installedPackages` is already in memory from the earlier binding, so replaying the
+          // active query paints it into the new panel without a second package-manager round-trip.
+          // Its terminal `resetSearch` / `showSearchResult` also clears the loading state that
+          // `publishSdkToPanel` just raised.
+          handleSearch(currentQuery)
+        }
+        return@launch
+      }
+      initForSdk(sdkToOpenOn)
     }
   }
 
@@ -366,6 +384,24 @@ internal class PyPackagingToolWindowService(val project: Project, val serviceSco
     }
   }
 
+  /**
+   * Pushes everything the view derives from the SDK alone: header interpreter path, package-list
+   * header name and loading state, module list selection. Extracted from [initForSdk] because a
+   * panel can be attached *after* the service is already bound to that SDK, in which case
+   * [initForSdk] short-circuits and only this part has to be replayed — see [initialize]
+   * (PY-91300). The presentation is built off EDT: it probes SDK validity.
+   */
+  private suspend fun publishSdkToPanel(sdk: Sdk) {
+    val interpreterPath = sdk.pyInterpreterPresentation().fullName
+    withContext(Dispatchers.EDT) {
+      toolWindowPanel?.let {
+        it.startLoadingSdk(sdk.name)
+        it.setInterpreterPath(interpreterPath)
+        it.syncSdkControllerSelection(sdk)
+      }
+    }
+  }
+
   @ApiStatus.Internal
   suspend fun initForSdk(sdk: Sdk?) {
     if (project.isDisposed) return
@@ -388,13 +424,7 @@ internal class PyPackagingToolWindowService(val project: Project, val serviceSco
       return
     }
 
-    withContext(Dispatchers.EDT) {
-      toolWindowPanel?.let {
-        it.startLoadingSdk(sdk.name)
-        it.setInterpreterPath(sdk.pyInterpreterPresentation().fullName)
-        it.syncSdkControllerSelection(sdk)
-      }
-    }
+    publishSdkToPanel(sdk)
 
     sdkContext = SdkContext(
       sdk = sdk,
@@ -850,3 +880,41 @@ internal class PyPackagingToolWindowService(val project: Project, val serviceSco
     }
   }
 }
+
+/**
+ * The interpreter the Python Packages tool window should open on: the one belonging to the module
+ * that owns the file the user is looking at, falling back to any module's interpreter when the
+ * editor gives no answer.
+ *
+ * Scanning `modules.firstNotNullOfOrNull { it.pythonSdk }` outright is only correct in a
+ * single-module project. Across independent subprojects it picks whichever module happens to come
+ * first, so the tool window opens on a foreign subproject's environment while the user is editing
+ * another one, and only starts agreeing with the editor once the next selection change reaches
+ * `PyPackagingToolWindowService`'s `FileEditorManagerListener` — the "switch between subprojects to
+ * make it refresh" half of PY-91300.
+ */
+internal suspend fun resolvePackagesToolWindowSdk(project: Project): Sdk? = readAction {
+  val selectedFile = FileEditorManager.getInstance(project).selectedFiles.firstOrNull()
+  val selectedModule = selectedFile?.let { ModuleUtilCore.findModuleForFile(it, project) }
+  selectedModule?.let { PythonSdkUtil.findPythonSdk(it) }
+  ?: project.modules.firstNotNullOfOrNull { it.pythonSdk }
+}
+
+/**
+ * Whether a tool window attaching to an already-bound [PyPackagingToolWindowService] should have the
+ * binding replayed into its fresh panel instead of re-binding the service.
+ *
+ * The service is a project service and outlives the tool window, so it can already be bound by the
+ * time a panel is built — the install dialog and the pyproject.toml "+ Add package" inlay call
+ * `initForSdk` directly, and the editor / roots / `PySdkListener` subscriptions keep that binding
+ * fresh. Handing the same SDK back to `initForSdk` would hit its "same SDK" short-circuit and the
+ * new panel would learn nothing at all: no path in the header, no module selection, empty package
+ * tree. Binding and rendering are separate concerns, so the rendering half is replayed explicitly.
+ *
+ * Replaying is only right while the binding agrees with [sdkToOpenOn]. A binding left over from
+ * another subproject has to be replaced instead, or the tool window would open on a foreign
+ * environment — and re-binding is safe there precisely because the SDKs differ, so `initForSdk` has
+ * real work to do (PY-91300).
+ */
+internal fun shouldReplayBoundSdk(boundSdk: Sdk?, sdkToOpenOn: Sdk?): Boolean =
+  boundSdk != null && (sdkToOpenOn == null || sdkToOpenOn == boundSdk)
