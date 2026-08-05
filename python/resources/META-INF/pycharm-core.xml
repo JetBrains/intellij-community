@@ -9,8 +9,8 @@
   <extensions defaultExtensionNs="com.intellij">
     <projectViewPane implementation="com.intellij.ide.projectView.impl.ProjectViewPane"/>
 
-    <projectAttachProcessor implementation="com.intellij.platform.ModuleAttachProcessor"/>
-    <projectAttachProcessor implementation="com.intellij.platform.WorkspaceModelCacheAttachProcessor"/>
+    <projectAttachProcessor implementation="com.intellij.platform.WorkspaceModelCacheAttachProcessor" order="first" id="WorkspaceModelCacheAttachProcessor"/>
+    <projectAttachProcessor implementation="com.intellij.platform.ModuleAttachProcessor" order="after WorkspaceModelCacheAttachProcessor"/>
 
     <renameHandler implementation="com.intellij.platform.renameProject.RenameProjectHandler"/>
     <renameHandler implementation="com.intellij.platform.renameProject.ProjectFolderRenameHandler"/>
