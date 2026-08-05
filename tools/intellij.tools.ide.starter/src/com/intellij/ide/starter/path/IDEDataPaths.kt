@@ -13,7 +13,7 @@ import kotlin.io.path.name
 
 open class IDEDataPaths(
   open val testHome: Path,
-  inMemoryRoot: Path?,
+  private val inMemoryRoot: Path?,
 ) : AutoCloseable {
 
   companion object {
@@ -47,12 +47,32 @@ open class IDEDataPaths(
   open val eventLogMetadataDir = (configDir / "event-log-metadata").createDirectories()
   open val eventLogDataDir = (systemDir / "event-log-data").createDirectories()
 
+  /**
+   * Returns a [FrontendIDEDataPaths] over the same directories and hands the ownership of [inMemoryRoot] over to it:
+   * the returned instance becomes responsible for deleting the in-memory root, and this one must not be used anymore.
+   *
+   * Unlike [createPaths] this neither wipes nor re-creates [testHome], so it is safe to call for paths already in use.
+   */
+  internal fun asFrontendDataPaths(): FrontendIDEDataPaths {
+    val frontendPaths = FrontendIDEDataPaths(testHome, inMemoryRoot)
+    inMemoryRootOwner.released = true
+    return frontendPaths
+  }
+
   override fun close() {
     cleanable.clean()
   }
 
-  private val cleanable = CLEANER.register(this, Runnable {
-    if (inMemoryRoot != null) {
+  private val inMemoryRootOwner = InMemoryRootOwner(inMemoryRoot)
+  private val cleanable = CLEANER.register(this, inMemoryRootOwner)
+
+  /** Must not hold a reference to the owning [IDEDataPaths], otherwise the [CLEANER] would never collect it. */
+  private class InMemoryRootOwner(private val inMemoryRoot: Path?) : Runnable {
+    @Volatile
+    var released: Boolean = false
+
+    override fun run() {
+      if (released || inMemoryRoot == null) return
       try {
         inMemoryRoot.deleteRecursivelyQuietly()
       }
@@ -61,7 +81,7 @@ open class IDEDataPaths(
         e.stackTraceToString().lines().forEach { logOutput("    $it") }
       }
     }
-  })
+  }
 
   override fun toString(): String = "IDE Test Paths at $testHome"
 }
