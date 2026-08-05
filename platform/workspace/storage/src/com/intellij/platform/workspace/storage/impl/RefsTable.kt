@@ -27,8 +27,12 @@ import com.intellij.platform.workspace.storage.impl.references.ReferenceContaine
 import com.intellij.platform.workspace.storage.instrumentation.Modification
 import it.unimi.dsi.fastutil.ints.IntArrayList
 import it.unimi.dsi.fastutil.ints.IntIntBiConsumer
+import org.jetbrains.annotations.ApiStatus
 import java.util.function.IntConsumer
 import java.util.function.IntFunction
+import kotlin.collections.containsValue
+import kotlin.collections.filterKeys
+import kotlin.text.get
 
 
 internal val ConnectionId.isOneToOne: Boolean
@@ -530,6 +534,26 @@ internal sealed class AbstractRefsTable {
         abstractOneToOneContainer[connectionId]?.inverse()?.get(parentId)?.let { listOf(it) } ?: emptyList()
       }
     }
+  }
+
+  @ApiStatus.Internal
+  public fun getChildrenConnections(entityId: ParentEntityId, snapshot: AbstractEntityStorage): List<ConnectionId> {
+    val parentClassId = entityId.id.clazz
+    val parentClass = entityId.id.clazz.findWorkspaceEntity()
+
+    val res = arrayListOf<ConnectionId>()
+
+    val filteredOneToMany = oneToManyContainer.filterKeys { it.parentClass == parentClassId }.keys
+    res.addAll(filteredOneToMany)
+    val filteredOneToOne = oneToOneContainer.filterKeys { it.parentClass == parentClassId }.keys
+    res.addAll(filteredOneToOne)
+    val filteredOneToAbstractMany = oneToAbstractManyContainer
+      .filterKeys { it.parentClass.findWorkspaceEntity().isAssignableFrom(parentClass) }.keys
+    res.addAll(filteredOneToAbstractMany)
+    val filteredAbstractOneToOne = abstractOneToOneContainer
+      .filterKeys { it.parentClass.findWorkspaceEntity().isAssignableFrom(parentClass) }.keys
+    res.addAll(filteredAbstractOneToOne)
+    return res
   }
 
   fun getChildrenRefsOfParentBy(parentId: ParentEntityId): Map<ConnectionId, List<ChildEntityId>> {

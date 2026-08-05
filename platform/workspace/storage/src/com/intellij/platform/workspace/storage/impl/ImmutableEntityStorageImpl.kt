@@ -22,6 +22,7 @@ import com.intellij.platform.workspace.storage.MutableExternalEntityMapping
 import com.intellij.platform.workspace.storage.ReferenceChange
 import com.intellij.platform.workspace.storage.SymbolicEntityId
 import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
 import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
 import com.intellij.platform.workspace.storage.impl.cache.ChangeOnWorkspaceBuilderChangeLog
 import com.intellij.platform.workspace.storage.impl.cache.TracedSnapshotCache
@@ -44,6 +45,7 @@ import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.ConcurrentLongObjectMap
 import com.intellij.util.containers.Java11Shim
 import io.opentelemetry.api.metrics.Meter
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
@@ -1015,7 +1017,9 @@ internal class MutableEntityStorageImpl(
   }
 }
 
-internal sealed class AbstractEntityStorage : EntityStorageInstrumentation {
+@WorkspaceEntityInternalApi
+@ApiStatus.Internal
+public sealed class AbstractEntityStorage : EntityStorageInstrumentation {
 
   internal abstract val entitiesByType: EntitiesBarrel
   internal abstract val refs: AbstractRefsTable
@@ -1218,8 +1222,8 @@ internal sealed class AbstractEntityStorage : EntityStorageInstrumentation {
     }
   }
 
-  companion object {
-    val LOG = logger<AbstractEntityStorage>()
+  internal companion object {
+    internal val LOG = logger<AbstractEntityStorage>()
   }
 }
 
