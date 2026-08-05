@@ -31,7 +31,7 @@ public final class JavaSyntaxHighlighterFactory extends SyntaxHighlighterFactory
    * SyntaxHighlighterProvider implementation (for .class files).
    */
   @Override
-  public @Nullable SyntaxHighlighter create(@NotNull FileType fileType, @Nullable Project project, @Nullable VirtualFile file) {
+  public @NotNull SyntaxHighlighter create(@NotNull FileType fileType, @Nullable Project project, @Nullable VirtualFile file) {
     if (project != null && file != null) {
       PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
 
