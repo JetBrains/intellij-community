@@ -19,6 +19,7 @@ One row per skill in this directory. `SKILL.md` holds the full instructions.
 | [icons](icons/SKILL.md) | Create or review IntelliJ New UI SVG icons, theme variants, and palette. |
 | [ide-diagnostics-mcp](ide-diagnostics-mcp/SKILL.md) | Inspect a running IntelliJ IDE for freezes, high CPU, or blocked threads via MCP. |
 | [jewel-markdown](jewel-markdown/SKILL.md) | Build or debug Jewel Markdown parsing, rendering, GFM, images, and styling. |
+| [jna](jna/SKILL.md) | Implement or debug JNA bindings in Kotlin or Java, including structures, JVM visibility, callbacks, pointers, ABI layouts, and native-library tests. |
 | [kotlin-ui-dsl](kotlin-ui-dsl/SKILL.md) | Write IntelliJ dialogs, settings, and forms with Kotlin UI DSL v2 panels, rows, cells, and bindings. |
 | [kotlin-ui-swing-component-architecture](kotlin-ui-swing-component-architecture/SKILL.md) | Design IntelliJ Swing UI components, state flow, and EDT work. |
 | [module-dependencies](module-dependencies/SKILL.md) | Add or modify IntelliJ module dependencies in `.iml` files. |
