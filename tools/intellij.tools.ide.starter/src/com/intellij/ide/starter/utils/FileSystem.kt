@@ -72,8 +72,11 @@ object FileSystem {
 
   fun countFiles(path: Path): Long = Files.walk(path).use { it.count() }
 
-  fun hasAtLeastFiles(path: Path, minCount: Long): Boolean =
-    Files.walk(path).use { stream ->
+  fun hasAtLeastFiles(path: Path, minCount: Long): Boolean {
+    // Files.walk() does not follow a symbolic link at the root without FileVisitOption.FOLLOW_LINKS, so a path that
+    // is itself a symlink (e.g. a shared reused-IDE system directory) would otherwise count as a single entry.
+    val realPath = if (Files.isSymbolicLink(path)) path.toRealPath() else path
+    Files.walk(realPath).use { stream ->
       val iterator = stream.iterator()
       var seen = 0L
       while (iterator.hasNext()) {
@@ -82,6 +85,7 @@ object FileSystem {
       }
       return false
     }
+  }
 
   fun compressToZip(sourceToCompress: Path, outputArchive: Path) {
     if (sourceToCompress.extension == "zip") {
