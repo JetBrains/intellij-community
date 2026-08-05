@@ -17,7 +17,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.terminal.block.reworked.TerminalUsageLocalStorage
 import org.jetbrains.plugins.terminal.session.impl.TerminalSession
 import org.jetbrains.plugins.terminal.session.impl.dto.KeyEventProcessingResultDto
@@ -31,7 +33,8 @@ import java.awt.event.KeyEvent
  * Logic of key events handling is copied from [com.jediterm.terminal.ui.TerminalPanel]
  * Logic of mouse event handling is copied from [com.jediterm.terminal.model.JediTerminal]
  */
-internal open class TerminalKeyEventsHandlerImpl(
+@ApiStatus.Internal
+open class TerminalKeyEventsHandlerImpl(
   private val editor: EditorEx,
   private val terminalInput: TerminalInput,
   private val scrollingModel: TerminalOutputScrollingModel?,

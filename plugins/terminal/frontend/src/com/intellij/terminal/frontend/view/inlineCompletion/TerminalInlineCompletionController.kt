@@ -24,6 +24,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.terminal.session.impl.TerminalContentUpdatedEvent
 import org.jetbrains.plugins.terminal.view.TerminalOffset
 import org.jetbrains.plugins.terminal.view.impl.MutableTerminalOutputModel
@@ -41,7 +43,8 @@ import kotlin.time.Duration.Companion.seconds
  * The controller uses [TerminalTypeAheadSession] only to confirm the order of input events.
  * All predictions are tentative, so it never changes the terminal output model itself.
  */
-internal class TerminalInlineCompletionController(
+@ApiStatus.Internal
+class TerminalInlineCompletionController(
   private val project: Project,
   private val editor: EditorEx,
   private val model: MutableTerminalOutputModel,
@@ -52,6 +55,16 @@ internal class TerminalInlineCompletionController(
   private var inputSession: TerminalTypeAheadSession? = null
   private val pendingEvents = ArrayDeque<PendingInputEvent>()
   private var lastTypedCommandText: String? = null
+
+  @ApiStatus.Internal
+  @VisibleForTesting
+  fun stateForTest(): StateForTest {
+    return StateForTest(
+      hasInputSession = inputSession != null,
+      pendingEventsCount = pendingEvents.size,
+      predictionsCount = inputSession?.predictionsCount ?: 0,
+    )
+  }
 
   @OptIn(AwaitCancellationAndInvoke::class)
   fun install() {
@@ -256,6 +269,14 @@ internal class TerminalInlineCompletionController(
     data object Mismatch : Confirmation
     data class Confirmed(val count: Int) : Confirmation
   }
+
+  @ApiStatus.Internal
+  @VisibleForTesting
+  data class StateForTest(
+    val hasInputSession: Boolean,
+    val pendingEventsCount: Int,
+    val predictionsCount: Int,
+  )
 
   companion object {
     private val LOG = logger<TerminalInlineCompletionController>()

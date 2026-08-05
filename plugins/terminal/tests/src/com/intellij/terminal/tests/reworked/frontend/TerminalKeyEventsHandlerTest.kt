@@ -1,5 +1,3 @@
-@file:Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
-
 package com.intellij.terminal.tests.reworked.frontend
 
 import com.intellij.openapi.application.EDT
