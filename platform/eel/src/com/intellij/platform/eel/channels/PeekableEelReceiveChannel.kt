@@ -188,7 +188,7 @@ suspend fun PeekableEelReceiveChannel.readLine(charset: Charset): String? {
 }
 
 /**
- * Please read the documentation for the other overload of [readUntil].
+ * Please read the documentation for the other overload of [readLine].
  *
  * And please vote for:
  * * KT-86011 KDoc: No tag for inlining documentation from another declaration
@@ -205,7 +205,7 @@ suspend fun PeekableEelReceiveChannel.readLine(
     if (last && buffer.hasRemaining() && buffer.get(buffer.limit() - 1) == '\r'.code.toByte()) {
       buffer.limit(buffer.limit() - 1)
     }
-    line.write(buffer.array(), buffer.position(), buffer.limit())
+    line.write(buffer.array(), buffer.position(), buffer.remaining())
   }
   @Suppress("BlockingMethodInNonBlockingContext")  // False positive.
   return if (newlineReached || line.size() != 0) line.toString(charset.name()) else null
