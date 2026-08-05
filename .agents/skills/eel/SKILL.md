@@ -1,6 +1,6 @@
 ---
 name: eel
-description: Use IntelliJ EEL APIs for process execution, paths, environments, WSL, or Docker.
+description: Use IntelliJ EEL APIs for process execution, paths, WSL, or Docker.
 ---
 
 # EEL (Execution Environment Layer) Skill

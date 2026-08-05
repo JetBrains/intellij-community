@@ -1,6 +1,6 @@
 ---
 name: testing-internals
-description: Debug IntelliJ `tests.cmd` execution, discovery, runner internals, and failures.
+description: Debug IntelliJ `tests.cmd` execution, discovery, and runner internals.
 ---
 
 # Test Execution Internals

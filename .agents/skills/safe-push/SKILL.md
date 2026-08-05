@@ -1,6 +1,6 @@
 ---
 name: safe-push
-description: Push IntelliJ repository changes through the required Safe Push workflow.
+description: Push IntelliJ repository changes through the Safe Push workflow.
 ---
 
 # Safe Push Guide for AI Agents

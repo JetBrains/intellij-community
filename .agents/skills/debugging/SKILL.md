@@ -1,6 +1,6 @@
 ---
 name: debugging
-description: Debug IntelliJ IDE failures with repository-specific techniques and tools.
+description: Debug IntelliJ IDE failures with repository-specific techniques.
 ---
 
 # Debugging

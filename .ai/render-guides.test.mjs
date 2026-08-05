@@ -573,6 +573,28 @@ describe('render-guides skills', () => {
     }
   })
 
+  it('reports the description bytes spent by the rendered edition', async () => {
+    const {rootDir, communitySourceDir, agentsDir, claudeDir, junieDir, communityClaudeDir} = createFixture()
+    try {
+      const render = edition => renderSkills({
+        communitySourceDir,
+        agentsDir,
+        claudeDir,
+        junieDir,
+        communityClaudeDir,
+        edition,
+      })
+
+      // The fixture has one community skill ('testing') and one ultimate-only skill ('platform-deep-dives'),
+      // each described by its own name, so the totals are the description lengths of the skills in scope.
+      equal((await render('COMMUNITY')).descriptionBytes, 'testing'.length)
+      equal((await render('ULTIMATE')).descriptionBytes, 'testing'.length + 'platform-deep-dives'.length)
+      equal((await render('ULTIMATE')).edition, 'ULTIMATE')
+    } finally {
+      rmSync(rootDir, {recursive: true, force: true})
+    }
+  })
+
   it('rejects multiline descriptions', async () => {
     const {rootDir, communitySourceDir, agentsDir, claudeDir, junieDir, communityClaudeDir} = createFixture()
     try {

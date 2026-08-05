@@ -1,6 +1,6 @@
 ---
 name: kotlin-ui-swing-component-architecture
-description: Design IntelliJ Swing UI components, state flow, EDT work, and lifecycle ownership.
+description: Design IntelliJ Swing UI components, state flow, and EDT work.
 ---
 
 # Swing feature component architecture

@@ -1,6 +1,6 @@
 ---
 name: commits
-description: Create, amend, or rename IntelliJ commits and write compliant commit messages.
+description: Create, amend, or rename IntelliJ commits and write commit messages.
 ---
 
 # Commits

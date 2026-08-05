@@ -1,6 +1,6 @@
 ---
 name: extract-module
-description: Extract optional plugin dependencies into separate IntelliJ content modules.
+description: Extract optional plugin dependencies into IntelliJ content modules.
 ---
 
 # Extracting an Optional Dependency into a New Content Module

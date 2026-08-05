@@ -1,6 +1,6 @@
 ---
 name: module-set-pluginization
-description: Convert Product DSL module sets into bundled wrapper plugins and fix loading wiring.
+description: Convert Product DSL module sets into bundled wrapper plugins.
 ---
 
 # Module Set Pluginization

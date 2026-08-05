@@ -104,6 +104,14 @@ Skill descriptions are always loaded into Codex context, so canonical `SKILL.md`
 
 The renderer validates the canonical sources available to the selected edition before writing or pruning generated files. If rendering fails on this budget, shorten the reported canonical descriptions and rerun the renderer; do not edit generated skill stubs.
 
+Every skill added spends from a fixed budget, so each run reports what is left:
+
+```text
+Skill descriptions for edition ULTIMATE: 5368/6144 bytes, 776 remaining.
+```
+
+Once less than 10% of the budget remains, the renderer also warns. Treat that as the signal to shorten existing descriptions rather than waiting for the next skill to fail the build.
+
 ```text
 PASS 1 (community source skills)
 --------------------------------

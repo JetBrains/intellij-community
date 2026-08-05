@@ -1,6 +1,6 @@
 ---
 name: driver-ui-tests
-description: Write IntelliJ UI tests with IDE Starter or UI Driver, including TestOps cases.
+description: Write IntelliJ UI tests with IDE Starter or UI Driver and TestOps cases.
 ---
 
 # Driver UI Tests Guide

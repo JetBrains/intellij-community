@@ -1,6 +1,6 @@
 ---
 name: poly-symbols
-description: Implement PolySymbols completion, references, rename, and docs across languages and frameworks.
+description: Implement PolySymbols completion, references, rename, and docs across languages.
 ---
 
 # PolySymbols
