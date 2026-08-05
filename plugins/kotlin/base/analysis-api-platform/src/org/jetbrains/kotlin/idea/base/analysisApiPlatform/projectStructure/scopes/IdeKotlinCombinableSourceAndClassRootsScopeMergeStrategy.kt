@@ -8,12 +8,10 @@ import org.jetbrains.kotlin.idea.base.projectStructure.scope.CombinableSourceAnd
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.CombinedSourceAndClassRootsScope
 import kotlin.reflect.KClass
 
-internal class IdeKotlinCombinableSourceAndClassRootsScopeMergeStrategy(
-    private val project: Project,
-): KotlinGlobalSearchScopeMergeStrategy<CombinableSourceAndClassRootsScope> {
+internal class IdeKotlinCombinableSourceAndClassRootsScopeMergeStrategy : KotlinGlobalSearchScopeMergeStrategy<CombinableSourceAndClassRootsScope> {
     override val targetType: KClass<CombinableSourceAndClassRootsScope> = CombinableSourceAndClassRootsScope::class
 
-    override fun uniteScopes(scopes: List<CombinableSourceAndClassRootsScope>): List<GlobalSearchScope> {
+    override fun uniteScopes(scopes: List<CombinableSourceAndClassRootsScope>, project: Project): List<GlobalSearchScope> {
         @Suppress("UNCHECKED_CAST")
         return when {
             scopes.size <= 1 -> return scopes as List<GlobalSearchScope>
