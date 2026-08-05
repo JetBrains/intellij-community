@@ -37,7 +37,7 @@ internal fun IDEDataPathsProvider.asFrontendDataPathsProvider(): IDEDataPathsPro
 interface TestContainer {
   companion object {
     init {
-      EventsBus.subscribe(TestContainer::javaClass) { _: TestContextInitializedEvent ->
+      EventsBus.subscribe(TestContainer::class.java) { _: TestContextInitializedEvent ->
         logOutput("Starter configuration storage: ${ConfigurationStorage.instance().getAll()}")
       }
     }

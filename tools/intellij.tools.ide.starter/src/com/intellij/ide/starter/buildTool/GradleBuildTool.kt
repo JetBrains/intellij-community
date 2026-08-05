@@ -61,10 +61,10 @@ open class GradleBuildTool(testContext: IDETestContext) : BuildTool(BuildToolTyp
   }
 
   init {
-    EventsBus.subscribe(GradleBuildTool::javaClass) { event: IdeLaunchEvent ->
+    EventsBus.subscribe(GradleBuildTool::class.java) { event: IdeLaunchEvent ->
       val existingProcesses = mutableSetOf<Long>()
       if (event.runContext.testContext === testContext) {
-        EventsBus.subscribe(GradleBuildTool::javaClass) { gradleEvent: GradleDaemonEvent ->
+        EventsBus.subscribe(GradleBuildTool::class.java) { gradleEvent: GradleDaemonEvent ->
           println(gradleEvent.data.state)
           CoroutineScope(Dispatchers.Default).launch {
             getProcessesIdByProcessName(GRADLE_DAEMON_NAME).filter { !existingProcesses.contains(it) }.forEach {
