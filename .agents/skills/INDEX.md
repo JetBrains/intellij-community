@@ -19,6 +19,8 @@ One row per skill in this directory. `SKILL.md` holds the full instructions.
 | [icons](icons/SKILL.md) | Create or review IntelliJ New UI SVG icons, theme variants, and palette. |
 | [ide-diagnostics-mcp](ide-diagnostics-mcp/SKILL.md) | Inspect a running IntelliJ IDE for freezes, high CPU, or blocked threads via MCP. |
 | [jewel-markdown](jewel-markdown/SKILL.md) | Build or debug Jewel Markdown parsing, rendering, GFM, images, and styling. |
+| [jewel-pr-preparer](jewel-pr-preparer/SKILL.md) | Prepare a Jewel pull request: validate the commit, run local CI checks, draft release notes, and create the PR. |
+| [jewel-release-helper](jewel-release-helper/SKILL.md) | Prepare a Jewel release: version bumps, checks, release notes, cherry-picks, artifact validation, and tagging. |
 | [jna](jna/SKILL.md) | Implement or debug JNA bindings in Kotlin or Java, including structures, JVM visibility, callbacks, pointers, ABI layouts, and native-library tests. |
 | [kotlin-ui-dsl](kotlin-ui-dsl/SKILL.md) | Write IntelliJ dialogs, settings, and forms with Kotlin UI DSL v2 panels, rows, cells, and bindings. |
 | [kotlin-ui-swing-component-architecture](kotlin-ui-swing-component-architecture/SKILL.md) | Design IntelliJ Swing UI components, state flow, and EDT work. |
@@ -38,3 +40,4 @@ One row per skill in this directory. `SKILL.md` holds the full instructions.
 | [testing-internals](testing-internals/SKILL.md) | Debug IntelliJ `tests.cmd` execution, discovery, and runner internals. |
 | [ui-accessibility](ui-accessibility/SKILL.md) | Review IntelliJ UI accessibility for keyboard, focus, labels, and screen readers. |
 | [writing-tests](writing-tests/SKILL.md) | Write IntelliJ JUnit 5 tests with fixtures, lifecycle, EDT, and registry. |
+| [youtrack-community](youtrack-community/SKILL.md) | Use this bundled CLI only in community checkouts; monorepo users must use the monorepo-only `youtrack` skill instead. |
