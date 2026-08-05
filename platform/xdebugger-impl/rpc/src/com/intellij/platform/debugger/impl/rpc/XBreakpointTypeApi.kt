@@ -28,7 +28,7 @@ interface XBreakpointTypeApi : RemoteApi<Unit> {
 
   suspend fun getBreakpointsInfo(projectId: ProjectId, fileId: VirtualFileId, start: Int, endInclusive: Int): List<XBreakpointsLineInfo>?
 
-  suspend fun addBreakpointThroughLux(projectId: ProjectId, typeId: XBreakpointTypeId): TimeoutSafeResult<XBreakpointDto?>
+  suspend fun addBreakpointThroughLux(projectId: ProjectId, typeId: XBreakpointTypeId): TimeoutSafeResult<XBreakpointId?>
 
   suspend fun toggleLineBreakpoint(projectId: ProjectId, request: XLineBreakpointInstallationRequest): XToggleLineBreakpointResponse?
 

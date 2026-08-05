@@ -5,6 +5,8 @@ import com.intellij.ide.rpc.util.toRpc
 import com.intellij.ide.ui.icons.rpcId
 import com.intellij.ide.vfs.rpcId
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.diagnostic.fileLogger
+import com.intellij.openapi.diagnostic.getOrHandleException
 import com.intellij.platform.debugger.impl.rpc.XBreakpointCustomPresentationDto
 import com.intellij.platform.debugger.impl.rpc.XBreakpointDto
 import com.intellij.platform.debugger.impl.rpc.XBreakpointDtoState
@@ -28,6 +30,8 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.withContext
 
+private val LOG = fileLogger()
+
 internal fun CustomizedBreakpointPresentation.toRpc(): XBreakpointCustomPresentationDto {
   return XBreakpointCustomPresentationDto(icon?.rpcId(), errorMessage, timestamp)
 }
@@ -49,7 +53,10 @@ internal suspend fun XBreakpointBase<*, *, *>.toRpc(): XBreakpointDto {
       // XBreakpointBase#getDescription depends on the current session
       // BreakpointWithHighlighter#getPropertyXMLDescriptions
       breakpointChangedFlow().combine(currentSessionFlow) { _, _ -> }.collectLatest {
-        send(getDtoState())
+        val state = runCatching { getDtoState() }.getOrHandleException { e ->
+          LOG.error("Failed to serialize breakpoint state ${breakpointId}; dropping the update", e)
+        } ?: return@collectLatest
+        send(state)
       }
     }.toRpc()
   )

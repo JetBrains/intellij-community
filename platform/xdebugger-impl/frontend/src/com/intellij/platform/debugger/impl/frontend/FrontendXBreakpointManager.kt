@@ -110,7 +110,6 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
 
   init {
     cs.launch {
-      FrontendXBreakpointTypesManager.getInstance(project).typesInitialized().await()
       initializeBreakpoints()
       durableWithStateReset(block = {
         defaultGroup = XBreakpointApi.getInstance().getDefaultGroup(project.projectId())
@@ -194,7 +193,7 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
     }
   }
 
-  private fun addBreakpoint(breakpointDto: XBreakpointDto, creationTrigger: XBreakpointCreationTrigger): XBreakpointProxy? {
+  private suspend fun addBreakpoint(breakpointDto: XBreakpointDto, creationTrigger: XBreakpointCreationTrigger): XBreakpointProxy? {
     val currentBreakpoint = breakpoints[breakpointDto.id]
     if (currentBreakpoint != null) {
       log.debug { "Breakpoint creation skipped for ${breakpointDto.id}, because it already exists" }
@@ -205,7 +204,7 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
       log.debug { "Breakpoint creation skipped for ${breakpointDto.id}, because it was removed locally" }
       return null
     }
-    val type = FrontendXBreakpointTypesManager.getInstance(project).getTypeById(breakpointDto.typeId) ?: return null
+    val type = FrontendXBreakpointTypesManager.getInstance(project).findTypeById(breakpointDto.typeId) ?: return null
     val newBreakpoint = createXBreakpointProxy(project, cs, breakpointDto, type, this, creationTrigger)
     val updateUI = creationTrigger == XBreakpointCreationTrigger.BREAKPOINT_EVENT
     (newBreakpoint as? FrontendXLineBreakpointProxy)?.registerInManager(updateUI)

@@ -8,6 +8,9 @@ import com.intellij.ide.rpc.rpcId
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.fileLogger
+import com.intellij.openapi.diagnostic.getOrHandleException
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.editor.impl.EditorId
 import com.intellij.openapi.editor.impl.findEditorOrNull
@@ -60,6 +63,8 @@ import kotlinx.coroutines.future.asDeferred
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+
+private val LOG = logger<BackendXDebuggerManagerApi>()
 
 internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
   override suspend fun initialize(projectId: ProjectId, capabilities: XFrontendDebuggerCapabilities) {
@@ -211,11 +216,17 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
     val project = projectId.findProject()
     val breakpointManager = (XDebuggerManager.getInstance(project) as XDebuggerManagerImpl).breakpointManager
 
-    val initialBreakpoints = breakpointManager.allBreakpoints.mapTo(LinkedHashSet()) {
-      it.toRpc()
+    val allBreakpoints = breakpointManager.allBreakpoints
+    val initialBreakpoints = allBreakpoints.mapNotNullTo(LinkedHashSet()) { breakpoint ->
+      runCatching { breakpoint.toRpc() }.getOrHandleException { e ->
+        LOG.error("Failed to serialize breakpoint ${breakpoint.breakpointId}", e)
+      }
+    }
+    if (initialBreakpoints.size != allBreakpoints.size) {
+      LOG.warn("Breakpoint snapshot is incomplete: serialized=${initialBreakpoints.size}, total=${allBreakpoints.size}")
     }
 
-    val initialBreakpointIds = initialBreakpoints.map { it.id }
+    val initialBreakpointIds = allBreakpoints.map { it.breakpointId }
 
     val eventsFlow = channelFlow {
       val events = Channel<suspend () -> XBreakpointEvent>(Channel.UNLIMITED)
@@ -264,7 +275,13 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
       }
 
       for (event in events) {
-        send(event())
+        try {
+          send(event())
+        }
+        catch (e: Throwable) {
+          rethrowControlFlowException(e)
+          LOG.error("Failed to serialize breakpoint event", e)
+        }
       }
     }
 
