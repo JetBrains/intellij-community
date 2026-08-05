@@ -2432,6 +2432,7 @@ a:com.intellij.openapi.fileTypes.SyntaxHighlighterBase
 - <init>():V
 - ps:fillMap(java.util.Map,com.intellij.openapi.editor.colors.TextAttributesKey,com.intellij.psi.tree.IElementType[]):V
 - s:fillMap(java.util.Map,com.intellij.psi.tree.TokenSet,com.intellij.openapi.editor.colors.TextAttributesKey):V
+- ps:merge(java.util.Map,java.util.Map):java.util.Map
 - s:pack(com.intellij.openapi.editor.colors.TextAttributesKey):com.intellij.openapi.editor.colors.TextAttributesKey[]
 - s:pack(com.intellij.openapi.editor.colors.TextAttributesKey,com.intellij.openapi.editor.colors.TextAttributesKey):com.intellij.openapi.editor.colors.TextAttributesKey[]
 - s:pack(com.intellij.openapi.editor.colors.TextAttributesKey,com.intellij.openapi.editor.colors.TextAttributesKey[]):com.intellij.openapi.editor.colors.TextAttributesKey[]

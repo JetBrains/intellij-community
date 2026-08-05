@@ -6,11 +6,16 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public abstract class SyntaxHighlighterBase implements SyntaxHighlighter {
   private static final Logger LOG = Logger.getInstance(SyntaxHighlighterBase.class);
@@ -97,5 +102,20 @@ public abstract class SyntaxHighlighterBase implements SyntaxHighlighter {
     if (oldVal != null && !oldVal.equals(value)) {
       LOG.error("Remapping highlighting for \"" + type + "\" val: old=" + oldVal + " new=" + value);
     }
+  }
+
+  /// From two `Map<IElementType, TextAttributesKey>` maps, create `Map<IElementType, TextAttributesKey[]>` map containing keys and values from both sources
+  protected static @NotNull @Unmodifiable Map<@NotNull IElementType, @NotNull TextAttributesKey @NotNull []> merge(@NotNull Map<? extends @NotNull IElementType, @NotNull TextAttributesKey> map1,
+                                                                                                                   @NotNull Map<? extends @NotNull IElementType, @NotNull TextAttributesKey> map2) {
+    Set<IElementType> keys = ContainerUtil.union(map1.keySet(), map2.keySet());
+    List<Map.Entry<@NotNull IElementType, @NotNull TextAttributesKey @NotNull []>> entries = new ArrayList<>(keys.size());
+    for (IElementType key : keys) {
+      TextAttributesKey[] packed = pack(map1.get(key), map2.get(key));
+      if (packed != TextAttributesKey.EMPTY_ARRAY) { // optimization: reduce memory
+        entries.add(Map.entry(key, packed));
+      }
+    }
+    //noinspection unchecked
+    return Map.ofEntries(entries.toArray(new Map.Entry[0]));
   }
 }
