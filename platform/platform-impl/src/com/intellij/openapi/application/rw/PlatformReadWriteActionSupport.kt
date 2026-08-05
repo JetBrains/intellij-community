@@ -48,11 +48,11 @@ import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
 import java.nio.file.Files
 import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.ContinuationInterceptor
 import kotlin.io.path.writeText
@@ -69,7 +69,7 @@ class PlatformReadWriteActionSupport : ReadWriteActionSupport {
   private val backgroundWriteActionDispatcher = Dispatchers.IO.limitedParallelism(1, "Background write action dispatcher")
   private val backgroundWriteActionDumpDispatcher =
     Dispatchers.IO.limitedParallelism(1, "Dispatcher for dumping threads and coroutines for background write action")
-  private val shouldAbortPendingActions = AtomicBoolean(false)
+  private val shouldAbortPendingActions = AtomicInteger(0)
 
   init {
     // init the write action counter listener
@@ -235,7 +235,7 @@ class PlatformReadWriteActionSupport : ReadWriteActionSupport {
           action = action,
           onJobPublished = { publishedEdtWriteActionJobs.add(it) },
           onJobNotNeeded = { publishedEdtWriteActionJobs.remove(it) },
-          shouldProceedWithWriteAction = { !shouldAbortPendingActions.get() })
+          shouldProceedWithWriteAction = { shouldAbortPendingActions.get() == 0 })
         { actualAction, job ->
           // this is a background thread
           // but we have write access now
@@ -354,12 +354,12 @@ class PlatformReadWriteActionSupport : ReadWriteActionSupport {
   }
 
   fun signalSuspendedEdtWriteActionNeedsToBeRetried() {
-    shouldAbortPendingActions.set(true)
+    shouldAbortPendingActions.incrementAndGet()
     signalWriteActionNeedsToBeRetried(publishedEdtWriteActionJobs)
   }
 
   fun signalSuspendedEdtWriteActionCanProceed() {
-    shouldAbortPendingActions.set(false)
+    shouldAbortPendingActions.decrementAndGet()
   }
 
   private val publishedBackgroundWriteActionJobs: MutableSet<Job> = ConcurrentCollectionFactory.createConcurrentSet()
