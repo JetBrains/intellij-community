@@ -79,11 +79,8 @@ TEST_FRAMEWORK_DEPS = [
 # needed to avoid runtime duplications in jps_test of community/platform/util/BUILD.bazel
 # as depset can't recognize that ":util-tests_test_lib" and "@community//platform/util:util-tests_test_lib" is the same lib
 def _normalize_runtime_dep(dep):
-    if dep in [
-        ":util-tests_test_lib",
-        "//platform/util:util-tests_test_lib",
-        "@community//platform/util:util-tests_test_lib",
-    ]:
+    if ((dep == ":util-tests_test_lib" and native.package_name() == "platform/util") or
+        dep in ["//platform/util:util-tests_test_lib", "@community//platform/util:util-tests_test_lib"]):
         return "@community//platform/util:util-tests_test_lib"
     return dep
 
