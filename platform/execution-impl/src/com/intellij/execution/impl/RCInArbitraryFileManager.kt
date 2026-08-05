@@ -111,32 +111,31 @@ internal class RCInArbitraryFileManager(private val project: Project) {
 
   /**
    * This function doesn't change the model, caller should iterate through the returned list and remove/add run configurations as needed.
-   * This function should be called with RunManagerImpl.lock.read
+   * [lock] is taken only to snapshot the model: [ProjectFileIndex.isInContent] may rebuild the workspace file index
+   * whose contributors query RunManager under the same lock, so it must not be called while holding it.
    */
-  internal fun loadChangedRunConfigsFromFile(runManager: RunManagerImpl, filePath: String): DeletedAndAddedRunConfigs {
+  internal fun loadChangedRunConfigsFromFile(runManager: RunManagerImpl, lock: ReentrantReadWriteLock, filePath: String): DeletedAndAddedRunConfigs {
     if (saveInProgress) {
       return DeletedAndAddedRunConfigs(emptyList(), emptyList())
     }
 
-    // shadow mutable map to ensure unchanged model
-    val filePathToRunConfigs: Map<String, List<RunnerAndConfigurationSettingsImpl>> = filePathToRunConfigs
+    fun runConfigsFromFile() = lock.read { filePathToRunConfigs.get(filePath)?.toList() ?: emptyList() }
 
     val file = LocalFileSystem.getInstance().findFileByPath(filePath)
     if (file == null || !file.isValid) {
       LOG.warn("It's unexpected that the file doesn't exist at this point ($filePath)")
-      val rcsToDelete = filePathToRunConfigs.get(filePath) ?: emptyList()
-      return DeletedAndAddedRunConfigs(rcsToDelete, emptyList())
+      return DeletedAndAddedRunConfigs(runConfigsFromFile(), emptyList())
     }
 
     if (!ProjectFileIndex.getInstance(project).isInContent(file)) {
-      val rcsToDelete = filePathToRunConfigs.get(filePath) ?: emptyList()
+      val rcsToDelete = runConfigsFromFile()
       if (rcsToDelete.isNotEmpty()) {
         LOG.warn("It's unexpected that the model contains run configurations for file, which is not within the project content ($filePath)")
       }
       return DeletedAndAddedRunConfigs(rcsToDelete, emptyList())
     }
 
-    val previouslyLoadedRunConfigs = filePathToRunConfigs.get(filePath) ?: emptyList()
+    val previouslyLoadedRunConfigs = runConfigsFromFile()
 
     val element = try {
       JDOMUtil.load(file.inputStream)
@@ -181,11 +180,11 @@ internal class RCInArbitraryFileManager(private val project: Project) {
 
   /**
    * This function doesn't change the model, caller should iterate through the returned list and remove run configurations.
-   * This function should be called with RunManagerImpl.lock.read
+   * [lock] is taken only to snapshot the model: [ProjectFileIndex.isInContent] may rebuild the workspace file index
+   * whose contributors query RunManager under the same lock, so it must not be called while holding it.
    */
-  internal fun findRunConfigsThatAreNotWithinProjectContent(): List<RunnerAndConfigurationSettingsImpl> {
-    // shadow mutable map to ensure unchanged model
-    val filePathToRunConfigs: Map<String, List<RunnerAndConfigurationSettingsImpl>> = filePathToRunConfigs
+  internal fun findRunConfigsThatAreNotWithinProjectContent(lock: ReentrantReadWriteLock): List<RunnerAndConfigurationSettingsImpl> {
+    val filePathToRunConfigs = lock.read { filePathToRunConfigs.mapValues { it.value.toList() } }
     if (filePathToRunConfigs.isEmpty()) return emptyList()
 
     val fileIndex = ProjectFileIndex.getInstance(project)
