@@ -1160,17 +1160,19 @@ internal class PluginDependenciesTest {
     }
 
     @Test
-    fun `external non bundled descriptors get implicit compatibility modules`() {
+    fun `external non bundled descriptors get soft compatibility modules`() {
       val compatibilityModuleIds = listOf(
         "intellij.libraries.groovy",
         "intellij.platform.structureView",
         "intellij.platform.todo",
+        "intellij.platform.bookmarks",
+        "intellij.platform.smRunner",
       )
       plugin("compatibility.modules.provider") {
         vendor = "JetBrains"
         content(namespace = "jetbrains") {
           for (moduleId in compatibilityModuleIds) {
-            module(moduleId) { packagePrefix = moduleId; moduleVisibility = ModuleVisibilityValue.PUBLIC }
+            module(moduleId, ModuleLoadingRuleValue.REQUIRED) { packagePrefix = moduleId; moduleVisibility = ModuleVisibilityValue.PUBLIC }
           }
         }
       }.installAt(pluginDirPath)
@@ -1194,8 +1196,7 @@ internal class PluginDependenciesTest {
 
       val pluginSet = buildPluginSet()
       val compatibilityModules = compatibilityModuleIds.map { pluginSet.getEnabledModule(it) }.toTypedArray()
-      val optionalTarget = pluginSet.getEnabledPlugin("optional.target")
-      val (externalConsumer, jetbrainsConsumer) = pluginSet.getEnabledPlugins("external.consumer", "jetbrains.consumer")
+      val (optionalTarget, externalConsumer, jetbrainsConsumer) = pluginSet.getEnabledPlugins("optional.target", "external.consumer", "jetbrains.consumer")
       val externalOptionalDescriptor = externalConsumer.dependencies.single { it.pluginId == PluginId.getId("optional.target") }.subDescriptor!!
       val jetbrainsOptionalDescriptor = jetbrainsConsumer.dependencies.single { it.pluginId == PluginId.getId("optional.target") }.subDescriptor!!
 
@@ -1205,6 +1206,27 @@ internal class PluginDependenciesTest {
       assertThat(jetbrainsConsumer).hasExactDirectParentClassloaders(optionalTarget)
       assertThat(jetbrainsOptionalDescriptor).hasExactDirectParentClassloaders(optionalTarget)
       assertThat(pluginSet.getEnabledModule("jetbrains.consumer.module")).doesNotHaveDirectParentClassloaders(*compatibilityModules)
+    }
+
+    @Test
+    fun `unavailable soft compatibility module does not exclude external plugin`() {
+      plugin("bookmarks.provider") {
+        vendor = "JetBrains"
+        content(namespace = "jetbrains") {
+          module("intellij.platform.bookmarks", ModuleLoadingRuleValue.REQUIRED) {
+            packagePrefix = "intellij.platform.bookmarks"
+            moduleVisibility = ModuleVisibilityValue.PUBLIC
+            dependencies {
+              module("unavailable.module")
+            }
+          }
+        }
+      }.installAt(pluginDirPath)
+      plugin("external.consumer") {}.installAt(pluginDirPath)
+
+      val pluginSet = buildPluginSet()
+
+      assertThat(pluginSet).hasExactlyEnabledPlugins("external.consumer")
     }
 
     @Test

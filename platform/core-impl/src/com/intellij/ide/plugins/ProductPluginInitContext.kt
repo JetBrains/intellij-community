@@ -266,10 +266,6 @@ class ProductPluginInitContext(
           yieldIfResolves(DependencyRef.of(CORE_ID))
         }
         if (descriptor is PluginModuleDescriptor && descriptor.pluginId != CORE_ID && isExternalNonBundledPlugin(descriptor)) {
-          for (dependencyRef in externalNonBundledPluginCompatibilityDependencies) {
-            yieldIfResolves(dependencyRef)
-          }
-
           if (doesDependOnModule(descriptor, BACKEND_MODULE_ID) ||
               doesDependOnModule(descriptor, FRONTEND_MODULE_ID)) {
             yieldIfResolves(DependencyRef.of(RPC_MODULE_ID))
@@ -370,7 +366,16 @@ class ProductPluginInitContext(
       remainingCandidates: RemainingCandidatesView,
     ): Sequence<DependencyRef> {
       return sequence {
-
+        suspend fun SequenceScope<DependencyRef>.yieldIfResolves(ref: DependencyRef) {
+          if (remainingCandidates.resolveReference(ref) != null) {
+            yield(ref)
+          }
+        }
+        if (descriptor is PluginModuleDescriptor && descriptor.pluginId != CORE_ID && isExternalNonBundledPlugin(descriptor)) {
+          for (dependencyRef in externalNonBundledPluginCompatibilityDependencies) {
+            yieldIfResolves(dependencyRef)
+          }
+        }
       }
     }
 
