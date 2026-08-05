@@ -129,7 +129,26 @@ public final class JavaClassSupersImpl extends JavaClassSupers {
         if (paramCandidate instanceof PsiTypeParameter && paramCandidate != parameter) {
           targetType = outer.substituteWithBoundsPromotion((PsiTypeParameter)paramCandidate);
           if (targetType != null && !innerType.getNullability().equals(TypeNullability.UNKNOWN)) {
-            targetType = targetType.withNullability(innerType.getNullability());
+            TypeNullability instantiated;
+            if (PsiUtil.resolveClassInClassTypeOnly(targetType) == paramCandidate) {
+              //   interface Super<T extends @Nullable Object> { void take(@NullnessUnspecified T t); }
+              //   interface Sub<U extends @Nullable Object> extends Super<U> {}
+              //
+              // For the `Super` substitutor of `Sub`, the outer substitutor leaves `U` as it is, and then there is
+              // nothing to instantiate the usage with: the bare `U` it hands back is not written anywhere in code, so it
+              // has no nullability of its own to report, and instantiating with it would erase the nullable bound of `U`.
+              instantiated = innerType.getNullability();
+            }
+            else {
+              //initialized with the known type
+              //  Bar<String> getNonNullBar() { <- with String
+              //    return new Bar<>();
+              //  }
+
+              //simplified without taking into account the nullability of the captured type
+              instantiated = innerType.getNullability().instantiatedWith(targetType.getNullability());
+            }
+            targetType = targetType.withNullability(instantiated);
           }
         }
         else {
