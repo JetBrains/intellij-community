@@ -20,8 +20,6 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
     private val whitelist : Set<String> = setOf(
         // TODO: multiResolve
         "MultiInvokableObjectResolve",
-        // TODO: resolve annotation param to annotation ctor ??
-        "ResolveCompiledAnnotation",
     )
 
     private fun isExpectedToFail(key: String): Boolean {
@@ -131,7 +129,7 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
     }
 
     fun testResolveCompiledAnnotation() {
-        doCheck("ResolveCompiledAnnotation", ::checkResolveCompiledAnnotation)
+        checkResolveCompiledAnnotation(myFixture)
     }
 
     fun testResolveExplicitLambdaParameter() {
