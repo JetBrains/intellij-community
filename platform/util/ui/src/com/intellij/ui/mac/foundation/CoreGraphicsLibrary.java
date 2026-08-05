@@ -3,16 +3,9 @@ package com.intellij.ui.mac.foundation;
 
 import com.sun.jna.Library;
 import com.sun.jna.Pointer;
-import org.jetbrains.annotations.ApiStatus;
 
 public interface CoreGraphicsLibrary extends Library {
   ID CGWindowListCreateImage(CoreGraphics.CGRect screenBounds, int windowOption, ID windowID, int imageOption);
-
-  @ApiStatus.Internal
-  boolean CGPreflightScreenCaptureAccess();
-
-  @ApiStatus.Internal
-  boolean CGRequestScreenCaptureAccess();
 
   ID objc_getClass(String className);
   Pointer sel_registerName(String selectorName);

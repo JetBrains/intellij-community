@@ -6,7 +6,6 @@ import com.sun.jna.FromNativeContext;
 import com.sun.jna.Native;
 import com.sun.jna.NativeMapped;
 import com.sun.jna.Structure;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.Collections;
@@ -29,29 +28,6 @@ public final @NonNls class CoreGraphics {
                                                          windowOption,
                                                          windowID,
                                                          imageOption);
-  }
-
-  /**
-   * Whether this process may record the screen. When it may not, a capture still succeeds but shows only the
-   * desktop background, so a caller that would otherwise hand the user an empty picture can warn about it.
-   * <p>
-   * Advisory only: once this has returned {@code false} it keeps returning {@code false} for the rest of the
-   * process, even after the user allows the grant, while the capture APIs commonly start working immediately.
-   * Do not gate a capture on it.
-   */
-  @ApiStatus.Internal
-  public static boolean preflightScreenCaptureAccess() {
-    return myCoreGraphicsLibrary.CGPreflightScreenCaptureAccess();
-  }
-
-  /**
-   * Asks for screen-recording access, which shows the system dialog the first time and does nothing on a later
-   * call. Returns immediately — the dialog belongs to another process — with the same value
-   * {@link #preflightScreenCaptureAccess()} would return, so it says nothing about what the user will choose.
-   */
-  @ApiStatus.Internal
-  public static boolean requestScreenCaptureAccess() {
-    return myCoreGraphicsLibrary.CGRequestScreenCaptureAccess();
   }
 
   @Structure.FieldOrder({"origin", "size"})
