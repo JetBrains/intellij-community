@@ -7,7 +7,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.util.UtilThreadingAssertions;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ui.EDT;
+import kotlin.coroutines.CoroutineContext;
+import kotlin.jvm.functions.Function2;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.ApiStatus.Obsolete;
 import org.jetbrains.annotations.NonNls;
@@ -16,6 +19,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 
 import java.awt.EventQueue;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Future;
 import java.util.function.Consumer;
 
 /**
@@ -26,10 +32,11 @@ import java.util.function.Consumer;
  */
 public final class ThreadingAssertions {
 
+  private static final Set<String> REPORTED_HEAVY_EXECUTIONS = ConcurrentHashMap.newKeySet();
+
   static {
     UtilThreadingAssertions.init(() -> {
-      softAssertBackgroundThread();
-      softAssertNoReadAccess();
+      checkEdtAndReadActionForHeavyActivity();
     });
   }
 
@@ -252,6 +259,51 @@ public final class ThreadingAssertions {
       else {
         trySoftAssertWriteAccessWhenLocksAreForbidden(application);
       }
+    }
+  }
+
+  /// Checks if we are going to wait for a heavy activity, for instance, an external process, to finish on EDT or under ReadAction. Logs error if we do so.
+  ///
+  /// HOW-TO fix an error from this method:
+  ///
+  ///   - You are on the pooled thread under [`ReadAction`][com.intellij.openapi.application.ReadAction]:
+  ///       - Synchronous (you need to return an execution result or derived information to the caller) - get rid of the ReadAction or synchronicity.
+  ///         Move execution part out of the code executed under ReadAction, or make your execution asynchronous - execute on
+  ///         [`other thread`][com.intellij.platform.ide.progress.TasksKt#withBackgroundProgress] and invoke a callback.
+  ///       - Non-synchronous (you don't need to return something) - execute on another thread. E.g. using [com.intellij.platform.ide.progress.TasksKt#withBackgroundProgress]
+  ///
+  ///   - You are on EDT:
+  ///       - Outside of [`WriteAction`][com.intellij.openapi.application.WriteAction]:
+  ///           - Synchronous (you need to return an execution result or derived information to the caller) - execute under
+  ///             [`modal progress`][com.intellij.platform.ide.progress.TasksKt#runWithModalProgressBlocking].
+  ///           - Non-synchronous (you don't need to return something) - execute on the pooled thread. E.g. using [com.intellij.platform.ide.progress.TasksKt#withBackgroundProgress]
+  ///       - Under [`WriteAction`][com.intellij.openapi.application.WriteAction]
+  ///           - Synchronous (you need to return an execution result or derived information to the caller) - get rid of the WriteAction or synchronicity.
+  ///             Move execution part out of the code executed under WriteAction, or make your execution asynchronous - execute on
+  ///             [`other thread`][com.intellij.platform.ide.progress.TasksKt#withBackgroundProgress] and invoke a callback.
+  ///           - Non-synchronous (you don't need to return something) - execute async on the pooled thread. E.g. using [com.intellij.platform.ide.progress.TasksKt#withBackgroundProgress]
+  ///
+  /// Common solutions include:
+  ///   - [com.intellij.openapi.vfs.DiskQueryRelay] to simulate cancellable IO from read action
+  ///   - [com.intellij.codeInsight.daemon.DaemonCodeAnalyzer#restart(Object)] to restart highlighting in files after heavy computation is finished
+  ///   - [com.intellij.openapi.progress.util.ProgressIndicatorUtils#awaitWithCheckCanceled(Future)] to wait for Future interruptibly
+  ///   - [com.intellij.openapi.progress.util.UtilKt#runWithCheckCanceled(CoroutineContext, Function2)] to run suspend computation as a detached activity
+  ///
+  /// @apiNote works only in the non-headless mode. Reports once per running session per stacktrace per cause.
+  @Internal
+  public static void checkEdtAndReadActionForHeavyActivity() {
+    Application application = ApplicationManager.getApplication();
+    if (application == null || application.isHeadlessEnvironment()) return;
+
+    String message = null;
+    if (application.isDispatchThread()) {
+      message = "Heavy activity executed on EDT";
+    }
+    else if (application.holdsReadLock()) {
+      message = "Heavy activity executed under ReadAction";
+    }
+    if (message != null && REPORTED_HEAVY_EXECUTIONS.add(ExceptionUtil.currentStackTrace())) {
+      getLogger().error(message + ", see ThreadingAssertions#checkEdtAndReadActionForHeavyActivity() Javadoc for resolutions");
     }
   }
 

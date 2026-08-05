@@ -443,7 +443,7 @@ public final class ExecutionHelper {
         mySemaphore.down();
         ApplicationManager.getApplication().executeOnPooledThread(myWaitThread);
         ApplicationManager.getApplication().executeOnPooledThread(myCancelListener);
-        OSProcessHandler.checkEdtAndReadAction(processHandler);
+        OSProcessHandler.checkEdtAndReadAction();
         mySemaphore.waitFor();
       }
     };
@@ -488,7 +488,7 @@ public final class ExecutionHelper {
       public void run() {
         mySemaphore.down();
         ApplicationManager.getApplication().executeOnPooledThread(myProcessRunnable);
-        OSProcessHandler.checkEdtAndReadAction(processHandler);
+        OSProcessHandler.checkEdtAndReadAction();
         mySemaphore.waitFor();
       }
     };
