@@ -521,7 +521,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
           }
           catch (TimeoutException ignored) {
           }
-          UIUtil.dispatchAllInvocationEvents();
+          PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
         }
         future.get();
       }
