@@ -9,7 +9,6 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.ValidationInfo;
@@ -18,27 +17,18 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.AnimatedIcon;
-import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.ComboBoxCompositeEditor;
 import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.TextFieldWithAutoCompletion;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.progress.ComponentVisibilityProgressManager;
-import com.intellij.util.ui.JBDimension;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
-import javax.swing.JPanel;
 import javax.swing.event.DocumentEvent;
 import java.awt.Point;
 import java.nio.file.InvalidPathException;
@@ -48,8 +38,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-import static com.intellij.util.ui.UI.PanelFactory;
-
 /**
  * @deprecated Migrate to {@link com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension}
  * or {@link com.intellij.openapi.vcs.ui.VcsCloneComponent}
@@ -57,15 +45,10 @@ import static com.intellij.util.ui.UI.PanelFactory;
 @Deprecated(forRemoval = true)
 public abstract class CloneDvcsDialog extends DialogWrapper {
 
-  private ComboBox<String> myRepositoryUrlCombobox;
-  private CollectionComboBoxModel<String> myRepositoryUrlComboboxModel;
-  private TextFieldWithAutoCompletion<String> myRepositoryUrlField;
-  private ComponentVisibilityProgressManager mySpinnerProgressManager;
-  private JButton myTestButton; // test repository
-  private MyTextFieldWithBrowseButton myDirectoryField;
-
   protected final @NotNull Project myProject;
   protected final @NotNull String myVcsDirectoryName;
+
+  private final @NotNull CloneDvcsDialogUi ui;
 
   private @Nullable ValidationInfo myCreateDirectoryValidationInfo;
   private @Nullable ValidationInfo myRepositoryTestValidationInfo;
@@ -82,6 +65,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
     super(project, true);
     myProject = project;
     myVcsDirectoryName = vcsDirectoryName;
+    ui = new CloneDvcsDialogUi(project, getRememberedInputs());
 
     initComponents(defaultUrl);
     setTitle(DvcsBundle.message("clone.title"));
@@ -91,7 +75,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
-    String path = myDirectoryField.getText();
+    String path = ui.directoryField.getText();
     new Task.Modal(myProject, DvcsBundle.message("progress.title.creating.destination.directory"), true) {
       private ValidationInfo error = null;
 
@@ -118,60 +102,48 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
   }
 
   public @NotNull String getParentDirectory() {
-    Path parent = Paths.get(myDirectoryField.getText()).toAbsolutePath().getParent();
+    Path parent = Paths.get(ui.directoryField.getText()).toAbsolutePath().getParent();
     return Objects.requireNonNull(parent).toAbsolutePath().toString();
   }
 
   public @NotNull String getDirectoryName() {
-    return Paths.get(myDirectoryField.getText()).getFileName().toString();
+    return Paths.get(ui.directoryField.getText()).getFileName().toString();
   }
 
   private void initComponents(@Nullable String defaultUrl) {
-    myRepositoryUrlComboboxModel = new CollectionComboBoxModel<>();
-    myRepositoryUrlField = TextFieldWithAutoCompletion.create(myProject,
-                                                              myRepositoryUrlComboboxModel.getItems(),
-                                                              false,
-                                                              "");
+    ui.repositoryUrlFieldSpinner.setVisible(false);
 
-    JLabel repositoryUrlFieldSpinner = new JLabel(new AnimatedIcon.Default());
-    repositoryUrlFieldSpinner.setVisible(false);
+    Disposer.register(getDisposable(), ui.spinnerProgressManager);
 
-    mySpinnerProgressManager = new ComponentVisibilityProgressManager(repositoryUrlFieldSpinner);
-    Disposer.register(getDisposable(), mySpinnerProgressManager);
+    ui.repositoryUrlCombobox.setEditable(true);
+    ui.repositoryUrlCombobox.setEditor(ComboBoxCompositeEditor.withComponents(ui.repositoryUrlField, ui.repositoryUrlFieldSpinner));
+    ui.repositoryUrlCombobox.setModel(ui.repositoryUrlComboboxModel);
 
-    myRepositoryUrlCombobox = new ComboBox<>();
-    myRepositoryUrlCombobox.setEditable(true);
-    myRepositoryUrlCombobox.setEditor(ComboBoxCompositeEditor.withComponents(myRepositoryUrlField,
-                                                                             repositoryUrlFieldSpinner));
-    myRepositoryUrlCombobox.setModel(myRepositoryUrlComboboxModel);
-
-    myRepositoryUrlField.addDocumentListener(new DocumentListener() {
+    ui.repositoryUrlField.addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(@NotNull com.intellij.openapi.editor.event.DocumentEvent event) {
-        myDirectoryField.trySetChildPath(defaultDirectoryPath(myRepositoryUrlField.getText().trim()));
+        ui.directoryField.trySetChildPath(defaultDirectoryPath(ui.repositoryUrlField.getText().trim()));
       }
     });
-    myRepositoryUrlField.addDocumentListener(new DocumentListener() {
+    ui.repositoryUrlField.addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(@NotNull com.intellij.openapi.editor.event.DocumentEvent event) {
         myRepositoryTestValidationInfo = null;
       }
     });
 
-    myTestButton = new JButton(DvcsBundle.message("clone.repository.url.test.label"));
-    myTestButton.addActionListener(e -> test());
+    ui.testButton.addActionListener(e -> test());
 
-    myDirectoryField = new MyTextFieldWithBrowseButton(ClonePathProvider.defaultParentDirectoryPath(myProject, getRememberedInputs()));
-    myDirectoryField.addBrowseFolderListener(myProject, FileChooserDescriptorFactory.createSingleFolderDescriptor()
+    ui.directoryField.addBrowseFolderListener(myProject, FileChooserDescriptorFactory.createSingleFolderDescriptor()
       .withTitle(DvcsBundle.message("clone.destination.directory.browser.title"))
       .withDescription(DvcsBundle.message("clone.destination.directory.browser.description"))
       .withShowFileSystemRoots(true)
       .withHideIgnored(false));
 
     if (defaultUrl != null) {
-      myRepositoryUrlField.setText(defaultUrl);
-      myRepositoryUrlField.selectAll();
-      myTestButton.setEnabled(true);
+      ui.repositoryUrlField.setText(defaultUrl);
+      ui.repositoryUrlField.selectAll();
+      ui.testButton.setEnabled(true);
     }
   }
 
@@ -182,7 +154,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
       myRepositoryTestProgressIndicator = null;
     }
     myRepositoryTestProgressIndicator =
-      mySpinnerProgressManager
+      ui.spinnerProgressManager
         .run(new Task.Backgroundable(myProject, DvcsBundle.message("clone.repository.url.test.title", testUrl), true) {
           private TestResult myTestResult;
 
@@ -201,15 +173,15 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
                 .createBalloonBuilder(new JLabel(DvcsBundle.message("clone.repository.url.test.success.message")))
                 .setDisposable(dialogDisposable)
                 .createBalloon()
-                .show(new RelativePoint(myTestButton, new Point(myTestButton.getWidth() / 2,
-                                                                myTestButton.getHeight())),
+                .show(new RelativePoint(ui.testButton, new Point(ui.testButton.getWidth() / 2,
+                                                                      ui.testButton.getHeight())),
                       Balloon.Position.below);
             }
             else {
               myRepositoryTestValidationInfo =
                 new ValidationInfo(DvcsBundle.message("clone.repository.url.test.failed.message",
                                                       XmlStringUtil.escapeString(myTestResult.myErrorMessage)),
-                                   myRepositoryUrlCombobox);
+                                   ui.repositoryUrlCombobox);
               startTrackingValidation();
             }
             myRepositoryTestProgressIndicator = null;
@@ -222,12 +194,18 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
   protected abstract @NotNull DvcsRememberedInputs getRememberedInputs();
 
   @Override
-  protected @NotNull List<ValidationInfo> doValidateAll() {
-    ValidationInfo urlValidation = CloneDvcsValidationUtils.checkRepositoryURL(myRepositoryUrlCombobox, getCurrentUrlText());
-    ValidationInfo directoryValidation = CloneDvcsValidationUtils.checkDirectory(myDirectoryField.getText(),
-                                                                                 myDirectoryField.getTextField());
+  protected boolean continuousValidation() {
+    // Force continuousValidation for custom validation in doValidateAll
+    return true;
+  }
 
-    myTestButton.setEnabled(urlValidation == null);
+  @Override
+  protected @NotNull List<ValidationInfo> doValidateAll() {
+    ValidationInfo urlValidation = CloneDvcsValidationUtils.checkRepositoryURL(ui.repositoryUrlCombobox, getCurrentUrlText());
+    ValidationInfo directoryValidation = CloneDvcsValidationUtils.checkDirectory(ui.directoryField.getText(),
+                                                                                 ui.directoryField.getTextField());
+
+    ui.testButton.setEnabled(urlValidation == null);
 
     List<ValidationInfo> infoList = new ArrayList<>();
     ContainerUtil.addIfNotNull(infoList, myRepositoryTestValidationInfo);
@@ -238,7 +216,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
   }
 
   private @NotNull String getCurrentUrlText() {
-    return OSAgnosticPathUtil.expandUserHome(myRepositoryUrlField.getText().trim());
+    return OSAgnosticPathUtil.expandUserHome(ui.repositoryUrlField.getText().trim());
   }
 
   /**
@@ -246,7 +224,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
    */
   @Deprecated(forRemoval = true)
   public void prependToHistory(final @NotNull String item) {
-    myRepositoryUrlComboboxModel.add(item);
+    ui.repositoryUrlComboboxModel.add(item);
   }
 
   public void rememberSettings() {
@@ -267,21 +245,12 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
 
   @Override
   public @Nullable JComponent getPreferredFocusedComponent() {
-    return myRepositoryUrlField;
+    return ui.repositoryUrlField;
   }
 
   @Override
   protected @NotNull JComponent createCenterPanel() {
-    JPanel panel = PanelFactory.grid()
-      .add(PanelFactory.panel(JBUI.Panels.simplePanel(UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP)
-                                .addToCenter(myRepositoryUrlCombobox)
-                                .addToRight(myTestButton))
-             .withLabel(DvcsBundle.message("clone.repository.url.label")))
-      .add(PanelFactory.panel(myDirectoryField)
-             .withLabel(DvcsBundle.message("clone.destination.directory.label")))
-      .createPanel();
-    panel.setPreferredSize(new JBDimension(500, 50, true));
-    return panel;
+    return ui.panel;
   }
 
   protected static class TestResult {
@@ -301,11 +270,11 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
     }
   }
 
-  private static final class MyTextFieldWithBrowseButton extends TextFieldWithBrowseButton {
+  static final class MyTextFieldWithBrowseButton extends TextFieldWithBrowseButton {
     private final @NotNull Path myDefaultParentPath;
     private boolean myModifiedByUser = false;
 
-    private MyTextFieldWithBrowseButton(@NotNull @NonNls String defaultParentPath) {
+    MyTextFieldWithBrowseButton(@NotNull @NonNls String defaultParentPath) {
       myDefaultParentPath = Paths.get(defaultParentPath).toAbsolutePath();
       setText(myDefaultParentPath.toString());
       getTextField().getDocument().addDocumentListener(new DocumentAdapter() {

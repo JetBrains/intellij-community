@@ -498,6 +498,7 @@ a:com.intellij.dvcs.ui.CloneDvcsDialog
 - pf:myVcsDirectoryName:java.lang.String
 - <init>(com.intellij.openapi.project.Project,java.lang.String,java.lang.String):V
 - <init>(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,java.lang.String):V
+- p:continuousValidation():Z
 - p:createCenterPanel():javax.swing.JComponent
 - p:doOKAction():V
 - p:doValidateAll():java.util.List
