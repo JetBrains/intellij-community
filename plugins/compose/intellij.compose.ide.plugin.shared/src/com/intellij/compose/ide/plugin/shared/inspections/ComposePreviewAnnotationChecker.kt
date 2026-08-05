@@ -22,7 +22,7 @@ import com.intellij.compose.ide.plugin.shared.JETPACK_PREVIEW_FQ_NAME
 import com.intellij.compose.ide.plugin.shared.MULTIPLATFORM_PREVIEW_CLASS_ID
 import com.intellij.compose.ide.plugin.shared.MULTIPLATFORM_PREVIEW_FQ_NAME
 import com.intellij.compose.ide.plugin.shared.classIdMatches
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.KtImportDirective
 

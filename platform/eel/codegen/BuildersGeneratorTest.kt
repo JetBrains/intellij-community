@@ -12,8 +12,8 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.command.writeCommandAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -73,9 +73,16 @@ import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsLibraryDependency
 import org.jetbrains.jps.model.module.JpsModuleDependency
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
-import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
+import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
+import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
+import org.jetbrains.kotlin.analysis.api.types.receiverType
 import org.jetbrains.kotlin.analysis.api.types.symbol
+import org.jetbrains.kotlin.analysis.api.types.type
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.elements.KtLightField
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.ALL
@@ -1026,7 +1033,10 @@ private fun PsiElement.getImportableTypes(): Collection<String> {
     override fun visitElement(element: PsiElement) {
       if (element is KtTypeReference) {
         val clsName = analyze(element) {
-          val maybeNestedClass = element.type.takeIf { !it.isPrimitive && !it.isAnyType && !it.isNothingType }?.expandedSymbol?.classId
+          val maybeNestedClass = element.type.takeIf {
+            val classId = it.classId
+            classId !in KaStandardTypeClassIds.PRIMITIVES && classId != KaStandardTypeClassIds.ANY && classId != KaStandardTypeClassIds.NOTHING
+          }?.expandedSymbol?.classId
           val rootClass = generateSequence(maybeNestedClass) { it.outerClassId }.lastOrNull()
           rootClass?.asFqNameString()
         }
