@@ -66,7 +66,15 @@ f:com.intellij.platform.compose.swing.components.SearchTextFieldKt
 f:com.intellij.platform.compose.swing.components.SegmentedButtonKt
 - *sf:SegmentedButton(java.util.List,java.lang.Object,kotlin.jvm.functions.Function1,org.jetbrains.compose.swing.modifier.SwingModifier,kotlin.jvm.functions.Function1,I,androidx.compose.runtime.Composer,I,I):V
 f:com.intellij.platform.compose.swing.components.ThreeStateCheckBoxKt
-- *sf:ThreeStateCheckBox(java.lang.String,com.intellij.util.ui.ThreeStateCheckBox$State,org.jetbrains.compose.swing.modifier.SwingModifier,kotlin.jvm.functions.Function1,androidx.compose.runtime.Composer,I,I):V
+- *sf:ThreeStateCheckBox(java.lang.String,com.intellij.platform.compose.swing.components.ThreeStateCheckBoxState,org.jetbrains.compose.swing.modifier.SwingModifier,kotlin.jvm.functions.Function1,androidx.compose.runtime.Composer,I,I):V
+*e:com.intellij.platform.compose.swing.components.ThreeStateCheckBoxState
+- java.lang.Enum
+- sf:INDETERMINATE:com.intellij.platform.compose.swing.components.ThreeStateCheckBoxState
+- sf:NOT_SELECTED:com.intellij.platform.compose.swing.components.ThreeStateCheckBoxState
+- sf:SELECTED:com.intellij.platform.compose.swing.components.ThreeStateCheckBoxState
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.platform.compose.swing.components.ThreeStateCheckBoxState
+- s:values():com.intellij.platform.compose.swing.components.ThreeStateCheckBoxState[]
 f:com.intellij.platform.compose.swing.components.TitledSeparatorKt
 - *sf:TitledSeparator(java.lang.String,org.jetbrains.compose.swing.modifier.SwingModifier,androidx.compose.runtime.Composer,I,I):V
 f:com.intellij.platform.compose.swing.modifier.ActionLinkModifiersKt
