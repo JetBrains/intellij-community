@@ -63,6 +63,7 @@ class PluginManagerSession(val sessionId: String) {
   val dependentToRequiredListMap: MutableMap<PluginId, MutableSet<PluginId>> = ConcurrentHashMap()
   val installsInProgress:  MutableMap<PluginId, PluginUiModel> = ConcurrentHashMap()
   val updatesInProgress:  MutableMap<PluginId, PluginUiModel> = ConcurrentHashMap()
+  val pendingUpdatesToReplace: MutableSet<PluginId> = ConcurrentCollectionFactory.createConcurrentSet()
   var isUiDisposedWithApply: Boolean = false
 
   val errorPluginsToDisable: MutableSet<PluginId> = ConcurrentCollectionFactory.createConcurrentSet()
