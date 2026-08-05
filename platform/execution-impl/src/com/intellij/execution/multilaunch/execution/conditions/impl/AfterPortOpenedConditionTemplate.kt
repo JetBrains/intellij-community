@@ -31,7 +31,8 @@ class AfterPortOpenedConditionTemplate : ConditionTemplate {
     private val DEFAULT_PORT = 80
 
     private var port: Int = DEFAULT_PORT
-    override val text get() = ExecutionBundle.message("run.configurations.multilaunch.condition.after.port.opened", port)
+    // Passed as a String so MessageFormat inserts it verbatim instead of applying locale number grouping ("8,080").
+    override val text get() = ExecutionBundle.message("run.configurations.multilaunch.condition.after.port.opened", port.toString())
     override val optionLabel = ExecutionBundle.message("run.configurations.multilaunch.condition.after.port.opened.label")
 
     override fun provideEditor(row: Row) = row
