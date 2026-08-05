@@ -730,6 +730,7 @@ platform/ijent/testFramework
 platform/ijent/ui
 platform/indexing-api
 platform/indexing-impl
+platform/indexing-impl/backend
 platform/indexing-tests
 platform/inline-completion/shared
 platform/inspect

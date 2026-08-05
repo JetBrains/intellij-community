@@ -1,10 +1,11 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.find.impl;
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.indexing.impl.backend;
 
 import com.intellij.find.FindInProjectSearchEngine;
 import com.intellij.find.FindModel;
 import com.intellij.find.TextSearchService;
 import com.intellij.find.TextSearchService.TextSearchResult;
+import com.intellij.find.impl.FindInProjectUtil;
 import com.intellij.find.ngrams.TrigramTextSearchService;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.DumbService;
@@ -15,7 +16,6 @@ import com.intellij.openapi.util.text.TrigramBuilder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.GlobalSearchScopeUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.UsageSearchContext;
@@ -90,11 +90,7 @@ public final class IdeaIndexBasedFindInProjectSearchEngine implements FindInProj
         return Collections.emptySet();
       }
 
-      GlobalSearchScope scope = GlobalSearchScopeUtil.toGlobalSearchScope(
-        FindInProjectUtil.getScopeFromModel(project, findModel),
-        project
-      );
-
+      GlobalSearchScope scope = FindInProjectUtil.getGlobalSearchScope(project, findModel);
       List<VirtualFile> hits = new ArrayList<>();
       TextSearchResult result = DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE.ignoreDumbMode(
         () -> {

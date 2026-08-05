@@ -90,6 +90,7 @@ object CommunityModuleSets {
     module("intellij.platform.project.backend")
     module("intellij.platform.progress.backend")
     module("intellij.platform.lang.impl.backend")
+    module("intellij.platform.indexing.impl.backend")
 
     // Frontend/monolith
     module("intellij.platform.frontend")

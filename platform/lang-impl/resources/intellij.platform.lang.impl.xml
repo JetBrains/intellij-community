@@ -1604,7 +1604,6 @@
     <platform.backend.documentation.inlineDocumentationProvider order="last"
       implementation="com.intellij.codeInsight.documentation.render.CompatibilityInlineDocumentationProvider"/>
     <psi.treeChangeListener implementation="com.intellij.openapi.fileEditor.impl.FileEditorPsiTreeChangeListener"/>
-    <findInProjectSearchEngine implementation="com.intellij.find.impl.IdeaIndexBasedFindInProjectSearchEngine"/>
     <postStartupActivity implementation="com.intellij.ide.script.IdeStartupScripts" order="last"/>
     <psi.treeChangePreprocessor implementation="com.intellij.util.indexing.events.FileBasedIndexTreeChangePreprocessor"/>
     <fileSetDescriptorFactory implementation="com.intellij.application.options.codeStyle.excludedFiles.NamedScopeDescriptor$Factory"/>

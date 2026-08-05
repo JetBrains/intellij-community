@@ -267,6 +267,7 @@
     <module name="intellij.platform.project.backend"/>
     <module name="intellij.platform.progress.backend"/>
     <module name="intellij.platform.lang.impl.backend"/>
+    <module name="intellij.platform.indexing.impl.backend"/>
     <module name="intellij.platform.frontend"/>
     <module name="intellij.platform.monolith"/>
     <module name="intellij.platform.editor"/>
