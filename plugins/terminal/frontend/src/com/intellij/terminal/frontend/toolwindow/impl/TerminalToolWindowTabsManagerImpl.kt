@@ -46,6 +46,8 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
+import org.jetbrains.plugins.terminal.TerminalEditorTabInfo
+import org.jetbrains.plugins.terminal.TerminalEditorTabSupportUtil
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.TerminalTabCloseListener
 import org.jetbrains.plugins.terminal.TerminalToolWindowFactory
@@ -205,9 +207,12 @@ class TerminalToolWindowTabsManagerImpl(
       manager.removeContent(content, true)
     }
 
-    val tab = TerminalToolWindowTabImpl(terminal, content, closeOnProcessTermination, processOptions)
-    content.putUserData(TerminalToolWindowTab.KEY, tab)
-    return tab
+    return TerminalToolWindowTabImpl(terminal, content, closeOnProcessTermination).also { tab ->
+      content.putUserData(TerminalEditorTabSupportUtil.TERMINAL_EDITOR_TAB_INFO_KEY, object : TerminalEditorTabInfo {
+        override fun getEditorTabTitle(): String = tab.view.getTitleText()
+      })
+      content.putUserData(TerminalToolWindowTab.KEY, tab)
+    }
   }
 
   private fun addTabToToolWindow(
@@ -253,7 +258,7 @@ class TerminalToolWindowTabsManagerImpl(
         userDefinedTitle = builder.tabName
       }
       else {
-        defaultTitle = builder.tabName ?: createDefaultTabName(getToolWindow())
+        defaultTitle = builder.tabName ?: createDefaultTabName(project, getToolWindow())
       }
     }
 

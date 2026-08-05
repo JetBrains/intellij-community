@@ -10,14 +10,13 @@ import com.intellij.openapi.util.UserDataHolderBase
 import java.beans.PropertyChangeListener
 import javax.swing.JComponent
 
-internal class ToolWindowTabFileEditor(
+internal class ToolWindowEditorTabFileEditor(
   private val project: Project,
-  private val file: ToolWindowTabFile
+  private val file: ToolWindowEditorTabFile,
 ) : UserDataHolderBase(), FileEditor {
-
   override fun getComponent(): JComponent = file.component
 
-  override fun getPreferredFocusedComponent(): JComponent = file.preferredFocusedComponent
+  override fun getPreferredFocusedComponent(): JComponent = file.getPreferredFocusedComponent()
 
   override fun getName(): @NlsSafe String = file.name
 
@@ -25,15 +24,16 @@ internal class ToolWindowTabFileEditor(
 
   override fun isModified(): Boolean = false
 
-  override fun isValid(): Boolean = true
+  override fun isValid(): Boolean = file.isValid
 
   override fun addPropertyChangeListener(listener: PropertyChangeListener) {}
 
   override fun removePropertyChangeListener(listener: PropertyChangeListener) {}
 
-  override fun getFile(): ToolWindowTabFile = file
+  override fun getFile() = file
 
   override fun dispose() {
+    file.onEditorClosed()
     FileEditorManager.getInstance(project).closeFile(this.file)
   }
 }

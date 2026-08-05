@@ -295,8 +295,8 @@
     <extensionPoint qualifiedName="com.intellij.actionOnSave" interface="com.intellij.ide.actionsOnSave.impl.ActionsOnSaveFileDocumentManagerListener$ActionOnSave" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.contentTabActionProvider" interface="com.intellij.openapi.wm.impl.content.tabActions.ContentTabActionProvider"
                     dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.toolWindowTabInEditorHelper" beanClass="com.intellij.util.KeyedLazyInstanceEP" dynamic="true">
-      <with attribute="implementationClass" implements="com.intellij.openapi.wm.impl.tabInEditor.ToolWindowTabInEditorHelper"/>
+    <extensionPoint qualifiedName="com.intellij.toolWindowEditorTabSupport" beanClass="com.intellij.util.KeyedLazyInstanceEP" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.openapi.wm.impl.tabInEditor.ToolWindowEditorTabSupport"/>
     </extensionPoint>
     <extensionPoint qualifiedName="com.intellij.inspectionPopupLevelChangePolicy" interface="com.intellij.openapi.editor.impl.InspectionPopupLevelChangePolicy" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.protocolHandler" interface="com.intellij.ide.ProtocolHandler" dynamic="true"/>
@@ -1144,7 +1144,7 @@
                              instance="com.intellij.openapi.editor.impl.stickyLines.configurable.StickyLinesConfigurable"/>
     <backgroundPostStartupActivity implementation="com.intellij.diagnostic.WindowsDefenderCheckerActivity" os="windows"/>
     <iconLayerProvider implementation="com.intellij.ide.LockedIconLayerProvider"/>
-    <fileEditorProvider implementation="com.intellij.openapi.wm.impl.tabInEditor.ToolWindowTabFileEditorProvider" id="ToolWindowTabFileEditor"/>
+    <fileEditorProvider implementation="com.intellij.openapi.wm.impl.tabInEditor.ToolWindowEditorTabFileEditorProvider" id="ToolWindowEditorTabFileEditor"/>
     <fileEditorProvider implementation="com.intellij.openapi.fileEditor.impl.text.LargeFileEditorProvider" id="LargeFileEditor"/>
     <fileEditorProvider id="jcomponent-editor" implementation="com.intellij.openapi.fileEditor.impl.JComponentEditorProvider"/>
     <fileEditorProvider id="settingsWindow" implementation="com.intellij.openapi.options.newEditor.settings.SettingsFileEditorProvider"/>
@@ -1152,7 +1152,7 @@
     <editorNotificationProvider implementation="com.intellij.openapi.options.newEditor.settings.SettingModifiedExternallyNotificationProvider"/>
     <virtualFileSystem implementationClass="com.intellij.openapi.options.newEditor.settings.SettingsFileSystem" key="settings" physical="false"/>
     <navbar implementation="com.intellij.openapi.options.newEditor.settings.SettingsNavBarModelExtension"/>
-    <editorAutoClosingHandler implementation="com.intellij.openapi.wm.impl.tabInEditor.ToolWindowTabEditorAutoClosingHandler"/>
+    <editorAutoClosingHandler implementation="com.intellij.openapi.wm.impl.tabInEditor.ToolWindowEditorTabAutoClosingHandler"/>
     <editorNotificationProvider implementation="com.intellij.openapi.fileEditor.impl.text.LargeFileNotificationProvider"/>
     <fileDocumentSynchronizationVetoer implementation="com.intellij.openapi.fileEditor.impl.LargeFileSavingVetoer"/>
     <editorNotificationProvider implementation="com.intellij.openapi.editor.impl.BidiContentNotificationProvider"/>
