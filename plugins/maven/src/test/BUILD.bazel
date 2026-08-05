@@ -14,7 +14,6 @@ jvm_library(
         # do not sort,
         "//platform/vcs-api:vcs",
         "//platform/util/progress",
-        "//plugins/repository-search/common",
     ],
 )
 
@@ -175,6 +174,8 @@ jvm_library(
         "//platform/execution:execution_test_lib",
         "//plugins/repository-search/common",
         "//plugins/repository-search/common:common_test_lib",
+        "//plugins/repository-search/completion",
+        "//plugins/repository-search/completion:completion_test_lib",
         "//plugins/maven/completion",
         "//plugins/maven/completion:completion_test_lib",
         "//plugins/maven/jps/ide",
