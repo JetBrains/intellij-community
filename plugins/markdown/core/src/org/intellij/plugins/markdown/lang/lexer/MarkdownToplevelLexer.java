@@ -33,13 +33,19 @@ public class MarkdownToplevelLexer extends LexerBase {
   private int myLexemeIndex;
 
   private final @NotNull MarkdownFlavourDescriptor flavour;
+  private final @Nullable ASTNode parsedTree;
 
   public MarkdownToplevelLexer() {
     this(MarkdownParserManager.FLAVOUR);
   }
 
   public MarkdownToplevelLexer(@NotNull MarkdownFlavourDescriptor flavour) {
+    this(flavour, null);
+  }
+
+  public MarkdownToplevelLexer(@NotNull MarkdownFlavourDescriptor flavour, @Nullable ASTNode parsedTree) {
     this.flavour = flavour;
+    this.parsedTree = parsedTree;
   }
 
   @Override
@@ -53,7 +59,9 @@ public class MarkdownToplevelLexer extends LexerBase {
     myBuffer = buffer;
     myBufferStart = startOffset;
     myBufferEnd = endOffset;
-    final var parsedTree = MarkdownParserManager.parseContent(buffer.subSequence(startOffset, endOffset), flavour);
+    var parsedTree =
+      this.parsedTree != null ?
+      this.parsedTree : MarkdownParserManager.parseContent(buffer.subSequence(startOffset, endOffset), flavour);
     myLexemes.clear();
     myStartOffsets.clear();
     myEndOffsets.clear();
