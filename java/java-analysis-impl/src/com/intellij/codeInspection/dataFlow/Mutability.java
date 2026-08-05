@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -12,6 +12,8 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiAssignmentExpression;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
@@ -20,7 +22,9 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.PsiParenthesizedExpression;
 import com.intellij.psi.PsiRecordComponent;
+import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.impl.source.PsiMethodImpl;
@@ -28,16 +32,20 @@ import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -186,9 +194,9 @@ public enum Mutability {
       return UNMODIFIABLE_VIEW;
     }
     if (owner instanceof PsiField field && owner.hasModifierProperty(PsiModifier.FINAL)) {
-      List<PsiExpression> initializers = ContainerUtil.createMaybeSingletonList(field.getInitializer());
-      if (initializers.isEmpty() && !owner.hasModifierProperty(PsiModifier.STATIC)) {
-        initializers = DfaPsiUtil.findAllConstructorInitializers(field);
+      List<PsiExpression> initializers = ContainerUtil.createMaybeSingletonList(unwrap(field.getInitializer()));
+      if (initializers.isEmpty()) {
+        initializers = findFieldInitializers(field);
       }
       return calcMutability(initializers);
     }
@@ -196,6 +204,33 @@ public enum Mutability {
       return calcMutability(DfaPsiUtil.findAllConstructorInitializers(component));
     }
     return owner instanceof PsiMethodImpl method ? JavaSourceInference.inferMutability(method) : UNKNOWN;
+  }
+
+  private static @NotNull List<PsiExpression> findFieldInitializers(@NotNull PsiField field) {
+    List<PsiExpression> result = null;
+    for (PsiReferenceExpression reference : VariableAccessUtils.getVariableReferences(field)) {
+      PsiElement parent = PsiTreeUtil.skipParentsOfType(reference, PsiParenthesizedExpression.class);
+      if (parent instanceof PsiAssignmentExpression assignment &&
+          PsiTreeUtil.isAncestor(assignment.getLExpression(), reference, false)) {
+        PsiExpression expression = unwrap(assignment.getRExpression());
+        if (expression == null) continue;
+        if (result == null) {
+          result = List.of(expression);
+          continue;
+        }
+        else if (result.size() == 1) {
+          result = new ArrayList<>(result);
+        }
+        result.add(expression);
+      }
+    }
+    return result == null ? List.of() : result;
+  }
+  
+  private static PsiExpression unwrap(PsiExpression expression) {
+    return PsiUtil.deparenthesizeExpression(expression) instanceof PsiAssignmentExpression assignment
+           ? unwrap(assignment.getRExpression())
+           : PsiUtil.deparenthesizeExpression(expression);
   }
 
   private static @NotNull Mutability calcMutability(List<PsiExpression> expressions) {
