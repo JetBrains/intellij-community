@@ -13,6 +13,8 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.testFramework.ExtensionTestUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
@@ -696,6 +698,23 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
     setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
     addNullnessUnspecified();
     doTest();
+  }
+
+  public void testJSpecifyNullableBoundInstantiatedWithNotNull() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    PsiClass superClass = myFixture.addClass("""
+                                               import org.jspecify.annotations.NullMarked;
+                                               import org.jspecify.annotations.Nullable;
+
+                                               @NullMarked
+                                               public class SupWithNullableBound<T extends @Nullable Object> {
+                                                 public void test(T arg) {}
+                                               }""");
+    doTest();
+    // The bound has to be read from the stub, where the extends-list reference is rebuilt in a DummyHolder and the
+    // @Nullable annotation reports no owner. .
+    assertFalse(((PsiFileImpl)superClass.getContainingFile()).isContentsLoaded());
   }
 
   public void testJSpecifyUnspecifiedTypeArgumentInstantiatedWithNullable() {

@@ -213,8 +213,12 @@ public final class DfaPsiUtil {
         PsiType type = PsiUtil.getTypeByPsiElement(owner);
         if (type != null) {
           PsiAnnotationOwner annotationOwner = fromAnnotation.getAnnotation().getOwner();
+          // The bound may come from a stub-built copy of the extends list, which lives in a DummyHolder and therefore
+          // reports no owner at all; isExtendedBounds() states the same thing without depending on the annotation's PSI.
+          boolean fromTypeHierarchy = fromAnnotation.isExtendedBounds() ||
+                                      annotationOwner instanceof PsiType && annotationOwner != type;
           if (PsiUtil.resolveClassInClassTypeOnly(type) instanceof PsiTypeParameter tp &&
-              annotationOwner instanceof PsiType && annotationOwner != type &&
+              fromTypeHierarchy &&
               !tp.equals(PsiUtil.resolveClassInClassTypeOnly(resultType))) {
             // Nullable/Unknown from type hierarchy: should check the instantiation, as it could be more concrete
             return getTypeNullability(resultType, forRead);
