@@ -264,7 +264,6 @@ public class J2KNullityInferrer {
                 PsiType type = typeElement.getType();
                 PsiModifierListOwner owner =
                         typeElement.getParent() instanceof PsiModifierListOwner modifierListOwner ? modifierListOwner : null;
-                if (owner instanceof PsiMethod) return;
                 Nullability nullability = DfaPsiUtil.getElementNullabilityForWrite(type, owner);
                 switch (nullability) {
                     case NULLABLE -> registerNullableType(type);

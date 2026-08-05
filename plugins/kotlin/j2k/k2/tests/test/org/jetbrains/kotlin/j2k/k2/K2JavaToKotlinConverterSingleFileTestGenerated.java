@@ -5043,6 +5043,11 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
             runTest("../../shared/tests/testData/newJ2k/nullability/MethodReturnsTernaryNull.java");
         }
 
+        @TestMetadata("notNullByDefault.java")
+        public void testNotNullByDefault() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/nullability/notNullByDefault.java");
+        }
+
         @TestMetadata("notNullCast.java")
         public void testNotNullCast() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/nullability/notNullCast.java");
@@ -5309,6 +5314,11 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
         @TestMetadata("simple.java")
         public void testSimple() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/nullabilityGenerics/simple.java");
+        }
+
+        @TestMetadata("typeArgumentInAbstractMethod.java")
+        public void testTypeArgumentInAbstractMethod() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/nullabilityGenerics/typeArgumentInAbstractMethod.java");
         }
 
         @TestMetadata("typeArgumentTodoK2_3.java")
