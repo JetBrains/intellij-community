@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
+import com.intellij.ide.plugins.PluginDependencyAnalysis.DependencyRef
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
@@ -22,6 +23,7 @@ import com.intellij.testFramework.rules.InMemoryFsExtension
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.extension.RegisterExtension
 import java.nio.file.FileVisitResult
 
@@ -856,6 +858,21 @@ internal class PluginDependenciesTest {
 
   @Nested
   inner class ImplicitDependencyAdditionTests {
+    @Test
+    @Timeout(10)
+    fun `soft compatibility dependency on self is ignored`() {
+      plugin("foo") {}.installAt(pluginDirPath)
+      val pluginSet = PluginSetTestBuilder.fromPath(pluginDirPath)
+        .withCompatibilityDependenciesForRemainingCandidatesProvider { descriptor, remainingCandidates ->
+          check(remainingCandidates.resolvePluginId(descriptor.pluginId) === descriptor)
+          sequenceOf(DependencyRef.of(descriptor.pluginId))
+        }
+        .build()
+
+      val foo = pluginSet.getEnabledPlugin("foo")
+      assertThat(pluginSet.resolvedPluginSet.getDirectResolvedDependencies(foo)).doesNotContain(foo)
+    }
+
     @Test
     fun `legacy plugin gets implicit java dependency when all modules marker is present`() {
       // marker enables implicit dependencies for legacy plugins
