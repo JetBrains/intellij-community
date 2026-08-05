@@ -53,6 +53,7 @@ def _jps_to_bazel_targets_json_impl(ctx):
     args.add_all(ctx.attr.starlark_test_targets, format_each = "--starlark-test=%s")
     args.add_all(ctx.attr.starlark_library_targets, format_each = "--starlark-library=%s")
     args.add_all(ctx.attr.starlark_iml_targets, format_each = "--starlark-iml=%s")
+    args.add_all(ctx.attr.starlark_plugin_distribution_targets, format_each = "--starlark-plugin-distribution=%s")
     args.use_param_file("@%s", use_always = True)
 
     env = {}
@@ -105,6 +106,10 @@ jps_to_bazel_targets_json = rule(
         "starlark_iml_targets": attr.string_list(
             default = [],
             doc = "Starlark-derived IML targets for parity assertion.",
+        ),
+        "starlark_plugin_distribution_targets": attr.string_list(
+            default = [],
+            doc = "Starlark-derived plugin distribution targets for parity assertion.",
         ),
         "jps_to_bazel_treat_kotlin_dev_version_as_snapshot": attr.string(
             default = "",

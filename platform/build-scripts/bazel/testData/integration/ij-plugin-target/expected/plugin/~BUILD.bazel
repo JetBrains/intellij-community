@@ -40,6 +40,7 @@ ij_plugin(
 exports_files(
     [
         "intellij.plugin.iml",
+        "resources/META-INF/plugin.xml",
     ],
     visibility = ["//visibility:public"],
 )

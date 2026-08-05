@@ -471,6 +471,10 @@ internal class BazelBuildFileGenerator(
 
         val imlTargetsBazel = BuildFile()
         imlTargetsBazel.exportFile(module.imlFile.relativeTo(module.bazelBuildFileDir).invariantSeparatorsPathString)
+        for (resource in module.resources) {
+          val pluginXml = findMarkedPluginXmlFile(resource) ?: continue
+          imlTargetsBazel.exportFile(pluginXml.relativeTo(module.bazelBuildFileDir).invariantSeparatorsPathString)
+        }
 
         val testTargetsBazel = BuildFile()
         testTargetsBazel.generateTestTargets(module, list)
