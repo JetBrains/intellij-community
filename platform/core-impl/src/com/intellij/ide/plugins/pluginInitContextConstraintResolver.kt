@@ -400,7 +400,10 @@ private class PluginSetConstraintsResolver(
       }
 
       val compatibilityDependencies = initContext.provideCompatibilityDependenciesForRemainingCandidates(descriptor, remainingCandidatesView)
-        .mapNotNullTo(ArrayList()) { remainingCandidatesView.resolveReference(it) }
+        .mapNotNullTo(ArrayList()) { dependencyRef ->
+          remainingCandidatesView.resolveReference(dependencyRef)
+            ?.takeIf { it !== descriptor }
+        }
       if (compatibilityDependencies.isNotEmpty()) {
         contributeDependencies(compatibilityDependencies)
       }
@@ -456,8 +459,11 @@ private class PluginSetConstraintsResolver(
     val descriptorGraph = DFSTBuilder(DescriptorGraphAdapter(remainingCandidates, resolvedDependents))
     if (!descriptorGraph.isAcyclic) {
       for (component in descriptorGraph.components) {
-        if (component.size <= 1) {
-          continue
+        if (component.size == 1) {
+          val selfDependent = component.first() in resolvedDependencies[component.first()].orEmpty()
+          if (!selfDependent) {
+            continue
+          }
         }
         val component = component.sortedWith(compareBy { it.pluginId }) // makes result stable
         val cycleNodesWithDependencies = component.associateWith { ArrayList<IdeaPluginDescriptorImpl>() }
@@ -512,7 +518,7 @@ private class PluginSetConstraintsResolver(
     if (!dfstBuilder.isAcyclic) {
       for (component in dfstBuilder.components) {
         if (component.size <= 1) {
-          continue
+          continue // no self-dependency expected: implied by filtering in dependency list construction above
         }
         val component = component.sortedWith(compareBy { it.representativeModule.pluginId }) // make result stable
         val cycleNodesWithDependencies = component.associateWith { ArrayList<RuntimeModuleGroup>() }

@@ -2,9 +2,12 @@
 package com.intellij.platform.pluginSystem.testFramework
 
 import com.intellij.ide.plugins.DiscoveredPluginsList
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
+import com.intellij.ide.plugins.PluginDependencyAnalysis.DependencyRef
 import com.intellij.ide.plugins.PluginDescriptorLoadingContext
 import com.intellij.ide.plugins.PluginInitContextFactory
 import com.intellij.ide.plugins.PluginInitializationContext
+import com.intellij.ide.plugins.PluginInitializationContext.RemainingCandidatesView
 import com.intellij.ide.plugins.PluginLoadingErrorReportingPolicy
 import com.intellij.ide.plugins.PluginMainDescriptor
 import com.intellij.ide.plugins.PluginManagerCore
@@ -32,6 +35,8 @@ class PluginSetTestBuilder private constructor(
   private var customCoreLoader: UrlClassLoader? = null
   private var productMode: ProductMode = ProductMode.MONOLITH
   private var explicitPluginSubsetToLoad: Set<PluginId>? = null
+  private var compatibilityDependenciesForRemainingCandidatesProvider:
+    ((IdeaPluginDescriptorImpl, RemainingCandidatesView) -> Sequence<DependencyRef>)? = null
 
   companion object {
     @JvmStatic
@@ -75,6 +80,12 @@ class PluginSetTestBuilder private constructor(
     this.explicitPluginSubsetToLoad = pluginsToLoad
   }
 
+  fun withCompatibilityDependenciesForRemainingCandidatesProvider(
+    provider: (IdeaPluginDescriptorImpl, RemainingCandidatesView) -> Sequence<DependencyRef>,
+  ): PluginSetTestBuilder = apply {
+    compatibilityDependenciesForRemainingCandidatesProvider = provider
+  }
+
   var buildNumber: String
     get() = productBuildNumber.toString()
     set(value) {
@@ -92,6 +103,15 @@ class PluginSetTestBuilder private constructor(
       }
       override val explicitPluginSubsetToLoad: Set<PluginId>? = this@PluginSetTestBuilder.explicitPluginSubsetToLoad
       override val currentProductModeId: String = productMode.id
+      override fun provideCompatibilityDependenciesForRemainingCandidates(
+        descriptor: IdeaPluginDescriptorImpl,
+        remainingCandidates: RemainingCandidatesView,
+      ): Sequence<DependencyRef> {
+        compatibilityDependenciesForRemainingCandidatesProvider?.let { provider ->
+          return provider(descriptor, remainingCandidates)
+        }
+        return super.provideCompatibilityDependenciesForRemainingCandidates(descriptor, remainingCandidates)
+      }
     }
   }
 
