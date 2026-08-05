@@ -1473,6 +1473,39 @@ internal class PluginDependenciesTest {
       assertThat(withLang).hasExactDirectParentClassloaders(*moduleDescriptors.toTypedArray())
       assertThat(withDependencies).hasExactDirectParentClassloaders()
     }
+
+    @Test
+    fun `unavailable module extracted from core does not exclude plugin depending on platform alias`() {
+      plugin("platform.alias.provider") {
+        vendor = "JetBrains"
+        pluginAlias("com.intellij.modules.platform")
+      }.installAt(pluginDirPath)
+
+      plugin("tasks.provider") {
+        vendor = "JetBrains"
+        content(namespace = "jetbrains") {
+          module("intellij.platform.tasks", ModuleLoadingRuleValue.REQUIRED) {
+            packagePrefix = "intellij.platform.tasks"
+            moduleVisibility = ModuleVisibilityValue.PUBLIC
+            dependencies {
+              module("unavailable.module")
+            }
+          }
+        }
+      }.installAt(pluginDirPath)
+
+      plugin("consumer") {
+        vendor = "JetBrains"
+        depends("com.intellij.modules.platform")
+      }.installAt(pluginDirPath)
+
+      val pluginSet = buildPluginSet()
+
+      assertThat(pluginSet).hasExactlyEnabledPlugins("consumer", "platform.alias.provider")
+      assertThat(pluginSet.getEnabledPlugin("consumer")).hasExactDirectParentClassloaders(
+        pluginSet.getEnabledPlugin("platform.alias.provider")
+      )
+    }
   }
 
   private fun foo() = plugin("foo") {}.installAt(pluginDirPath)
