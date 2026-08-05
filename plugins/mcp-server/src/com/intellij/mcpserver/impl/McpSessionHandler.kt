@@ -2,6 +2,7 @@ package com.intellij.mcpserver.impl
 
 import com.intellij.mcpserver.ClientInfo
 import com.intellij.mcpserver.McpCallAdditionalDataElement
+import com.intellij.mcpserver.McpCallHeaders
 import com.intellij.mcpserver.McpCallInfo
 import com.intellij.mcpserver.McpExpectedError
 import com.intellij.mcpserver.McpSessionInvocationMode
@@ -364,7 +365,7 @@ internal class McpSessionHandler(
         rawArguments = request.arguments ?: EmptyJsonObject,
         meta = request.meta?.json ?: EmptyJsonObject,
         mcpSessionOptions = sessionOptions,
-        headers = headersWithoutAuthToken ?: emptyMap(),
+        headers = McpCallHeaders(headersWithoutAuthToken ?: emptyMap()),
         sessionId = session.sessionId,
       ).apply {
         sessionHandler = this@McpSessionHandler

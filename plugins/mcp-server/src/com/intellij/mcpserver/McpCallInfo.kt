@@ -23,7 +23,7 @@ class McpCallInfo(
   val rawArguments: JsonObject,
   val meta: JsonObject,
   val mcpSessionOptions: McpServerService.McpSessionOptions,
-  val headers: Map<String, List<String>> = emptyMap(),
+  val headers: McpCallHeaders = emptyMcpCallHeaders(),
   // todo drop default, drop nullability
   val sessionId: String? = null,
 ) {
@@ -33,6 +33,18 @@ class McpCallInfo(
     return "McpCallAdditionalData(id=$callId, clientInfo=$clientInfo, toolName=${mcpToolDescriptor.name}"
   }
 }
+
+class McpCallHeaders {
+  private val headers: Map<String, List<String>>
+
+  constructor(headers: Map<String, List<String>>) {
+    this.headers = headers.entries.associateBy({ it.key.lowercase() }, { it.value })
+  }
+
+  fun get(header: String): List<String>? = headers[header.lowercase()]
+}
+
+fun emptyMcpCallHeaders(): McpCallHeaders = McpCallHeaders(emptyMap())
 
 class ClientInfo(val name: String, val version: String)
 
