@@ -7,8 +7,8 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
-import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
@@ -57,7 +57,7 @@ internal class KotlinDoubleNegationInspection : KotlinApplicableInspectionBase.S
             element: KtPrefixExpression,
             updater: ModPsiUpdater,
         ) {
-            element.baseExpression?.let { element.parentThroughParenthesis.replace(it) }
+            element.baseExpression?.let { element.parentThroughParenthesis?.replace(it) }
         }
 
     }
