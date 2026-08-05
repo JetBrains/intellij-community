@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.io;
 
+import com.intellij.openapi.util.UtilThreadingAssertions;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -51,6 +52,9 @@ public final class WindowsRegistryUtil {
     return output.subSequence(startPos, endPos + 1).toString();
   }
 
+  /**
+   * Must be called on a background thread without holding a read lock.
+   */
   public static @NotNull List<String> readRegistryBranch(@NotNull String location) {
     List<String> result = new ArrayList<>();
     StringBuilder output = doReadBranch(location);
@@ -73,10 +77,16 @@ public final class WindowsRegistryUtil {
     return readRegistrySilently("reg query \"" + location + "\"");
   }
 
+  /**
+   * Must be called on a background thread without holding a read lock.
+   */
   public static @Nullable String readRegistryDefault(@NonNls @NotNull String location) {
     return trimToValue(readRegistrySilently("reg query \"" + location + "\" /ve"));
   }
 
+  /**
+   * Must be called on a background thread without holding a read lock.
+   */
   public static @Nullable String readRegistryValue(@NonNls @NotNull String location, @NonNls @NotNull String key) {
     return trimToValue(readRegistrySilently("reg query \"" + location + "\" /v " + key));
   }
@@ -91,8 +101,13 @@ public final class WindowsRegistryUtil {
     }
   }
 
+  /**
+   * Must be called on a background thread without holding a read lock.
+   */
   @ApiStatus.Internal
   public static @NotNull String readRegistry(@NonNls @NotNull String command) throws IOException, InterruptedException {
+    UtilThreadingAssertions.softAssertHeavyBackgroundActivity();
+
     Process process = Runtime.getRuntime().exec(command);
     InputStream is = null;
     ByteArrayOutputStream os = null;

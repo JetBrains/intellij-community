@@ -6,6 +6,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
+import com.intellij.openapi.util.UtilThreadingAssertions;
 import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.ApiStatus.Obsolete;
@@ -24,6 +25,13 @@ import java.util.function.Consumer;
  * These functions are also allowed to be used directly.
  */
 public final class ThreadingAssertions {
+
+  static {
+    UtilThreadingAssertions.init(() -> {
+      softAssertBackgroundThread();
+      softAssertNoReadAccess();
+    });
+  }
 
   private ThreadingAssertions() { }
 
