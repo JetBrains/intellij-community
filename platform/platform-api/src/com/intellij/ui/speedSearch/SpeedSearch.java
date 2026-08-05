@@ -69,8 +69,10 @@ public class SpeedSearch extends SpeedSearchSupply implements KeyListener, Speed
         }
       }
       else if (e.getKeyCode() == KeyEvent.VK_BACK_SPACE) {
-        backspace();
-        e.consume();
+        if (isHoldingFilter()) {
+          backspace();
+          e.consume();
+        }
       }
       else if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
         if (isHoldingFilter()) {
