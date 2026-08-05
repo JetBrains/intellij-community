@@ -94,7 +94,6 @@ import com.intellij.internal.statistic.eventLog.dispatcher.IntellijReportValidat
 import com.intellij.internal.statistic.eventLog.events.EventFieldIds
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.components.service
-import com.jetbrains.fus.reporting.FusHttpClient
 import com.jetbrains.fus.reporting.REMOTE_CONFIG_OPTIONS_UPDATE_FAILED
 import com.jetbrains.fus.reporting.jvm.InMemoryJvmFileStorage
 import com.jetbrains.fus.reporting.jvm.JvmFileStorage
@@ -267,6 +266,7 @@ object FusComponentProvider {
       }
 
       messageHandler(REMOTE_CONFIG_OPTIONS_UPDATED) { updateOptions(recorderId, it) }
+      messageHandler(REMOTE_CONFIG_OPTIONS_UPDATE_FAILED) { systemCollector.logLoadingConfigFailed(it.first, it.second.toLong()) }
       messageHandler(METADATA_LOADED_TOPIC) { systemCollector.logMetadataLoaded(it) }
       messageHandler(METADATA_LOAD_FAILED_TOPIC) { systemCollector.logMetadataLoadFailed(loadErrorToEventLogMetadataUpdateError(it)) }
       messageHandler(METADATA_UPDATED_TOPIC) { systemCollector.logMetadataUpdated(it) }
@@ -365,6 +365,8 @@ object FusComponentProvider {
             isInternal,
             systemLogGroupId,
             eventLogProvider.sendFrequencyMs.milliseconds,
+            // eventBufferSize is a safeguard against missing bundled metadata. If bundled metadata is missing due to a regression,
+            // we have a buffer that should be enough to bridge the gap until the first metadata update.
             5000,
             eventLogProvider.isCharsEscapingRequired,
             EventFieldIds.FieldsIgnoredByMerge.toSet()
