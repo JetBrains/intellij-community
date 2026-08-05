@@ -353,7 +353,7 @@ public abstract class Decompressor {
   }
 
   public final void extract(@NotNull Path outputDir) throws IOException {
-    boolean isWindows = ArchiveBackend.Companion.isWindows$intellij_platform_util(outputDir);
+    boolean isWindows = ArchiveBackend.isOnWindows(outputDir);
 
     Path realOutputDir = NioFiles.createDirectories(outputDir).toRealPath();
 

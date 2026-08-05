@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -228,7 +228,7 @@ public abstract class Compressor implements Closeable {
   }
 
   public final void addFile(@NotNull String entryName, @NotNull Path file, long timestamp) throws IOException {
-    boolean isWindows = ArchiveBackend.Companion.isWindows$intellij_platform_util(file);
+    boolean isWindows = ArchiveBackend.isOnWindows(file);
     entryName = entryName(entryName);
     if (accept(entryName, file)) {
       addFile(file, Files.readAttributes(file, BasicFileAttributes.class), entryName, timestamp, isWindows);
@@ -345,7 +345,7 @@ public abstract class Compressor implements Closeable {
   }
 
   private void addRecursively(String prefix, Path root, long timestampMs) throws IOException {
-    boolean isWindows = ArchiveBackend.Companion.isWindows$intellij_platform_util(root);
+    boolean isWindows = ArchiveBackend.isOnWindows(root);
     boolean traceEnabled = LOG.isTraceEnabled();
     if (traceEnabled) LOG.trace("dir=" + root + " prefix=" + prefix);
 
