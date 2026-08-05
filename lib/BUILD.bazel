@@ -17634,409 +17634,481 @@ java_library(
 )
 
 copy_file(
-    name = "org.apache.maven/maven-embedder-4.0.0-rc-5.jar_copy",
-    src = "@org_apache_maven-maven-embedder-4_0_0-rc-5_http//file",
-    out = "org.apache.maven/maven-embedder-4.0.0-rc-5.jar",
+    name = "org.apache.maven/maven-embedder-4.0.0-rc-6.jar_copy",
+    src = "@org_apache_maven-maven-embedder-4_0_0-rc-6_http//file",
+    out = "org.apache.maven/maven-embedder-4.0.0-rc-6.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.apache.maven/maven-api-annotations-4.0.0-rc-5.jar_copy",
-    src = "@org_apache_maven-maven-api-annotations-4_0_0-rc-5_http//file",
-    out = "org.apache.maven/maven-api-annotations-4.0.0-rc-5.jar",
+    name = "org.apache.maven/maven-api-annotations-4.0.0-rc-6.jar_copy",
+    src = "@org_apache_maven-maven-api-annotations-4_0_0-rc-6_http//file",
+    out = "org.apache.maven/maven-api-annotations-4.0.0-rc-6.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.apache.maven/maven-api-core-4.0.0-rc-5.jar_copy",
-    src = "@org_apache_maven-maven-api-core-4_0_0-rc-5_http//file",
-    out = "org.apache.maven/maven-api-core-4.0.0-rc-5.jar",
+    name = "org.apache.maven/maven-api-core-4.0.0-rc-6.jar_copy",
+    src = "@org_apache_maven-maven-api-core-4_0_0-rc-6_http//file",
+    out = "org.apache.maven/maven-api-core-4.0.0-rc-6.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.apache.maven/maven-api-di-4.0.0-rc-5.jar_copy",
-    src = "@org_apache_maven-maven-api-di-4_0_0-rc-5_http//file",
-    out = "org.apache.maven/maven-api-di-4.0.0-rc-5.jar",
+    name = "org.apache.maven/maven-api-di-4.0.0-rc-6.jar_copy",
+    src = "@org_apache_maven-maven-api-di-4_0_0-rc-6_http//file",
+    out = "org.apache.maven/maven-api-di-4.0.0-rc-6.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.apache.maven/maven-api-settings-4.0.0-rc-5.jar_copy",
-    src = "@org_apache_maven-maven-api-settings-4_0_0-rc-5_http//file",
-    out = "org.apache.maven/maven-api-settings-4.0.0-rc-5.jar",
+    name = "org.apache.maven/maven-api-settings-4.0.0-rc-6.jar_copy",
+    src = "@org_apache_maven-maven-api-settings-4_0_0-rc-6_http//file",
+    out = "org.apache.maven/maven-api-settings-4.0.0-rc-6.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.apache.maven/maven-api-toolchain-4.0.0-rc-5.jar_copy",
-    src = "@org_apache_maven-maven-api-toolchain-4_0_0-rc-5_http//file",
-    out = "org.apache.maven/maven-api-toolchain-4.0.0-rc-5.jar",
+    name = "org.apache.maven/maven-api-toolchain-4.0.0-rc-6.jar_copy",
+    src = "@org_apache_maven-maven-api-toolchain-4_0_0-rc-6_http//file",
+    out = "org.apache.maven/maven-api-toolchain-4.0.0-rc-6.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.apache.maven/maven-api-plugin-4.0.0-rc-5.jar_copy",
-    src = "@org_apache_maven-maven-api-plugin-4_0_0-rc-5_http//file",
-    out = "org.apache.maven/maven-api-plugin-4.0.0-rc-5.jar",
+    name = "org.apache.maven/maven-api-plugin-4.0.0-rc-6.jar_copy",
+    src = "@org_apache_maven-maven-api-plugin-4_0_0-rc-6_http//file",
+    out = "org.apache.maven/maven-api-plugin-4.0.0-rc-6.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.apache.maven/maven-api-cli-4.0.0-rc-5.jar_copy",
-    src = "@org_apache_maven-maven-api-cli-4_0_0-rc-5_http//file",
-    out = "org.apache.maven/maven-api-cli-4.0.0-rc-5.jar",
+    name = "org.apache.maven/maven-api-cli-4.0.0-rc-6.jar_copy",
+    src = "@org_apache_maven-maven-api-cli-4_0_0-rc-6_http//file",
+    out = "org.apache.maven/maven-api-cli-4.0.0-rc-6.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.apache.maven/maven-api-model-4.0.0-rc-5.jar_copy",
-    src = "@org_apache_maven-maven-api-model-4_0_0-rc-5_http//file",
-    out = "org.apache.maven/maven-api-model-4.0.0-rc-5.jar",
+    name = "org.apache.maven/maven-api-model-4.0.0-rc-6.jar_copy",
+    src = "@org_apache_maven-maven-api-model-4_0_0-rc-6_http//file",
+    out = "org.apache.maven/maven-api-model-4.0.0-rc-6.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.apache.maven/maven-api-xml-4.0.0-rc-5.jar_copy",
-    src = "@org_apache_maven-maven-api-xml-4_0_0-rc-5_http//file",
-    out = "org.apache.maven/maven-api-xml-4.0.0-rc-5.jar",
+    name = "org.apache.maven/maven-api-xml-4.0.0-rc-6.jar_copy",
+    src = "@org_apache_maven-maven-api-xml-4_0_0-rc-6_http//file",
+    out = "org.apache.maven/maven-api-xml-4.0.0-rc-6.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.apache.maven/maven-core-4.0.0-rc-5.jar_copy",
-    src = "@org_apache_maven-maven-core-4_0_0-rc-5_http//file",
-    out = "org.apache.maven/maven-core-4.0.0-rc-5.jar",
+    name = "org.apache.maven/maven-core-4.0.0-rc-6.jar_copy",
+    src = "@org_apache_maven-maven-core-4_0_0-rc-6_http//file",
+    out = "org.apache.maven/maven-core-4.0.0-rc-6.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.apache.maven/maven-api-metadata-4.0.0-rc-5.jar_copy",
-    src = "@org_apache_maven-maven-api-metadata-4_0_0-rc-5_http//file",
-    out = "org.apache.maven/maven-api-metadata-4.0.0-rc-5.jar",
+    name = "org.apache.maven/maven-api-metadata-4.0.0-rc-6.jar_copy",
+    src = "@org_apache_maven-maven-api-metadata-4_0_0-rc-6_http//file",
+    out = "org.apache.maven/maven-api-metadata-4.0.0-rc-6.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.apache.maven/maven-api-spi-4.0.0-rc-5.jar_copy",
-    src = "@org_apache_maven-maven-api-spi-4_0_0-rc-5_http//file",
-    out = "org.apache.maven/maven-api-spi-4.0.0-rc-5.jar",
+    name = "org.apache.maven/maven-api-spi-4.0.0-rc-6.jar_copy",
+    src = "@org_apache_maven-maven-api-spi-4_0_0-rc-6_http//file",
+    out = "org.apache.maven/maven-api-spi-4.0.0-rc-6.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.apache.maven/maven-impl-4.0.0-rc-5.jar_copy",
-    src = "@org_apache_maven-maven-impl-4_0_0-rc-5_http//file",
-    out = "org.apache.maven/maven-impl-4.0.0-rc-5.jar",
+    name = "org.apache.maven/maven-impl-4.0.0-rc-6.jar_copy",
+    src = "@org_apache_maven-maven-impl-4_0_0-rc-6_http//file",
+    out = "org.apache.maven/maven-impl-4.0.0-rc-6.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.apache.maven.resolver/maven-resolver-connector-basic-2.0.13.jar_copy",
-    src = "@org_apache_maven_resolver-maven-resolver-connector-basic-2_0_13_http//file",
-    out = "org.apache.maven.resolver/maven-resolver-connector-basic-2.0.13.jar",
+    name = "org.apache.maven.resolver/maven-resolver-connector-basic-2.0.21.jar_copy",
+    src = "@org_apache_maven_resolver-maven-resolver-connector-basic-2_0_21_http//file",
+    out = "org.apache.maven.resolver/maven-resolver-connector-basic-2.0.21.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.apache.maven/maven-repository-metadata-4.0.0-rc-5.jar_copy",
-    src = "@org_apache_maven-maven-repository-metadata-4_0_0-rc-5_http//file",
-    out = "org.apache.maven/maven-repository-metadata-4.0.0-rc-5.jar",
+    name = "org.apache.maven/maven-repository-metadata-4.0.0-rc-6.jar_copy",
+    src = "@org_apache_maven-maven-repository-metadata-4_0_0-rc-6_http//file",
+    out = "org.apache.maven/maven-repository-metadata-4.0.0-rc-6.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.apache.maven/maven-cli-4.0.0-rc-5.jar_copy",
-    src = "@org_apache_maven-maven-cli-4_0_0-rc-5_http//file",
-    out = "org.apache.maven/maven-cli-4.0.0-rc-5.jar",
+    name = "org.apache.maven/maven-cli-4.0.0-rc-6.jar_copy",
+    src = "@org_apache_maven-maven-cli-4_0_0-rc-6_http//file",
+    out = "org.apache.maven/maven-cli-4.0.0-rc-6.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.apache.maven.resolver/maven-resolver-transport-file-2.0.13.jar_copy",
-    src = "@org_apache_maven_resolver-maven-resolver-transport-file-2_0_13_http//file",
-    out = "org.apache.maven.resolver/maven-resolver-transport-file-2.0.13.jar",
+    name = "org.apache.maven.resolver/maven-resolver-transport-file-2.0.21.jar_copy",
+    src = "@org_apache_maven_resolver-maven-resolver-transport-file-2_0_21_http//file",
+    out = "org.apache.maven.resolver/maven-resolver-transport-file-2.0.21.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.apache.maven/maven-di-4.0.0-rc-5.jar_copy",
-    src = "@org_apache_maven-maven-di-4_0_0-rc-5_http//file",
-    out = "org.apache.maven/maven-di-4.0.0-rc-5.jar",
+    name = "org.apache.maven.resolver/maven-resolver-transport-apache-2.0.21.jar_copy",
+    src = "@org_apache_maven_resolver-maven-resolver-transport-apache-2_0_21_http//file",
+    out = "org.apache.maven.resolver/maven-resolver-transport-apache-2.0.21.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.apache.maven/maven-jline-4.0.0-rc-5.jar_copy",
-    src = "@org_apache_maven-maven-jline-4_0_0-rc-5_http//file",
-    out = "org.apache.maven/maven-jline-4.0.0-rc-5.jar",
+    name = "commons-codec/commons-codec-1.22.0.jar_copy",
+    src = "@commons-codec-commons-codec-1_22_0_http//file",
+    out = "commons-codec/commons-codec-1.22.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.jline/jline-reader-3.30.6.jar_copy",
-    src = "@org_jline-jline-reader-3_30_6_http//file",
-    out = "org.jline/jline-reader-3.30.6.jar",
+    name = "org.slf4j/jcl-over-slf4j-2.0.18.jar_copy",
+    src = "@org_slf4j-jcl-over-slf4j-2_0_18_http//file",
+    out = "org.slf4j/jcl-over-slf4j-2.0.18.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.jline/jline-style-3.30.6.jar_copy",
-    src = "@org_jline-jline-style-3_30_6_http//file",
-    out = "org.jline/jline-style-3.30.6.jar",
+    name = "eu.maveniverse.maven.domtrip/domtrip-core-1.6.0.jar_copy",
+    src = "@eu_maveniverse_maven_domtrip-domtrip-core-1_6_0_http//file",
+    out = "eu.maveniverse.maven.domtrip/domtrip-core-1.6.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.jline/jline-builtins-3.30.6.jar_copy",
-    src = "@org_jline-jline-builtins-3_30_6_http//file",
-    out = "org.jline/jline-builtins-3.30.6.jar",
+    name = "eu.maveniverse.maven.domtrip/domtrip-maven-1.6.0.jar_copy",
+    src = "@eu_maveniverse_maven_domtrip-domtrip-maven-1_6_0_http//file",
+    out = "eu.maveniverse.maven.domtrip/domtrip-maven-1.6.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.jline/jline-console-3.30.6.jar_copy",
-    src = "@org_jline-jline-console-3_30_6_http//file",
-    out = "org.jline/jline-console-3.30.6.jar",
+    name = "org.slf4j/jul-to-slf4j-2.0.18.jar_copy",
+    src = "@org_slf4j-jul-to-slf4j-2_0_18_http//file",
+    out = "org.slf4j/jul-to-slf4j-2.0.18.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.jline/jline-console-ui-3.30.6.jar_copy",
-    src = "@org_jline-jline-console-ui-3_30_6_http//file",
-    out = "org.jline/jline-console-ui-3.30.6.jar",
+    name = "org.apache.maven/maven-di-4.0.0-rc-6.jar_copy",
+    src = "@org_apache_maven-maven-di-4_0_0-rc-6_http//file",
+    out = "org.apache.maven/maven-di-4.0.0-rc-6.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.jline/jline-terminal-3.30.6.jar_copy",
-    src = "@org_jline-jline-terminal-3_30_6_http//file",
-    out = "org.jline/jline-terminal-3.30.6.jar",
+    name = "org.apache.maven/maven-jline-4.0.0-rc-6.jar_copy",
+    src = "@org_apache_maven-maven-jline-4_0_0-rc-6_http//file",
+    out = "org.apache.maven/maven-jline-4.0.0-rc-6.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.jline/jline-native-3.30.6.jar_copy",
-    src = "@org_jline-jline-native-3_30_6_http//file",
-    out = "org.jline/jline-native-3.30.6.jar",
+    name = "org.jline/jline-reader-4.3.1.jar_copy",
+    src = "@org_jline-jline-reader-4_3_1_http//file",
+    out = "org.jline/jline-reader-4.3.1.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.jline/jline-terminal-jni-3.30.6.jar_copy",
-    src = "@org_jline-jline-terminal-jni-3_30_6_http//file",
-    out = "org.jline/jline-terminal-jni-3.30.6.jar",
+    name = "org.jline/jline-style-4.3.1.jar_copy",
+    src = "@org_jline-jline-style-4_3_1_http//file",
+    out = "org.jline/jline-style-4.3.1.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.apache.maven/maven-logging-4.0.0-rc-5.jar_copy",
-    src = "@org_apache_maven-maven-logging-4_0_0-rc-5_http//file",
-    out = "org.apache.maven/maven-logging-4.0.0-rc-5.jar",
+    name = "org.jline/jline-builtins-4.3.1.jar_copy",
+    src = "@org_jline-jline-builtins-4_3_1_http//file",
+    out = "org.jline/jline-builtins-4.3.1.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.apache.maven/maven-xml-4.0.0-rc-5.jar_copy",
-    src = "@org_apache_maven-maven-xml-4_0_0-rc-5_http//file",
-    out = "org.apache.maven/maven-xml-4.0.0-rc-5.jar",
+    name = "org.jline/jline-console-4.3.1.jar_copy",
+    src = "@org_jline-jline-console-4_3_1_http//file",
+    out = "org.jline/jline-console-4.3.1.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "com.fasterxml.woodstox/woodstox-core-7.1.1.jar_copy",
-    src = "@com_fasterxml_woodstox-woodstox-core-7_1_1_http//file",
-    out = "com.fasterxml.woodstox/woodstox-core-7.1.1.jar",
+    name = "org.jline/jline-shell-4.3.1.jar_copy",
+    src = "@org_jline-jline-shell-4_3_1_http//file",
+    out = "org.jline/jline-shell-4.3.1.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.apache.maven/maven-artifact-4.0.0-rc-5.jar_copy",
-    src = "@org_apache_maven-maven-artifact-4_0_0-rc-5_http//file",
-    out = "org.apache.maven/maven-artifact-4.0.0-rc-5.jar",
+    name = "org.jline/jline-console-ui-4.3.1.jar_copy",
+    src = "@org_jline-jline-console-ui-4_3_1_http//file",
+    out = "org.jline/jline-console-ui-4.3.1.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.apache.maven/maven-builder-support-4.0.0-rc-5.jar_copy",
-    src = "@org_apache_maven-maven-builder-support-4_0_0-rc-5_http//file",
-    out = "org.apache.maven/maven-builder-support-4.0.0-rc-5.jar",
+    name = "org.jline/jline-terminal-4.3.1.jar_copy",
+    src = "@org_jline-jline-terminal-4_3_1_http//file",
+    out = "org.jline/jline-terminal-4.3.1.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.apache.maven/maven-model-4.0.0-rc-5.jar_copy",
-    src = "@org_apache_maven-maven-model-4_0_0-rc-5_http//file",
-    out = "org.apache.maven/maven-model-4.0.0-rc-5.jar",
+    name = "org.jline/jline-native-4.3.1.jar_copy",
+    src = "@org_jline-jline-native-4_3_1_http//file",
+    out = "org.jline/jline-native-4.3.1.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.apache.maven/maven-support-4.0.0-rc-5.jar_copy",
-    src = "@org_apache_maven-maven-support-4_0_0-rc-5_http//file",
-    out = "org.apache.maven/maven-support-4.0.0-rc-5.jar",
+    name = "org.jline/jline-terminal-jni-4.3.1.jar_copy",
+    src = "@org_jline-jline-terminal-jni-4_3_1_http//file",
+    out = "org.jline/jline-terminal-jni-4.3.1.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.apache.maven/maven-model-builder-4.0.0-rc-5.jar_copy",
-    src = "@org_apache_maven-maven-model-builder-4_0_0-rc-5_http//file",
-    out = "org.apache.maven/maven-model-builder-4.0.0-rc-5.jar",
+    name = "org.apache.maven/maven-logging-4.0.0-rc-6.jar_copy",
+    src = "@org_apache_maven-maven-logging-4_0_0-rc-6_http//file",
+    out = "org.apache.maven/maven-logging-4.0.0-rc-6.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.codehaus.plexus/plexus-interpolation-1.28.jar_copy",
-    src = "@org_codehaus_plexus-plexus-interpolation-1_28_http//file",
-    out = "org.codehaus.plexus/plexus-interpolation-1.28.jar",
+    name = "org.apache.maven/maven-xml-4.0.0-rc-6.jar_copy",
+    src = "@org_apache_maven-maven-xml-4_0_0-rc-6_http//file",
+    out = "org.apache.maven/maven-xml-4.0.0-rc-6.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.apache.maven/maven-plugin-api-4.0.0-rc-5.jar_copy",
-    src = "@org_apache_maven-maven-plugin-api-4_0_0-rc-5_http//file",
-    out = "org.apache.maven/maven-plugin-api-4.0.0-rc-5.jar",
+    name = "com.fasterxml.woodstox/woodstox-core-7.2.1.jar_copy",
+    src = "@com_fasterxml_woodstox-woodstox-core-7_2_1_http//file",
+    out = "com.fasterxml.woodstox/woodstox-core-7.2.1.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.eclipse.sisu/org.eclipse.sisu.plexus-0.9.0.M4.jar_copy",
-    src = "@org_eclipse_sisu-org_eclipse_sisu_plexus-0_9_0_M4_http//file",
-    out = "org.eclipse.sisu/org.eclipse.sisu.plexus-0.9.0.M4.jar",
+    name = "org.codehaus.woodstox/stax2-api-4.3.0.jar_copy",
+    src = "@org_codehaus_woodstox-stax2-api-4_3_0_http//file",
+    out = "org.codehaus.woodstox/stax2-api-4.3.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.apache.maven/maven-settings-4.0.0-rc-5.jar_copy",
-    src = "@org_apache_maven-maven-settings-4_0_0-rc-5_http//file",
-    out = "org.apache.maven/maven-settings-4.0.0-rc-5.jar",
+    name = "org.apache.maven/maven-artifact-4.0.0-rc-6.jar_copy",
+    src = "@org_apache_maven-maven-artifact-4_0_0-rc-6_http//file",
+    out = "org.apache.maven/maven-artifact-4.0.0-rc-6.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.apache.maven/maven-settings-builder-4.0.0-rc-5.jar_copy",
-    src = "@org_apache_maven-maven-settings-builder-4_0_0-rc-5_http//file",
-    out = "org.apache.maven/maven-settings-builder-4.0.0-rc-5.jar",
+    name = "org.apache.maven/maven-builder-support-4.0.0-rc-6.jar_copy",
+    src = "@org_apache_maven-maven-builder-support-4_0_0-rc-6_http//file",
+    out = "org.apache.maven/maven-builder-support-4.0.0-rc-6.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.apache.maven/maven-toolchain-builder-4.0.0-rc-5.jar_copy",
-    src = "@org_apache_maven-maven-toolchain-builder-4_0_0-rc-5_http//file",
-    out = "org.apache.maven/maven-toolchain-builder-4.0.0-rc-5.jar",
+    name = "org.apache.maven/maven-model-4.0.0-rc-6.jar_copy",
+    src = "@org_apache_maven-maven-model-4_0_0-rc-6_http//file",
+    out = "org.apache.maven/maven-model-4.0.0-rc-6.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.apache.maven/maven-toolchain-model-4.0.0-rc-5.jar_copy",
-    src = "@org_apache_maven-maven-toolchain-model-4_0_0-rc-5_http//file",
-    out = "org.apache.maven/maven-toolchain-model-4.0.0-rc-5.jar",
+    name = "org.apache.maven/maven-support-4.0.0-rc-6.jar_copy",
+    src = "@org_apache_maven-maven-support-4_0_0-rc-6_http//file",
+    out = "org.apache.maven/maven-support-4.0.0-rc-6.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.apache.maven.resolver/maven-resolver-api-2.0.13.jar_copy",
-    src = "@org_apache_maven_resolver-maven-resolver-api-2_0_13_http//file",
-    out = "org.apache.maven.resolver/maven-resolver-api-2.0.13.jar",
+    name = "org.apache.maven/maven-model-builder-4.0.0-rc-6.jar_copy",
+    src = "@org_apache_maven-maven-model-builder-4_0_0-rc-6_http//file",
+    out = "org.apache.maven/maven-model-builder-4.0.0-rc-6.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.apache.maven.resolver/maven-resolver-spi-2.0.13.jar_copy",
-    src = "@org_apache_maven_resolver-maven-resolver-spi-2_0_13_http//file",
-    out = "org.apache.maven.resolver/maven-resolver-spi-2.0.13.jar",
+    name = "org.codehaus.plexus/plexus-interpolation-1.29.jar_copy",
+    src = "@org_codehaus_plexus-plexus-interpolation-1_29_http//file",
+    out = "org.codehaus.plexus/plexus-interpolation-1.29.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.apache.maven.resolver/maven-resolver-util-2.0.13.jar_copy",
-    src = "@org_apache_maven_resolver-maven-resolver-util-2_0_13_http//file",
-    out = "org.apache.maven.resolver/maven-resolver-util-2.0.13.jar",
+    name = "org.apache.maven/maven-plugin-api-4.0.0-rc-6.jar_copy",
+    src = "@org_apache_maven-maven-plugin-api-4_0_0-rc-6_http//file",
+    out = "org.apache.maven/maven-plugin-api-4.0.0-rc-6.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.apache.maven.resolver/maven-resolver-impl-2.0.13.jar_copy",
-    src = "@org_apache_maven_resolver-maven-resolver-impl-2_0_13_http//file",
-    out = "org.apache.maven.resolver/maven-resolver-impl-2.0.13.jar",
+    name = "org.eclipse.sisu/org.eclipse.sisu.plexus-1.1.0.jar_copy",
+    src = "@org_eclipse_sisu-org_eclipse_sisu_plexus-1_1_0_http//file",
+    out = "org.eclipse.sisu/org.eclipse.sisu.plexus-1.1.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.apache.maven.resolver/maven-resolver-named-locks-2.0.13.jar_copy",
-    src = "@org_apache_maven_resolver-maven-resolver-named-locks-2_0_13_http//file",
-    out = "org.apache.maven.resolver/maven-resolver-named-locks-2.0.13.jar",
+    name = "org.apache.maven/maven-settings-4.0.0-rc-6.jar_copy",
+    src = "@org_apache_maven-maven-settings-4_0_0-rc-6_http//file",
+    out = "org.apache.maven/maven-settings-4.0.0-rc-6.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.codehaus.plexus/plexus-utils-4.0.2.jar_copy",
-    src = "@org_codehaus_plexus-plexus-utils-4_0_2_http//file",
-    out = "org.codehaus.plexus/plexus-utils-4.0.2.jar",
+    name = "org.apache.maven/maven-settings-builder-4.0.0-rc-6.jar_copy",
+    src = "@org_apache_maven-maven-settings-builder-4_0_0-rc-6_http//file",
+    out = "org.apache.maven/maven-settings-builder-4.0.0-rc-6.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.codehaus.plexus/plexus-xml-4.1.0.jar_copy",
-    src = "@org_codehaus_plexus-plexus-xml-4_1_0_http//file",
-    out = "org.codehaus.plexus/plexus-xml-4.1.0.jar",
+    name = "org.apache.maven/maven-toolchain-builder-4.0.0-rc-6.jar_copy",
+    src = "@org_apache_maven-maven-toolchain-builder-4_0_0-rc-6_http//file",
+    out = "org.apache.maven/maven-toolchain-builder-4.0.0-rc-6.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.codehaus.plexus/plexus-classworlds-2.9.0.jar_copy",
-    src = "@org_codehaus_plexus-plexus-classworlds-2_9_0_http//file",
-    out = "org.codehaus.plexus/plexus-classworlds-2.9.0.jar",
+    name = "org.apache.maven/maven-toolchain-model-4.0.0-rc-6.jar_copy",
+    src = "@org_apache_maven-maven-toolchain-model-4_0_0-rc-6_http//file",
+    out = "org.apache.maven/maven-toolchain-model-4.0.0-rc-6.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "org.apache.maven.resolver/maven-resolver-api-2.0.21.jar_copy",
+    src = "@org_apache_maven_resolver-maven-resolver-api-2_0_21_http//file",
+    out = "org.apache.maven.resolver/maven-resolver-api-2.0.21.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "org.apache.maven.resolver/maven-resolver-spi-2.0.21.jar_copy",
+    src = "@org_apache_maven_resolver-maven-resolver-spi-2_0_21_http//file",
+    out = "org.apache.maven.resolver/maven-resolver-spi-2.0.21.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.google.code.gson/gson-2.14.0.jar_copy",
+    src = "@com_google_code_gson-gson-2_14_0_http//file",
+    out = "com.google.code.gson/gson-2.14.0.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "org.apache.maven.resolver/maven-resolver-util-2.0.21.jar_copy",
+    src = "@org_apache_maven_resolver-maven-resolver-util-2_0_21_http//file",
+    out = "org.apache.maven.resolver/maven-resolver-util-2.0.21.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "org.apache.maven.resolver/maven-resolver-impl-2.0.21.jar_copy",
+    src = "@org_apache_maven_resolver-maven-resolver-impl-2_0_21_http//file",
+    out = "org.apache.maven.resolver/maven-resolver-impl-2.0.21.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "org.apache.maven.resolver/maven-resolver-named-locks-2.0.21.jar_copy",
+    src = "@org_apache_maven_resolver-maven-resolver-named-locks-2_0_21_http//file",
+    out = "org.apache.maven.resolver/maven-resolver-named-locks-2.0.21.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "org.codehaus.plexus/plexus-utils-4.0.3.jar_copy",
+    src = "@org_codehaus_plexus-plexus-utils-4_0_3_http//file",
+    out = "org.codehaus.plexus/plexus-utils-4.0.3.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "org.codehaus.plexus/plexus-xml-4.1.1.jar_copy",
+    src = "@org_codehaus_plexus-plexus-xml-4_1_1_http//file",
+    out = "org.codehaus.plexus/plexus-xml-4.1.1.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "org.codehaus.plexus/plexus-classworlds-2.12.0.jar_copy",
+    src = "@org_codehaus_plexus-plexus-classworlds-2_12_0_http//file",
+    out = "org.codehaus.plexus/plexus-classworlds-2.12.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
@@ -18050,25 +18122,17 @@ copy_file(
 )
 
 copy_file(
-    name = "org.slf4j/slf4j-api-2.0.17.jar_copy",
-    src = "@org_slf4j-slf4j-api-2_0_17_http//file",
-    out = "org.slf4j/slf4j-api-2.0.17.jar",
+    name = "org.slf4j/slf4j-api-2.0.18.jar_copy",
+    src = "@org_slf4j-slf4j-api-2_0_18_http//file",
+    out = "org.slf4j/slf4j-api-2.0.18.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "commons-cli/commons-cli-1.10.0.jar_copy",
-    src = "@commons-cli-commons-cli-1_10_0_http//file",
-    out = "commons-cli/commons-cli-1.10.0.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "org.jline/jansi-core-3.30.6.jar_copy",
-    src = "@org_jline-jansi-core-3_30_6_http//file",
-    out = "org.jline/jansi-core-3.30.6.jar",
+    name = "org.jline/jansi-core-4.3.1.jar_copy",
+    src = "@org_jline-jansi-core-4_3_1_http//file",
+    out = "org.jline/jansi-core-4.3.1.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
@@ -18078,377 +18142,433 @@ java_library(
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
-        ":org_apache_maven-maven-embedder-4_0_0-rc-5_http_import",
-        ":org_apache_maven-maven-api-annotations-4_0_0-rc-5_http_import",
-        ":org_apache_maven-maven-api-core-4_0_0-rc-5_http_import",
-        ":org_apache_maven-maven-api-di-4_0_0-rc-5_http_import",
-        ":org_apache_maven-maven-api-settings-4_0_0-rc-5_http_import",
-        ":org_apache_maven-maven-api-toolchain-4_0_0-rc-5_http_import",
-        ":org_apache_maven-maven-api-plugin-4_0_0-rc-5_http_import",
-        ":org_apache_maven-maven-api-cli-4_0_0-rc-5_http_import",
-        ":org_apache_maven-maven-api-model-4_0_0-rc-5_http_import",
-        ":org_apache_maven-maven-api-xml-4_0_0-rc-5_http_import",
-        ":org_apache_maven-maven-core-4_0_0-rc-5_http_import",
-        ":org_apache_maven-maven-api-metadata-4_0_0-rc-5_http_import",
-        ":org_apache_maven-maven-api-spi-4_0_0-rc-5_http_import",
-        ":org_apache_maven-maven-impl-4_0_0-rc-5_http_import",
-        ":org_apache_maven_resolver-maven-resolver-connector-basic-2_0_13_http_import",
-        ":org_apache_maven-maven-repository-metadata-4_0_0-rc-5_http_import",
-        ":org_apache_maven-maven-cli-4_0_0-rc-5_http_import",
-        ":org_apache_maven_resolver-maven-resolver-transport-file-2_0_13_http_import",
-        ":org_jdom-jdom2-2_0_6_1_http_import",
-        ":org_apache_maven-maven-di-4_0_0-rc-5_http_import",
-        ":org_apache_maven-maven-jline-4_0_0-rc-5_http_import",
-        ":org_jline-jline-reader-3_30_6_http_import",
-        ":org_jline-jline-style-3_30_6_http_import",
-        ":org_jline-jline-builtins-3_30_6_http_import",
-        ":org_jline-jline-console-3_30_6_http_import",
-        ":org_jline-jline-console-ui-3_30_6_http_import",
-        ":org_jline-jline-terminal-3_30_6_http_import",
-        ":org_jline-jline-native-3_30_6_http_import",
-        ":org_jline-jline-terminal-jni-3_30_6_http_import",
-        ":org_apache_maven-maven-logging-4_0_0-rc-5_http_import",
-        ":org_apache_maven-maven-xml-4_0_0-rc-5_http_import",
-        ":com_fasterxml_woodstox-woodstox-core-7_1_1_http_import",
-        ":org_codehaus_woodstox-stax2-api-4_2_2_http_import",
-        ":org_apache_maven-maven-artifact-4_0_0-rc-5_http_import",
-        ":org_apache_maven-maven-builder-support-4_0_0-rc-5_http_import",
-        ":org_apache_maven-maven-model-4_0_0-rc-5_http_import",
-        ":org_apache_maven-maven-support-4_0_0-rc-5_http_import",
-        ":org_apache_maven-maven-model-builder-4_0_0-rc-5_http_import",
-        ":org_codehaus_plexus-plexus-interpolation-1_28_http_import",
-        ":org_apache_maven-maven-plugin-api-4_0_0-rc-5_http_import",
-        ":org_eclipse_sisu-org_eclipse_sisu_plexus-0_9_0_M4_http_import",
-        ":org_apache_maven-maven-settings-4_0_0-rc-5_http_import",
-        ":org_apache_maven-maven-settings-builder-4_0_0-rc-5_http_import",
-        ":org_apache_maven-maven-toolchain-builder-4_0_0-rc-5_http_import",
-        ":org_apache_maven-maven-toolchain-model-4_0_0-rc-5_http_import",
-        ":org_apache_maven_resolver-maven-resolver-api-2_0_13_http_import",
-        ":org_apache_maven_resolver-maven-resolver-spi-2_0_13_http_import",
-        ":com_google_code_gson-gson-2_13_2_http_import",
-        ":org_apache_maven_resolver-maven-resolver-util-2_0_13_http_import",
-        ":org_apache_maven_resolver-maven-resolver-impl-2_0_13_http_import",
-        ":org_apache_maven_resolver-maven-resolver-named-locks-2_0_13_http_import",
-        ":org_codehaus_plexus-plexus-utils-4_0_2_http_import",
-        ":org_codehaus_plexus-plexus-xml-4_1_0_http_import",
-        ":org_codehaus_plexus-plexus-classworlds-2_9_0_http_import",
+        ":org_apache_maven-maven-embedder-4_0_0-rc-6_http_import",
+        ":org_apache_maven-maven-api-annotations-4_0_0-rc-6_http_import",
+        ":org_apache_maven-maven-api-core-4_0_0-rc-6_http_import",
+        ":org_apache_maven-maven-api-di-4_0_0-rc-6_http_import",
+        ":org_apache_maven-maven-api-settings-4_0_0-rc-6_http_import",
+        ":org_apache_maven-maven-api-toolchain-4_0_0-rc-6_http_import",
+        ":org_apache_maven-maven-api-plugin-4_0_0-rc-6_http_import",
+        ":org_apache_maven-maven-api-cli-4_0_0-rc-6_http_import",
+        ":org_apache_maven-maven-api-model-4_0_0-rc-6_http_import",
+        ":org_apache_maven-maven-api-xml-4_0_0-rc-6_http_import",
+        ":org_apache_maven-maven-core-4_0_0-rc-6_http_import",
+        ":org_apache_maven-maven-api-metadata-4_0_0-rc-6_http_import",
+        ":org_apache_maven-maven-api-spi-4_0_0-rc-6_http_import",
+        ":org_apache_maven-maven-impl-4_0_0-rc-6_http_import",
+        ":org_apache_maven_resolver-maven-resolver-connector-basic-2_0_21_http_import",
+        ":org_apache_maven-maven-repository-metadata-4_0_0-rc-6_http_import",
+        ":org_apache_maven-maven-cli-4_0_0-rc-6_http_import",
+        ":org_apache_maven_resolver-maven-resolver-transport-file-2_0_21_http_import",
+        ":org_apache_maven_resolver-maven-resolver-transport-apache-2_0_21_http_import",
+        ":org_apache_httpcomponents-httpclient-4_5_14_http_import",
+        ":org_apache_httpcomponents-httpcore-4_4_16_http_import",
+        ":commons-codec-commons-codec-1_22_0_http_import",
+        ":org_slf4j-jcl-over-slf4j-2_0_18_http_import",
+        ":eu_maveniverse_maven_domtrip-domtrip-core-1_6_0_http_import",
+        ":eu_maveniverse_maven_domtrip-domtrip-maven-1_6_0_http_import",
+        ":org_slf4j-jul-to-slf4j-2_0_18_http_import",
+        ":org_apache_maven-maven-di-4_0_0-rc-6_http_import",
+        ":org_apache_maven-maven-jline-4_0_0-rc-6_http_import",
+        ":org_jline-jline-reader-4_3_1_http_import",
+        ":org_jline-jline-style-4_3_1_http_import",
+        ":org_jline-jline-builtins-4_3_1_http_import",
+        ":org_jline-jline-console-4_3_1_http_import",
+        ":org_jline-jline-shell-4_3_1_http_import",
+        ":org_jline-jline-console-ui-4_3_1_http_import",
+        ":org_jline-jline-terminal-4_3_1_http_import",
+        ":org_jline-jline-native-4_3_1_http_import",
+        ":org_jline-jline-terminal-jni-4_3_1_http_import",
+        ":org_apache_maven-maven-logging-4_0_0-rc-6_http_import",
+        ":org_apache_maven-maven-xml-4_0_0-rc-6_http_import",
+        ":com_fasterxml_woodstox-woodstox-core-7_2_1_http_import",
+        ":org_codehaus_woodstox-stax2-api-4_3_0_http_import",
+        ":org_apache_maven-maven-artifact-4_0_0-rc-6_http_import",
+        ":org_apache_maven-maven-builder-support-4_0_0-rc-6_http_import",
+        ":org_apache_maven-maven-model-4_0_0-rc-6_http_import",
+        ":org_apache_maven-maven-support-4_0_0-rc-6_http_import",
+        ":org_apache_maven-maven-model-builder-4_0_0-rc-6_http_import",
+        ":org_codehaus_plexus-plexus-interpolation-1_29_http_import",
+        ":org_apache_maven-maven-plugin-api-4_0_0-rc-6_http_import",
+        ":org_eclipse_sisu-org_eclipse_sisu_plexus-1_1_0_http_import",
+        ":org_apache_maven-maven-settings-4_0_0-rc-6_http_import",
+        ":org_apache_maven-maven-settings-builder-4_0_0-rc-6_http_import",
+        ":org_apache_maven-maven-toolchain-builder-4_0_0-rc-6_http_import",
+        ":org_apache_maven-maven-toolchain-model-4_0_0-rc-6_http_import",
+        ":org_apache_maven_resolver-maven-resolver-api-2_0_21_http_import",
+        ":org_apache_maven_resolver-maven-resolver-spi-2_0_21_http_import",
+        ":com_google_code_gson-gson-2_14_0_http_import",
+        ":org_apache_maven_resolver-maven-resolver-util-2_0_21_http_import",
+        ":org_apache_maven_resolver-maven-resolver-impl-2_0_21_http_import",
+        ":org_apache_maven_resolver-maven-resolver-named-locks-2_0_21_http_import",
+        ":org_codehaus_plexus-plexus-utils-4_0_3_http_import",
+        ":org_codehaus_plexus-plexus-xml-4_1_1_http_import",
+        ":org_codehaus_plexus-plexus-classworlds-2_12_0_http_import",
         ":org_codehaus_plexus-plexus-sec-dispatcher-4_1_0_http_import",
-        ":org_slf4j-slf4j-api-2_0_17_http_import",
-        ":commons-cli-commons-cli-1_10_0_http_import",
-        ":org_jline-jansi-core-3_30_6_http_import",
+        ":org_slf4j-slf4j-api-2_0_18_http_import",
+        ":commons-cli-commons-cli-1_11_0_http_import",
+        ":org_jline-jansi-core-4_3_1_http_import",
     ],
 )
 
 jvm_import(
-    name = "org_apache_maven-maven-embedder-4_0_0-rc-5_http_import",
-    jar = "@org_apache_maven-maven-embedder-4_0_0-rc-5_http//file",
-    source_jar = "@org_apache_maven-maven-embedder-4_0_0-rc-5-sources_http//file",
+    name = "org_apache_maven-maven-embedder-4_0_0-rc-6_http_import",
+    jar = "@org_apache_maven-maven-embedder-4_0_0-rc-6_http//file",
+    source_jar = "@org_apache_maven-maven-embedder-4_0_0-rc-6-sources_http//file",
 )
 
 jvm_import(
-    name = "org_apache_maven-maven-api-annotations-4_0_0-rc-5_http_import",
-    jar = "@org_apache_maven-maven-api-annotations-4_0_0-rc-5_http//file",
-    source_jar = "@org_apache_maven-maven-api-annotations-4_0_0-rc-5-sources_http//file",
+    name = "org_apache_maven-maven-api-annotations-4_0_0-rc-6_http_import",
+    jar = "@org_apache_maven-maven-api-annotations-4_0_0-rc-6_http//file",
+    source_jar = "@org_apache_maven-maven-api-annotations-4_0_0-rc-6-sources_http//file",
 )
 
 jvm_import(
-    name = "org_apache_maven-maven-api-core-4_0_0-rc-5_http_import",
-    jar = "@org_apache_maven-maven-api-core-4_0_0-rc-5_http//file",
-    source_jar = "@org_apache_maven-maven-api-core-4_0_0-rc-5-sources_http//file",
+    name = "org_apache_maven-maven-api-core-4_0_0-rc-6_http_import",
+    jar = "@org_apache_maven-maven-api-core-4_0_0-rc-6_http//file",
+    source_jar = "@org_apache_maven-maven-api-core-4_0_0-rc-6-sources_http//file",
 )
 
 jvm_import(
-    name = "org_apache_maven-maven-api-di-4_0_0-rc-5_http_import",
-    jar = "@org_apache_maven-maven-api-di-4_0_0-rc-5_http//file",
-    source_jar = "@org_apache_maven-maven-api-di-4_0_0-rc-5-sources_http//file",
+    name = "org_apache_maven-maven-api-di-4_0_0-rc-6_http_import",
+    jar = "@org_apache_maven-maven-api-di-4_0_0-rc-6_http//file",
+    source_jar = "@org_apache_maven-maven-api-di-4_0_0-rc-6-sources_http//file",
 )
 
 jvm_import(
-    name = "org_apache_maven-maven-api-settings-4_0_0-rc-5_http_import",
-    jar = "@org_apache_maven-maven-api-settings-4_0_0-rc-5_http//file",
-    source_jar = "@org_apache_maven-maven-api-settings-4_0_0-rc-5-sources_http//file",
+    name = "org_apache_maven-maven-api-settings-4_0_0-rc-6_http_import",
+    jar = "@org_apache_maven-maven-api-settings-4_0_0-rc-6_http//file",
+    source_jar = "@org_apache_maven-maven-api-settings-4_0_0-rc-6-sources_http//file",
 )
 
 jvm_import(
-    name = "org_apache_maven-maven-api-toolchain-4_0_0-rc-5_http_import",
-    jar = "@org_apache_maven-maven-api-toolchain-4_0_0-rc-5_http//file",
-    source_jar = "@org_apache_maven-maven-api-toolchain-4_0_0-rc-5-sources_http//file",
+    name = "org_apache_maven-maven-api-toolchain-4_0_0-rc-6_http_import",
+    jar = "@org_apache_maven-maven-api-toolchain-4_0_0-rc-6_http//file",
+    source_jar = "@org_apache_maven-maven-api-toolchain-4_0_0-rc-6-sources_http//file",
 )
 
 jvm_import(
-    name = "org_apache_maven-maven-api-plugin-4_0_0-rc-5_http_import",
-    jar = "@org_apache_maven-maven-api-plugin-4_0_0-rc-5_http//file",
-    source_jar = "@org_apache_maven-maven-api-plugin-4_0_0-rc-5-sources_http//file",
+    name = "org_apache_maven-maven-api-plugin-4_0_0-rc-6_http_import",
+    jar = "@org_apache_maven-maven-api-plugin-4_0_0-rc-6_http//file",
+    source_jar = "@org_apache_maven-maven-api-plugin-4_0_0-rc-6-sources_http//file",
 )
 
 jvm_import(
-    name = "org_apache_maven-maven-api-cli-4_0_0-rc-5_http_import",
-    jar = "@org_apache_maven-maven-api-cli-4_0_0-rc-5_http//file",
-    source_jar = "@org_apache_maven-maven-api-cli-4_0_0-rc-5-sources_http//file",
+    name = "org_apache_maven-maven-api-cli-4_0_0-rc-6_http_import",
+    jar = "@org_apache_maven-maven-api-cli-4_0_0-rc-6_http//file",
+    source_jar = "@org_apache_maven-maven-api-cli-4_0_0-rc-6-sources_http//file",
 )
 
 jvm_import(
-    name = "org_apache_maven-maven-api-model-4_0_0-rc-5_http_import",
-    jar = "@org_apache_maven-maven-api-model-4_0_0-rc-5_http//file",
-    source_jar = "@org_apache_maven-maven-api-model-4_0_0-rc-5-sources_http//file",
+    name = "org_apache_maven-maven-api-model-4_0_0-rc-6_http_import",
+    jar = "@org_apache_maven-maven-api-model-4_0_0-rc-6_http//file",
+    source_jar = "@org_apache_maven-maven-api-model-4_0_0-rc-6-sources_http//file",
 )
 
 jvm_import(
-    name = "org_apache_maven-maven-api-xml-4_0_0-rc-5_http_import",
-    jar = "@org_apache_maven-maven-api-xml-4_0_0-rc-5_http//file",
-    source_jar = "@org_apache_maven-maven-api-xml-4_0_0-rc-5-sources_http//file",
+    name = "org_apache_maven-maven-api-xml-4_0_0-rc-6_http_import",
+    jar = "@org_apache_maven-maven-api-xml-4_0_0-rc-6_http//file",
+    source_jar = "@org_apache_maven-maven-api-xml-4_0_0-rc-6-sources_http//file",
 )
 
 jvm_import(
-    name = "org_apache_maven-maven-core-4_0_0-rc-5_http_import",
-    jar = "@org_apache_maven-maven-core-4_0_0-rc-5_http//file",
-    source_jar = "@org_apache_maven-maven-core-4_0_0-rc-5-sources_http//file",
+    name = "org_apache_maven-maven-core-4_0_0-rc-6_http_import",
+    jar = "@org_apache_maven-maven-core-4_0_0-rc-6_http//file",
+    source_jar = "@org_apache_maven-maven-core-4_0_0-rc-6-sources_http//file",
 )
 
 jvm_import(
-    name = "org_apache_maven-maven-api-metadata-4_0_0-rc-5_http_import",
-    jar = "@org_apache_maven-maven-api-metadata-4_0_0-rc-5_http//file",
-    source_jar = "@org_apache_maven-maven-api-metadata-4_0_0-rc-5-sources_http//file",
+    name = "org_apache_maven-maven-api-metadata-4_0_0-rc-6_http_import",
+    jar = "@org_apache_maven-maven-api-metadata-4_0_0-rc-6_http//file",
+    source_jar = "@org_apache_maven-maven-api-metadata-4_0_0-rc-6-sources_http//file",
 )
 
 jvm_import(
-    name = "org_apache_maven-maven-api-spi-4_0_0-rc-5_http_import",
-    jar = "@org_apache_maven-maven-api-spi-4_0_0-rc-5_http//file",
-    source_jar = "@org_apache_maven-maven-api-spi-4_0_0-rc-5-sources_http//file",
+    name = "org_apache_maven-maven-api-spi-4_0_0-rc-6_http_import",
+    jar = "@org_apache_maven-maven-api-spi-4_0_0-rc-6_http//file",
+    source_jar = "@org_apache_maven-maven-api-spi-4_0_0-rc-6-sources_http//file",
 )
 
 jvm_import(
-    name = "org_apache_maven-maven-impl-4_0_0-rc-5_http_import",
-    jar = "@org_apache_maven-maven-impl-4_0_0-rc-5_http//file",
-    source_jar = "@org_apache_maven-maven-impl-4_0_0-rc-5-sources_http//file",
+    name = "org_apache_maven-maven-impl-4_0_0-rc-6_http_import",
+    jar = "@org_apache_maven-maven-impl-4_0_0-rc-6_http//file",
+    source_jar = "@org_apache_maven-maven-impl-4_0_0-rc-6-sources_http//file",
 )
 
 jvm_import(
-    name = "org_apache_maven_resolver-maven-resolver-connector-basic-2_0_13_http_import",
-    jar = "@org_apache_maven_resolver-maven-resolver-connector-basic-2_0_13_http//file",
-    source_jar = "@org_apache_maven_resolver-maven-resolver-connector-basic-2_0_13-sources_http//file",
+    name = "org_apache_maven_resolver-maven-resolver-connector-basic-2_0_21_http_import",
+    jar = "@org_apache_maven_resolver-maven-resolver-connector-basic-2_0_21_http//file",
+    source_jar = "@org_apache_maven_resolver-maven-resolver-connector-basic-2_0_21-sources_http//file",
 )
 
 jvm_import(
-    name = "org_apache_maven-maven-repository-metadata-4_0_0-rc-5_http_import",
-    jar = "@org_apache_maven-maven-repository-metadata-4_0_0-rc-5_http//file",
-    source_jar = "@org_apache_maven-maven-repository-metadata-4_0_0-rc-5-sources_http//file",
+    name = "org_apache_maven-maven-repository-metadata-4_0_0-rc-6_http_import",
+    jar = "@org_apache_maven-maven-repository-metadata-4_0_0-rc-6_http//file",
+    source_jar = "@org_apache_maven-maven-repository-metadata-4_0_0-rc-6-sources_http//file",
 )
 
 jvm_import(
-    name = "org_apache_maven-maven-cli-4_0_0-rc-5_http_import",
-    jar = "@org_apache_maven-maven-cli-4_0_0-rc-5_http//file",
-    source_jar = "@org_apache_maven-maven-cli-4_0_0-rc-5-sources_http//file",
+    name = "org_apache_maven-maven-cli-4_0_0-rc-6_http_import",
+    jar = "@org_apache_maven-maven-cli-4_0_0-rc-6_http//file",
+    source_jar = "@org_apache_maven-maven-cli-4_0_0-rc-6-sources_http//file",
 )
 
 jvm_import(
-    name = "org_apache_maven_resolver-maven-resolver-transport-file-2_0_13_http_import",
-    jar = "@org_apache_maven_resolver-maven-resolver-transport-file-2_0_13_http//file",
-    source_jar = "@org_apache_maven_resolver-maven-resolver-transport-file-2_0_13-sources_http//file",
+    name = "org_apache_maven_resolver-maven-resolver-transport-file-2_0_21_http_import",
+    jar = "@org_apache_maven_resolver-maven-resolver-transport-file-2_0_21_http//file",
+    source_jar = "@org_apache_maven_resolver-maven-resolver-transport-file-2_0_21-sources_http//file",
 )
 
 jvm_import(
-    name = "org_apache_maven-maven-di-4_0_0-rc-5_http_import",
-    jar = "@org_apache_maven-maven-di-4_0_0-rc-5_http//file",
-    source_jar = "@org_apache_maven-maven-di-4_0_0-rc-5-sources_http//file",
+    name = "org_apache_maven_resolver-maven-resolver-transport-apache-2_0_21_http_import",
+    jar = "@org_apache_maven_resolver-maven-resolver-transport-apache-2_0_21_http//file",
+    source_jar = "@org_apache_maven_resolver-maven-resolver-transport-apache-2_0_21-sources_http//file",
 )
 
 jvm_import(
-    name = "org_apache_maven-maven-jline-4_0_0-rc-5_http_import",
-    jar = "@org_apache_maven-maven-jline-4_0_0-rc-5_http//file",
-    source_jar = "@org_apache_maven-maven-jline-4_0_0-rc-5-sources_http//file",
+    name = "commons-codec-commons-codec-1_22_0_http_import",
+    jar = "@commons-codec-commons-codec-1_22_0_http//file",
+    source_jar = "@commons-codec-commons-codec-1_22_0-sources_http//file",
 )
 
 jvm_import(
-    name = "org_jline-jline-reader-3_30_6_http_import",
-    jar = "@org_jline-jline-reader-3_30_6_http//file",
-    source_jar = "@org_jline-jline-reader-3_30_6-sources_http//file",
+    name = "org_slf4j-jcl-over-slf4j-2_0_18_http_import",
+    jar = "@org_slf4j-jcl-over-slf4j-2_0_18_http//file",
+    source_jar = "@org_slf4j-jcl-over-slf4j-2_0_18-sources_http//file",
 )
 
 jvm_import(
-    name = "org_jline-jline-style-3_30_6_http_import",
-    jar = "@org_jline-jline-style-3_30_6_http//file",
-    source_jar = "@org_jline-jline-style-3_30_6-sources_http//file",
+    name = "eu_maveniverse_maven_domtrip-domtrip-core-1_6_0_http_import",
+    jar = "@eu_maveniverse_maven_domtrip-domtrip-core-1_6_0_http//file",
+    source_jar = "@eu_maveniverse_maven_domtrip-domtrip-core-1_6_0-sources_http//file",
 )
 
 jvm_import(
-    name = "org_jline-jline-builtins-3_30_6_http_import",
-    jar = "@org_jline-jline-builtins-3_30_6_http//file",
-    source_jar = "@org_jline-jline-builtins-3_30_6-sources_http//file",
+    name = "eu_maveniverse_maven_domtrip-domtrip-maven-1_6_0_http_import",
+    jar = "@eu_maveniverse_maven_domtrip-domtrip-maven-1_6_0_http//file",
+    source_jar = "@eu_maveniverse_maven_domtrip-domtrip-maven-1_6_0-sources_http//file",
 )
 
 jvm_import(
-    name = "org_jline-jline-console-3_30_6_http_import",
-    jar = "@org_jline-jline-console-3_30_6_http//file",
-    source_jar = "@org_jline-jline-console-3_30_6-sources_http//file",
+    name = "org_slf4j-jul-to-slf4j-2_0_18_http_import",
+    jar = "@org_slf4j-jul-to-slf4j-2_0_18_http//file",
+    source_jar = "@org_slf4j-jul-to-slf4j-2_0_18-sources_http//file",
 )
 
 jvm_import(
-    name = "org_jline-jline-console-ui-3_30_6_http_import",
-    jar = "@org_jline-jline-console-ui-3_30_6_http//file",
-    source_jar = "@org_jline-jline-console-ui-3_30_6-sources_http//file",
+    name = "org_apache_maven-maven-di-4_0_0-rc-6_http_import",
+    jar = "@org_apache_maven-maven-di-4_0_0-rc-6_http//file",
+    source_jar = "@org_apache_maven-maven-di-4_0_0-rc-6-sources_http//file",
 )
 
 jvm_import(
-    name = "org_jline-jline-terminal-3_30_6_http_import",
-    jar = "@org_jline-jline-terminal-3_30_6_http//file",
-    source_jar = "@org_jline-jline-terminal-3_30_6-sources_http//file",
+    name = "org_apache_maven-maven-jline-4_0_0-rc-6_http_import",
+    jar = "@org_apache_maven-maven-jline-4_0_0-rc-6_http//file",
+    source_jar = "@org_apache_maven-maven-jline-4_0_0-rc-6-sources_http//file",
 )
 
 jvm_import(
-    name = "org_jline-jline-native-3_30_6_http_import",
-    jar = "@org_jline-jline-native-3_30_6_http//file",
-    source_jar = "@org_jline-jline-native-3_30_6-sources_http//file",
+    name = "org_jline-jline-reader-4_3_1_http_import",
+    jar = "@org_jline-jline-reader-4_3_1_http//file",
+    source_jar = "@org_jline-jline-reader-4_3_1-sources_http//file",
 )
 
 jvm_import(
-    name = "org_jline-jline-terminal-jni-3_30_6_http_import",
-    jar = "@org_jline-jline-terminal-jni-3_30_6_http//file",
-    source_jar = "@org_jline-jline-terminal-jni-3_30_6-sources_http//file",
+    name = "org_jline-jline-style-4_3_1_http_import",
+    jar = "@org_jline-jline-style-4_3_1_http//file",
+    source_jar = "@org_jline-jline-style-4_3_1-sources_http//file",
 )
 
 jvm_import(
-    name = "org_apache_maven-maven-logging-4_0_0-rc-5_http_import",
-    jar = "@org_apache_maven-maven-logging-4_0_0-rc-5_http//file",
-    source_jar = "@org_apache_maven-maven-logging-4_0_0-rc-5-sources_http//file",
+    name = "org_jline-jline-builtins-4_3_1_http_import",
+    jar = "@org_jline-jline-builtins-4_3_1_http//file",
+    source_jar = "@org_jline-jline-builtins-4_3_1-sources_http//file",
 )
 
 jvm_import(
-    name = "org_apache_maven-maven-xml-4_0_0-rc-5_http_import",
-    jar = "@org_apache_maven-maven-xml-4_0_0-rc-5_http//file",
-    source_jar = "@org_apache_maven-maven-xml-4_0_0-rc-5-sources_http//file",
+    name = "org_jline-jline-console-4_3_1_http_import",
+    jar = "@org_jline-jline-console-4_3_1_http//file",
+    source_jar = "@org_jline-jline-console-4_3_1-sources_http//file",
 )
 
 jvm_import(
-    name = "com_fasterxml_woodstox-woodstox-core-7_1_1_http_import",
-    jar = "@com_fasterxml_woodstox-woodstox-core-7_1_1_http//file",
-    source_jar = "@com_fasterxml_woodstox-woodstox-core-7_1_1-sources_http//file",
+    name = "org_jline-jline-shell-4_3_1_http_import",
+    jar = "@org_jline-jline-shell-4_3_1_http//file",
+    source_jar = "@org_jline-jline-shell-4_3_1-sources_http//file",
 )
 
 jvm_import(
-    name = "org_apache_maven-maven-artifact-4_0_0-rc-5_http_import",
-    jar = "@org_apache_maven-maven-artifact-4_0_0-rc-5_http//file",
-    source_jar = "@org_apache_maven-maven-artifact-4_0_0-rc-5-sources_http//file",
+    name = "org_jline-jline-console-ui-4_3_1_http_import",
+    jar = "@org_jline-jline-console-ui-4_3_1_http//file",
+    source_jar = "@org_jline-jline-console-ui-4_3_1-sources_http//file",
 )
 
 jvm_import(
-    name = "org_apache_maven-maven-builder-support-4_0_0-rc-5_http_import",
-    jar = "@org_apache_maven-maven-builder-support-4_0_0-rc-5_http//file",
-    source_jar = "@org_apache_maven-maven-builder-support-4_0_0-rc-5-sources_http//file",
+    name = "org_jline-jline-terminal-4_3_1_http_import",
+    jar = "@org_jline-jline-terminal-4_3_1_http//file",
+    source_jar = "@org_jline-jline-terminal-4_3_1-sources_http//file",
 )
 
 jvm_import(
-    name = "org_apache_maven-maven-model-4_0_0-rc-5_http_import",
-    jar = "@org_apache_maven-maven-model-4_0_0-rc-5_http//file",
-    source_jar = "@org_apache_maven-maven-model-4_0_0-rc-5-sources_http//file",
+    name = "org_jline-jline-native-4_3_1_http_import",
+    jar = "@org_jline-jline-native-4_3_1_http//file",
+    source_jar = "@org_jline-jline-native-4_3_1-sources_http//file",
 )
 
 jvm_import(
-    name = "org_apache_maven-maven-support-4_0_0-rc-5_http_import",
-    jar = "@org_apache_maven-maven-support-4_0_0-rc-5_http//file",
-    source_jar = "@org_apache_maven-maven-support-4_0_0-rc-5-sources_http//file",
+    name = "org_jline-jline-terminal-jni-4_3_1_http_import",
+    jar = "@org_jline-jline-terminal-jni-4_3_1_http//file",
+    source_jar = "@org_jline-jline-terminal-jni-4_3_1-sources_http//file",
 )
 
 jvm_import(
-    name = "org_apache_maven-maven-model-builder-4_0_0-rc-5_http_import",
-    jar = "@org_apache_maven-maven-model-builder-4_0_0-rc-5_http//file",
-    source_jar = "@org_apache_maven-maven-model-builder-4_0_0-rc-5-sources_http//file",
+    name = "org_apache_maven-maven-logging-4_0_0-rc-6_http_import",
+    jar = "@org_apache_maven-maven-logging-4_0_0-rc-6_http//file",
+    source_jar = "@org_apache_maven-maven-logging-4_0_0-rc-6-sources_http//file",
 )
 
 jvm_import(
-    name = "org_codehaus_plexus-plexus-interpolation-1_28_http_import",
-    jar = "@org_codehaus_plexus-plexus-interpolation-1_28_http//file",
-    source_jar = "@org_codehaus_plexus-plexus-interpolation-1_28-sources_http//file",
+    name = "org_apache_maven-maven-xml-4_0_0-rc-6_http_import",
+    jar = "@org_apache_maven-maven-xml-4_0_0-rc-6_http//file",
+    source_jar = "@org_apache_maven-maven-xml-4_0_0-rc-6-sources_http//file",
 )
 
 jvm_import(
-    name = "org_apache_maven-maven-plugin-api-4_0_0-rc-5_http_import",
-    jar = "@org_apache_maven-maven-plugin-api-4_0_0-rc-5_http//file",
-    source_jar = "@org_apache_maven-maven-plugin-api-4_0_0-rc-5-sources_http//file",
+    name = "com_fasterxml_woodstox-woodstox-core-7_2_1_http_import",
+    jar = "@com_fasterxml_woodstox-woodstox-core-7_2_1_http//file",
+    source_jar = "@com_fasterxml_woodstox-woodstox-core-7_2_1-sources_http//file",
 )
 
 jvm_import(
-    name = "org_eclipse_sisu-org_eclipse_sisu_plexus-0_9_0_M4_http_import",
-    jar = "@org_eclipse_sisu-org_eclipse_sisu_plexus-0_9_0_M4_http//file",
-    source_jar = "@org_eclipse_sisu-org_eclipse_sisu_plexus-0_9_0_M4-sources_http//file",
+    name = "org_codehaus_woodstox-stax2-api-4_3_0_http_import",
+    jar = "@org_codehaus_woodstox-stax2-api-4_3_0_http//file",
+    source_jar = "@org_codehaus_woodstox-stax2-api-4_3_0-sources_http//file",
 )
 
 jvm_import(
-    name = "org_apache_maven-maven-settings-4_0_0-rc-5_http_import",
-    jar = "@org_apache_maven-maven-settings-4_0_0-rc-5_http//file",
-    source_jar = "@org_apache_maven-maven-settings-4_0_0-rc-5-sources_http//file",
+    name = "org_apache_maven-maven-artifact-4_0_0-rc-6_http_import",
+    jar = "@org_apache_maven-maven-artifact-4_0_0-rc-6_http//file",
+    source_jar = "@org_apache_maven-maven-artifact-4_0_0-rc-6-sources_http//file",
 )
 
 jvm_import(
-    name = "org_apache_maven-maven-settings-builder-4_0_0-rc-5_http_import",
-    jar = "@org_apache_maven-maven-settings-builder-4_0_0-rc-5_http//file",
-    source_jar = "@org_apache_maven-maven-settings-builder-4_0_0-rc-5-sources_http//file",
+    name = "org_apache_maven-maven-builder-support-4_0_0-rc-6_http_import",
+    jar = "@org_apache_maven-maven-builder-support-4_0_0-rc-6_http//file",
+    source_jar = "@org_apache_maven-maven-builder-support-4_0_0-rc-6-sources_http//file",
 )
 
 jvm_import(
-    name = "org_apache_maven-maven-toolchain-builder-4_0_0-rc-5_http_import",
-    jar = "@org_apache_maven-maven-toolchain-builder-4_0_0-rc-5_http//file",
-    source_jar = "@org_apache_maven-maven-toolchain-builder-4_0_0-rc-5-sources_http//file",
+    name = "org_apache_maven-maven-model-4_0_0-rc-6_http_import",
+    jar = "@org_apache_maven-maven-model-4_0_0-rc-6_http//file",
+    source_jar = "@org_apache_maven-maven-model-4_0_0-rc-6-sources_http//file",
 )
 
 jvm_import(
-    name = "org_apache_maven-maven-toolchain-model-4_0_0-rc-5_http_import",
-    jar = "@org_apache_maven-maven-toolchain-model-4_0_0-rc-5_http//file",
-    source_jar = "@org_apache_maven-maven-toolchain-model-4_0_0-rc-5-sources_http//file",
+    name = "org_apache_maven-maven-support-4_0_0-rc-6_http_import",
+    jar = "@org_apache_maven-maven-support-4_0_0-rc-6_http//file",
+    source_jar = "@org_apache_maven-maven-support-4_0_0-rc-6-sources_http//file",
 )
 
 jvm_import(
-    name = "org_apache_maven_resolver-maven-resolver-api-2_0_13_http_import",
-    jar = "@org_apache_maven_resolver-maven-resolver-api-2_0_13_http//file",
-    source_jar = "@org_apache_maven_resolver-maven-resolver-api-2_0_13-sources_http//file",
+    name = "org_apache_maven-maven-model-builder-4_0_0-rc-6_http_import",
+    jar = "@org_apache_maven-maven-model-builder-4_0_0-rc-6_http//file",
+    source_jar = "@org_apache_maven-maven-model-builder-4_0_0-rc-6-sources_http//file",
 )
 
 jvm_import(
-    name = "org_apache_maven_resolver-maven-resolver-spi-2_0_13_http_import",
-    jar = "@org_apache_maven_resolver-maven-resolver-spi-2_0_13_http//file",
-    source_jar = "@org_apache_maven_resolver-maven-resolver-spi-2_0_13-sources_http//file",
+    name = "org_codehaus_plexus-plexus-interpolation-1_29_http_import",
+    jar = "@org_codehaus_plexus-plexus-interpolation-1_29_http//file",
+    source_jar = "@org_codehaus_plexus-plexus-interpolation-1_29-sources_http//file",
 )
 
 jvm_import(
-    name = "com_google_code_gson-gson-2_13_2_http_import",
-    jar = "@com_google_code_gson-gson-2_13_2_http//file",
-    source_jar = "@com_google_code_gson-gson-2_13_2-sources_http//file",
+    name = "org_apache_maven-maven-plugin-api-4_0_0-rc-6_http_import",
+    jar = "@org_apache_maven-maven-plugin-api-4_0_0-rc-6_http//file",
+    source_jar = "@org_apache_maven-maven-plugin-api-4_0_0-rc-6-sources_http//file",
 )
 
 jvm_import(
-    name = "org_apache_maven_resolver-maven-resolver-util-2_0_13_http_import",
-    jar = "@org_apache_maven_resolver-maven-resolver-util-2_0_13_http//file",
-    source_jar = "@org_apache_maven_resolver-maven-resolver-util-2_0_13-sources_http//file",
+    name = "org_eclipse_sisu-org_eclipse_sisu_plexus-1_1_0_http_import",
+    jar = "@org_eclipse_sisu-org_eclipse_sisu_plexus-1_1_0_http//file",
+    source_jar = "@org_eclipse_sisu-org_eclipse_sisu_plexus-1_1_0-sources_http//file",
 )
 
 jvm_import(
-    name = "org_apache_maven_resolver-maven-resolver-impl-2_0_13_http_import",
-    jar = "@org_apache_maven_resolver-maven-resolver-impl-2_0_13_http//file",
-    source_jar = "@org_apache_maven_resolver-maven-resolver-impl-2_0_13-sources_http//file",
+    name = "org_apache_maven-maven-settings-4_0_0-rc-6_http_import",
+    jar = "@org_apache_maven-maven-settings-4_0_0-rc-6_http//file",
+    source_jar = "@org_apache_maven-maven-settings-4_0_0-rc-6-sources_http//file",
 )
 
 jvm_import(
-    name = "org_apache_maven_resolver-maven-resolver-named-locks-2_0_13_http_import",
-    jar = "@org_apache_maven_resolver-maven-resolver-named-locks-2_0_13_http//file",
-    source_jar = "@org_apache_maven_resolver-maven-resolver-named-locks-2_0_13-sources_http//file",
+    name = "org_apache_maven-maven-settings-builder-4_0_0-rc-6_http_import",
+    jar = "@org_apache_maven-maven-settings-builder-4_0_0-rc-6_http//file",
+    source_jar = "@org_apache_maven-maven-settings-builder-4_0_0-rc-6-sources_http//file",
 )
 
 jvm_import(
-    name = "org_codehaus_plexus-plexus-utils-4_0_2_http_import",
-    jar = "@org_codehaus_plexus-plexus-utils-4_0_2_http//file",
-    source_jar = "@org_codehaus_plexus-plexus-utils-4_0_2-sources_http//file",
+    name = "org_apache_maven-maven-toolchain-builder-4_0_0-rc-6_http_import",
+    jar = "@org_apache_maven-maven-toolchain-builder-4_0_0-rc-6_http//file",
+    source_jar = "@org_apache_maven-maven-toolchain-builder-4_0_0-rc-6-sources_http//file",
 )
 
 jvm_import(
-    name = "org_codehaus_plexus-plexus-xml-4_1_0_http_import",
-    jar = "@org_codehaus_plexus-plexus-xml-4_1_0_http//file",
-    source_jar = "@org_codehaus_plexus-plexus-xml-4_1_0-sources_http//file",
+    name = "org_apache_maven-maven-toolchain-model-4_0_0-rc-6_http_import",
+    jar = "@org_apache_maven-maven-toolchain-model-4_0_0-rc-6_http//file",
+    source_jar = "@org_apache_maven-maven-toolchain-model-4_0_0-rc-6-sources_http//file",
 )
 
 jvm_import(
-    name = "org_codehaus_plexus-plexus-classworlds-2_9_0_http_import",
-    jar = "@org_codehaus_plexus-plexus-classworlds-2_9_0_http//file",
-    source_jar = "@org_codehaus_plexus-plexus-classworlds-2_9_0-sources_http//file",
+    name = "org_apache_maven_resolver-maven-resolver-api-2_0_21_http_import",
+    jar = "@org_apache_maven_resolver-maven-resolver-api-2_0_21_http//file",
+    source_jar = "@org_apache_maven_resolver-maven-resolver-api-2_0_21-sources_http//file",
+)
+
+jvm_import(
+    name = "org_apache_maven_resolver-maven-resolver-spi-2_0_21_http_import",
+    jar = "@org_apache_maven_resolver-maven-resolver-spi-2_0_21_http//file",
+    source_jar = "@org_apache_maven_resolver-maven-resolver-spi-2_0_21-sources_http//file",
+)
+
+jvm_import(
+    name = "com_google_code_gson-gson-2_14_0_http_import",
+    jar = "@com_google_code_gson-gson-2_14_0_http//file",
+    source_jar = "@com_google_code_gson-gson-2_14_0-sources_http//file",
+)
+
+jvm_import(
+    name = "org_apache_maven_resolver-maven-resolver-util-2_0_21_http_import",
+    jar = "@org_apache_maven_resolver-maven-resolver-util-2_0_21_http//file",
+    source_jar = "@org_apache_maven_resolver-maven-resolver-util-2_0_21-sources_http//file",
+)
+
+jvm_import(
+    name = "org_apache_maven_resolver-maven-resolver-impl-2_0_21_http_import",
+    jar = "@org_apache_maven_resolver-maven-resolver-impl-2_0_21_http//file",
+    source_jar = "@org_apache_maven_resolver-maven-resolver-impl-2_0_21-sources_http//file",
+)
+
+jvm_import(
+    name = "org_apache_maven_resolver-maven-resolver-named-locks-2_0_21_http_import",
+    jar = "@org_apache_maven_resolver-maven-resolver-named-locks-2_0_21_http//file",
+    source_jar = "@org_apache_maven_resolver-maven-resolver-named-locks-2_0_21-sources_http//file",
+)
+
+jvm_import(
+    name = "org_codehaus_plexus-plexus-utils-4_0_3_http_import",
+    jar = "@org_codehaus_plexus-plexus-utils-4_0_3_http//file",
+    source_jar = "@org_codehaus_plexus-plexus-utils-4_0_3-sources_http//file",
+)
+
+jvm_import(
+    name = "org_codehaus_plexus-plexus-xml-4_1_1_http_import",
+    jar = "@org_codehaus_plexus-plexus-xml-4_1_1_http//file",
+    source_jar = "@org_codehaus_plexus-plexus-xml-4_1_1-sources_http//file",
+)
+
+jvm_import(
+    name = "org_codehaus_plexus-plexus-classworlds-2_12_0_http_import",
+    jar = "@org_codehaus_plexus-plexus-classworlds-2_12_0_http//file",
+    source_jar = "@org_codehaus_plexus-plexus-classworlds-2_12_0-sources_http//file",
 )
 
 jvm_import(
@@ -18458,21 +18578,21 @@ jvm_import(
 )
 
 jvm_import(
-    name = "org_slf4j-slf4j-api-2_0_17_http_import",
-    jar = "@org_slf4j-slf4j-api-2_0_17_http//file",
-    source_jar = "@org_slf4j-slf4j-api-2_0_17-sources_http//file",
+    name = "org_slf4j-slf4j-api-2_0_18_http_import",
+    jar = "@org_slf4j-slf4j-api-2_0_18_http//file",
+    source_jar = "@org_slf4j-slf4j-api-2_0_18-sources_http//file",
 )
 
 jvm_import(
-    name = "commons-cli-commons-cli-1_10_0_http_import",
-    jar = "@commons-cli-commons-cli-1_10_0_http//file",
-    source_jar = "@commons-cli-commons-cli-1_10_0-sources_http//file",
+    name = "commons-cli-commons-cli-1_11_0_http_import",
+    jar = "@commons-cli-commons-cli-1_11_0_http//file",
+    source_jar = "@commons-cli-commons-cli-1_11_0-sources_http//file",
 )
 
 jvm_import(
-    name = "org_jline-jansi-core-3_30_6_http_import",
-    jar = "@org_jline-jansi-core-3_30_6_http//file",
-    source_jar = "@org_jline-jansi-core-3_30_6-sources_http//file",
+    name = "org_jline-jansi-core-4_3_1_http_import",
+    jar = "@org_jline-jansi-core-4_3_1_http//file",
+    source_jar = "@org_jline-jansi-core-4_3_1-sources_http//file",
 )
 
 java_library(
