@@ -337,41 +337,11 @@ internal class ButtonsStateService: PersistentStateComponent<Element> {
 
 private val buttonState get() = ApplicationManager.getApplication().service<ButtonsStateService>()
 
+private val customizedGroup get() = getGroupPath(GROUP_MAIN_TOOLBAR_NEW_UI, GROUP_MAIN_TOOLBAR_CENTER)
 
 @ApiStatus.Internal
 class EnableStripeGroup : ToggleAction(), DumbAware {
-  @ApiStatus.Internal
-  companion object {
-    @ApiStatus.Internal
-    const val STRIPE_ACTION_GROUP_ID: String = "TopStripeActionGroup"
 
-    private val customizedGroup get() = getGroupPath(GROUP_MAIN_TOOLBAR_NEW_UI, GROUP_MAIN_TOOLBAR_CENTER)
-
-    fun setSingleStripeEnabled(enabled: Boolean) {
-      NotRoamableUiSettings.getInstance().experimentalSingleStripe = enabled
-    }
-
-    fun isSingleStripeEnabled() = NotRoamableUiSettings.getInstance().experimentalSingleStripe
-
-    @ApiStatus.Internal
-    fun pinButton(toolWindowId: String, pinned: Boolean) {
-      buttonState.setPinned(toolWindowId, pinned)
-    }
-
-    @Suppress("SameParameterValue")
-    private fun getGroupPath(vararg ids: String): List<String>? {
-      val globalSchema = CustomActionsSchema.getInstance()
-      val groupPath = ArrayList<String>()
-      groupPath += "root"
-      for (id in ids) {
-        groupPath += getActionName(globalSchema, id) ?: return null
-      }
-      return groupPath
-    }
-
-    private fun getActionName(globalSchema: CustomActionsSchema, actionId: String): String? =
-      globalSchema.getDisplayName(actionId) ?: ActionManager.getInstance().getActionOrStub(actionId)?.templateText
-  }
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
@@ -380,10 +350,41 @@ class EnableStripeGroup : ToggleAction(), DumbAware {
   }
 
   override fun isSelected(e: AnActionEvent): Boolean =
-    isSingleStripeEnabled()
+    SingleStripeHelper.isSingleStripeEnabled()
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
-    setSingleStripeEnabled(state)
+    SingleStripeHelper.setSingleStripeEnabled(state)
   }
 
 }
+
+@ApiStatus.Internal
+object SingleStripeHelper {
+
+  const val STRIPE_ACTION_GROUP_ID: String = "TopStripeActionGroup"
+
+  fun setSingleStripeEnabled(enabled: Boolean) {
+    NotRoamableUiSettings.getInstance().experimentalSingleStripe = enabled
+  }
+
+  fun isSingleStripeEnabled(): Boolean = NotRoamableUiSettings.getInstance().experimentalSingleStripe
+
+  @ApiStatus.Internal
+  fun pinButton(toolWindowId: String, pinned: Boolean) {
+    buttonState.setPinned(toolWindowId, pinned)
+  }
+}
+
+@Suppress("SameParameterValue")
+private fun getGroupPath(vararg ids: String): List<String>? {
+  val globalSchema = CustomActionsSchema.getInstance()
+  val groupPath = ArrayList<String>()
+  groupPath += "root"
+  for (id in ids) {
+    groupPath += getActionName(globalSchema, id) ?: return null
+  }
+  return groupPath
+}
+
+private fun getActionName(globalSchema: CustomActionsSchema, actionId: String): String? =
+  globalSchema.getDisplayName(actionId) ?: ActionManager.getInstance().getActionOrStub(actionId)?.templateText
