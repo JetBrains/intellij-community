@@ -6,8 +6,6 @@ import com.intellij.ide.HelpTooltip
 import com.intellij.ide.actions.ActivateToolWindowAction
 import com.intellij.ide.actions.ToolWindowsGroup
 import com.intellij.ide.ui.NotRoamableUiSettings
-import com.intellij.ide.ui.customization.ActionUrl
-import com.intellij.ide.ui.customization.CustomActionsListener.Companion.fireSchemaChanged
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.Disposable
@@ -41,7 +39,6 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
-import com.intellij.openapi.keymap.impl.ui.Group
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
@@ -69,12 +66,9 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.intellij.lang.annotations.Language
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
-
-@Language("devkit-action-id") private const val STRIPE_ACTION_GROUP_ID = "TopStripeActionGroup"
 
 @ApiStatus.Internal
 class StripeActionGroup: ActionGroup(), DumbAware {
@@ -351,44 +345,14 @@ class EnableStripeGroup : ToggleAction(), DumbAware {
     private val customizedGroup get() = getGroupPath(GROUP_MAIN_TOOLBAR_NEW_UI, GROUP_MAIN_TOOLBAR_CENTER)
 
     fun setSingleStripeEnabled(enabled: Boolean) {
-      if (enabled) updateActionGroup(true, customizedGroup ?: return, STRIPE_ACTION_GROUP_ID)
       NotRoamableUiSettings.getInstance().experimentalSingleStripe = enabled
     }
 
-    fun isSingleStripeEnabled() = hasActionOnToolbar()
-                                  && shouldSingleStripeBeEnabled()
-
-    fun shouldSingleStripeBeEnabled() = NotRoamableUiSettings.getInstance().experimentalSingleStripe
-
-    fun hasActionOnToolbar() = customizedGroup?.let { isActionGroupAdded(it, STRIPE_ACTION_GROUP_ID) } == true
+    fun isSingleStripeEnabled() = NotRoamableUiSettings.getInstance().experimentalSingleStripe
 
     @ApiStatus.Internal
     fun pinButton(toolWindowId: String, pinned: Boolean) {
       buttonState.setPinned(toolWindowId, pinned)
-    }
-
-    @Suppress("SameParameterValue")
-    private fun isActionGroupAdded(groupPath: List<String>, actionId: String): Boolean {
-      return CustomActionsSchema.getInstance().getActions().find { it.groupPath == groupPath && matchesId(it.component, actionId) } != null
-    }
-
-    @Suppress("SameParameterValue")
-    private fun updateActionGroup(add: Boolean, groupPath: List<String>, actionId: String) {
-      val globalSchema = CustomActionsSchema.getInstance()
-      val actions = globalSchema.getActions().toMutableList()
-      actions.removeIf { it.groupPath == groupPath && matchesId(it.component, actionId) }
-      if (add) {
-        actions.add(ActionUrl(ArrayList(groupPath), actionId, ActionUrl.ADDED, 0))
-      }
-      globalSchema.setActions(actions)
-      fireSchemaChanged()
-      globalSchema.setCustomizationSchemaForCurrentProjects()
-    }
-
-    private fun matchesId(component: Any?, actionId: String) = when (component) {
-      is AnAction -> ActionManager.getInstance().getId(component) == actionId
-      is Group -> component.id == actionId
-      else -> component == actionId
     }
 
     @Suppress("SameParameterValue")
