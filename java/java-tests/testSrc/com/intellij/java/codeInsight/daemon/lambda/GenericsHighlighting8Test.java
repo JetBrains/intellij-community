@@ -1219,4 +1219,6 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
 
   @TestFor(issues = "IDEA-386630")
   public void testIDEA386630(){ doTest(); }
+
+  public void testWildcardContainmentWithTypeParameterBound(){ doTest(); }
 }

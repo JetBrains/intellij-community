@@ -1261,11 +1261,37 @@ public final class TypeConversionUtil {
         // compatibility feature: allow to assign raw types to generic ones
         return allowUncheckedConversion;
       }
-      if (!typesAgree(typeLeft, typeRight, allowUncheckedConversion)) {
+      if (!typesAgree(typeLeft, typeRight, allowUncheckedConversion) &&
+          !agreeByTypeParameterBound(typeLeft, typeRight, rp, rightSubstitutor, allowUncheckedConversion)) {
         return false;
       }
     }
     return true;
+  }
+
+  /**
+   * The containment rules of JLS 4.5.1 do not take the declared bound of the type parameter into account: formally,
+   * {@code ? extends Set<?>} does not contain {@code ?}. However, if the type parameter is declared as
+   * {@code <RS extends Set<?>>}, then every possible type argument is a subtype of {@code Set<?>}, so the containment
+   * should hold.
+   *
+   * @return true if {@code typeLeft} contains {@code typeRight}, given that {@code typeRight} is the type argument
+   * for {@code rightParameter}, and thus is bounded by the declared bound of that parameter
+   */
+  private static boolean agreeByTypeParameterBound(@NotNull PsiType typeLeft,
+                                                   @NotNull PsiType typeRight,
+                                                   @NotNull PsiTypeParameter rightParameter,
+                                                   @NotNull PsiSubstitutor rightSubstitutor,
+                                                   boolean allowUncheckedConversion) {
+    if (!(typeLeft instanceof PsiWildcardType) || !((PsiWildcardType)typeLeft).isExtends()) return false;
+    // an extends-bounded wildcard already has an upper bound of its own
+    if (!(typeRight instanceof PsiWildcardType) || ((PsiWildcardType)typeRight).isExtends()) return false;
+    PsiType leftBound = ((PsiWildcardType)typeLeft).getBound();
+    if (leftBound == null) return false;
+    for (PsiClassType bound : rightParameter.getExtendsListTypes()) {
+      if (isAssignable(leftBound, rightSubstitutor.substitute(bound), allowUncheckedConversion, false)) return true;
+    }
+    return false;
   }
 
   private static final RecursionGuard<PsiType> ourGuard = RecursionManager.createGuard("isAssignable");
