@@ -977,7 +977,6 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
     }
   }
 
-  @IJIgnore(issue = "IJPL-252062")
   public void testDoNotLeakForgottenUncommittedDocument() throws Exception {
     ApplicationManager.getApplication().executeOnPooledThread(() -> ReadAction.compute(() -> {
       Document document = createFreeThreadedDocument();
@@ -1132,7 +1131,6 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
       .toString();
   }
 
-  @IJIgnore(issue = "IJPL-252062")
   public void testHugeAmountOfChangedDocumentsMustNotBeHardRetainedByDocumentCommitThreadQueue() throws Exception {
     ApplicationManager.getApplication().assertIsDispatchThread();
     LoggedErrorProcessor.executeWith(new LoggedErrorProcessor() {
@@ -1275,12 +1273,15 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
     }
     VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir);
     assertEquals(N, vDir.getChildren().length);
-    List<PsiFile> psiFiles = new ArrayList<>(Arrays.stream(vDir.getChildren()).parallel().map(vFile -> ReadAction.compute(() -> {
-      PsiFile psiFile = findFile(vFile);
-      Document doc = getDocument(psiFile);
-      doc.putUserData(MY_DOC_KEY, true);
-      return getPsiDocumentManager().getPsiFile(doc);
-    })).toList());
+    List<PsiFile> psiFiles = new ArrayList<>();
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+     psiFiles.addAll(Arrays.stream(vDir.getChildren()).parallel().map(vFile -> ReadAction.compute(() -> {
+        PsiFile psiFile = findFile(vFile);
+        Document doc = getDocument(psiFile);
+        doc.putUserData(MY_DOC_KEY, true);
+        return getPsiDocumentManager().getPsiFile(doc);
+      })).toList());
+    }, "", true, getProject());
     assertEquals(N, psiFiles.size());
     WriteCommandAction.runWriteCommandAction(getProject(), () -> {
       for (PsiFile psiFile : psiFiles) {
