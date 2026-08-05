@@ -475,7 +475,8 @@ private fun endStartupEmptyStatePresentationHold(project: Project) {
   fileEditorManager.mainSplitters.endStartupEmptyStatePresentationHold()
 }
 
-internal suspend fun attachToProjectAsync(
+@Internal
+suspend fun attachToProjectAsync(
   projectToClose: Project,
   projectDir: Path,
   processor: ProjectAttachProcessor? = null,
