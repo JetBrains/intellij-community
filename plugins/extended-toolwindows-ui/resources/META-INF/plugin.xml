@@ -18,8 +18,14 @@
   <incompatible-with>com.intellij.jetbrains.client</incompatible-with>
 
   <description><![CDATA[
-        Provides toolwindows features, like tool window layout, vertical toolwindow labels, etc.
-    ]]></description>
+    Extends the New UI tool window layout with additional options:
+
+    <ul>
+      <li><b>Horizontal top and bottom stripes</b> — place tool window buttons in a horizontal row along the top or bottom edge instead of the vertical side bars.</li>
+      <li><b>Top-left and top-right placement</b> — anchor tool windows to the upper corners, next to the existing left, right, and bottom anchors.</li>
+      <li><b>Tool window names in the sidebars</b> — show names next to the icons, rendered vertically so they cost no extra editor width.</li>
+    </ul>
+  ]]></description>
 
   <extensions defaultExtensionNs="com.intellij">
     <toolWindowExtension implementation="com.intellij.extendedToolWindowsUi.ToolWindowExtensionImpl"/>

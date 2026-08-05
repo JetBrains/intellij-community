@@ -25,8 +25,8 @@ internal open class ToolWindowPaneNewButtonManager(paneId: String, isPrimary: Bo
   internal val left = ToolWindowLeftToolbar(paneId, isPrimary)
   internal val right = ToolWindowRightToolbar(paneId, isPrimary)
 
-  internal val top: ToolWindowToolbar? = ToolWindowExtension.getInstance()?.createTopToolWindowToolbar(paneId, isPrimary)
-  internal val bottom: ToolWindowToolbar? = ToolWindowExtension.getInstance()?.createBottomToolWindowToolbar(paneId, isPrimary)
+  internal val top: ToolWindowToolbar?
+  internal val bottom: ToolWindowToolbar?
 
   private var showButtons = true
   private var isStripesOverlaid = false
@@ -37,6 +37,10 @@ internal open class ToolWindowPaneNewButtonManager(paneId: String, isPrimary: Bo
     get() = true
 
   init {
+    val extension = ToolWindowExtension.getInstance()
+    top = extension?.createTopToolWindowToolbar(paneId, isPrimary)
+    bottom = extension?.createBottomToolWindowToolbar(paneId, isPrimary)
+
     allToolbars().forEach {
       it.addVisibleButtonsListener { updateToolStripesVisibility() }
     }

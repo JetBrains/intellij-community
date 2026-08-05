@@ -28,7 +28,7 @@ class StripeButtonSeparator: JComponent() {
 
   override fun paintComponent(g: Graphics) {
     super.paintComponent(g)
-    val padding = SquareStripeButtonLook.getIconPadding(isOnTheLeftStripe())
+    val padding = SquareStripeButtonLook.getIconPadding(this)
     val fullWidth = this.width
     val fullHeight = this.height
     val visibleWidth = JBUI.scale(24)

@@ -25,8 +25,8 @@ import com.intellij.openapi.wm.impl.AbstractSquareStripeButton
 import com.intellij.openapi.wm.impl.SquareStripeButton
 import com.intellij.openapi.wm.impl.SquareStripeButtonLook
 import com.intellij.openapi.wm.impl.ToolWindowImpl
+import com.intellij.openapi.wm.impl.getToolbarAnchor
 import com.intellij.openapi.wm.impl.isInternal
-import com.intellij.openapi.wm.impl.isOnTheLeftStripe
 import com.intellij.openapi.wm.safeToolWindowPaneId
 import com.intellij.toolWindow.extendedToolWindowsUi.ToolWindowExtension
 import com.intellij.ui.ComponentUtil
@@ -281,8 +281,9 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
   private fun setInitialOffsetFromStripeButton(relativePoint: RelativePoint, clickedComponent: Component) {
     initialOffset.location = relativePoint.getPoint(clickedComponent).also {
       if (clickedComponent is AbstractSquareStripeButton) {
-        it.x -= clickedComponent.insets.left + SquareStripeButtonLook.getIconPadding(clickedComponent.isOnTheLeftStripe()).left
-        it.y -= clickedComponent.insets.top + SquareStripeButtonLook.getIconPadding(clickedComponent.isOnTheLeftStripe()).top
+        val padding = SquareStripeButtonLook.getIconPadding(clickedComponent)
+        it.x -= clickedComponent.insets.left + padding.left
+        it.y -= clickedComponent.insets.top + padding.top
       }
     }
   }
@@ -739,7 +740,6 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
         component.size = component.preferredSize
       }
 
-      val isLeft = component.isOnTheLeftStripe()
       val areaSize = when (component) {
         is StripeButton -> component.size.also {
           val delta = JBUIScale.scale(1)
@@ -748,7 +748,7 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
         }
         is AbstractSquareStripeButton -> component.size.also {
           JBInsets.removeFrom(it, component.insets)
-          JBInsets.removeFrom(it, SquareStripeButtonLook.getIconPadding(isLeft))
+          JBInsets.removeFrom(it, SquareStripeButtonLook.getIconPadding(component))
         }
         else -> JBUI.emptySize()
       }
@@ -772,7 +772,11 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
 
         when (component) {
           is StripeButton -> component.paint(it)
-          is AbstractSquareStripeButton -> component.paintDraggingButton(it, isLeft)
+          is AbstractSquareStripeButton -> {
+            component.getToolbarAnchor()?.let { toolbarAnchor ->
+              component.paintDraggingButton(it, toolbarAnchor)
+            }
+          }
         }
 
         it.dispose()

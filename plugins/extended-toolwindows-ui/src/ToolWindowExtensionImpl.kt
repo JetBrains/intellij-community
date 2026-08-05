@@ -12,6 +12,7 @@ import com.intellij.toolWindow.StripeButtonUi
 import com.intellij.toolWindow.extendedToolWindowsUi.ToolWindowExtension
 import com.intellij.ui.icons.toStrokeIcon
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -136,9 +137,9 @@ private class SquareStripeButtonLookVerticalText(button: SquareStripeButton) : S
     }
   }
 
-  override fun paintDraggingButton(g: Graphics, isLeft: Boolean) {
+  override fun paintDraggingButton(g: Graphics, toolbarAnchor: ToolWindowAnchorEnum) {
     val color = JBUI.CurrentTheme.ToolWindow.DragAndDrop.BUTTON_FLOATING_BACKGROUND
-    val iconPadding = getIconPadding(isLeft)
+    val iconPadding = getIconPadding(toolbarAnchor)
     val areaSize = button.size.also {
       JBInsets.removeFrom(it, button.insets)
       JBInsets.removeFrom(it, iconPadding)
@@ -159,12 +160,12 @@ private class SquareStripeButtonLookVerticalText(button: SquareStripeButton) : S
   }
 
   override fun getPreferredSize(size: Dimension): Dimension {
-    val labelSpace = getButtonScaledInsets().fullWidth + getLabelWidth()
+    val labelAndExtraSpace = getButtonScaledInsets().fullWidth + getLabelWidth()
     if (toolWindow.getAnchorEnum().isHorizontal()) {
-      size.width += labelSpace
+      size.width += labelAndExtraSpace
     }
     else {
-      size.height += labelSpace
+      size.height += labelAndExtraSpace
     }
     return size
   }
@@ -173,7 +174,7 @@ private class SquareStripeButtonLookVerticalText(button: SquareStripeButton) : S
     return UIUtil.computeStringWidth(button, button.getFontMetrics(getTextFont()), getStripeText())
   }
 
-  private fun getTextFont() = button.font
+  private fun getTextFont() = if (compactMode) JBFont.create(button.font).lessOn(1f) else button.font
 
   private fun getStripeText(): String {
     return (toolWindow.stripeShortTitleProvider?.get() ?: toolWindow.stripeTitleProvider.get()).trim()
@@ -181,11 +182,14 @@ private class SquareStripeButtonLookVerticalText(button: SquareStripeButton) : S
 
   private fun getButtonScaledInsets(): ButtonScaledInsets {
     return if (compactMode)
-      ButtonScaledInsets(leftRightExtraInset = JBUIScale.scale(2), iconLabelInset = JBUIScale.scale(4))
-    else ButtonScaledInsets(leftRightExtraInset = JBUIScale.scale(4), iconLabelInset = JBUIScale.scale(6))
+      ButtonScaledInsets(leftRightExtraInset = JBUIScale.scale(6), iconLabelInset = JBUIScale.scale(4))
+    else ButtonScaledInsets(leftRightExtraInset = JBUIScale.scale(8), iconLabelInset = JBUIScale.scale(6))
   }
 
-  private data class ButtonScaledInsets(val leftRightExtraInset: Int, val iconLabelInset: Int) {
+  private data class ButtonScaledInsets(
+    val leftRightExtraInset: Int, // For vertical used as top/bottom extra inset
+    val iconLabelInset: Int,
+  ) {
     val fullWidth: Int
       get() = leftRightExtraInset * 2 + iconLabelInset
   }

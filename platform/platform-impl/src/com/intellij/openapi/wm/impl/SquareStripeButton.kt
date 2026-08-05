@@ -25,9 +25,11 @@ import com.intellij.openapi.wm.impl.SquareStripeButton.Companion.createMoveGroup
 import com.intellij.toolWindow.ResizeStripeManager
 import com.intellij.toolWindow.StripeButtonUi
 import com.intellij.toolWindow.ToolWindowEventSource
-import com.intellij.toolWindow.extendedToolWindowsUi.ToolWindowExtension
 import com.intellij.toolWindow.ToolWindowLeftToolbar
+import com.intellij.toolWindow.ToolWindowRightToolbar
 import com.intellij.toolWindow.ToolWindowToolbar
+import com.intellij.toolWindow.extendedToolWindowsUi.ToolWindowExtension
+import com.intellij.toolWindow.extendedToolWindowsUi.ToolWindowHorizontalToolbar
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.MouseDragHelper
@@ -73,8 +75,8 @@ abstract class AbstractSquareStripeButton(
     })
   }
 
-  fun paintDraggingButton(g: Graphics, isLeft: Boolean) {
-    (buttonLook as SquareStripeButtonLook).paintDraggingButton(g, isLeft)
+  fun paintDraggingButton(g: Graphics, toolbarAnchor: ToolWindowAnchorEnum) {
+    (buttonLook as SquareStripeButtonLook).paintDraggingButton(g, toolbarAnchor)
   }
 }
 
@@ -247,7 +249,7 @@ private class SquareStripeButtonLookHorizontalText(button: SquareStripeButton): 
     val texts = getStripeSplitText()
     val insets = button.insets
     val textPadding = if (UISettings.getInstance().compactMode) 4 else 6
-    val textOffset = JBUI.CurrentTheme.Toolbar.stripeToolbarTextOffset(button.isOnTheLeftStripe())
+    val textOffset = getTextOffset(button)
     val x = insets.left + JBUI.scale(textPadding + textOffset)
     var y = iconPosition.y + iconLabelGap
     val totalWidth = button.width - insets.left - insets.right - JBUI.scale(textPadding * 2)
@@ -416,9 +418,21 @@ private class SquareAnActionButton(private val window: ToolWindowImpl)
   }
 }
 
-internal fun Component.isOnTheLeftStripe(): Boolean {
+internal fun Component.getToolbarAnchor(): ToolWindowAnchorEnum? {
   val stripe = ComponentUtil.getParentOfType(ToolWindowToolbar::class.java, this)
-  return stripe is ToolWindowLeftToolbar
+
+  return when (stripe) {
+    is ToolWindowLeftToolbar -> ToolWindowAnchorEnum.LEFT
+    is ToolWindowRightToolbar -> ToolWindowAnchorEnum.RIGHT
+    is ToolWindowHorizontalToolbar -> {
+      when (stripe.anchor) {
+        ToolWindowAnchor.TOP -> ToolWindowAnchorEnum.TOP
+        ToolWindowAnchor.BOTTOM -> ToolWindowAnchorEnum.BOTTOM
+        else -> null
+      }
+    }
+    else -> null
+  }
 }
 
 /**

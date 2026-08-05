@@ -3,8 +3,8 @@ package com.intellij.openapi.wm.impl
 
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.wm.ToolWindowAnchor
+import com.intellij.openapi.wm.impl.SquareStripeButtonLook.Companion.getIconPadding
 import com.intellij.toolWindow.MoreSquareStripeButton
-import com.intellij.toolWindow.ResizeStripeManager
 import com.intellij.toolWindow.StripeButtonManager
 import com.intellij.toolWindow.extendedToolWindowsUi.ToolWindowExtension
 import com.intellij.ui.awt.DevicePoint
@@ -627,7 +627,7 @@ internal abstract class AbstractDroppableStripe(val paneId: String, layoutManage
       if (!rectangle.isEmpty) {
         var round: Int? = null
         if (isNewStripes) {
-          JBInsets.removeFrom(rectangle, JBUI.CurrentTheme.Toolbar.stripeToolbarButtonIconPadding(isOnTheLeftStripe(), ResizeStripeManager.isShowNames()))
+          JBInsets.removeFrom(rectangle, getIconPadding(this))
           round = JBUI.CurrentTheme.Toolbar.stripeButtonArc(UISettings.getInstance().compactMode).get()
         }
         g.color = if (isNewStripes) JBUI.CurrentTheme.ToolWindow.DragAndDrop.BUTTON_DROP_BACKGROUND else JBUI.CurrentTheme.DragAndDrop.Area.BACKGROUND
