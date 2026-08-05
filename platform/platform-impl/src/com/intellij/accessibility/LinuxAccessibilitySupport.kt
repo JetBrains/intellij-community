@@ -119,13 +119,13 @@ object LinuxAccessibilitySupport {
    * or to leave the temporary runtime ATK Wrapper activation state.
    */
   suspend fun applyRequestedChanges(): Boolean {
-    if (screenReaderSupportRequested && !isSupportScreenReadersOverridden()) {
-      serviceAsync<GeneralSettings>().isSupportScreenReaders = true
-    }
-
     val vmOptionsUpdated = linuxAccessibilitySupportRequested &&
                            !atkWrapperEnabledInConfig &&
                            updateAtkWrapperVmOption(shouldEnableAtkWrapper = true)
+
+    if (screenReaderSupportRequested && !isSupportScreenReadersOverridden()) {
+      serviceAsync<GeneralSettings>().isSupportScreenReaders = true
+    }
 
     val restartRequired = atkWrapperActivatedInCurrentSession || vmOptionsUpdated
     if (restartRequired) {
