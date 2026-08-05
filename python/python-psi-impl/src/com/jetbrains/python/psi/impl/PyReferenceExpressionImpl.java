@@ -272,7 +272,13 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       }
     }
 
-    return getTypeFromTargets(context);
+    final PsiFile realFile = FileContextUtil.getContextFile(this);
+    if (!(getContainingFile() instanceof PyExpressionCodeFragment) || (realFile != null && context.maySwitchToAST(realFile))) {
+      final PyResolveContext resolveContext = PyResolveContext.defaultContext(context);
+      return getTypeFromTargets(PyUtil.multiResolveTopPriority(getReference(resolveContext)), context, this);
+    }
+
+    return PyAnyType.getAny();
   }
 
   public static @Nullable PyType getQualifiedReferenceType(@NotNull PyReferenceExpression refExpr,
@@ -343,17 +349,6 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       case PyClassType classType -> findProperty(classType, name, context) != null;
       case null, default -> false;
     };
-  }
-
-  private @Nullable PyType getTypeFromTargets(@NotNull TypeEvalContext context) {
-    final PyResolveContext resolveContext = PyResolveContext.defaultContext(context);
-
-    final PsiFile realFile = FileContextUtil.getContextFile(this);
-    if (!(getContainingFile() instanceof PyExpressionCodeFragment) || (realFile != null && context.maySwitchToAST(realFile))) {
-      return getTypeFromTargets(PyUtil.multiResolveTopPriority(getReference(resolveContext)), context, this);
-    }
-
-    return PyAnyType.getAny();
   }
 
   private static @Nullable PyType getTypeFromTargets(@NotNull List<@NotNull PsiElement> targets,
