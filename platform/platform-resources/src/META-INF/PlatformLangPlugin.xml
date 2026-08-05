@@ -4,11 +4,7 @@
 
   <module value="com.intellij.modules.platform"/>
   <module value="com.intellij.modules.lang"/>
-  <module value="com.intellij.modules.xdebugger"/>
-  <module value="com.intellij.modules.externalSystem"/>
-  <module value="com.intellij.platform.ide.impl.wsl"/>
 
-  <xi:include href="/META-INF/PlatformLangComponents.xml"/>
   <xi:include href="/idea/PriorityEditorLangActions.xml"/>
   <xi:include href="/idea/PlatformActions.xml"/>
   <xi:include href="/META-INF/PlatformExecutionActions.xml"/>
@@ -24,7 +20,6 @@
   <xi:include href="/META-INF/WorkspaceModelImpl.xml"/>
   <xi:include href="/META-INF/ProjectModel.xml"/>
   <xi:include href="/META-INF/ProjectModelImpl.xml"/>
-  <xi:include href="/META-INF/ProjectModelPlatform.xml"/>
   <xi:include href="/META-INF/Indexing.xml"/>
   <xi:include href="/META-INF/Editor.xml"/>
   <xi:include href="/META-INF/EditorEx.xml"/>
@@ -32,14 +27,14 @@
   <xi:include href="/META-INF/IdeCore.xml"/>
   <xi:include href="/META-INF/PlatformExtensionPoints.xml"/>
   <xi:include href="/META-INF/Refactoring.xml"/>
-  <xi:include href="/META-INF/LangExtensionPoints.xml"/>
+  <xi:include href="/META-INF/RefactoringExtensionPoints.xml"/>
+  <xi:include href="/META-INF/CodeStyle.xml"/>
 
   <xi:include href="/META-INF/PlatformExtensions.xml"/>
-  <xi:include href="/META-INF/PlatformExecutionExtensions.xml"/>
+  <xi:include href="/META-INF/RemoteDevUtil.xml">
+    <xi:fallback/>
+  </xi:include>
 
-  <xi:include href="/META-INF/LangExtensions.xml"/>
-  <xi:include href="/META-INF/ProjectModelLangExtensions.xml"/>
-  <xi:include href="/META-INF/SearchEverywhereCodeInsightContributors.xml"/>
   <xi:include href="/META-INF/OpenTelemetryExtensions.xml"/>
 
   <xi:include href="/META-INF/WorkspaceModelExtensions.xml"/>

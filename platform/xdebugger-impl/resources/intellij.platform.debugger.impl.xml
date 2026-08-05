@@ -3,6 +3,8 @@
   All new extensions, actions, services, extension points, etc. should go to intellij.platform.debugger.impl.content.xml
 -->
 <idea-plugin visibility="public" xmlns:xi="http://www.w3.org/2001/XInclude">
+  <module value="com.intellij.modules.xdebugger"/>
+
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="fleet.rhizomedb"/>

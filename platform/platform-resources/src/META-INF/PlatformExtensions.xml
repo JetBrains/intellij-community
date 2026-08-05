@@ -1,5 +1,5 @@
 <!--suppress PluginXmlRegistrationCheck -->
-<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+<idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.testFramework.fixtures.HeavyIdeaTestFixturePathProvider" open="true"
                         serviceImplementation="com.intellij.testFramework.fixtures.HeavyIdeaTestFixturePathProviderImpl"/>
@@ -7,12 +7,5 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.platform.ide.bootstrap.IdeStartupWizardCollector"/>
 
     <statistics.applicationUsagesCollector implementation="com.intellij.openapi.updateSettings.impl.PluginAutoUpdateFUSCollector"/>
-
-    <!--<editor.rd.localSupport filetype="PLAIN_TEXT"/> IJPL-189393 -->
-
   </extensions>
-
-  <xi:include href="/META-INF/RemoteDevUtil.xml">
-    <xi:fallback/>
-  </xi:include>
 </idea-plugin>

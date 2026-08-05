@@ -1,4 +1,6 @@
 <idea-plugin visibility="public">
+  <module value="com.intellij.platform.ide.impl.wsl"/>
+
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.libraries.caffeine"/>

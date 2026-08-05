@@ -1,7 +1,0 @@
-<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
-  <xi:include href="/META-INF/CompletionExtensionPoints.xml"/>
-  <xi:include href="/META-INF/RefactoringExtensionPoints.xml"/>
-  <xi:include href="/META-INF/RefactoringLangExtensionPoints.xml"/>
-  <xi:include href="/META-INF/FormatterExtensionPoints.xml"/>
-  <xi:include href="/META-INF/EditorExtensionPoints.xml"/>
-</idea-plugin>
