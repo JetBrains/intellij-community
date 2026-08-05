@@ -15,6 +15,7 @@ fun <T : Any> buildProjectViewNodeModel(id: Long, userObject: T, build: (Project
 
 @ApiStatus.Experimental
 sealed interface ProjectViewNodeModelBuilder {
+  fun setModel(model: BackendProjectViewNodeModel<*>)
   fun buildPresentation(build: (TreeNodePresentationBuilder) -> Unit)
   fun setPathElementType(pathElementType: String)
   fun setPathElementId(pathElementId: String)
@@ -35,6 +36,6 @@ sealed interface ProjectViewNodeModel {
 }
 
 @ApiStatus.Experimental
-sealed interface BackendProjectViewNodeModel<T> : ProjectViewNodeModel {
+sealed interface BackendProjectViewNodeModel<out T> : ProjectViewNodeModel {
   val userObject: T
 }

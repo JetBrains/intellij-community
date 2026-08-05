@@ -485,6 +485,16 @@ class TreeNodePresentationBuilderImpl : TreeNodePresentationBuilder {
   private var toolTipValue: String? = null
   private var textAttributesKeyValue: TextAttributesKey? = null
 
+  override fun setPresentation(presentation: TreeNodePresentation) {
+    presentation as TreeNodePresentationImpl
+    isLeafValue = presentation.isLeaf
+    iconValue = presentation.icon
+    mainTextValue = presentation.mainText
+    fullTextValue = presentation.fullText.toMutableList()
+    toolTipValue = presentation.toolTip
+    textAttributesKeyValue = presentation.textAttributesKey
+  }
+
   override fun setLeaf(isLeaf: Boolean) {
     this.isLeafValue = isLeaf
   }

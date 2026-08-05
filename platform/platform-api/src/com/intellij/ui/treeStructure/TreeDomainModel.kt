@@ -25,6 +25,7 @@ sealed interface TreeNodePresentation
 @ApiStatus.Experimental
 @ApiStatus.NonExtendable
 interface TreeNodePresentationBuilder {
+  fun setPresentation(presentation: TreeNodePresentation)
   fun setLeaf(isLeaf: Boolean)
   fun setIcon(icon: Icon?)
   fun setMainText(text: String)

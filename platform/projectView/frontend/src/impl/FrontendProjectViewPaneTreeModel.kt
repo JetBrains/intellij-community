@@ -373,7 +373,7 @@ internal class Node(
     return projectViewNode.presentation.isLeaf
   }
 
-  override fun toString(): String = "{[${projectViewNode.id}] ${projectViewNode.presentation.mainText}}"
+  override fun toString(): String = "{${if (isLeaf) "-" else "+"}[${projectViewNode.id}] ${projectViewNode.presentation.mainText}}"
 }
 
 private val LOG = logger<FrontendProjectViewPaneTreeModel>()

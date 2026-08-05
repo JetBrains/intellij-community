@@ -26,6 +26,8 @@ import com.intellij.ui.tree.buildTreeNodeDescriptorPresentation
 import com.intellij.ui.treeStructure.TreeNodePresentationBuilder
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresReadLock
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import org.jetbrains.annotations.ApiStatus
@@ -95,38 +97,71 @@ class TreeStructureProjectViewNodeProvider(
     }
   }
 
-  override suspend fun createNodeModel(id: Long, node: TreeStructureProjectViewNode): BackendProjectViewNodeModel<TreeStructureProjectViewNode>? {
+  override suspend fun getNodeModelFlow(id: Long, node: TreeStructureProjectViewNode): Flow<BackendProjectViewNodeModel<TreeStructureProjectViewNode>> {
     node as TreeStructureProjectViewNodeImpl?
-    return read {
-      if (!structure.isValid(node)) return@read null
-      buildProjectViewNodeModel(id, node) { nodeBuilder ->
-        nodeBuilder.buildPresentation { presentationBuilder ->
-          buildPresentation(presentationBuilder, node)
-        }
-        // A hack to make tree state save / restore work when switching from Light to Backend:
-        // project names are different for some reason, but because the root node is not even shown,
-        // we can treat any root nodes as equal for the purpose of re-expand.
-        if (node.elementDescriptor is ProjectViewProjectNode) {
-          nodeBuilder.setPathElementType("")
-          nodeBuilder.setPathElementId("")
-        }
-        nodeBuilder.setCanNavigate(node.canNavigate())
-        nodeBuilder.setCanNavigateToSource(node.canNavigateToSource())
-        nodeBuilder.setIncludedInExpandAll(node.isIncludedInExpandAll())
-        nodeBuilder.setIsDirectory(node.isDirectory())
+    return flow {
+      val fastModel = buildFastModel(id, node)
+      if (fastModel == null) return@flow
+      emit(fastModel)
+      val fullModel = buildFullModel(id, node, fastModel)
+      if (fullModel == null) return@flow
+      emit(fullModel)
+    }
+  }
+
+  private suspend fun buildFastModel(
+    id: Long,
+    node: TreeStructureProjectViewNodeImpl,
+  ): BackendProjectViewNodeModel<TreeStructureProjectViewNodeImpl>? = read {
+    if (!structure.isValid(node)) return@read null
+    buildProjectViewNodeModel(id, node) { nodeBuilder ->
+      nodeBuilder.buildPresentation { presentationBuilder ->
+        buildFastPresentation(presentationBuilder, node)
+        presentationBuilder.setLeaf(isLeaf = computeFastIsLeaf(node)) // expensive, will compute later
+      }
+      // A hack to make tree state save / restore work when switching from Light to Backend:
+      // project names are different for some reason, but because the root node is not even shown,
+      // we can treat any root nodes as equal for the purpose of re-expand.
+      if (node.elementDescriptor is ProjectViewProjectNode) {
+        nodeBuilder.setPathElementType("")
+        nodeBuilder.setPathElementId("")
+      }
+      nodeBuilder.setCanNavigate(node.canNavigate())
+      nodeBuilder.setCanNavigateToSource(node.canNavigateToSource())
+      nodeBuilder.setIncludedInExpandAll(node.isIncludedInExpandAll())
+      nodeBuilder.setIsDirectory(node.isDirectory())
+    }
+  }
+
+  private suspend fun buildFullModel(
+    id: Long,
+    node: TreeStructureProjectViewNodeImpl,
+    fastModel: BackendProjectViewNodeModel<TreeStructureProjectViewNodeImpl>,
+  ): BackendProjectViewNodeModel<TreeStructureProjectViewNodeImpl>? = read {
+    if (!structure.isValid(node)) return@read null
+    buildProjectViewNodeModel(id, node) { nodeBuilder ->
+      nodeBuilder.setModel(fastModel)
+      nodeBuilder.buildPresentation { presentationBuilder -> 
+        presentationBuilder.setLeaf(computeIsLeaf(node))
       }
     }
   }
 
-  private fun buildPresentation(builder: TreeNodePresentationBuilder, validNode: TreeStructureProjectViewNodeImpl) {
+  private fun buildFastPresentation(builder: TreeNodePresentationBuilder, validNode: TreeStructureProjectViewNodeImpl) {
     val descriptor = validNode.elementDescriptor
     descriptor.update()
-    builder.setLeaf(computeIsLeaf(validNode))
     if (descriptor !is PresentableNodeDescriptor<*>) {
       builder.setMainText(descriptor.toString())
       return
     }
     buildTreeNodeDescriptorPresentation(descriptor, builder)
+  }
+
+  private fun computeFastIsLeaf(validNode: TreeStructureProjectViewNodeImpl): Boolean {
+    return when {
+      validNode.elementDescriptor is ProjectViewProjectNode -> false // the root is never leaf
+      else -> !validNode.isDirectory()
+    }
   }
 
   private fun computeIsLeaf(validNode: TreeStructureProjectViewNodeImpl): Boolean {

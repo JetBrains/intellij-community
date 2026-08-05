@@ -97,10 +97,7 @@ internal class ProjectViewPaneStateBuilderImpl(
 
     private fun addNode(id: Long, node: Node) {
       nodeById[id] = node
-      val userObject = node.model.userObject
-      if (userObject != null) { // null on the frontend
-        nodeByUserObject[userObject] = node
-      }
+      nodeByUserObject[node.model.userObject] = node
     }
 
     private fun removeNode(id: Long) {
@@ -149,6 +146,7 @@ internal class ProjectViewPaneStateBuilderImpl(
     private fun StringBuilder.dumpState(id: Long, level: Int) {
       val node = nodeById.getValue(id)
       append(" ".repeat(level))
+      append(if (node.model.presentation.isLeaf) "-" else "+")
       append("[").append(id).append("] ")
       append(node.model.presentation.mainText)
       append("\n")

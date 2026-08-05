@@ -29,7 +29,9 @@ import com.intellij.openapi.application.ReadConstraint
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.constrainedReadAction
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
@@ -57,6 +59,7 @@ import com.intellij.platform.projectView.pane.SelectByContext
 import com.intellij.platform.projectView.pane.SelectByEditor
 import com.intellij.platform.projectView.pane.SelectInRequest
 import com.intellij.platform.projectView.pane.SuspendingBackendProjectViewPaneStateAccessor
+import com.intellij.platform.projectView.pane.buildProjectViewNodeModel
 import com.intellij.platform.projectView.settings.ProjectViewPaneFileNestingValue
 import com.intellij.platform.projectView.settings.ProjectViewPaneOption
 import com.intellij.platform.projectView.settings.ProjectViewPaneSettingsAccessor
@@ -65,6 +68,7 @@ import com.intellij.platform.projectView.settings.ProjectViewPaneSettingsStateBu
 import com.intellij.platform.projectView.settings.ProjectViewPaneSortKey
 import com.intellij.platform.projectView.settings.allProjectViewPaneOptions
 import com.intellij.platform.projectView.settings.allProjectViewPaneSortKeys
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.util.coroutines.flow.throttle
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiDirectory
@@ -79,15 +83,19 @@ import com.intellij.util.containers.nullize
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.lastOrNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -99,11 +107,11 @@ import kotlin.concurrent.atomics.ExperimentalAtomicApi
 @ApiStatus.Experimental
 interface ProjectViewTreeNodeProvider<T> {
   suspend fun getChildren(parent: T?): List<T>?
-  suspend fun createNodeModel(id: Long, node: T): BackendProjectViewNodeModel<T>?
+  suspend fun getNodeModelFlow(id: Long, node: T): Flow<BackendProjectViewNodeModel<T>>
 }
 
 @ApiStatus.Experimental
-abstract class TreeBasedProjectViewPaneModel<T>(protected val project: Project) : ProjectViewPaneModel {
+abstract class TreeBasedProjectViewPaneModel<T : Any>(protected val project: Project) : ProjectViewPaneModel {
   private val currentTreeState = AtomicReference<ProjectViewPaneTreeState?>(null)
 
   val suspendingState: SuspendingBackendProjectViewPaneStateAccessor<T>?
@@ -332,6 +340,9 @@ abstract class TreeBasedProjectViewPaneModel<T>(protected val project: Project) 
         processedEventEpoch.update { it + count }
       }
     }
+    
+    private lateinit var modelComputationScope: CoroutineScope
+    private val modelComputations = ConcurrentHashMap<Long, NodeModelComputation>()
 
     private val sessionFinished = CompletableDeferred<Unit>()
 
@@ -340,6 +351,7 @@ abstract class TreeBasedProjectViewPaneModel<T>(protected val project: Project) 
     suspend fun run() {
       try {
         coroutineScope {
+          modelComputationScope = childScope("Async model computations for the PV pane $id")
           applySettings()
           initialize()
           onStateChanged(suspendingState)
@@ -359,6 +371,9 @@ abstract class TreeBasedProjectViewPaneModel<T>(protected val project: Project) 
                 }
                 is ProcessPendingUpdatesRequest -> {
                   processPendingUpdates()
+                }
+                is UpdateNodeModelRequest<*> -> {
+                  builder.updateNode(request.model)
                 }
                 is UpdateSettingsRequest -> {
                   applySettings()
@@ -758,30 +773,38 @@ abstract class TreeBasedProjectViewPaneModel<T>(protected val project: Project) 
     }
 
     private suspend fun updateChildren(parentModel: BackendProjectViewNodeModel<T>, allowLoading: Boolean, deep: Boolean) {
+      LOG.debug { "Updating the children of ID = ${parentModel.id}" }
       parentModel as ProjectViewNodeModelImpl<T>
       val newChildren = nodeProvider.getChildren(if (parentModel.id == SUPER_ROOT_ID) null else parentModel.userObject) ?: return
+      LOG.trace { "The new children are $newChildren" }
       val oldModels = suspendingState.getChildren(parentModel)
 
       if (oldModels == null && !allowLoading) return
 
       if (oldModels == null) { // first time loaded, must send even if empty
+        LOG.trace { "The children were loaded for the first time, applying as-is" }
         setChildren(parentModel, newChildren)
         return
       }
 
       if (oldModels.isEmpty() && newChildren.isEmpty()) { // no change
+        LOG.trace { "The children list remains empty" }
         return
       }
 
       if (oldModels.isEmpty()) { // empty -> non-empty
+        LOG.trace { "The children list becomes non-empty" }
         setChildren(parentModel, newChildren)
         return
       }
 
       if (newChildren.isEmpty()) { // non-empty -> empty
+        LOG.trace { "The children list becomes empty" }
         removeChildren(parentModel)
         return
       }
+
+      LOG.trace { "The children list changes, computing the delta" }
 
       // Compute a map of all previously existing children.
       val oldModelsByUserObject = HashMap<T, BackendProjectViewNodeModel<T>>(oldModels.size)
@@ -815,6 +838,8 @@ abstract class TreeBasedProjectViewPaneModel<T>(protected val project: Project) 
         }
       }
 
+      LOG.trace { "Removed children: $oldModels" }
+
       // Now oldModelsByUserObject contains only removed children. Remove them in descending index
       // order, so that the remaining (lower) indices stay valid as the list shrinks.
       for (index in oldModels.indices.reversed()) {
@@ -822,6 +847,8 @@ abstract class TreeBasedProjectViewPaneModel<T>(protected val project: Project) 
           builder.removeNodeChild(parentModel.id, index)
         }
       }
+
+      LOG.trace { "Remaining and new children: $oldModels" }
 
       // Now establish the new order left to right. New children are inserted at their target index;
       // surviving children are moved to their target index (which also refreshes their model, and is a
@@ -851,28 +878,89 @@ abstract class TreeBasedProjectViewPaneModel<T>(protected val project: Project) 
 
     private suspend fun createNewModel(node: T): BackendProjectViewNodeModel<T>? {
       val id = nextId++
-      return nodeProvider.createNodeModel(id, node)
+      return createNodeModel(id, node)
     }
 
     private suspend fun createUpdatedModel(node: BackendProjectViewNodeModel<T>): BackendProjectViewNodeModel<T>? {
       if (node.id == SUPER_ROOT_ID) return state.getNodeById(SUPER_ROOT_ID) // immutable, reuse (and avoid NPE, because userObject is null)
-      return nodeProvider.createNodeModel(node.id, node.userObject)
+      return createNodeModel(node.id, node.userObject)
     }
 
     private suspend fun updateModel(oldModel: BackendProjectViewNodeModel<T>, newNode: T): BackendProjectViewNodeModel<T>? {
-      return nodeProvider.createNodeModel(oldModel.id, newNode)
+      return createNodeModel(oldModel.id, newNode)
     }
 
-    private suspend fun setChildren(parent: BackendProjectViewNodeModel<T>?, children: List<T>) {
+    private suspend fun createNodeModel(id: Long, node: T): BackendProjectViewNodeModel<T>? {
+      modelComputations.remove(id)?.cancelAndJoin()
+      val existingModel = suspendingState.getNodeByUserObject(node)
+      if (existingModel == null) {
+        // Return the first value, compute the full presentation async.
+        val computation = NodeModelComputation(id, node)
+        modelComputations[id] = computation
+        return computation.firstValue()
+      }
+      else {
+        // When updating an existing presentation, skip draft ones to prevent flickering
+        // (old full presentation -> new draft presentation -> new full presentation).
+        return nodeProvider.getNodeModelFlow(id, node).lastOrNull()
+      }
+    }
+
+    private suspend fun setChildren(parent: ProjectViewNodeModelImpl<T>?, children: List<T>) {
       setChildrenModels(parent, children.mapNotNull { getOrCreateNodeModel(it) })
     }
 
-    private suspend fun setChildrenModels(parent: BackendProjectViewNodeModel<T>?, children: List<BackendProjectViewNodeModel<T>>) {
+    private suspend fun setChildrenModels(parent: ProjectViewNodeModelImpl<T>?, children: List<BackendProjectViewNodeModel<T>>) {
+      if (children.isNotEmpty() && parent != null) {
+        ensureNotLeaf(parent)
+      }
       builder.setNodeChildren(parent?.id ?: SUPER_ROOT_ID, children)
+    }
+
+    private suspend fun ensureNotLeaf(node: ProjectViewNodeModelImpl<T>) {
+      if (node.presentation.isLeaf) {
+        LOG.debug { "The node ID = ${node.id} will have children now, making sure it's not a leaf" }
+        builder.updateNode(buildProjectViewNodeModel(node.id, node.userObject) { nodeBuilder ->
+          nodeBuilder.setModel(node)
+          nodeBuilder.buildPresentation { presentationBuilder ->
+            presentationBuilder.setLeaf(false)
+          }
+        })
+      }
     }
 
     private suspend fun removeChildren(parent: BackendProjectViewNodeModel<T>?) {
       builder.removeNodeChildren(parent?.id ?: SUPER_ROOT_ID)
+    }
+    
+    private inner class NodeModelComputation(id: Long, node: T) {
+      private val firstValue = CompletableDeferred<BackendProjectViewNodeModel<T>?>()
+      
+      private val job = modelComputationScope.launch {
+        var first = true
+        nodeProvider.getNodeModelFlow(id, node).collect { model ->
+          if (first) {
+            first = false
+            firstValue.complete(model)
+          }
+          else {
+            schedule { epoch ->
+              UpdateNodeModelRequest(epoch, id, model)
+            }
+          }
+        }
+      }.also { job ->
+        job.invokeOnCompletion {
+          modelComputations.remove(id, this@NodeModelComputation)
+          firstValue.complete(null)
+        }
+      }
+      
+      suspend fun firstValue(): BackendProjectViewNodeModel<T>? = firstValue.await()
+      
+      suspend fun cancelAndJoin() {
+        job.cancelAndJoin()
+      }
     }
   }
 }
@@ -886,6 +974,7 @@ private data class UpdateSettingsRequest(override val epoch: Long) : StateUpdate
 private data class SetOptionRequest(override val epoch: Long, val option: ProjectViewPaneOption, val newValue: Boolean) : StateUpdateRequest()
 private data class SetSortKeyRequest(override val epoch: Long, val sortKey: ProjectViewPaneSortKey) : StateUpdateRequest()
 private data class SelectNodeRequest(override val epoch: Long, val nodePath: ProjectViewNodePath) : StateUpdateRequest()
+private data class UpdateNodeModelRequest<T>(override val epoch: Long, val id: Long, val model: BackendProjectViewNodeModel<T>) : StateUpdateRequest()
 
 private val LOG = logger<TreeBasedProjectViewPaneModel<*>>()
 

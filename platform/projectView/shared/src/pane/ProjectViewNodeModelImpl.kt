@@ -19,6 +19,17 @@ internal class ProjectViewNodeModelBuilderImpl<T : Any>(private val id: Long, pr
   private var includedInExpandAll = false
   private var isDirectory = false
 
+  override fun setModel(model: BackendProjectViewNodeModel<*>) {
+    model as ProjectViewNodeModelImpl<*>
+    presentationBuilder.setPresentation(model.presentation)
+    pathElementType = model.pathElementType
+    pathElementId = model.pathElementId
+    canNavigate = model.canNavigate()
+    canNavigateToSource = model.canNavigateToSource()
+    includedInExpandAll = model.isIncludedInExpandAll()
+    isDirectory = model.isDirectory()
+  }
+
   override fun buildPresentation(build: (TreeNodePresentationBuilder) -> Unit) {
     build(presentationBuilder)
   }
@@ -69,7 +80,7 @@ internal class ProjectViewNodeModelBuilderImpl<T : Any>(private val id: Long, pr
 }
 
 @ApiStatus.Internal
-data class ProjectViewNodeModelImpl<T>(
+data class ProjectViewNodeModelImpl<T : Any>(
   private val maybeUserObject: T?,
   override val id: Long,
   override val presentation: TreeNodePresentationImpl,

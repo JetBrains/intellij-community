@@ -238,6 +238,10 @@ internal class ProjectViewToolWindowServiceImpl(
                 }
               }
             }
+            catch (e: Exception) {
+              rethrowControlFlowException(e)
+              LOG.error("An error has occurred when requesting the state flow of the pane ${pane.id} state. ", e)
+            }
             finally {
               LOG.debug { "The pane ${pane.id} has finished collecting its updates"}
             }
