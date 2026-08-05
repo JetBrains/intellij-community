@@ -43,6 +43,7 @@
               language="textmate"
               fieldName="INSTANCE"
               order="last"
+              id="textmate"
     />
     <fileTypeDetector implementation="org.jetbrains.plugins.textmate.TextMateFileType$TextMateFileDetector" order="last"/>
     <obsoleteStorage file="textmate_os.xml">

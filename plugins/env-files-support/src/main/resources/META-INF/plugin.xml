@@ -69,7 +69,7 @@
         <fileBasedIndex implementation="ru.adelf.idea.dotenv.indexing.DotEnvKeyValuesIndex"/>
 
         <fileType name=".env file" extensions="env" fileNames=".env" patterns=".env.*" fieldName="INSTANCE" language="DotEnv"
-                  implementationClass="ru.adelf.idea.dotenv.DotEnvFileType"/>
+                  implementationClass="ru.adelf.idea.dotenv.DotEnvFileType" order="before textmate"/>
         <lang.parserDefinition language="DotEnv" implementationClass="ru.adelf.idea.dotenv.DotEnvParserDefinition"/>
         <lang.commenter language="DotEnv" implementationClass="ru.adelf.idea.dotenv.extension.DotEnvCommenter"/>
 
