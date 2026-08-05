@@ -36,6 +36,9 @@
 
     <typedHandler implementation="com.intellij.maven.completion.MavenDependenciesAutoPopupHandler"
                   id="MavenDependenciesAutoPopupHandler"/>
+
+    <lookup.charFilter id="MavenCompletionCharFilter" order="first"
+                       implementation="com.intellij.maven.completion.MavenCompletionCharFilter"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.idea.reposearch">
