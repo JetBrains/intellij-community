@@ -446,6 +446,8 @@ private class PluginSetConstraintsResolver(
         populatedList.addAll(extra)
       }
 
+      expandDependsEdges(descriptor, remainingCandidatesDependencies.keys, ::contributeDependencies)
+
       val compatibilityDependencies = initContext.provideCompatibilityDependenciesForRemainingCandidates(descriptor, remainingCandidatesView)
         .mapNotNullTo(ArrayList()) { dependencyRef ->
           remainingCandidatesView.resolveReference(dependencyRef)
@@ -454,7 +456,6 @@ private class PluginSetConstraintsResolver(
       if (compatibilityDependencies.isNotEmpty()) {
         contributeDependencies(compatibilityDependencies)
       }
-      expandDependsEdges(descriptor, remainingCandidatesDependencies.keys, ::contributeDependencies)
 
       populatedList?.distinct() ?: dependencies
     }
