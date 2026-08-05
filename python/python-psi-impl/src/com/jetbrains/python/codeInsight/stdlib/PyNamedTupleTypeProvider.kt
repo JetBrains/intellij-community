@@ -3,7 +3,6 @@ package com.jetbrains.python.codeInsight.stdlib
 
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
-import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.ArrayUtil
 import com.intellij.util.containers.mapSmartNotNull
 import com.jetbrains.python.PyNames
@@ -18,7 +17,7 @@ import com.jetbrains.python.psi.PyElementGenerator
 import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyKeywordArgument
-import com.jetbrains.python.psi.PyParameter
+import com.jetbrains.python.psi.PyNamedParameter
 import com.jetbrains.python.psi.PyPsiFacade
 import com.jetbrains.python.psi.PyQualifiedNameOwner
 import com.jetbrains.python.psi.PyReferenceExpression
@@ -39,6 +38,7 @@ import com.jetbrains.python.psi.types.PyClassLikeType
 import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.PyNamedTupleType
 import com.jetbrains.python.psi.types.PyOverloadType
+import com.jetbrains.python.psi.types.PySelfType
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.PyTypeMember
 import com.jetbrains.python.psi.types.PyTypeProviderBase
@@ -60,16 +60,17 @@ class PyNamedTupleTypeProvider : PyTypeProviderBase() {
       is PyFunction if anchor is PyCallExpression -> getNamedTupleFunctionType(referenceTarget, context, anchor)
       is PyTargetExpression -> getNamedTupleTypeForTarget(referenceTarget, context)
       is PyClass if anchor is PyCallExpression -> getNamedTupleTypeForClass(referenceTarget, context, anchor)
-      is PyParameter if anchor is PyCallExpression && referenceTarget.isSelf -> {
-        PsiTreeUtil.getParentOfType(referenceTarget, PyFunction::class.java)
-          ?.takeIf { it.modifier == PyAstFunction.Modifier.CLASSMETHOD }
-          ?.let { method ->
-            method.containingClass?.let { getNamedTupleTypeForClass(it, context, anchor) }
-          }
-      }
       else -> null
     }
     return type.notNullToRef()
+  }
+
+  override fun getParameterType(param: PyNamedParameter, func: PyFunction, context: TypeEvalContext): Ref<PyType>? {
+    if (!param.isSelf) return null
+    val cls = func.containingClass ?: return null
+    val type = getNamedTupleTypeForClass(cls, context) ?: return null
+    val scopeClassType = if (func.modifier == PyAstFunction.Modifier.CLASSMETHOD) type.toClass() else type.toInstance()
+    return Ref.create(PySelfType(scopeClassType))
   }
 
   override fun getReferenceExpressionType(referenceExpression: PyReferenceExpression, context: TypeEvalContext): PyType? {

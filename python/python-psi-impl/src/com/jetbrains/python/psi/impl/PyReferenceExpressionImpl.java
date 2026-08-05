@@ -25,6 +25,7 @@ import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.PyTypeAssertionEvaluator;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.inspections.PyInspectionMessages.ProblemMessage;
 import com.jetbrains.python.psi.AccessDirection;
@@ -42,7 +43,6 @@ import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFromImportStatement;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyImportElement;
-import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.psi.PyQualifiedExpression;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.PyTargetExpression;
@@ -260,8 +260,16 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       return type;
     }
 
-    if (isQualified() && getImportParent() == null) {
-      return getQualifiedReferenceType(this, context, null);
+    if (getImportParent() == null) {
+      if (isQualified()) {
+        return getQualifiedReferenceType(this, context, null);
+      }
+      else {
+        final PyType typeByControlFlow = getUnqualifiedReferenceTypeByControlFlow(this, context);
+        if (!isUnknown(typeByControlFlow)) {
+          return typeByControlFlow;
+        }
+      }
     }
 
     return getTypeFromTargets(context);
@@ -307,7 +315,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     //   and returns that annotated type if found
     // - If no providers return a type, falls back to returning the type of the assigned value
 
-    final ControlFlowTypeResult controlFlowResult = doGetQualifiedReferenceTypeByControlFlow(refExpr, context);
+    final ControlFlowTypeResult controlFlowResult = getQualifiedReferenceTypeByControlFlow(refExpr, context);
     final PyType typeByControlFlow = controlFlowResult.type();
     if (!isUnknown(typeByControlFlow)) {
       if (controlFlowResult.foundPrefixCall()) {
@@ -378,8 +386,26 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     return PyUnionType.union(members);
   }
 
-  private static @NotNull ControlFlowTypeResult doGetQualifiedReferenceTypeByControlFlow(@NotNull PyReferenceExpression refExpr,
-                                                                                         @NotNull TypeEvalContext context) {
+  private static @Nullable PyType getUnqualifiedReferenceTypeByControlFlow(@NotNull PyReferenceExpression refExpr,
+                                                                           @NotNull TypeEvalContext context) {
+    if (context.allowDataFlow(refExpr)) {
+      final ScopeOwner scopeOwner = ScopeUtil.getScopeOwner(refExpr);
+      final String name = refExpr.getReferencedName();
+      if (name != null && scopeOwner != null) {
+        final Scope scope = ControlFlowCache.getScope(scopeOwner);
+        boolean useCfg = scope.declaresName(name) && !scope.isGlobal(name) && !scope.isNonlocal(name) ||
+                         !ScopeUtil.getElementsOfAccessType(name, scopeOwner, ReadWriteInstruction.ACCESS.ASSERTTYPE).isEmpty() ||
+                         !ScopeUtil.getElementsOfAccessType(name, scopeOwner, ReadWriteInstruction.ACCESS.READWRITE).isEmpty();
+        if (useCfg) {
+          return getTypeByControlFlow(name, context, refExpr, scopeOwner).type();
+        }
+      }
+    }
+    return PyAnyType.getUnknown();
+  }
+
+  private static @NotNull ControlFlowTypeResult getQualifiedReferenceTypeByControlFlow(@NotNull PyReferenceExpression refExpr,
+                                                                                       @NotNull TypeEvalContext context) {
     PyExpression qualifier = refExpr.getQualifier();
     if (context.allowDataFlow(refExpr) && qualifier != null) {
       PyExpression next = qualifier;
@@ -529,23 +555,6 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     }
     if (target instanceof PyFile) {
       return Ref.create(new PyModuleType((PyFile)target));
-    }
-    // If it is qualified, we already tried inferring by CFG in getQualifiedReferenceTypeByControlFlow
-    if (!anchor.isQualified() && target instanceof PyElement && context.allowDataFlow(anchor)) {
-      final ScopeOwner scopeOwner = ScopeUtil.getScopeOwner(anchor);
-      final String name = ((PyElement)target).getName();
-      if (scopeOwner != null && name != null) {
-        if (!ScopeUtil.getElementsOfAccessType(name, scopeOwner, ReadWriteInstruction.ACCESS.ASSERTTYPE).isEmpty()
-            || (target instanceof PyTargetExpression
-                || target instanceof PyNamedParameter
-                || !ScopeUtil.getElementsOfAccessType(name, scopeOwner, ReadWriteInstruction.ACCESS.READWRITE).isEmpty())
-            && ScopeUtil.getScopeOwner(target) == scopeOwner) {
-          final PyType type = getTypeByControlFlow(name, context, anchor, scopeOwner).type();
-          if (!isUnknown(type)) {
-            return Ref.create(type);
-          }
-        }
-      }
     }
     if (target instanceof PyFunction function) {
       final PyDecoratorList decoratorList = function.getDecoratorList();
