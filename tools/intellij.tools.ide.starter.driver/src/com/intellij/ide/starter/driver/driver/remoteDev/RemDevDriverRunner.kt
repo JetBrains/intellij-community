@@ -72,7 +72,7 @@ open class RemDevDriverRunner : DriverRunner {
         backendRun.driver::beforeCall
       })
 
-    val (frontendStartResult, frontendProcess) = try {
+    val (frontendStartResult, frontendProcess, frontendRunContext) = try {
       IDEFrontendHandler(context.frontendIDEContext,
                          remoteDevDriverOptions.frontendOptions,
                          remoteDevDriverOptions.debugPort)
@@ -91,7 +91,8 @@ open class RemDevDriverRunner : DriverRunner {
                                frontendProcess = frontendProcess,
                                frontendDriver = frontendDriverWithLogging,
                                frontendStartResult = frontendStartResult,
-                               joinLink = joinLink)
+                               joinLink = joinLink,
+                               frontendRunContext = frontendRunContext)
   }
 
   /** Fails the run before anything is started if the context doesn't fit the launch mode. */
@@ -118,10 +119,12 @@ open class RemDevDriverRunner : DriverRunner {
     frontendDriver: Driver,
     frontendStartResult: Deferred<IDEStartResult>,
     joinLink: String,
+    frontendRunContext: IDERunContext
   ): RemoteDevBackgroundRun = RemoteDevBackgroundRun(backendRun = backendRun,
                                                      frontendProcess = frontendProcess,
                                                      frontendDriver = frontendDriver,
-                                                     frontendStartResult = frontendStartResult)
+                                                     frontendStartResult = frontendStartResult,
+                                                     frontendRunContext = frontendRunContext)
 
   /** Lets the environment the frontend runs in - dockerized support, for one - rewrite the link the backend reported. */
   private fun customizeJoinLink(joinLink: String): String =

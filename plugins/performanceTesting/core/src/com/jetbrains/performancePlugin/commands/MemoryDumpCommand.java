@@ -1,10 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.performancePlugin.commands;
 
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.ui.playback.commands.AbstractCommand;
 import com.intellij.util.MemoryDumpHelper;
+import com.jetbrains.performancePlugin.LogDirHandler;
 import com.jetbrains.performancePlugin.Timer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Promise;
@@ -39,7 +39,7 @@ public final class MemoryDumpCommand extends AbstractCommand {
   }
 
   public static @NotNull Path getMemoryDumpPath() {
-    String memoryDumpPath = System.getProperties().getProperty("memory.snapshots.path", PathManager.getLogPath());
+    String memoryDumpPath = System.getProperties().getProperty("memory.snapshots.path", LogDirHandler.currentLogDir().toString());
     String currentTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
     return Paths.get(memoryDumpPath, Timer.instance.getActivityName() + '-' + currentTime + ".zip");
   }

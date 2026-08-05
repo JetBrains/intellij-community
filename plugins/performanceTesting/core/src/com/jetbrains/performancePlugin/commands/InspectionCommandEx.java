@@ -10,7 +10,6 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.Tools;
 import com.intellij.codeInspection.ui.InspectionResultsView;
 import com.intellij.codeInspection.ui.actions.ExportToXMLAction;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -36,6 +35,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.download.DownloadableFileDescription;
 import com.intellij.util.download.DownloadableFileService;
 import com.intellij.util.download.FileDownloader;
+import com.jetbrains.performancePlugin.LogDirHandler;
 import com.jetbrains.performancePlugin.PerformanceTestingBundle;
 import com.jetbrains.performancePlugin.utils.ActionCallbackProfilerStopper;
 import com.jetbrains.performancePlugin.utils.ResultsToFileProcessor;
@@ -181,7 +181,7 @@ public class InspectionCommandEx extends AbstractCommand {
                   if (ApplicationManagerEx.isInIntegrationTest()) {
                     if (warningCount < Integer.MAX_VALUE) {
                       Path perfMetricsPath =
-                        Paths.get(PathManager.getLogPath()).resolve("performance-metrics").resolve("inspectionMetrics.json");
+                        LogDirHandler.currentLogDir().resolve("performance-metrics").resolve("inspectionMetrics.json");
                       ResultsToFileProcessor.writeMetricsToJson(perfMetricsPath, "inspection_execution", (int)warningCount, null);
                     }
                     else {
