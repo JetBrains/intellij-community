@@ -39,7 +39,6 @@ import com.intellij.terminal.frontend.view.hyperlinks.FrontendTerminalHyperlinkF
 import com.intellij.terminal.frontend.view.hyperlinks.installHyperlinksProcessing
 import com.intellij.terminal.frontend.view.hyperlinks.installOsc8HyperlinksProcessing
 import com.intellij.terminal.frontend.view.inlineCompletion.TerminalInlineCompletionController
-import com.intellij.terminal.frontend.view.inlineCompletion.TerminalInlineCompletionInputListener
 import com.intellij.terminal.frontend.view.typeahead.TerminalTypeAhead
 import com.intellij.terminal.frontend.view.typeahead.TerminalTypeAheadOutputModelController
 import com.intellij.terminal.frontend.view.typeahead.TerminalTypeAheadOutputModelControllerV1
@@ -426,16 +425,7 @@ class TerminalViewImpl(
       )
 
       if (TerminalAiInlineCompletion.isEnabled()) {
-        val inlineCompletionScope = coroutineScope.childScope("TerminalInlineCompletion")
-        val inlineCompletionController =
-          TerminalInlineCompletionController(project, outputEditor, outputModel, shellIntegration, inlineCompletionScope)
-        val inlineCompletionInputListener = TerminalInlineCompletionInputListener(inlineCompletionController)
-
-        inlineCompletionController.install()
-        inlineCompletionInputListener.install(
-          terminalView = this@TerminalViewImpl,
-          coroutineScope = coroutineScope.childScope("TerminalInlineCompletionInputListener"),
-        )
+        configureInlineCompletion(outputModel, shellIntegration)
       }
 
       val startupOptions = startupOptionsDeferred.await()
@@ -697,6 +687,31 @@ class TerminalViewImpl(
       editor,
       coroutineScope.childScope("TerminalCommandCompletionTypingListener")
     )
+  }
+
+  private fun configureInlineCompletion(
+    outputModel: MutableTerminalOutputModel,
+    shellIntegration: TerminalShellIntegration,
+  ) {
+    val inlineCompletionScope = coroutineScope.childScope("TerminalInlineCompletion")
+    val inlineCompletionController =
+      TerminalInlineCompletionController(project, outputEditor, outputModel, shellIntegration, inlineCompletionScope)
+    inlineCompletionController.install()
+    addKeyEventsListener(inlineCompletionScope.asDisposable(), object : TerminalKeyEventsListener {
+      override fun beforeKeyEvent(event: TerminalKeyEvent): Boolean {
+        inlineCompletionController.handleKeyEvent(event)
+        return false
+      }
+    })
+    outputModel.addListener(inlineCompletionScope.asDisposable(), object : TerminalOutputModelListener {
+      override fun afterContentChanged(event: TerminalContentChangeEvent) {
+        inlineCompletionController.handleContentChanged()
+      }
+
+      override fun cursorOffsetChanged(event: TerminalCursorOffsetChangeEvent) {
+        inlineCompletionController.handleCursorOffsetChanged()
+      }
+    })
   }
 
   override fun toString(): String {
