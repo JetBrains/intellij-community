@@ -13,6 +13,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -43,6 +44,7 @@ public final class InstalledPluginsState {
   private final Set<PluginId> myInstalledWithoutRestartPlugins = new HashSet<>();
   private final Set<PluginId> myUpdatedPlugins = new HashSet<>();
   private final Map<PluginId, IdeaPluginDescriptor> myUpdatedPluginDescriptors = new HashMap<>();
+  private final Map<PluginId, Path> myUpdatedPluginArchives = new HashMap<>();
   private final Set<PluginId> myUpdatedWithoutRestartPlugins = new HashSet<>();
   private final Set<PluginId> myUninstalledWithoutRestartPlugins = new HashSet<>();
   private final Set<String> myOutdatedPlugins = new HashSet<>();
@@ -94,6 +96,13 @@ public final class InstalledPluginsState {
   public @NotNull Collection<IdeaPluginDescriptor> getUpdatedPluginDescriptors() {
     synchronized (myLock) {
       return List.copyOf(myUpdatedPluginDescriptors.values());
+    }
+  }
+
+  @ApiStatus.Internal
+  public @Nullable Path getUpdatedPluginArchive(@NotNull PluginId id) {
+    synchronized (myLock) {
+      return myUpdatedPluginArchives.get(id);
     }
   }
 
@@ -167,6 +176,14 @@ public final class InstalledPluginsState {
    */
   @ApiStatus.Internal
   public void onPluginInstall(@NotNull IdeaPluginDescriptor descriptor, boolean isUpdate, boolean restartNeeded) {
+    onPluginInstall(descriptor, isUpdate, restartNeeded, null);
+  }
+
+  @ApiStatus.Internal
+  public void onPluginInstall(@NotNull IdeaPluginDescriptor descriptor,
+                              boolean isUpdate,
+                              boolean restartNeeded,
+                              @Nullable Path archive) {
     PluginId id = descriptor.getPluginId();
     synchronized (myLock) {
       myOutdatedPlugins.remove(id.getIdString());
@@ -174,6 +191,9 @@ public final class InstalledPluginsState {
         if (restartNeeded) {
           myUpdatedPlugins.add(id);
           myUpdatedPluginDescriptors.put(id, descriptor);
+          if (archive != null) {
+            myUpdatedPluginArchives.put(id, archive);
+          }
         }
         else {
           myUpdatedWithoutRestartPlugins.add(id);

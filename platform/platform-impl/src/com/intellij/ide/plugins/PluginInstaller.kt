@@ -157,7 +157,19 @@ object PluginInstaller {
     newPluginPath: Path,
     oldPluginPath: Path?,
   ) {
-    installAfterRestart(newDescriptor, newPluginPath, oldPluginPath, !keepArchive())
+    installAfterRestartAndKeepIfNecessary(newDescriptor, newPluginPath, oldPluginPath, null)
+  }
+
+  @ApiStatus.Internal
+  @JvmStatic
+  @Throws(IOException::class)
+  fun installAfterRestartAndKeepIfNecessary(
+    newDescriptor: IdeaPluginDescriptor,
+    newPluginPath: Path,
+    oldPluginPath: Path?,
+    replacedPluginArchive: Path?,
+  ) {
+    installAfterRestart(newDescriptor, newPluginPath, oldPluginPath, !keepArchive(), replacedPluginArchive)
   }
 
   @ApiStatus.Internal
@@ -169,14 +181,34 @@ object PluginInstaller {
     existingPlugin: Path?,
     deleteSourceFile: Boolean,
   ) {
+    installAfterRestart(descriptor, sourceFile, existingPlugin, deleteSourceFile, null)
+  }
+
+  private fun installAfterRestart(
+    descriptor: IdeaPluginDescriptor,
+    sourceFile: Path,
+    existingPlugin: Path?,
+    deleteSourceFile: Boolean,
+    replacedPluginArchive: Path?,
+  ) {
     LOG.debug("Scheduling installation of plugin $descriptor after restart")
     val commands = ArrayList<ActionCommand>()
+
+    val pluginsPath = getPluginsPath()
+    if (replacedPluginArchive != null) {
+      val replacedTarget = if (replacedPluginArchive.fileName.toString().endsWith(".jar")) {
+        pluginsPath.resolve(replacedPluginArchive.fileName)
+      }
+      else {
+        pluginsPath.resolve(rootEntryName(replacedPluginArchive))
+      }
+      commands.add(DeleteCommand(replacedTarget))
+    }
 
     if (existingPlugin != null) {
       commands.add(DeleteCommand(existingPlugin))
     }
 
-    val pluginsPath = getPluginsPath()
     if (sourceFile.fileName.toString().endsWith(".jar")) {
       commands.add(CopyCommand(sourceFile, pluginsPath.resolve(sourceFile.fileName)))
     }

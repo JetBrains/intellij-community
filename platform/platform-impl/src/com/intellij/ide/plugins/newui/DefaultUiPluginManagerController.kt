@@ -159,6 +159,9 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     return withContext(context) {
       val isUpdate = updateDescriptor != null
       val actionDescriptor: PluginUiModel = if (isUpdate) updateDescriptor else descriptor
+      val replacePendingUpdate = isUpdate && InstalledPluginsState.getInstance().updatedPluginDescriptors.any {
+        it.pluginId == actionDescriptor.pluginId && it.version != actionDescriptor.version
+      }
       if (!PluginManagerMain.checkThirdPartyPluginsAllowed(listOf(actionDescriptor.getDescriptor()))) {
         return@withContext InstallPluginResult.FAILED
       }
@@ -179,7 +182,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
       var installWithoutRestart = true
       var uninstallPlugin = false
       if (isUpdate) {
-        if (descriptor.isBundled) {
+        if (replacePendingUpdate || descriptor.isBundled) {
           installWithoutRestart = false
         }
         else if (!checkCanUnloadWithoutRestart(descriptor.pluginId)) {
@@ -212,6 +215,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
         if (disabledPluginNames.isNotEmpty() || disabledDependantPlugins.isNotEmpty()) {
           if (isUpdate) {
             session.updatesInProgress[pluginUiModel.pluginId] = pluginUiModel
+            if (replacePendingUpdate) session.pendingUpdatesToReplace.add(pluginUiModel.pluginId)
           }
           else {
             session.installsInProgress[pluginUiModel.pluginId] = pluginUiModel
@@ -231,7 +235,10 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
                                                         session.needRestart
         )
 
-        return@withContext performInstallOperation(installPluginRequest, parentComponent, modalityState, pluginEnabler, customPlugins)
+        return@withContext performInstallOperation(
+          installPluginRequest, parentComponent, modalityState, pluginEnabler, customPlugins,
+          pluginUiModel.pluginId.takeIf { replacePendingUpdate },
+        )
       }
     }
   }
@@ -251,6 +258,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     val pluginEnabler = pluginEnabler ?: SessionStatePluginEnabler(session)
     val installDescriptor = session.installsInProgress.remove(pluginId)
     val updateDescriptor = session.updatesInProgress.remove(pluginId)
+    val replacePendingUpdate = session.pendingUpdatesToReplace.remove(pluginId)
     val descriptor = installDescriptor ?: updateDescriptor ?: return InstallPluginResult.FAILED
     val modalityState = modalityState ?: parentComponent?.let { ModalityState.stateForComponent(it) } ?: ModalityState.any()
 
@@ -269,7 +277,10 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
                                                     session.needRestart
     )
 
-    return performInstallOperation(installPluginRequest, parentComponent, modalityState, pluginEnabler, customPlugins)
+    return performInstallOperation(
+      installPluginRequest, parentComponent, modalityState, pluginEnabler, customPlugins,
+      pluginId.takeIf { replacePendingUpdate },
+    )
   }
 
   private fun enablePluginsForInstallation(
@@ -579,6 +590,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     modalityState: ModalityState?,
     pluginEnabler: PluginEnabler,
     customRepoPlugins: List<PluginUiModel>,
+    pendingUpdateToReplace: PluginId? = null,
   ): InstallPluginResult {
     val session = findSession(request.sessionId) ?: return InstallPluginResult.FAILED
     val result = InstallPluginResult()
@@ -586,6 +598,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     coroutineToIndicator {
       val operation = PluginInstallOperation(request.pluginsToInstall, customRepoPlugins, it, pluginEnabler)
       operation.setAllowInstallWithoutRestart(request.allowInstallWithoutRestart)
+      operation.setPendingUpdateToReplace(pendingUpdateToReplace)
       var cancel = false
       var success = true
       var showErrors = true

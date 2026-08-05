@@ -4,6 +4,7 @@ package com.intellij.openapi.updateSettings;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.InstalledPluginsState;
 import com.intellij.ide.plugins.PluginDescriptorLoadUtilsKt;
+import com.intellij.ide.plugins.PluginNode;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.updateSettings.impl.PluginUpdateCandidateDecision;
@@ -40,6 +41,24 @@ public class UpdatePluginsFromCustomRepositoryTest extends BareTestFixtureTestCa
     state.onPluginInstall(descriptor, true, true);
 
     assertSame(descriptor, state.getUpdatedPluginDescriptors().iterator().next());
+  }
+
+  @Test
+  public void testLaterRestartedUpdateReplacesPendingDescriptor() {
+    PluginId id = PluginId.getId("pending.update");
+    PluginNode first = new PluginNode(id);
+    first.setVersion("2.0");
+    PluginNode second = new PluginNode(id);
+    second.setVersion("3.0");
+    Path firstArchive = Path.of("first.zip");
+    Path secondArchive = Path.of("second.zip");
+    InstalledPluginsState state = new InstalledPluginsState();
+
+    state.onPluginInstall(first, true, true, firstArchive);
+    state.onPluginInstall(second, true, true, secondArchive);
+
+    assertSame(second, state.getUpdatedPluginDescriptors().iterator().next());
+    assertSame(secondArchive, state.getUpdatedPluginArchive(id));
   }
 
   @Test
