@@ -216,7 +216,7 @@ private suspend fun getAvailableBreakpointTypesFromServer(project: Project, edit
     val fileId = file.rpcId()
     val breakpointsInfoDtos = XBreakpointTypeApi.getInstance().getBreakpointsInfo(project.projectId(), fileId, start, endInclusive)
     val breakpointInfoList = breakpointsInfoDtos?.map { lineBreakpointInfo ->
-      val types = lineBreakpointInfo.availableTypes.mapNotNull { breakpointTypesManager.getTypeById(it) }
+      val types = lineBreakpointInfo.availableTypes.mapNotNull { breakpointTypesManager.findTypeById(it) }
       EditorLineBreakpointsInfo(types, lineBreakpointInfo.singleBreakpointVariant)
     }
     if (breakpointInfoList != null) {

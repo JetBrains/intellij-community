@@ -4,19 +4,20 @@ package com.intellij.platform.debugger.impl.frontend
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Ref
 import com.intellij.platform.debugger.impl.rpc.XBreakpointTypeApi
 import com.intellij.platform.debugger.impl.rpc.XBreakpointTypeDto
 import com.intellij.platform.debugger.impl.rpc.XBreakpointTypeId
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointTypeProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointTypeProxy
 import com.intellij.platform.project.projectId
-import fleet.rpc.client.durable
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentHashMap
 
@@ -28,19 +29,23 @@ internal class FrontendXBreakpointTypesManager(
 ) {
   private val types = ConcurrentHashMap<XBreakpointTypeId, XBreakpointTypeProxy>()
   private val typesChanged = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
-  private val typesInitialized = CompletableDeferred<Unit>()
+  private val typesChangedWithReplay = typesChanged.shareIn(cs, SharingStarted.Eagerly, replay = 1)
+  private val typesInitialized = MutableStateFlow(false)
 
   init {
     cs.launch {
-      durable {
+      durableWithStateReset(block = {
         val (initialBreakpointTypes, breakpointTypesFlow) = XBreakpointTypeApi.getInstance().getBreakpointTypeList(project.projectId())
         handleBreakpointTypesFromBackend(cs, initialBreakpointTypes)
-        typesInitialized.complete(Unit)
+        typesInitialized.value = true
         breakpointTypesFlow.toFlow().collectLatest {
           handleBreakpointTypesFromBackend(cs, it)
           typesChanged.tryEmit(Unit)
         }
-      }
+      }, stateReset = {
+        types.clear()
+        typesInitialized.value = false
+      })
     }
   }
 
@@ -62,14 +67,20 @@ internal class FrontendXBreakpointTypesManager(
     }
   }
 
-  fun typesInitialized(): Deferred<Unit> {
-    return typesInitialized
+  private suspend fun awaitTypesInitialized() {
+    typesInitialized.first { it }
   }
 
-  fun typesChangedFlow(): Flow<Unit> = typesChanged
-
-  fun getTypeById(id: XBreakpointTypeId): XBreakpointTypeProxy? {
-    return types[id]
+  suspend fun findTypeById(id: XBreakpointTypeId): XBreakpointTypeProxy? {
+    types[id]?.let { return it }
+    awaitTypesInitialized()
+    return findOrAwaitElement(
+      updateFlow = typesChangedWithReplay,
+      logMessage = "breakpoint type ${id.id}",
+      timeoutS = 60,
+    ) {
+      types[id]?.let { Ref.create(it) }
+    }
   }
 
   fun getBreakpointTypes(): List<XBreakpointTypeProxy> {

@@ -22,7 +22,6 @@ import com.intellij.platform.debugger.impl.rpc.InlineBreakpointVariantWithMatchi
 import com.intellij.platform.debugger.impl.rpc.InlineBreakpointVariantsOnLine
 import com.intellij.platform.debugger.impl.rpc.TimeoutSafeResult
 import com.intellij.platform.debugger.impl.rpc.VariantSelectedResponse
-import com.intellij.platform.debugger.impl.rpc.XBreakpointDto
 import com.intellij.platform.debugger.impl.rpc.XBreakpointId
 import com.intellij.platform.debugger.impl.rpc.XBreakpointTypeApi
 import com.intellij.platform.debugger.impl.rpc.XBreakpointTypeDto
@@ -137,7 +136,7 @@ internal class BackendXBreakpointTypeApi : XBreakpointTypeApi {
     }
   }
 
-  override suspend fun addBreakpointThroughLux(projectId: ProjectId, typeId: XBreakpointTypeId): TimeoutSafeResult<XBreakpointDto?> {
+  override suspend fun addBreakpointThroughLux(projectId: ProjectId, typeId: XBreakpointTypeId): TimeoutSafeResult<XBreakpointId?> {
     val project = projectId.findProjectOrNull() ?: return CompletableDeferred(value = null)
     val type = XBreakpointUtil.findType(typeId.id) ?: return CompletableDeferred(value = null)
     return project.service<BackendXBreakpointTypeApiProjectCoroutineScope>().cs.async(Dispatchers.EDT) {
@@ -145,7 +144,7 @@ internal class BackendXBreakpointTypeApi : XBreakpointTypeApi {
       val rawBreakpoint = type.addBreakpoint(project, null)
       val xBreakpointBase = rawBreakpoint as? XBreakpointBase<*, *, *>
       LOG.debug { "[$requestId] Adding breakpoint through lux: ${xBreakpointBase?.breakpointId}" }
-      xBreakpointBase?.toRpc()
+      xBreakpointBase?.breakpointId
     }
   }
 
