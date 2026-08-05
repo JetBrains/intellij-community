@@ -342,6 +342,9 @@ private val buttonState get() = ApplicationManager.getApplication().service<Butt
 class EnableStripeGroup : ToggleAction(), DumbAware {
   @ApiStatus.Internal
   companion object {
+    @ApiStatus.Internal
+    const val STRIPE_ACTION_GROUP_ID: String = "TopStripeActionGroup"
+
     private val customizedGroup get() = getGroupPath(GROUP_MAIN_TOOLBAR_NEW_UI, GROUP_MAIN_TOOLBAR_CENTER)
 
     fun setSingleStripeEnabled(enabled: Boolean) {
