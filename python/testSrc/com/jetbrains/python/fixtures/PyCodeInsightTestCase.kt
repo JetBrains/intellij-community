@@ -11,9 +11,11 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.impl.FilePropertyPusher
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
@@ -28,8 +30,10 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.findParentOfType
 import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.IndexingTestUtil.Companion.waitUntilIndexesAreReady
+import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
+import com.intellij.testFramework.fixtures.TempDirTestFixture
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl
 import com.intellij.testFramework.runInEdtAndWait
@@ -94,6 +98,7 @@ import com.jetbrains.python.psi.impl.PyBuiltinCache.Companion.getInstance
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher
 import com.jetbrains.python.psi.types.PyExpectedTypeJudgement.getExpectedType
 import com.jetbrains.python.psi.types.PyExpectedVarianceJudgment.getExpectedVariance
+import com.jetbrains.python.psi.types.PyTypeEngineSettingsModificationTracker
 import com.jetbrains.python.psi.types.PyInferredVarianceJudgment.getDeclaredOrInferredVariance
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.psi.types.TypeEvalContext.Companion.codeAnalysis
@@ -234,30 +239,108 @@ abstract class PyCodeInsightTestCase {
   )
 
   companion object {
+    /** Tells a freshly initialized light project from one carried over from the previous test class. */
+    private val OWNING_TEST_CLASS_KEY = Key<String>("PyCodeInsightTestCase.owningTestClass")
+
+    // only one active fixture per JVM is possible; cleared in `tearDownFixture` so the last test class
+    // of a run does not stay reachable from this static field
+    private var fixtureOrNull: CodeInsightTestFixture? = null
 
     @JvmStatic
-    protected lateinit var myFixture: CodeInsightTestFixture // only one active fixture per JVM is possible
+    protected val myFixture: CodeInsightTestFixture
+      get() = fixtureOrNull ?: error("The fixture is torn down or was never set up")
+
+    private const val PY_ANY_TYPE_KEY = "python.type.any"
+
+    /** The `python.type.any` value the registry held before this class ran; restored in [tearDownFixture]. */
+    private var originalPyAnyType = false
+
+    /** The `python.type.any` value currently on the registry, as [applyPyAnyType] left it. */
+    private var appliedPyAnyType = false
 
     @BeforeAll
     @JvmStatic
     fun setUpFixture(testInfo: TestInfo) {
       val factory = IdeaTestFixtureFactory.getFixtureFactory()
       val testClass = testInfo.testClass.orElse(PyCodeInsightTestCase::class.java)!!
+      // A fresh descriptor per class is what forces `initProject()`: `LightPlatformTestCase.doSetup`
+      // reuses the project unless the descriptor differs (uses identity)
       val projectDescriptor = PyLightProjectDescriptor(LanguageLevel.getLatest())
       val builder = factory.createLightFixtureBuilder(projectDescriptor, testClass.simpleName)
-      myFixture = factory.createCodeInsightFixture(builder.fixture, LightTempDirTestFixtureImpl(true))
-      myFixture.testDataPath = PythonTestUtil.getTestDataPath()
-      myFixture.setUp()
+      // published before `setUp` so that a failure there still leaves something for `tearDownFixture`
+      val fixture = factory.createCodeInsightFixture(builder.fixture, LightTempDirTestFixtureImpl(true))
+      fixtureOrNull = fixture
+      fixture.testDataPath = PythonTestUtil.getTestDataPath()
+      fixture.setUp()
       InspectionProfileImpl.INIT_INSPECTIONS = true
+
+      originalPyAnyType = Registry.get(PY_ANY_TYPE_KEY).asBoolean()
+      appliedPyAnyType = originalPyAnyType
+
+      // Claim the project before asserting, so that a failure blames the class that actually preceded us
+      // instead of cascading the same stale owner into every later class.
+      val project = fixture.project
+      val previousOwner = project.getUserData(OWNING_TEST_CLASS_KEY)
+      project.putUserData(OWNING_TEST_CLASS_KEY, testClass.name)
+      Assertions.assertNull(
+        previousOwner,
+        "The light project was reused from $previousOwner instead of being re-initialized, so state " +
+        "leaks between test classes. Either `setUpFixture` no longer passes a fresh " +
+        "`PyLightProjectDescriptor`, or `LightProjectDescriptor` gained an `equals`.",
+      )
     }
 
     @AfterAll
     @JvmStatic
     fun tearDownFixture() {
-      InspectionProfileImpl.INIT_INSPECTIONS = false
-      myFixture.tearDown()
-      FilePropertyPusher.EP_NAME.findExtensionOrFail(PythonLanguageLevelPusher::class.java).flushLanguageLevelCache()
-      IntentionalUnstubbing.resetForciblyUnstubbedFileSet()
+      val fixture = fixtureOrNull
+      // `IntentionalUnstubbing` holds `PsiFile`s and the language level pusher holds `Module`s, both in
+      // caches that outlive the project, so they are drained *before* `tearDown` runs its leak detection.
+      // `RunAll` keeps one failing step from skipping the others: a throwing `tearDown` used to leave
+      // those caches pinning the whole project graph for the rest of the JVM.
+      RunAll.runAll(
+        { fixture?.let { pushLanguageLevel(it.project, null) } },
+        { Registry.get(PY_ANY_TYPE_KEY).setValue(originalPyAnyType) },
+        { IntentionalUnstubbing.resetForciblyUnstubbedFileSet() },
+        {
+          FilePropertyPusher.EP_NAME.findExtensionOrFail(PythonLanguageLevelPusher::class.java).flushLanguageLevelCache()
+        },
+        { InspectionProfileImpl.INIT_INSPECTIONS = false },
+        { fixture?.tearDown() },
+        { fixtureOrNull = null },
+      )
+    }
+
+    /**
+     * The forced level survives between tests of one class and is reset to `null` in [tearDownFixture]. Isolation
+     * between tests comes from [setUpPerTest] re-establishing the default level rather than from tearing the level
+     * down after every test, which lets the no-op check below elide the push for most tests.
+     */
+    private fun pushLanguageLevel(project: Project, languageLevel: LanguageLevel?) {
+      // `setForcedLanguageLevel` assigns `FORCE_LANGUAGE_LEVEL` and then re-pushes the property over every
+      // indexable directory and waits for indexes, which dominates the runtime of suites that rarely leave the
+      // default level. In unit test mode `getEffectiveLanguageLevel` answers from that field before it consults
+      // the pushed attributes, so when the field already holds the level we want there is nothing left to push.
+      if (LanguageLevel.FORCE_LANGUAGE_LEVEL == languageLevel) return
+      PythonLanguageLevelPusher.setForcedLanguageLevel(project, languageLevel)
+      waitUntilIndexesAreReady(project)
+    }
+
+    /**
+     * Types inferred under one `python.type.any` setting stay in the caches that tests of one class share,
+     * and the setting is part of no cache key, so a later test with the opposite setting would see them and
+     * trip `PyAnyType.validate`.
+     *
+     * The value is held for the rest of the class and restored once in [tearDownFixture], the same way the
+     * forced language level is. Scoping it to the test's disposable instead would be wrong: [Registry]'s
+     * disposable overload restores the old value on dispose, so [appliedPyAnyType] would stop describing
+     * what the registry actually holds and the invalidation below would be skipped when it is needed.
+     */
+    private fun applyPyAnyType(project: Project, enabled: Boolean) {
+      if (appliedPyAnyType == enabled) return
+      Registry.get(PY_ANY_TYPE_KEY).setValue(enabled)
+      appliedPyAnyType = enabled
+      PyTypeEngineSettingsModificationTracker.getInstance(project).incModificationCount()
     }
   }
 
@@ -265,41 +348,46 @@ abstract class PyCodeInsightTestCase {
   @BeforeEach
   fun setUpPerTest() {
     testCallCount = 0
+    // [test] establishes the level it needs, but tests that drive `myFixture` directly do not, and neither does
+    // whatever a test body runs before calling [test]. Without this they would inherit the level the previous test
+    // forced. Costs nothing in the common case: [pushLanguageLevel] skips a push that would be a no-op, and this is
+    // the same level [TestOptions] defaults to and the light project descriptor is built with.
+    setLanguageLevel(LanguageLevel.getLatest())
   }
 
   @AfterEach
   fun tearDownPerTest() {
-    runInEdtAndWait {
-      // close any open editors
-      val fem = FileEditorManager.getInstance(myFixture.project)
-      fem.openFiles.forEach { fem.closeFile(it) }
+    // every step must run even if an earlier one fails, or its state leaks into the next test
+    RunAll.runAll(
+      {
+        runInEdtAndWait {
+          // close any open editors
+          val fem = FileEditorManager.getInstance(myFixture.project)
+          fem.openFiles.forEach { fem.closeFile(it) }
 
-      // wipe temp dir
-      WriteAction.runAndWait<RuntimeException> {
-        myFixture.tempDirFixture.getFile(".")?.children?.forEach { it.delete(this) }
-      }
-    }
-
-    // reset project-scoped state
-    setLanguageLevel(null)
-    if (myFixture.module != null) {
-      PyNamespacePackagesService.getInstance(myFixture.module).resetAllNamespacePackages()
-    }
-
-    // wait for indexes
-    waitUntilIndexesAreReady(myFixture.project)
-    Assertions.assertTrue(testCallCount < 2, "Test method `test` should not be called more than once per JUnit test")
+          // wipe temp dir
+          WriteAction.runAndWait<RuntimeException> {
+            myFixture.tempDirFixture.getFile(".")?.children?.forEach { it.delete(this) }
+          }
+        }
+      },
+      {
+        if (myFixture.module != null) {
+          PyNamespacePackagesService.getInstance(myFixture.module).resetAllNamespacePackages()
+        }
+      },
+      { waitUntilIndexesAreReady(myFixture.project) },
+      {
+        Assertions.assertTrue(testCallCount < 2, "Test method `test` should not be called more than once per JUnit test")
+      },
+    )
   }
 
   protected fun setLanguageLevel(languageLevel: LanguageLevel?) {
-    val project = myFixture.project
-    if (project != null) {
-      PythonLanguageLevelPusher.setForcedLanguageLevel(project, languageLevel)
-      waitUntilIndexesAreReady(project)
-    }
+    pushLanguageLevel(myFixture.project, languageLevel)
   }
 
-  protected fun setAdditionalSdkRoots(additionalSdkRoots:  Map<String, OrderRootType>, addElseRemove: Boolean) {
+  protected fun setAdditionalSdkRoots(additionalSdkRoots: Map<String, OrderRootType>, addElseRemove: Boolean) {
     if (additionalSdkRoots.isEmpty()) return
     val sdk = PythonSdkUtil.findPythonSdk(myFixture.module)!!
 
@@ -341,32 +429,24 @@ abstract class PyCodeInsightTestCase {
     @Language("Python") fileContent: String,
     vararg otherFiles: Pair<String, String>,
   ) {
-    // using the shared `myFixture.projectDisposable` would accumulate flag modifications
-    // across all tests and dispose them only at @AfterAll, which can leave them non-nested and
-    // trip RecursionManager's "Non-nested assertion flag modifications" check.
-    val recursionFlagDisposable = Disposer.newDisposable("PyCodeInsightTestCase recursion-prevention flag")
-    if (options.assertRecursionPrevention) {
-      RecursionManager.assertOnRecursionPrevention(recursionFlagDisposable)
-    }
-    else {
-      RecursionManager.disableAssertOnRecursionPrevention(recursionFlagDisposable)
-    }
-    setLanguageLevel(options.languageLevel)
-
-    val anyTypeKey = Registry.get("python.type.any")
-    val oldAnyType = anyTypeKey.asBoolean()
-    anyTypeKey.setValue(options.enablePyAnyType)
-
-    setAdditionalSdkRoots(options.additionalSdkRoots, true)
-
+    val testDisposable = Disposer.newDisposable(myFixture.testRootDisposable, "PyCodeInsightTestCase per-test state")
+    // everything that registers on `testDisposable` stays inside the `try`, so a failure while setting the
+    // test up cannot leave the recursion flag behind
     try {
+      if (options.assertRecursionPrevention) {
+        RecursionManager.assertOnRecursionPrevention(testDisposable)
+      }
+      else {
+        RecursionManager.disableAssertOnRecursionPrevention(testDisposable)
+      }
+      applyPyAnyType(myFixture.project, options.enablePyAnyType)
+      setLanguageLevel(options.languageLevel)
+      setAdditionalSdkRoots(options.additionalSdkRoots, true)
       doTest(options, fileName, fileContent, otherFiles)
     }
     finally {
       setAdditionalSdkRoots(options.additionalSdkRoots, false)
-      setLanguageLevel(null)
-      anyTypeKey.setValue(oldAnyType)
-      Disposer.dispose(recursionFlagDisposable)
+      Disposer.dispose(testDisposable)
       testCallCount++
     }
   }
@@ -390,7 +470,7 @@ abstract class PyCodeInsightTestCase {
       collectAndCheckHighlighting(options, originalText, expectedAssertions)
     }
     finally {
-        myFixture.disableInspections(*inspectionInstances)
+      myFixture.disableInspections(*inspectionInstances)
     }
 
     if (options.assertSdkRootsNotParsed) {
@@ -602,7 +682,7 @@ abstract class PyCodeInsightTestCase {
       val syntheticElement = PyUtil.createExpressionFromFragment(strLitValue, parent)
                              ?: throw AssertionError("Expression not found in string literal '$strLitValue' at pos $offsetStart")
       parent = PsiTreeUtil.getParentOfType(syntheticElement.findElementAt(offsetStart), PyExpression::class.java)
-                       ?: throw AssertionError("Expression not found in string literal '$strLitValue' at pos $offsetStart")
+               ?: throw AssertionError("Expression not found in string literal '$strLitValue' at pos $offsetStart")
     }
 
     val actualContent = when (PyTestAssertionType.fromValue(expectedAssertion.type)) {
@@ -959,7 +1039,7 @@ private object PyTestAssertionInliner {
   private fun replaceCommentAssertion(
     text: StringBuilder,
     expectedAssertions: List<PyTestAssertion>,
-    actualAndPlaceholderAssertions: List<PyTestAssertion>
+    actualAndPlaceholderAssertions: List<PyTestAssertion>,
   ) {
     removeAssertions(text, expectedAssertions)
     if (actualAndPlaceholderAssertions.isEmpty()) return
@@ -1049,7 +1129,7 @@ object PyTestAssertionParser {
       if (parsedStart.codeColumnStart == -1
           && PyTestAssertionType.fromValue(parsedStart.type) == null
           && !defaultSeverityNames.contains(parsedStart.type)
-        ) {
+      ) {
         // for trailing test assertions with unknown assertion type we assume it's a comment
         lineIndex++
         continue
@@ -1690,8 +1770,8 @@ class PyCodeInsightTestCaseFixtureReuseTest : PyCodeInsightTestCase() {
 
   companion object {
     private var fixtureFromFirstTest: CodeInsightTestFixture? = null
-    private var projectFromFirstTest: com.intellij.openapi.project.Project? = null
-    private var tempDirFromFirstTest: com.intellij.testFramework.fixtures.TempDirTestFixture? = null
+    private var projectFromFirstTest: Project? = null
+    private var tempDirFromFirstTest: TempDirTestFixture? = null
   }
 
   @Test
