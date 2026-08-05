@@ -1,0 +1,21 @@
+[project]
+name = "core"
+version = "0.1.0"
+requires-python = ">=3.13, <3.14"
+dependencies = [
+    "pandas",
+    "polars",
+    "pyyaml",
+]
+
+[project.optional-dependencies]
+viz = ["tabulate"]
+
+# Nested include-group, exactly as the reporter has it.
+[dependency-groups]
+exploratory = [{ include-group = "jupyter" }]
+jupyter = ["itables"]
+
+[build-system]
+requires = ["uv_build>=0.11.32,<0.12.0"]
+build-backend = "uv_build"
