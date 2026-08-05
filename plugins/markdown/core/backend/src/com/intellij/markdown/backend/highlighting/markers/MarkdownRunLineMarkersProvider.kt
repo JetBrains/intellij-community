@@ -29,13 +29,15 @@ import org.intellij.plugins.markdown.extensions.jcef.commandRunner.MarkdownRunne
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.RunnerPlace
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.RunnerType
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.TrustedProjectUtil
-import org.intellij.plugins.markdown.extensions.jcef.commandRunner.getMarkdownCommandWorkingDirectory
+import org.intellij.plugins.markdown.extensions.jcef.commandRunner.getMarkdownCommandWorkingDirectories
+import org.intellij.plugins.markdown.extensions.jcef.commandRunner.withMarkdownCommandWorkingDirectory
 import org.intellij.plugins.markdown.injection.aliases.CodeFenceLanguageGuesser
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownLanguage
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence
 import org.intellij.plugins.markdown.lang.psi.util.hasType
+import java.awt.event.MouseEvent
 
 internal class MarkdownRunLineMarkersProvider: RunLineMarkerContributor(), DumbAware {
   override fun getInfo(element: PsiElement): Info? {
@@ -62,15 +64,18 @@ internal class MarkdownRunLineMarkersProvider: RunLineMarkerContributor(), DumbA
       if (codeSpanInfo != null) return codeSpanInfo
     }
 
-    val dir = getMarkdownCommandWorkingDirectory(element.project, element.containingFile.virtualFile) ?: return null
-    if (!matches(element.project, dir, true, text)) {
+    val directories = getMarkdownCommandWorkingDirectories(element.project, element.containingFile.virtualFile)
+    if (!matches(element.project, directories, true, text)) {
       return null
     }
 
     val runAction = object : AnAction({ MarkdownBundle.message("markdown.runner.launch.command", text) },
                                       AllIcons.RunConfigurations.TestState.Run) {
       override fun actionPerformed(e: AnActionEvent) {
-        execute(e.project!!, dir, true, text, DefaultRunExecutor.getRunExecutorInstance(), RunnerPlace.EDITOR)
+        val inputEvent = e.inputEvent as? MouseEvent ?: return
+        withMarkdownCommandWorkingDirectory(e.project!!, element.containingFile.virtualFile, inputEvent.component, inputEvent.x, inputEvent.y) { workingDirectory ->
+          execute(e.project!!, workingDirectory, true, text, DefaultRunExecutor.getRunExecutorInstance(), RunnerPlace.EDITOR)
+        }
       }
     }
     return Info(AllIcons.RunConfigurations.TestState.Run, arrayOf(runAction)) { MarkdownBundle.message("markdown.runner.launch.command", text) }
@@ -85,13 +90,15 @@ internal class MarkdownRunLineMarkersProvider: RunLineMarkerContributor(), DumbA
     val language = CodeFenceLanguageGuesser.guessLanguageForInjection(lang)
     val runner = MarkdownRunner.EP_NAME.extensionList.firstOrNull { it.isApplicable(language) } ?: return null
     val text = (element.parent as? MarkdownCodeFence)?.let(this::collectFenceText) ?: return null
-    val dir = getMarkdownCommandWorkingDirectory(element.project, element.containingFile.virtualFile) ?: return null
     val runAction = object : AnAction({ runner.title() }, AllIcons.RunConfigurations.TestState.Run_run) {
       override fun actionPerformed(event: AnActionEvent) {
         val project = event.getData(CommonDataKeys.PROJECT) ?: return
-        TrustedProjectUtil.executeIfTrusted(project) {
-          RUNNER_EXECUTED.log(project, RunnerPlace.EDITOR, RunnerType.BLOCK, runner.javaClass)
-          runner.run(text, project, dir, DefaultRunExecutor.getRunExecutorInstance())
+        val inputEvent = event.inputEvent as? MouseEvent ?: return
+        withMarkdownCommandWorkingDirectory(project, element.containingFile.virtualFile, inputEvent.component, inputEvent.x, inputEvent.y) { workingDirectory ->
+          TrustedProjectUtil.executeIfTrusted(project) {
+            RUNNER_EXECUTED.log(project, RunnerPlace.EDITOR, RunnerType.BLOCK, runner.javaClass)
+            runner.run(text, project, workingDirectory, DefaultRunExecutor.getRunExecutorInstance())
+          }
         }
       }
     }

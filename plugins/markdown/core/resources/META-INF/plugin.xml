@@ -364,9 +364,6 @@
     <registryKey key="markdown.experimental.allow.external.requests"
                  defaultValue="true"
                  description="Enables requests for external resources from the preview (e.g. non-local images)."/>
-    <registryKey key="markdown.command.runner.use.file.directory"
-                 defaultValue="false"
-                 description="Use the markdown file's parent directory as the working directory when running commands. Defaults to project root."/>
     <registryKey key="markdown.backtick.reference.symbol.length"
                  defaultValue="10"
                  description="Minimal length of the backtick reference symbol"/>

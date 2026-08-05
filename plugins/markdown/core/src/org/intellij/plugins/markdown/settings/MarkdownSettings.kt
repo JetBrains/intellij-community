@@ -60,6 +60,10 @@ class MarkdownSettings(internal val project: Project): SimplePersistentStateComp
     get() = state.isFileGroupingEnabled
     set(value) { state.isFileGroupingEnabled = value }
 
+  var useFileDirectoryForCommands: Boolean?
+    get() = state.useFileDirectoryForCommands
+    set(value) { state.useFileDirectoryForCommands = value }
+
   override fun noStateLoaded() {
     super.noStateLoaded()
     loadState(MarkdownSettingsState())
