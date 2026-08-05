@@ -43,3 +43,7 @@ fun UiRobot.dragAndDrop(from: UiComponent, fromPoint: Point? = null, to: UiCompo
     toPoint ?: to.component.let { Point(it.width / 2, it.height / 2) }
   )
 }
+
+fun UiComponent.dragAndDrop(to: UiComponent, toPoint: Point? = null) {
+  driver.ui.dragAndDrop(this, to = to, toPoint = toPoint)
+}

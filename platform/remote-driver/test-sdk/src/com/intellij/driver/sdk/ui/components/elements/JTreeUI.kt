@@ -17,7 +17,6 @@ import com.intellij.driver.sdk.ui.AccessibleNameCellRendererReader
 import com.intellij.driver.sdk.ui.CellRendererReader
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.QueryBuilder
-import com.intellij.driver.sdk.ui.boundsOnScreen
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.components.common.Icon
@@ -240,12 +239,8 @@ open class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
 
   fun getComponentAtRow(row: Int): Component = fixture.getComponentAtRow(row)
 
-  fun dragAndDropRowByNumberToPoint(row: Int, to:Point) {
-    val actualLocation = this.boundsOnScreen.location.apply {
-      val rowLocation = fixture.scrollToRowAndGetVisibleCenter(row)
-      translate(rowLocation.x, rowLocation.y)
-    }
-    driver.ui.dragAndDrop(actualLocation, to)
+  fun dragAndDropRowByNumberTo(row: Int, to: UiComponent, toPoint: Point? = null) {
+    driver.ui.dragAndDrop(this, fixture.scrollToRowAndGetVisibleCenter(row), to, toPoint)
   }
 
   fun waitForNodesLoaded(timeout: Duration = 10.seconds) {
