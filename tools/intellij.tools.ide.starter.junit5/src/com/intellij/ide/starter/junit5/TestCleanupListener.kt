@@ -16,6 +16,7 @@ import kotlinx.coroutines.job
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
 import org.junit.platform.engine.TestExecutionResult
+import org.junit.platform.engine.support.descriptor.ClassSource
 import org.junit.platform.launcher.TestExecutionListener
 import org.junit.platform.launcher.TestIdentifier
 import org.junit.platform.launcher.TestPlan
@@ -38,7 +39,7 @@ open class TestCleanupListener : TestExecutionListener {
   override fun executionFinished(testIdentifier: TestIdentifier, testExecutionResult: TestExecutionResult) {
     val message = "Test `${testIdentifier.displayName}` execution is finished"
     cancelPerTestSupervisorScope(testIdentifier, message)
-    if (testIdentifier.isContainer) {
+    if (testIdentifier.isClassContainer()) {
       cancelSupervisorScopeChildren(perClassSupervisorScope, message)
     }
   }
@@ -49,6 +50,10 @@ open class TestCleanupListener : TestExecutionListener {
     cancelSupervisorScopeChildren(perClassSupervisorScope, message)
     cancelSupervisorScopeChildren(testSuiteSupervisorScope, message)
   }
+}
+
+private fun TestIdentifier.isClassContainer(): Boolean {
+  return isContainer && source.isPresent && source.get() is ClassSource
 }
 
 private fun cancelSupervisorScopeChildren(scope: CoroutineScope, message: String) {
