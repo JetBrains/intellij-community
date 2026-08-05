@@ -8,27 +8,31 @@ import com.intellij.driver.sdk.PluginId
 import com.intellij.driver.sdk.invokeAction
 import com.intellij.driver.sdk.step
 import com.intellij.driver.sdk.ui.Finder
-import com.intellij.driver.sdk.ui.UiText.Companion.asString
 import com.intellij.driver.sdk.ui.accessibleName
 import com.intellij.driver.sdk.ui.boundsOnScreen
 import com.intellij.driver.sdk.ui.components.ComponentData
+import com.intellij.driver.sdk.ui.components.UIComponentsList
 import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.components.common.IdeaFrameUI
 import com.intellij.driver.sdk.ui.components.common.WelcomeScreenUI
 import com.intellij.driver.sdk.ui.components.common.tabbedPane
 import com.intellij.driver.sdk.ui.components.elements.DialogUiComponent
-import com.intellij.driver.sdk.ui.components.elements.JTextComponentUI
 import com.intellij.driver.sdk.ui.components.elements.JButtonUiComponent
 import com.intellij.driver.sdk.ui.components.elements.JLabelUiComponent
+import com.intellij.driver.sdk.ui.components.elements.JTextComponentUI
+import com.intellij.driver.sdk.ui.components.elements.JTextFieldUI
 import com.intellij.driver.sdk.ui.components.elements.PopupUiComponent
 import com.intellij.driver.sdk.ui.components.elements.accessibleList
 import com.intellij.driver.sdk.ui.components.elements.button
 import com.intellij.driver.sdk.ui.components.elements.checkBox
 import com.intellij.driver.sdk.ui.components.elements.dialog
+import com.intellij.driver.sdk.ui.components.elements.fileChooser
 import com.intellij.driver.sdk.ui.components.elements.popup
+import com.intellij.driver.sdk.ui.components.elements.table
 import com.intellij.driver.sdk.ui.components.elements.textComponent
 import com.intellij.driver.sdk.ui.components.elements.textField
 import com.intellij.driver.sdk.ui.components.elements.waitSelected
+import com.intellij.driver.sdk.ui.hasFocus
 import com.intellij.driver.sdk.ui.should
 import com.intellij.driver.sdk.ui.ui
 import com.intellij.driver.sdk.ui.xQuery
@@ -36,10 +40,12 @@ import com.intellij.driver.sdk.waitFor
 import com.intellij.openapi.util.SystemInfo
 import java.awt.Point
 import java.awt.event.KeyEvent
+import java.nio.file.Path
 import javax.swing.JButton
 import javax.swing.JCheckBox
 import javax.swing.JDialog
 import javax.swing.JLabel
+import javax.swing.JList
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
@@ -64,7 +70,19 @@ private fun Finder.onPluginsPage(action: PluginsSettingsPageUiComponent.() -> Un
     PluginsSettingsPageUiComponent::class.java).apply {
   }.apply(action)
 
-class PluginsSettingsPageUiComponent(data: ComponentData) : UiComponent(data) {
+
+abstract class LoadablePluginsUiComponent(data: ComponentData) : UiComponent(data) {
+  val progressIcons: UIComponentsList<UiComponent> = xx { byType("com.intellij.util.ui.AsyncProcessIcon") }
+
+  fun waitLoaded(timeout: Duration = 40.seconds) {
+    waitFor("Expected NO progress indicators", timeout) {
+      progressIcons.list().isEmpty()
+    }
+  }
+}
+
+class PluginsSettingsPageUiComponent(data: ComponentData) : LoadablePluginsUiComponent(data) {
+
   val searchPluginTextField = textField("Plugins search textfield") { byAccessibleName("Search plugins") }
   val installedTab: JLabelUiComponent =
     x(JLabelUiComponent::class.java, readableName = "Installed tab") { and(byType(JLabel::class.java), byAccessibleName("Installed")) }
@@ -73,13 +91,6 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : UiComponent(data) {
   val searchOptionsButton = x("Search filters") { byAccessibleName("Search Options") }
   val updateAllButton = x("Update All link") { byAccessibleName("Update all") }
   val pluginsList get() = xx("//*[@javaclass='com.intellij.ide.plugins.newui.ListPluginComponent']", ListPluginComponent::class.java)
-  val addRepoBtn: UiComponent = x("Add custom repository button") { byAccessibleName("Add") }
-
-  fun waitLoaded(timeout: Duration = 40.seconds) {
-    waitFor("no progress indicators on plugins page", timeout) {
-      xx { byType("com.intellij.util.ui.AsyncProcessIcon") }.list().isEmpty()
-    }
-  }
 
   //todo change to open gear method in rd tests
   fun openSettingsPopup() {
@@ -108,11 +119,11 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : UiComponent(data) {
     return this
   }
 
-  fun openGearSettings(): PopupUiComponent {
+  fun openGearSettingsPopup(): GearSettingsPopup {
     step("Click on Gear icon and open settings popup") {
       gearButton.click()
     }
-    return driver.ui.popup()
+    return driver.ui.gearSettingsPopup()
   }
 
   fun getUpdatesCountIndicator(): CountIcon? {
@@ -167,7 +178,7 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : UiComponent(data) {
     getPluginFromList(pluginName).present()
 
   fun pluginDetailsPage(action: PluginDetailsPage.() -> Unit = {}): PluginDetailsPage =
-    x(PluginDetailsPage::class.java) { byType("com.intellij.ide.plugins.newui.PluginDetailsPageComponent") }.apply(action)
+    x(PluginDetailsPage::class.java, "Plugins description page") { byType("com.intellij.ide.plugins.newui.PluginDetailsPageComponent") }.apply(action)
 
   //TODO Dirty kostyl because our plugin manager can show this btn in one of these places or in both
   // and we cant predict it until full refactoring
@@ -241,15 +252,16 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : UiComponent(data) {
 
     fun checkUiElementsForEnabledPlugin(): ListPluginComponent {
       step("Check UI elements for enabled plugin") {
-        enabledCheckBox.waitFound(30.seconds)
         enabledCheckBox.waitSelected(true)
       }
       return this
     }
 
     fun checkPluginStateInUI(enabled: Boolean, timeout: Duration = 15.seconds) {
-      enabledCheckBox.should("Plugin '$name': State checkbox should be ${if (enabled) "enabled" else "disabled"}", timeout) {
-        isSelected() == enabled
+      step("Check plugin state checkbox in the UI") {
+        enabledCheckBox.should("Plugin '$name': State checkbox should be ${if (enabled) "enabled" else "disabled"}", timeout) {
+          isSelected() == enabled
+        }
       }
     }
 
@@ -276,7 +288,6 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : UiComponent(data) {
       }
       step("Confirm plugin uninstallation in the dialog") {
         driver.ui.dialog(title = "Uninstall Plugin?") {
-          waitFound()
           button("Yes").click()
         }
       }
@@ -284,7 +295,9 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : UiComponent(data) {
     }
 
     fun pluginDescription(): PluginDetailsPage {
-      click()
+      step("Open the plugin description page") {
+        this.click()
+      }
       return driver.ui.x(PluginDetailsPage::class.java) { byType("com.intellij.ide.plugins.newui.PluginDetailsPageComponent") }
     }
   }
@@ -300,32 +313,43 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : UiComponent(data) {
     fun getDescriptor(): PluginDescriptor
   }
 
-  class PluginDetailsPage(data: ComponentData) : UiComponent(data) {
+  class PluginDetailsPage(data: ComponentData) : LoadablePluginsUiComponent(data) {
     val optionButton = x(OptionButtonUiComponent::class.java) { byType("com.intellij.ide.plugins.newui.buttons.OptionButton") }
     val installButton: UiComponent = x("Install button") { and(byType(JButton::class.java), byAccessibleName("Install")) }
-    val installOptionButton = x { byType("com.intellij.ide.plugins.newui.buttons.InstallOptionButton") }
-    val restartButtonDesc = x { byType("com.intellij.ide.plugins.newui.RestartButton") }
-    val uninstallButton = x { and(byType(JButton::class.java), byAccessibleName("Uninstall")) }
-    val installedButton = x { and(byType(JButton::class.java), byAccessibleName("Installed")) }
-    val disableButton = x { and(or(byClass("JButton"), byClass("MainButton")), byAccessibleName("Disable")) }
-    val enableButton = x { and(or(byType(JButton::class.java), byClass("MainButton")), byAccessibleName("Enable")) }
+    val installOptionButton = x("Install btn in plugin description") { byType("com.intellij.ide.plugins.newui.buttons.InstallOptionButton") }
+    val restartButtonDesc = x("Restart btn in plugin description") { byType("com.intellij.ide.plugins.newui.RestartButton") }
+    val uninstallButton = x("Uninstall btn in plugin description") { and(byType(JButton::class.java), byAccessibleName("Uninstall")) }
+    val installedButton = x("Installed btn in plugin description") { and(byType(JButton::class.java), byAccessibleName("Installed")) }
+    val disableButton = x("Disable btn in plugin description") { and(or(byClass("JButton"), byClass("MainButton")), byAccessibleName("Disable")) }
+    val enableButton = x("Enable btn in plugin description") { and(or(byType(JButton::class.java), byClass("MainButton")), byAccessibleName("Enable")) }
+    val updateButton = x("Update btn in plugin description") { and(or(byType(JButton::class.java), byClass("MainButton")), byAccessibleName("Update")) }
     val arrowButton: UiComponent =
       x("Uninstall dropdown") { byType($$"com.intellij.ui.components.BasicOptionButtonUI$ArrowButton") }
     val restartIdeButton: UiComponent = x("Restart button") { byAccessibleName("Restart IDE") }
+
     val tabbedPane = tabbedPane()
     val overviewTab = tabbedPane.tab("Overview")
     val whatsNewTab = tabbedPane.tab("What's New")
     val reviewsTab = tabbedPane.tab("Reviews")
     val additionalInfoTab = tabbedPane.tab("Additional Info")
     val versionPanel = x { byType("com.intellij.ide.plugins.newui.VersionPanel") }
-    val pluginHomepage = x { byAccessibleName("Plugin homepage") }
+    val pluginHomepage = x("Plugin homepage link") { byAccessibleName("Plugin homepage") }
 
     fun additionalText(text: String): UiComponent = x { and(byType(JLabel::class.java), byText(text)) }
+
+    fun updatePlugin(): PluginDetailsPage {
+      step("Click on 'Update' button in the plugin description") {
+        updateButton.click()
+      }
+      waitLoaded(20.seconds)
+      return this
+    }
+
 
     fun uninstallPlugin(): PluginDetailsPage {
       step("Click on dropdown and uninstall plugin") {
         arrowButton.click()
-        driver.ui.popup().waitFound(15.seconds).accessibleList().clickItem("Uninstall")
+        driver.ui.popup().accessibleList().clickItem("Uninstall")
       }
       return this
     }
@@ -357,23 +381,68 @@ class RestartDialog(data: ComponentData) : DialogUiComponent(data) {
 
   fun postponeRestart() {
     step("Click Not now button in Restart IDE dialog") {
-      waitFound()
       postponeButton.click()
     }
   }
 
   fun restart() {
     step("Click Restart IDE button in Restart IDE dialog") {
-      waitFound()
       restartIdeButton.click()
     }
   }
 }
 
-
-fun SettingsDialogUiComponent.installationErrorDialog(action: InstallationErrorDialog.() -> Unit = {}): InstallationErrorDialog =
-  x(InstallationErrorDialog::class.java, readableName = "Installation error dialog") {
+fun PluginsSettingsPageUiComponent.installationErrorDialog(action: DialogUiComponent.() -> Unit = {}): DialogUiComponent =
+  x(DialogUiComponent::class.java, readableName = "Installation error dialog") {
     contains(byAccessibleName("download or installation failed"))
   }.apply(action)
 
-class InstallationErrorDialog(data: ComponentData) : DialogUiComponent(data)
+
+//this dialog is a separate component, not a part of settings window
+fun Finder.customRepositoriesDialog(action: CustomPluginsRepositoryListDialog.() -> Unit = {}): CustomPluginsRepositoryListDialog =
+  x(CustomPluginsRepositoryListDialog::class.java, readableName = "Custom repositories list dialog") {
+    byTitle("Custom Plugin Repositories")
+  }.apply(action)
+
+//this popup is a separate component, not a part of settings window
+fun Finder.gearSettingsPopup(action: GearSettingsPopup.() -> Unit = {}): GearSettingsPopup =
+  x(GearSettingsPopup::class.java, readableName = "Plugins gear settings popup") {
+    componentWithChild(byClass("HeavyWeightWindow"), byType(JList::class.java))
+  }.apply(action)
+
+
+class GearSettingsPopup(data: ComponentData) : PopupUiComponent(data) {
+
+  fun addCustomPluginRepo(repositoryUrl: String) {
+    step("Click on 'Manage Plugin Repositories' item") {
+      accessibleList().clickItem("Manage Plugin Repositories…")
+    }
+    driver.ui.customRepositoriesDialog().addCustomRepository(repositoryUrl)
+  }
+
+  fun installPluginFromDisk(pluginZipPath: Path) {
+    step("Click on 'Install Plugin from Disk' item") {
+      accessibleList().clickItem("Install Plugin from Disk")
+    }
+    step("Choose plugin zip file in the File Chooser") {
+      driver.ui.fileChooser({ byAccessibleName("Choose Plugin File") }).openPath(pluginZipPath)
+    }
+  }
+}
+
+class CustomPluginsRepositoryListDialog(data: ComponentData) : DialogUiComponent(data) {
+  val addRepoBtn: UiComponent = x("Add custom repository button") { byAccessibleName("Add") }
+
+  // 'Add' inserts an empty row and starts its cell editor, which is an ExtendableTextField focused asynchronously
+  private val repoUrlField: JTextFieldUI =
+    textField("Custom repository url field") { byType("com.intellij.ui.components.fields.ExtendableTextField") }
+
+  fun addCustomRepository(repoUrl: String) {
+    step("Add custom plugin repository '$repoUrl'") {
+      addRepoBtn.click()
+      table().should("cell editor of the table with custom repos should be focused") { driver.hasFocus(this) }
+      repoUrlField.text = repoUrl
+      okButton.click()
+    }
+  }
+}
