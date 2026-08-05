@@ -205,7 +205,7 @@ class PlatformReadWriteActionSupport : ReadWriteActionSupport {
   private object DeniedSentinel
 
   /**
-   * EDT write action is intended to run on the UI thread.
+   * EDT write action's body is intended to run on the UI thread as a continuous computation.
    *
    * Since the UI thread is a single-threaded executor, the naive implementation is prone to deadlocks:
    * we can initiate a pending locking action, suspend, and then the next computation would block the executor on a blocking locking action --

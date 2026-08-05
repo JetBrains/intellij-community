@@ -217,9 +217,9 @@ class NonBlockingFlushQueue(private val threadingSupport: ThreadingSupport) {
             uiQueue.pollFirst() // now we remove WriteActionFinished from the queue
           }
           if (threadingSupport.isWriteActionPending() || threadingSupport.isWriteActionInProgress()) {
-            scheduleFlushOnWriteActionTermination()
-            // this requestFlush is needed because suspending edtWriteAction might be residing in this queue after the current WriteActionFinished
+            // this flushing is needed because suspending edtWriteAction might be residing in this queue after the current WriteActionFinished
             // so if current write action is pending, we need to continue processing UI runnables
+            scheduleFlushOnWriteActionTermination()
             continue
           } else {
             currentWriteIntentLockMode = WriteIntentLockMode.ALL
