@@ -31,6 +31,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.progress.waitForMaybeCancellable
 import com.intellij.util.ui.EDT
+import java.util.LinkedHashMap
 import java.util.Objects
 import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
@@ -55,6 +56,7 @@ internal class RefreshSessionImpl internal constructor(
   private val mySemaphore = Semaphore()
 
   private var myWorkQueue: MutableList<VirtualFile> = ArrayList()
+  private var myNewFilesCaseSensitive: MutableMap<NewVirtualFile, MutableList<String>> = LinkedHashMap()
   private val myEvents: MutableList<VFileEvent> = ArrayList()
 
   @Volatile private var myWorker: RefreshWorker? = null
@@ -91,6 +93,16 @@ internal class RefreshSessionImpl internal constructor(
     for (file in files) doAddFile(file)
   }
 
+  override fun addNewChildren(parent: VirtualFile, childrenNames: Collection<String>) {
+    checkState()
+    if (childrenNames.isEmpty()) return
+    if (parent !is NewVirtualFile) {
+      LOG.debug("skipped: $parent / ${parent.javaClass}")
+      return
+    }
+    myNewFilesCaseSensitive.computeIfAbsent(parent) { ArrayList() }.addAll(childrenNames)
+  }
+
   private fun checkState() {
     check(!myCanceled) { "Already canceled" }
     check(!myLaunched) { "Already launched" }
@@ -117,7 +129,7 @@ internal class RefreshSessionImpl internal constructor(
 
   fun prepareExecution(): /* if nothing to do */ Boolean {
     checkState()
-    if (myWorkQueue.isEmpty() && myEvents.isEmpty()) {
+    if (myWorkQueue.isEmpty() && myNewFilesCaseSensitive.isEmpty() && myEvents.isEmpty()) {
       if (myFinishRunnable == null) return true
       LOG.warn(Exception("no files to refresh"))
     }
@@ -127,12 +139,14 @@ internal class RefreshSessionImpl internal constructor(
   }
 
   val isEventSession: Boolean
-    get() = myWorkQueue.isEmpty() && !myEvents.isEmpty()
+    get() = myWorkQueue.isEmpty() && myNewFilesCaseSensitive.isEmpty() && !myEvents.isEmpty()
 
   fun scan(timeInQueue: Long): Collection<VFileEvent> {
-    if (myWorkQueue.isEmpty()) return myEvents
     val workQueue = myWorkQueue
     myWorkQueue = mutableListOf()
+    val newFilesCaseSensitive = myNewFilesCaseSensitive
+    myNewFilesCaseSensitive = LinkedHashMap()
+    if (workQueue.isEmpty() && newFilesCaseSensitive.isEmpty()) return myEvents
     val forceRefresh = !myIsRecursive && !this.isAsynchronous // shallow sync refresh (e.g., project config files on open)
 
     val fs = LocalFileSystem.getInstance()
@@ -171,6 +185,7 @@ internal class RefreshSessionImpl internal constructor(
 
     var count = 0
     val events = ArrayList<VFileEvent?>()
+    events.addAll(myEvents)
     withPrefetchForRemoteRoots(refreshRoots) {
       do {
         if (myCanceled) break
@@ -178,7 +193,10 @@ internal class RefreshSessionImpl internal constructor(
 
         val worker = RefreshWorker(refreshRoots, myIsRecursive)
         myWorker = worker
-        events.addAll(worker.scan())
+        events.addAll(worker.scanNewFiles(newFilesCaseSensitive))
+        if (refreshRoots.isNotEmpty()) {
+          events.addAll(worker.scan())
+        }
         myWorker = null
 
         count++

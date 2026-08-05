@@ -14,6 +14,17 @@ abstract class RefreshSession {
     addAllFiles(listOf(*files))
   }
 
+  /**
+   * Scan those children if they are not cached in VFS and recursively preload their children.
+   *
+   * Do nothing for files already loaded into vfs.
+   *
+   * @see [com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl.refreshNioFilesInternal]
+   * @see [com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl.createChildAndFireCreationEvent]
+   */
+  @ApiStatus.Internal
+  abstract fun addNewChildren(parent: VirtualFile, childrenNames: Collection<String>)
+
   abstract fun launch()
 
   @ApiStatus.Internal
