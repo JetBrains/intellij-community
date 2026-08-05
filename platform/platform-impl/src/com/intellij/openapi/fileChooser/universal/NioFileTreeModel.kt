@@ -335,6 +335,7 @@ class NioFileTreeModel(
         val presentation = contributorRoot.presentation
         presentation.icon?.let { updateIcon(it) }
         updateName(presentation.presentableName)
+        updateComment(presentation.comment)
       }
     }
 
@@ -361,6 +362,7 @@ class NioFileTreeModel(
   ) : Root(state, null) {
     init {
       updateName(contributorRoot.presentation.presentableName)
+      updateComment(contributorRoot.presentation.comment)
       updateIcon(contributorRoot.presentation.icon ?: EmptyIcon.ICON_16)
       updateValid(true)
     }

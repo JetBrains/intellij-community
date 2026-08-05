@@ -464,7 +464,7 @@ class NioFileSystemTree(
       this.setIcon(if (!hidden || icon == null) icon else getTransparentIcon(icon))
       val attributes = SimpleTextAttributes(style, color)
       if (name != null) this.append(name, attributes)
-      if (comment != null) this.append(comment, attributes)
+      if (comment != null) this.append(" $comment", SimpleTextAttributes(style, GRAYED))
     }
 
   }

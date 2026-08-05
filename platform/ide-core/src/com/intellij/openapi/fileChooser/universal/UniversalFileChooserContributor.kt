@@ -58,7 +58,8 @@ interface UniversalFileChooserContributor {
 
   data class Presentation(
     @get:Nls val presentableName: String,
-    val icon: Icon? = null
+    val icon: Icon? = null,
+    @get:Nls val comment: String? = null,
   )
 
   suspend fun getPresentation(path: Path): Presentation? = null
