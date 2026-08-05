@@ -17,6 +17,8 @@ import kotlin.io.path.pathString
 
 object TimeoutAnalyzer {
 
+  private val ROLLED_LOG_NAME: Regex = Regex("""idea\.(\d+)\.log""")
+
   private val dialogMethodCalls: List<String> = listOf(
     "com.intellij.openapi.ui.DialogWrapper.doShow",
     "java.awt.Dialog.show"
@@ -56,10 +58,10 @@ object TimeoutAnalyzer {
   }
 
   private fun detectIndicatorsNotFinished(runContext: IDERunContext): Error? {
-    val logsFromOldToNew = getLogsFromNewToOld(runContext)
+    val logsFromNewToOld = getLogsFromNewToOld(runContext)
     val runningIndicators = mutableMapOf<String, Int>()
     val indicatorMessagePattern = Regex("- Progress indicator:(started|finished):(.+)$")
-    logsFromOldToNew.reversed().forEach { logFile ->
+    logsFromNewToOld.reversed().forEach { logFile ->
       Files.readString(logFile)
         .lineSequence()
         .mapNotNull { line -> indicatorMessagePattern.find(line)?.destructured }
@@ -133,9 +135,10 @@ object TimeoutAnalyzer {
   }
 
   private fun getLastThreadDump(runContext: IDERunContext): String? {
-    val killThreadDump = runContext.lastIdeReportingData.logsDir.listDirectoryEntries("threadDump-before-kill*.txt").firstOrNull()
+    val logs = runContext.lastIdeReportingData.logsDir
+    val killThreadDump = logs.listDirectoryEntries("threadDump-before-kill*.txt").firstOrNull()
 
-    val threadDumpsDirectory = runContext.lastIdeReportingData.logsDir.resolve("monitoring-thread-dumps-ide")
+    val threadDumpsDirectory = logs.resolve("monitoring-thread-dumps-ide")
     val lastThreadDump = threadDumpsDirectory
       .takeIf { it.exists() }
       ?.listDirectoryEntries("threadDump*.txt")
@@ -155,10 +158,20 @@ object TimeoutAnalyzer {
   }
 
   private fun getLogsFromNewToOld(runContext: IDERunContext): List<Path> {
-    return runContext.registeredIdeReportingData().reversed().flatMap {
+    return runContext.ideReportingDataFromCurrentToOldest().flatMap {
       val lastLogInReporting = it.logsDir.resolve("idea.log")
       if (!lastLogInReporting.exists()) return@flatMap listOf()
-      listOf(lastLogInReporting) + it.logsDir.listDirectoryEntries("idea.*.log").sortedBy { it.name }
+      listOf(lastLogInReporting) + it.logsDir.listDirectoryEntries("idea.*.log")
+        .sortedBy(::rolledLogIndex)
     }
   }
+
+  /**
+   * `idea.log` rolls into `idea.1.log`, `idea.2.log` and so on, so the greater the index, the older the file. The index has to be
+   * compared as a number: sorted as a string, `idea.10.log` would come right after `idea.1.log` instead of after `idea.9.log`.
+   *
+   * Files that don't follow the convention go last, keeping their relative order.
+   */
+  private fun rolledLogIndex(logFile: Path): Int =
+    ROLLED_LOG_NAME.matchEntire(logFile.name)?.groupValues?.get(1)?.toIntOrNull() ?: Int.MAX_VALUE
 }

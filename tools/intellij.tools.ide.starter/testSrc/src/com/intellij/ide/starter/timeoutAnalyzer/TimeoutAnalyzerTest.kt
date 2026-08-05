@@ -7,6 +7,7 @@ import com.intellij.ide.starter.utils.JarUtils
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.string.shouldNotContain
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
@@ -67,6 +68,17 @@ class TimeoutAnalyzerTest {
     setUpLogsDir("all-data")
     val error = TimeoutAnalyzer.analyzeTimeout(runContextMock)
     error.shouldNotBeNull().messageText.shouldContain("openSettingsDialog")
+  }
+
+  /** `idea.2.log` is newer than `idea.10.log`, so the rolled logs have to be ordered by their index as a number, not as a string. */
+  @Test
+  fun testDetectCommandFromRolledLogWithDoubleDigitIndex() {
+    setUpLogsDir("rolled-logs")
+    val error = TimeoutAnalyzer.analyzeTimeout(runContextMock)
+    error.shouldNotBeNull().messageText.let {
+      it.shouldContain("Last executed command was: newerCommand")
+      it.shouldNotContain("olderCommand")
+    }
   }
 
   @Test
