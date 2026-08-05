@@ -13,6 +13,7 @@ import com.intellij.tools.ide.util.common.logError
 import com.intellij.tools.ide.util.common.logOutput
 import com.intellij.tools.ide.util.common.replaceSpecialCharactersWithHyphens
 import org.jetbrains.annotations.ApiStatus
+import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.copyTo
 import kotlin.io.path.createDirectories
@@ -167,4 +168,24 @@ class IDEReportingData internal constructor(
     }
   }
 
+  @Volatile
+  var allowedIdeErrorReportFiles: Set<Path>? = null
+    private set
+
+  fun restrictIdeErrorReportsToExistingFiles() {
+    allowedIdeErrorReportFiles = collectIdeErrorReportFiles()
+  }
+
+  private fun collectIdeErrorReportFiles(): Set<Path> {
+    if (!logsDir.exists()) return emptySet()
+    return Files.find(logsDir, 4, { path, _ -> path.isIdeErrorMessageFile() }).use { stream ->
+      stream.map { it.toAbsolutePath().normalize() }.toList().toSet()
+    }
+  }
+
+  private fun Path.isIdeErrorMessageFile(): Boolean {
+    val reportRootName = parent?.parent?.name
+    return name == ErrorReporter.MESSAGE_FILENAME &&
+           (reportRootName == ErrorReporter.ERRORS_DIR_NAME || reportRootName == "script-${ErrorReporter.ERRORS_DIR_NAME}")
+  }
 }

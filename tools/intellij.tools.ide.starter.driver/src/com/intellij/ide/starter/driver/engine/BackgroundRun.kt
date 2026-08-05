@@ -165,6 +165,7 @@ open class BackgroundRun(
   }
 
   open fun forceKill() {
+    catchAll("Restrict IDE errors to existing before force kill") { runContext.lastIdeReportingData.restrictIdeErrorReportsToExistingFiles() }
     logOutput("[Closing ${process.id}] Performing force kill")
     process.kill()
   }

@@ -36,13 +36,13 @@ object ErrorReporterToCI : ErrorReporter {
   }
 
   private fun collectErrors(ideReportingData: IDEReportingData): List<Error> {
-    return collectErrors(ideReportingData.logsDir)
+    return collectErrors(ideReportingData.logsDir, ideReportingData.allowedIdeErrorReportFiles)
   }
 
-  fun collectErrors(logsDir: Path): List<Error> {
+  fun collectErrors(logsDir: Path, allowedFiles: Set<Path>? = null): List<Error> {
     if (SystemProperties.getBooleanProperty("DO_NOT_REPORT_ERRORS", false)) return emptyList()
-    return collectExceptions(getErrorsDir(logsDir)) +
-           collectExceptions(getScriptErrorsDir(logsDir))
+    return collectExceptions(getErrorsDir(logsDir), allowedFiles) +
+           collectExceptions(getScriptErrorsDir(logsDir), allowedFiles)
   }
 
   fun getErrorsDir(logsDir: Path): Path? {
@@ -63,7 +63,7 @@ object ErrorReporterToCI : ErrorReporter {
   /**
    * Method only collects exceptions from [ErrorReporter.ERRORS_DIR_NAME] and skip freezes
    */
-  private fun collectExceptions(rootErrorsDir: Path?): List<Error> {
+  private fun collectExceptions(rootErrorsDir: Path?, allowedFiles: Set<Path>?): List<Error> {
     if (rootErrorsDir == null || !rootErrorsDir.isDirectory()) {
       return emptyList()
     }
@@ -72,6 +72,8 @@ object ErrorReporterToCI : ErrorReporter {
     for (errorDir in errorsDirectories) {
       val messageFile = errorDir.resolve(MESSAGE_FILENAME)
       if (!messageFile.exists()) continue
+      if (allowedFiles != null && messageFile.toAbsolutePath().normalize() !in allowedFiles) continue
+
       val messageText = messageFile.readText().trimIndent().trim()
       val syntheticTestNameFile = errorDir.resolve(SYNTHETIC_TESTNAME_FILENAME)
       val syntheticTestName = if (syntheticTestNameFile.exists()) syntheticTestNameFile.readText().trim() else null
