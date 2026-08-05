@@ -229,6 +229,29 @@ open class MultipleFileMergeDialog(
     project?.unblockReloadingProjectOnExternalChanges()
     SwingUtilities.getWindowAncestor(rootPane)?.removeComponentListener(popupCloseListener)
     super.dispose()
+    revertAbandonedDocuments()
+  }
+
+  /**
+   * Opening the three-side viewer replaces each opened file's document with the merge base (that is what
+   * makes the result editable). For files the user did not finish - still unresolved, so never saved or
+   * marked processed - that base is left unsaved in the document and would be flushed to disk after the
+   * dialog closes (e.g. by the VFS refresh in GitConflictResolver), destroying the conflict. Reload their
+   * on-disk content so any later flush is a no-op. Files that were saved ("Save and Close" or finished)
+   * are already in sync with disk and are skipped. Runs after `super.dispose()` so the models - and their
+   * document listeners - are already gone and cannot react to the reload.
+   *
+   * IJPL-251324 Merge Revisions viewer: cancelling overwrites the conflicted file and marks it resolved
+   */
+  @RequiresEdt
+  private fun revertAbandonedDocuments() {
+    val fileDocumentManager = FileDocumentManager.getInstance()
+    for (file in unresolvedFiles) {
+      val document = fileDocumentManager.getCachedDocument(file) ?: continue
+      if (fileDocumentManager.isDocumentUnsaved(document)) {
+        fileDocumentManager.reloadFromDisk(document)
+      }
+    }
   }
 
   private fun getModalTaskOwner(): ModalTaskOwner {
@@ -525,9 +548,12 @@ open class MultipleFileMergeDialog(
                                                VcsBundle.message("multiple.file.merge.dialog.progress.title.loading.revisions")) {
       mergeRequestBuilder(file).withTitles().withCallback { result: MergeResult ->
         mergeResult = result
-        saveDocument(file)
-        checkMarkModifiedProject(project, file)
-        iterativeDataHolder?.getMergeConflictModel(file)?.apply {
+        val model = iterativeDataHolder?.getMergeConflictModel(file)
+        if (result != MergeResult.CANCEL || model?.contentModified == true) {
+          saveDocument(file)
+          checkMarkModifiedProject(project, file)
+        }
+        model?.apply {
           markReviewed()
           chosenSide = when (result) {
             MergeResult.LEFT -> Side.LEFT
