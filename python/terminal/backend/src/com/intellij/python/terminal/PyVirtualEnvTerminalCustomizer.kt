@@ -20,11 +20,11 @@ import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.entities
 import com.intellij.python.terminal.shared.PyTerminalBundle
 import com.intellij.python.terminal.shared.PyVirtualEnvTerminalSettings
-import com.jetbrains.python.PyNames
 import com.jetbrains.python.orLogException
 import com.jetbrains.python.sdk.Activatable
 import com.jetbrains.python.sdk.PySdkUtil
 import com.jetbrains.python.sdk.PythonEnvironment
+import com.jetbrains.python.sdk.internal.PYTHON_MODULE_ID
 import com.jetbrains.python.sdk.pythonInterpreter
 import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.sdk.terminal.Shell
@@ -264,5 +264,5 @@ fun pyTerminalDefaultWorkingDirectory(project: Project, file: VirtualFile?): Pat
   } ?: return null
 
   // Follow the module only if it's a Python module; otherwise keep the platform default.
-  return if (module.type?.name == PyNames.PYTHON_MODULE_ID) contentRoot.toNioPathOrNull() else null
+  return if (module.type?.name == PYTHON_MODULE_ID) contentRoot.toNioPathOrNull() else null
 }

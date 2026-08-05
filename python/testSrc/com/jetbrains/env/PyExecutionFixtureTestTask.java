@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.env;
 
 import com.intellij.execution.process.ProcessHandler;
@@ -31,7 +31,6 @@ import com.intellij.testFramework.fixtures.impl.ModuleFixtureBuilderImpl;
 import com.intellij.testFramework.fixtures.impl.ModuleFixtureImpl;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonModuleTypeBase;
 import com.jetbrains.python.PythonTestUtil;
 import com.jetbrains.python.extensions.ModuleExtKt;
@@ -39,6 +38,7 @@ import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.internal.PySdkNamesKt;
 import com.jetbrains.python.tools.sdkTools.PySdkTools;
 import com.jetbrains.python.tools.sdkTools.SdkCreationType;
 import org.jetbrains.annotations.NotNull;
@@ -253,12 +253,12 @@ public abstract class PyExecutionFixtureTestTask extends PyTestTask {
 
   public static class PlatformPythonModuleType extends PythonModuleTypeBase<EmptyModuleBuilder> {
 
-    private static final String MODULE_ID = PyNames.PYTHON_MODULE_ID;
+    private static final String MODULE_ID = PySdkNamesKt.PYTHON_MODULE_ID;
 
     @NotNull
     public static PlatformPythonModuleType getInstance() {
       ensureModuleRegistered();
-      return (PlatformPythonModuleType)ModuleTypeManager.getInstance().findByID(PyNames.PYTHON_MODULE_ID);
+      return (PlatformPythonModuleType)ModuleTypeManager.getInstance().findByID(PySdkNamesKt.PYTHON_MODULE_ID);
     }
 
     static void ensureModuleRegistered() {

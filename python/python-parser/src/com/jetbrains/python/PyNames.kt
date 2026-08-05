@@ -2,7 +2,6 @@
 package com.jetbrains.python
 
 import com.intellij.openapi.util.NlsSafe
-import com.jetbrains.python.PyNames.TYPE_STRING_TYPES
 import com.jetbrains.python.psi.LanguageLevel
 import org.jetbrains.annotations.NonNls
 import java.util.regex.Pattern
@@ -150,8 +149,6 @@ object PyNames {
   const val PYTHON_SDK_ID_NAME: String = "Python SDK"
   const val VERBOSE_REG_EXP_LANGUAGE_ID: String = "PythonVerboseRegExp"
 
-  @NonNls
-  const val PYTHON_MODULE_ID: @NonNls String = "PYTHON_MODULE"
   const val TESTCASE_SETUP_NAME: String = "setUp"
   const val PY_DOCSTRING_ID: String = "Doctest"
   const val END_WILDCARD: String = ".*"

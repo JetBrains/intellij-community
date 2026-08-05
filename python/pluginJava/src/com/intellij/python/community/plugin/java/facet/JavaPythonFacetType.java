@@ -10,6 +10,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.parser.icons.PythonParserIcons;
 import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.internal.PySdkNamesKt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -21,7 +22,7 @@ import java.util.List;
 @ApiStatus.Internal
 final class JavaPythonFacetType extends FacetType<JavaPythonFacet, JavaPythonFacetConfiguration> {
 
-  private static final @NonNls String ID = "Python";
+  private static final @NonNls String ID = PySdkNamesKt.PYTHON_FACET_ID;
 
   public static JavaPythonFacetType getInstance() {
     return findInstance(JavaPythonFacetType.class);

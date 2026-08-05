@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.tools
 
 import com.intellij.openapi.Disposable
@@ -12,9 +12,9 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.util.ui.UIUtil
-import com.jetbrains.python.PyNames
 import com.jetbrains.python.packaging.PyPackagingSettings
 import com.jetbrains.python.sdk.PythonSdkUpdater
+import com.jetbrains.python.sdk.internal.PYTHON_MODULE_ID
 import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.tools.sdkTools.PySdkTools
 import com.jetbrains.python.tools.sdkTools.SdkCreationType
@@ -39,7 +39,7 @@ fun createSdkForPerformance(module: Module,
 
 fun openProjectWithPythonSdk(projectPath: String, sdkHome: String?, testRootDisposable: Disposable): Pair<Project, Sdk?> {
   val sdkProducer = if (sdkHome == null) {_,_->null} else createPythonSdkProducer(sdkHome)
-  return openProjectWithSdk(projectPath, PyNames.PYTHON_MODULE_ID, sdkProducer, testRootDisposable)
+  return openProjectWithSdk(projectPath, PYTHON_MODULE_ID, sdkProducer, testRootDisposable)
 }
 
 fun createPythonSdkProducer(sdkHome: String): (Project, Module) -> Sdk {

@@ -5,10 +5,11 @@ import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
 import com.intellij.python.junit5Tests.framework.env.pySdkFixture
+import com.intellij.python.junit5Tests.framework.pyModuleFixture
 import com.intellij.python.terminal.pyTerminalDefaultWorkingDirectory
 import com.intellij.python.test.env.junit5.pyVenvFixture
 import com.intellij.testFramework.common.timeoutRunBlocking
-import com.intellij.python.junit5Tests.framework.pyModuleFixture
+import com.intellij.testFramework.junit5.fixture.moduleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import kotlinx.coroutines.Dispatchers
@@ -51,7 +52,7 @@ class PyTerminalDefaultWorkingDirectoryTest {
 
   // A module that is not a Python module (default empty module type).
   private val nonPythonModuleDir = tempPathFixture(prefix = "subproject_non_python")
-  private val nonPythonModule = projectFixture.pyModuleFixture(nonPythonModuleDir, addPathToSourceRoot = true)
+  private val nonPythonModule = projectFixture.moduleFixture(nonPythonModuleDir, addPathToSourceRoot = true)
 
   private suspend fun createFile(dir: Path, name: String) = withContext(Dispatchers.IO) {
     val path = dir.resolve(name)

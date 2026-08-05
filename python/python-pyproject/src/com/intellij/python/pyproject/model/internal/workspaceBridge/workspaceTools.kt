@@ -44,7 +44,7 @@ import com.intellij.python.pyproject.model.spi.WorkspaceName
 import com.intellij.python.pyproject.model.spi.plus
 import com.intellij.workspaceModel.ide.legacyBridge.LegacyBridgeJpsEntitySourceFactory
 import com.intellij.workspaceModel.ide.toPath
-import com.jetbrains.python.PyNames
+import com.jetbrains.python.sdk.internal.PYTHON_MODULE_ID
 import com.jetbrains.python.venvReader.Directory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
@@ -79,7 +79,7 @@ internal suspend fun rebuildProjectModel(project: Project, files: FSWalkInfoWith
 
     // Existing Python module names keyed by their content root directory.
     val existingPythonNames: Map<Path, String> = currentSnapshot.entities<ModuleEntity>()
-      .filter { it.type == PYTHON_MODULE_ID }
+      .filter { it.type == PYTHON_MODULE_TYPE_ID }
       .mapNotNull { module ->
         val moduleRootPath = module.contentRoots.singleOrNull()?.url?.toPath()
         moduleRootPath?.let { it to module.name }
@@ -144,7 +144,7 @@ private fun matchEntriesToModules(
 
   // First pass: match by location against Python-typed modules (adopts non-pyproject Python modules at the same root)
   // This is the primary and most reliable matching strategy.
-  val pythonTypedModules = allModules.filter { it.type == PYTHON_MODULE_ID }
+  val pythonTypedModules = allModules.filter { it.type == PYTHON_MODULE_TYPE_ID }
   val moduleAnchors = pythonTypedModules.associateWith { ModuleAnchor(it) }
   for (entry in entries) {
     val entryRootUrl = entry.root.toVirtualFileUrl(virtualFileUrlManager)
@@ -243,7 +243,7 @@ private fun updateModule(
   // and UI flicker from multiple change events.
   val needsModuleModify = module.name != entry.name.name
                           || module.entitySource != entitySource
-                          || module.type != PYTHON_MODULE_ID
+                          || module.type != PYTHON_MODULE_TYPE_ID
                           || existingContentRoot == null
                           || existingPyProjectToml == null
                           || existingExModuleOptions == null
@@ -257,7 +257,7 @@ private fun updateModule(
     projectStorage.modifyModuleEntity(module) {
       this.name = entry.name.name
       this.entitySource = entitySource
-      this.type = PYTHON_MODULE_ID
+      this.type = PYTHON_MODULE_TYPE_ID
 
       if (isModuleDependenciesChanged) {
         // Replacing `dependencies` wipes the SdkDependency item — save and restore it.
@@ -350,7 +350,7 @@ private fun addNewModule(
         SourceRootEntity(srcRoot.toVirtualFileUrl(virtualFileUrlManager), JAVA_SOURCE_ROOT_TYPE, entitySource)
       }
     })
-    type = PYTHON_MODULE_ID
+    type = PYTHON_MODULE_TYPE_ID
     pyProjectTomlEntity = PyProjectTomlWorkspaceEntity(participatedTools, tomlDirUrl, entitySource)
     exModuleOptions = ExternalSystemModuleOptionsEntity(entitySource) {
       externalSystem = PY_PROJECT_SYSTEM_ID.id
@@ -638,7 +638,7 @@ private suspend fun findSrc(root: Directory): Set<Directory> =
     if (src.exists()) setOf(src) else emptySet()
   }
 
-private val PYTHON_MODULE_ID: ModuleTypeId = ModuleTypeId(PyNames.PYTHON_MODULE_ID)
+private val PYTHON_MODULE_TYPE_ID: ModuleTypeId = ModuleTypeId(PYTHON_MODULE_ID)
 
 internal val EntitySource.isPythonEntity: Boolean get() = (this as? JpsImportedEntitySource)?.externalSystemId == PY_PROJECT_SYSTEM_ID.id
 

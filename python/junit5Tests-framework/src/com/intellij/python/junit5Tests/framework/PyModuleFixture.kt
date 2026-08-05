@@ -5,7 +5,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.testFramework.junit5.fixture.TestFixture
 import com.intellij.testFramework.junit5.fixture.moduleFixture
-import com.jetbrains.python.PyNames
+import com.jetbrains.python.sdk.internal.PYTHON_MODULE_ID
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
 
@@ -16,7 +16,7 @@ import java.nio.file.Path
 fun TestFixture<Project>.pyModuleFixture(
   pathFixture: TestFixture<Path>,
   addPathToSourceRoot: Boolean = false,
-): TestFixture<Module> = moduleFixture(pathFixture, addPathToSourceRoot, PyNames.PYTHON_MODULE_ID)
+): TestFixture<Module> = moduleFixture(pathFixture, addPathToSourceRoot, PYTHON_MODULE_ID)
 
 /**
  * Same as [moduleFixture], but with python module type. Use for python tests
@@ -24,4 +24,4 @@ fun TestFixture<Project>.pyModuleFixture(
 @TestOnly
 fun TestFixture<Project>.pyModuleFixture(
   name: String? = null,
-): TestFixture<Module> = moduleFixture(name, PyNames.PYTHON_MODULE_ID)
+): TestFixture<Module> = moduleFixture(name, PYTHON_MODULE_ID)

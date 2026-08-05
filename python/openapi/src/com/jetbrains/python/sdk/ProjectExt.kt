@@ -4,7 +4,6 @@
 package com.jetbrains.python.sdk
 
 import com.intellij.openapi.diagnostic.fileLogger
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -15,7 +14,7 @@ import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.entities
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
-import com.jetbrains.python.PyNames
+import com.jetbrains.python.sdk.internal.PYTHON_MODULE_ID
 import org.jetbrains.annotations.ApiStatus
 
 private val thisLogger = fileLogger()
@@ -46,7 +45,7 @@ suspend fun Project.getModuleRoots(): Set<VirtualFile> {
     val roots = module.contentRoots
       .flatMap { listOf(it.url) + it.sourceRoots.map { sr -> sr.url } }
       .mapNotNull { it.virtualFile }
-    if (roots.isEmpty() && module.type?.name == PyNames.PYTHON_MODULE_ID) {
+    if (roots.isEmpty() && module.type?.name == PYTHON_MODULE_ID) {
       thisLogger.warn("SAFETY NET: no roots in python module '${module.name}' of project '$name'.")
     }
     roots

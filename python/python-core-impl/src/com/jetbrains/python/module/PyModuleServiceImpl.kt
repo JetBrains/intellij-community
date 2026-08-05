@@ -18,6 +18,7 @@ import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.jetbrains.python.PyInternalExecApi
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.facet.PythonFacetSettings
+import com.jetbrains.python.sdk.internal.PYTHON_MODULE_ID
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -85,6 +86,6 @@ internal class PyModuleServiceImpl(val project: Project, coroutineScope: Corouti
   }
 
   private companion object {
-    val Module.isPyModuleType: Boolean get() = ModuleType.get(this).id == PyNames.PYTHON_MODULE_ID
+    val Module.isPyModuleType: Boolean get() = ModuleType.get(this).id == PYTHON_MODULE_ID
   }
 }
