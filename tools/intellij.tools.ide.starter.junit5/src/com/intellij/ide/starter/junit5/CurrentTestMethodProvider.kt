@@ -3,6 +3,7 @@ package com.intellij.ide.starter.junit5
 import com.intellij.ide.starter.di.di
 import com.intellij.ide.starter.runner.CurrentTestMethod
 import com.intellij.ide.starter.runner.TestMethod
+import org.junit.platform.engine.TestExecutionResult
 import org.junit.platform.engine.support.descriptor.MethodSource
 import org.junit.platform.launcher.TestExecutionListener
 import org.junit.platform.launcher.TestIdentifier
@@ -29,5 +30,11 @@ open class CurrentTestMethodProvider : TestExecutionListener {
         testClass = methodSource.javaClass,
       )
     )
+  }
+
+  override fun executionFinished(testIdentifier: TestIdentifier?, testExecutionResult: TestExecutionResult?) {
+    if (testIdentifier?.isTest == true) {
+      di.direct.instance<CurrentTestMethod>().set(null)
+    }
   }
 }
