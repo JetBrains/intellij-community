@@ -96,7 +96,7 @@ internal class TerminalInlineCompletionController(
   }
 
   private fun handleTyping(char: Char, cursorOffset: TerminalOffset) {
-    val session = getOrCreateInputSession()
+    val session = getOrCreateInputSession(cursorOffset)
     val prediction = TerminalTypingPrediction(session.cursorPosition, char.toString(), isTentative = true)
     addPendingEvent(PendingInputEvent.Typing(char, prediction.position))
     session.applyPrediction(prediction)
@@ -104,19 +104,25 @@ internal class TerminalInlineCompletionController(
   }
 
   private fun handleBackspace(cursorOffset: TerminalOffset) {
-    val session = getOrCreateInputSession()
-    if (session.cursorPosition.columnIndex == 0) {
+    val cursorPosition = inputSession?.cursorPosition ?: cursorOffset.toLogicalPosition()
+    if (cursorPosition.columnIndex == 0) {
       LOG.trace("Inline completion ignored backspace at line start")
       return
     }
+    val session = getOrCreateInputSession(cursorOffset)
     val prediction = TerminalBackspacePrediction(session.cursorPosition, isTentative = true)
     addPendingEvent(PendingInputEvent.Backspace())
     session.applyPrediction(prediction)
     LOG.trace("Inline completion input deferred: backspace")
   }
 
-  private fun getOrCreateInputSession(): TerminalTypeAheadSession {
-    return inputSession ?: TerminalTypeAheadSession(project, model).also { inputSession = it }
+  private fun getOrCreateInputSession(cursorOffset: TerminalOffset): TerminalTypeAheadSession {
+    return inputSession ?: TerminalTypeAheadSession(project, model, cursorOffset.toLogicalPosition()).also { inputSession = it }
+  }
+
+  private fun TerminalOffset.toLogicalPosition(): TerminalLogicalPosition {
+    val line = model.getLineByOffset(this)
+    return TerminalLogicalPosition(line.toAbsolute(), (this - model.getStartOfLine(line)).toInt())
   }
 
   private fun handleOutputModelUpdate() {
