@@ -7,9 +7,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.util.elementType
 import org.jetbrains.kotlin.KtNodeTypes
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.targetSymbol
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
 import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
 import org.jetbrains.kotlin.idea.base.psi.safeDeparenthesize
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -61,13 +62,14 @@ internal class RedundantElvisReturnNullInspection : KotlinApplicableInspectionBa
         return isTargetOfReturn && element.operationToken == KtTokens.ELVIS
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtBinaryExpression): Unit? {
         val outerReturn = element.getStrictParentOfType<KtReturnExpression>() ?: return null
         val innerReturn = element.right as? KtReturnExpression ?: return null
 
-        val outerReturnTarget = outerReturn.targetSymbol ?: return null
-        val innerReturnTarget = innerReturn.targetSymbol ?: return null
+        val outerReturnTarget = outerReturn.resolveSymbol() ?: return null
+        val innerReturnTarget = innerReturn.resolveSymbol() ?: return null
 
         // Returns point to different targets, we cannot remove the inner return
         if (outerReturnTarget != innerReturnTarget) return null

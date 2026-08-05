@@ -8,17 +8,15 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.components.targetSymbol
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSymbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.importableFqName
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
-import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
@@ -54,7 +52,6 @@ import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
 import org.jetbrains.kotlin.psi.psiUtil.parents
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 internal sealed class ConvertFunctionWithDemorgansLawIntention(
     conversions: List<Conversion>,
@@ -79,12 +76,13 @@ internal sealed class ConvertFunctionWithDemorgansLawIntention(
         return Presentation.of(KotlinBundle.message("replace.0.with.1", fromFunctionName, toFunctionName))
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(session: KaSession)
     override fun prepareContext(element: KtCallExpression): ConvertFunctionWithDemorgansLawContext? {
         val (fromFunctionName, _, _, negatePredicate) = conversions[element.calleeExpression?.text] ?: return null
         val fqNames = functions[fromFunctionName] ?: return null
         val targetFunctionName =
-            element.resolveToCall()?.singleFunctionCallOrNull()?.symbol?.importableFqName ?: return null
+            element.resolveSymbol()?.importableFqName ?: return null
         if (targetFunctionName !in fqNames) return null
 
         val lambda = element.singleLambdaArgumentExpression() ?: return null
@@ -93,7 +91,7 @@ internal sealed class ConvertFunctionWithDemorgansLawIntention(
 
         val functionPredicate = when (lastStatement) {
             is KtReturnExpression -> {
-                val targetSymbol = lastStatement.targetSymbol
+                val targetSymbol = lastStatement.resolveSymbol()
                 val lambdaSymbol = lambda.functionLiteral.symbol
                 if (targetSymbol == lambdaSymbol) lastStatement.returnedExpression else null
             }
@@ -157,7 +155,7 @@ internal sealed class ConvertFunctionWithDemorgansLawIntention(
         val (_, toFunctionName, negateCall, negatePredicate) = conversions[element.calleeExpression?.text] ?: return
         val lambda = element.singleLambdaArgumentExpression() ?: return
         val lastStatement = lambda.bodyExpression?.statements?.lastOrNull() ?: return
-        val returnExpression = lastStatement.safeAs<KtReturnExpression>()
+        val returnExpression = lastStatement as? KtReturnExpression
         val predicate = returnExpression?.returnedExpression ?: lastStatement
 
         val psiFactory = KtPsiFactory(element.project)
@@ -206,7 +204,7 @@ internal sealed class ConvertFunctionWithDemorgansLawIntention(
     }
 
     private fun PsiElement.asExclPrefixExpression(): KtPrefixExpression? {
-        return safeAs<KtPrefixExpression>()?.takeIf { it.operationToken == KtTokens.EXCL && it.baseExpression != null }
+        return (this as? KtPrefixExpression)?.takeIf { it.operationToken == KtTokens.EXCL && it.baseExpression != null }
     }
 
     private fun KtPsiFactory.createLabelQualifier(labelName: String): KtContainerNode {
