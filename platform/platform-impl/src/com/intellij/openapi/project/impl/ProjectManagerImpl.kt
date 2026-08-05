@@ -104,6 +104,7 @@ import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.platform.PROJECT_NEWLY_CREATED
 import com.intellij.platform.PROJECT_NEWLY_OPENED
 import com.intellij.platform.PlatformProjectOpenProcessor
+import com.intellij.platform.attachSafe
 import com.intellij.platform.attachToProjectAsync
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.core.nio.fs.MultiRoutingFileSystem
@@ -1126,8 +1127,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
 
     val isValidProject = ProjectUtil.isValidProjectPath(projectDir)
     val processor = ProjectAttachProcessor.getProcessor(projectToClose, projectDir, options.project)
-    if (processor != null &&
-        (!isValidProject || serviceAsync<GeneralSettings>().confirmOpenNewProject == GeneralSettings.OPEN_PROJECT_ASK)) {
+    if (!isValidProject || serviceAsync<GeneralSettings>().confirmOpenNewProject == GeneralSettings.OPEN_PROJECT_ASK) {
       while (true) {
         val result = tryToOpen(projectToClose, processor, options, projectDir)
         if (result != null) {
@@ -1182,7 +1182,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
 
   private suspend fun tryToOpen(
     projectToClose: Project,
-    processor: ProjectAttachProcessor,
+    processor: ProjectAttachProcessor?,
     options: OpenProjectTask,
     projectDir: Path,
   ): Boolean? {
@@ -1196,9 +1196,10 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
         }
       }
       GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH -> {
-        processor.beforeAttach(options.project)
-        if (attachToProjectAsync(projectToClose, projectDir, processor, options.callback, options.beforeOpen)) {
-          return true
+        LOG.assertTrue(processor != null, "Processor must not be null to be able to attach project to the same window")
+        if (processor != null) {
+          processor.beforeAttach(options.project)
+          return checkTrustedState(projectDir) && attachSafe(processor, projectToClose, projectDir, options.callback, options.beforeOpen)
         }
         else {
           // cannot attach, retry

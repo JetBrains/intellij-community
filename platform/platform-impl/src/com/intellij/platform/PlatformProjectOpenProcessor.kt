@@ -486,17 +486,18 @@ internal suspend fun attachToProjectAsync(
     return false
   }
   if (processor != null) {
-    return attachImpl(processor, projectToClose, projectDir, callback, beforeOpen)
+    return attachSafe(processor, projectToClose, projectDir, callback, beforeOpen)
   }
   for (attachProcessor in ProjectAttachProcessor.EP_NAME.lazySequence()) {
-    if (attachImpl(attachProcessor, projectToClose, projectDir, callback, beforeOpen)) {
+    if (attachSafe(attachProcessor, projectToClose, projectDir, callback, beforeOpen)) {
       return true
     }
   }
   return false
 }
 
-private suspend fun attachImpl(
+@Internal
+suspend fun attachSafe(
   attachProcessor: ProjectAttachProcessor,
   projectToClose: Project,
   projectDir: Path,
