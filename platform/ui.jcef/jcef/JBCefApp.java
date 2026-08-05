@@ -665,6 +665,11 @@ public final class JBCefApp {
       }
     }
 
+    if (ApplicationManager.getApplication().isInternal()) {
+      // NOTE: for the test purposes we want to trigger these actions before JBCefApp initialization, so register them here.
+      InternalJcefTest.registerTestFailActions();
+    }
+
     return isJcefFromJbr() || getNativeBundlePath() != null;
   }
 
