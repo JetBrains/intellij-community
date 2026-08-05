@@ -237,11 +237,6 @@ class ProductPluginInitContext(
         if (descriptor.pluginId != CORE_ID) {
           yieldIfResolves(DependencyRef.of(CORE_ID))
         }
-        if (descriptor is PluginModuleDescriptor && descriptor.pluginId != CORE_ID && isExternalNonBundledPlugin(descriptor)) {
-          for (dependencyRef in externalNonBundledPluginCompatibilityDependencies) {
-            yieldIfResolves(dependencyRef)
-          }
-        }
 
         // If a plugin does not include any module dependency tags in its plugin.xml, it's assumed to be a legacy plugin
         // and is loaded only in IntelliJ IDEA, so it may use classes from Java plugin.
@@ -345,7 +340,16 @@ class ProductPluginInitContext(
       remainingCandidates: RemainingCandidatesView,
     ): Sequence<DependencyRef> {
       return sequence {
-
+        suspend fun SequenceScope<DependencyRef>.yieldIfResolves(ref: DependencyRef) {
+          if (remainingCandidates.resolveReference(ref) != null) {
+            yield(ref)
+          }
+        }
+        if (descriptor is PluginModuleDescriptor && descriptor.pluginId != CORE_ID && isExternalNonBundledPlugin(descriptor)) {
+          for (dependencyRef in externalNonBundledPluginCompatibilityDependencies) {
+            yieldIfResolves(dependencyRef)
+          }
+        }
       }
     }
 
