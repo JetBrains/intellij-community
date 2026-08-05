@@ -281,8 +281,8 @@ public abstract class Decompressor {
 
     /**
      * <p>Make absolute symbolic links relative from the extraction directory.</p>
-     * For example, when archive contains link to {@code /opt/foo} and archive is extracted to
-     * {@code /foo/bar} then the resulting link will be {@code /foo/bar/opt/foo}
+     * For example, when an archive contains a link to {@code /opt/foo} and archive is extracted to {@code /foo/bar},
+     * then the resulting link will be {@code /foo/bar/opt/foo}.
      */
     RELATIVIZE_ABSOLUTE
   }
@@ -501,7 +501,7 @@ public abstract class Decompressor {
       if (relativeTarget != null) {
         Path outputTarget = outputDir.resolve(relativeTarget);
         if (!outputTarget.normalize().startsWith(outputDir.normalize())) {
-          throw new IOException("Invalid symlink (points outside of output directory): " + entryName + " -> " + linkTarget);
+          throw new IOException("Invalid symlink (points outside the output directory): " + entryName + " -> " + linkTarget);
         }
         return outputTarget;
       }
@@ -513,7 +513,7 @@ public abstract class Decompressor {
     }
     Path linkTargetNormalized = outputFile.getParent().resolve(outputTarget).normalize();
     if (!linkTargetNormalized.startsWith(outputDir.normalize())) {
-      throw new IOException("Invalid symlink (points outside of output directory): " + entryName + " -> " + linkTarget);
+      throw new IOException("Invalid symlink (points outside the output directory): " + entryName + " -> " + linkTarget);
     }
     return outputTarget;
   }
