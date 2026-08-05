@@ -113,12 +113,10 @@ object SuvorovProgress {
     val application = ApplicationManager.getApplication()
     val rwService = application.serviceIfCreated<ReadWriteActionSupport>()
     if (Thread.holdsLock(awtComponentLock)) {
-      @Suppress("TestOnlyProblems")
       if (rwService is PlatformReadWriteActionSupport) {
         rwService.signalBackgroundWriteActionNeedsToBeRetried()
       }
     }
-    @Suppress("TestOnlyProblems")
     if (rwService is PlatformReadWriteActionSupport) {
       rwService.signalSuspendedEdtWriteActionNeedsToBeRetried()
     }
