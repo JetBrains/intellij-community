@@ -12,7 +12,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    kotlinc_opts = "@community//:k17",
+    kotlinc_opts = "@community//:k21",
     module_name = "kotlin.util.project-model-updater",
     resource_strip_prefix = "resources",
     resources = glob(
@@ -37,7 +37,7 @@ jvm_library(
         [],
         allow_empty = True,
     ),
-    kotlinc_opts = "@community//:k17",
+    kotlinc_opts = "@community//:k21",
     module_name = "kotlin.util.project-model-updater",
     visibility = ["//visibility:public"],
     runtime_deps = [
