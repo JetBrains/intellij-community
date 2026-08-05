@@ -19,6 +19,7 @@ One row per skill in this directory. `SKILL.md` holds the full instructions.
 | [icons](icons/SKILL.md) | Create or review IntelliJ New UI SVG icons, theme variants, sizes, and palette. |
 | [ide-diagnostics-mcp](ide-diagnostics-mcp/SKILL.md) | Inspect a running IntelliJ IDE for freezes, high CPU, blocked threads, or thread dumps via MCP. |
 | [jewel-markdown](jewel-markdown/SKILL.md) | Build or debug Jewel Markdown parsing, rendering, GFM, images, styling, and extensions. |
+| [kotlin-ui-dsl](kotlin-ui-dsl/SKILL.md) | Write IntelliJ dialogs, settings, and forms with Kotlin UI DSL v2 panels, rows, cells, bindings, and validation. |
 | [kotlin-ui-swing-component-architecture](kotlin-ui-swing-component-architecture/SKILL.md) | Design IntelliJ Swing UI components, state flow, EDT work, and lifecycle ownership. |
 | [module-dependencies](module-dependencies/SKILL.md) | Add or modify IntelliJ module dependencies in `.iml` files. |
 | [module-set-pluginization](module-set-pluginization/SKILL.md) | Convert Product DSL module sets into bundled wrapper plugins and fix loading wiring. |
