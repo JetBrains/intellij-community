@@ -250,7 +250,7 @@ class MavenDependencySmartCompletionTest(mavenVersion: String, modelVersion: Str
   }
 
   @Test
-  fun testCompletionArtifactIdThenGroupIdThenInsertVersion() = runBlocking {
+  fun testCompletionArtifactIdThenGroupIdThenVersion() = runBlocking {
 
     maven.createProjectPom("""
                        <groupId>test</groupId><artifactId>project</artifactId><version>1</version>
@@ -264,7 +264,7 @@ class MavenDependencySmartCompletionTest(mavenVersion: String, modelVersion: Str
     maven.refreshFiles(listOf(maven.projectPom))
     maven.fixture.configureFromExistingVirtualFile(maven.projectPom)
 
-    val elements = maven.fixture.completeBasic()
+    maven.fixture.completeBasic()
 
     maven.assertCompletionVariants(maven.fixture, maven.RENDERING_TEXT, "intellijartifactanother", "intellijartifact")
 
@@ -273,6 +273,12 @@ class MavenDependencySmartCompletionTest(mavenVersion: String, modelVersion: Str
     }
 
     maven.assertCompletionVariants(maven.fixture, maven.RENDERING_TEXT, "org.intellijgroup")
+
+    withContext(Dispatchers.EDT) {
+      maven.fixture.finishLookup('\n')
+    }
+
+    maven.assertCompletionVariants(maven.fixture, maven.RENDERING_TEXT, "1.0")
 
     withContext(Dispatchers.EDT) {
       maven.fixture.finishLookup('\n')
