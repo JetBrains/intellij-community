@@ -10,12 +10,12 @@ import com.intellij.psi.CustomHighlighterTokenType;
 import com.intellij.psi.StringEscapesTokenTypes;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.HashMap;
 import java.util.Map;
 
 public class CustomFileHighlighter extends SyntaxHighlighterBase {
-  private static final Map<IElementType, TextAttributesKey> ourKeys;
+  private static final @Unmodifiable @NotNull Map<@NotNull IElementType, @NotNull TextAttributesKey @NotNull []> ourKeys;
   private final SyntaxTable myTable;
 
   public CustomFileHighlighter(SyntaxTable table) {
@@ -23,21 +23,19 @@ public class CustomFileHighlighter extends SyntaxHighlighterBase {
   }
 
   static {
-    ourKeys = new HashMap<>();
-
-    ourKeys.put(CustomHighlighterTokenType.KEYWORD_1, CustomHighlighterColors.CUSTOM_KEYWORD1_ATTRIBUTES);
-    ourKeys.put(CustomHighlighterTokenType.KEYWORD_2, CustomHighlighterColors.CUSTOM_KEYWORD2_ATTRIBUTES);
-    ourKeys.put(CustomHighlighterTokenType.KEYWORD_3, CustomHighlighterColors.CUSTOM_KEYWORD3_ATTRIBUTES);
-    ourKeys.put(CustomHighlighterTokenType.KEYWORD_4, CustomHighlighterColors.CUSTOM_KEYWORD4_ATTRIBUTES);
-    ourKeys.put(CustomHighlighterTokenType.NUMBER, CustomHighlighterColors.CUSTOM_NUMBER_ATTRIBUTES);
-    ourKeys.put(CustomHighlighterTokenType.STRING, CustomHighlighterColors.CUSTOM_STRING_ATTRIBUTES);
-    ourKeys.put(CustomHighlighterTokenType.SINGLE_QUOTED_STRING, CustomHighlighterColors.CUSTOM_STRING_ATTRIBUTES);
-    ourKeys.put(StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN, CustomHighlighterColors.CUSTOM_VALID_STRING_ESCAPE);
-    ourKeys.put(StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN, CustomHighlighterColors.CUSTOM_INVALID_STRING_ESCAPE);
-    ourKeys.put(StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN, CustomHighlighterColors.CUSTOM_INVALID_STRING_ESCAPE);
-    ourKeys.put(CustomHighlighterTokenType.LINE_COMMENT, CustomHighlighterColors.CUSTOM_LINE_COMMENT_ATTRIBUTES);
-    ourKeys.put(CustomHighlighterTokenType.MULTI_LINE_COMMENT,
-                CustomHighlighterColors.CUSTOM_MULTI_LINE_COMMENT_ATTRIBUTES);
+    ourKeys = Map.ofEntries(
+    Map.entry(CustomHighlighterTokenType.KEYWORD_1, new TextAttributesKey[]{CustomHighlighterColors.CUSTOM_KEYWORD1_ATTRIBUTES}),
+    Map.entry(CustomHighlighterTokenType.KEYWORD_2, new TextAttributesKey[]{CustomHighlighterColors.CUSTOM_KEYWORD2_ATTRIBUTES}),
+    Map.entry(CustomHighlighterTokenType.KEYWORD_3, new TextAttributesKey[]{CustomHighlighterColors.CUSTOM_KEYWORD3_ATTRIBUTES}),
+    Map.entry(CustomHighlighterTokenType.KEYWORD_4, new TextAttributesKey[]{CustomHighlighterColors.CUSTOM_KEYWORD4_ATTRIBUTES}),
+    Map.entry(CustomHighlighterTokenType.NUMBER, new TextAttributesKey[]{CustomHighlighterColors.CUSTOM_NUMBER_ATTRIBUTES}),
+    Map.entry(CustomHighlighterTokenType.STRING, new TextAttributesKey[]{CustomHighlighterColors.CUSTOM_STRING_ATTRIBUTES}),
+    Map.entry(CustomHighlighterTokenType.SINGLE_QUOTED_STRING, new TextAttributesKey[]{CustomHighlighterColors.CUSTOM_STRING_ATTRIBUTES}),
+    Map.entry(StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN, new TextAttributesKey[]{CustomHighlighterColors.CUSTOM_VALID_STRING_ESCAPE}),
+    Map.entry(StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN, new TextAttributesKey[]{CustomHighlighterColors.CUSTOM_INVALID_STRING_ESCAPE}),
+    Map.entry(StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN, new TextAttributesKey[]{CustomHighlighterColors.CUSTOM_INVALID_STRING_ESCAPE}),
+    Map.entry(CustomHighlighterTokenType.LINE_COMMENT, new TextAttributesKey[]{CustomHighlighterColors.CUSTOM_LINE_COMMENT_ATTRIBUTES}),
+    Map.entry(CustomHighlighterTokenType.MULTI_LINE_COMMENT, new TextAttributesKey[]{CustomHighlighterColors.CUSTOM_MULTI_LINE_COMMENT_ATTRIBUTES}));
   }
 
   @Override
@@ -55,6 +53,6 @@ public class CustomFileHighlighter extends SyntaxHighlighterBase {
 
   @Override
   public @NotNull TextAttributesKey @NotNull [] getTokenHighlights(@NotNull IElementType tokenType) {
-    return pack(ourKeys.get(tokenType));
+    return ourKeys.getOrDefault(tokenType, TextAttributesKey.EMPTY_ARRAY);
   }
 }
