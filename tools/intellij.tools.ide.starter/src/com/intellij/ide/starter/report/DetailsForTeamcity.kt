@@ -32,7 +32,6 @@ object DetailsForTeamcity : DetailsOnCI {
   private fun getFailureDetailsForCI(runContext: IDERunContext, error: Error?): String {
     val uri = getLinkToCIArtifacts(runContext)
     return "Test: ${getActiveTestName(runContext, error)}" + System.lineSeparator() +
-           "You can find logs and other info in CI artifacts under the path ${runContext.contextName}" + System.lineSeparator() +
            "Link on TC artifacts $uri"
   }
 
