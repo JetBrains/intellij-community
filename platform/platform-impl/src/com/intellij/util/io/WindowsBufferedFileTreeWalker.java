@@ -35,7 +35,6 @@ final class WindowsBufferedFileTreeWalker {
     new WindowsBufferedFileTreeWalker(visitor).walk(root);
   }
 
-  /// One open directory on the walk stack: its path, the backing stream and a lazily advanced iterator over its entries.
   private static final class DirectoryFrame {
     final Path dir;
     final WindowsBufferedDirectoryStream stream;
@@ -67,7 +66,7 @@ final class WindowsBufferedFileTreeWalker {
           // throws a (runtime) DirectoryIteratorException that unwinds the stack instead of reaching this point.
           myStack.pop();
           top.stream.close();
-          if (!bubbleToParent(myVisitor.postVisitDirectory(top.dir, null))) return;  // TERMINATE
+          if (!rewindToParent(myVisitor.postVisitDirectory(top.dir, null))) return;  // TERMINATE
           continue;
         }
 
@@ -96,15 +95,10 @@ final class WindowsBufferedFileTreeWalker {
     }
   }
 
-  /// Runs {@code preVisitDirectory} and, when it returns {@code CONTINUE}, opens {@code dir} and pushes a frame.
-  ///
-  /// @return {@code null} when a frame was pushed (the walk descended into {@code dir}); otherwise the result the caller
-  /// must bubble up: {@code preVisitDirectory}'s own value for {@code TERMINATE}/{@code SKIP_SIBLINGS}, {@code CONTINUE}
-  /// for {@code SKIP_SUBTREE}, or {@code postVisitDirectory}'s value when the directory failed to open.
   private @Nullable FileVisitResult enterDirectory(@NotNull Path dir, @NotNull BasicFileAttributes attrs) throws IOException {
     FileVisitResult pre = myVisitor.preVisitDirectory(dir, attrs);
     if (pre == FileVisitResult.SKIP_SUBTREE) return FileVisitResult.CONTINUE;
-    if (pre != FileVisitResult.CONTINUE) return pre;  // TERMINATE / SKIP_SIBLINGS bubble up to the caller
+    if (pre != FileVisitResult.CONTINUE) return pre;  // TERMINATE / SKIP_SIBLINGS rewind up to the caller
 
     WindowsBufferedDirectoryStream stream;
     try {
@@ -117,15 +111,12 @@ final class WindowsBufferedFileTreeWalker {
     return null;
   }
 
-  /// @return the next eligible entry of {@code frame}, or {@code null} when the directory is skipped or exhausted.
   private static @Nullable Pair<Path, BasicFileAttributes> nextEntry(@NotNull DirectoryFrame frame) {
     if (frame.skipRemaining || !frame.iterator.hasNext()) return null;
     return frame.iterator.next();
   }
 
-  /// Applies a {@code postVisitDirectory} result to the parent directory still on the stack.
-  /// @return {@code false} when the walk must terminate, {@code true} to continue.
-  private boolean bubbleToParent(@NotNull FileVisitResult result) {
+  private boolean rewindToParent(@NotNull FileVisitResult result) {
     if (result == FileVisitResult.TERMINATE) return false;
     DirectoryFrame parent = myStack.peek();
     if (result == FileVisitResult.SKIP_SIBLINGS && parent != null) parent.skipRemaining = true;
