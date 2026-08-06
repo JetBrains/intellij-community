@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.markdown.backend.services
 
+import com.intellij.markdown.backend.inspections.resolveReferences
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
@@ -11,8 +12,6 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.intellij.plugins.markdown.lang.MarkdownFileType
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownLinkDestination
-import com.intellij.markdown.backend.inspections.resolveReferences
 import org.jetbrains.annotations.ApiStatus
 import java.util.function.Predicate
 
@@ -20,8 +19,7 @@ import java.util.function.Predicate
 object MarkdownFileGraphUtils {
 
   /**
-   * Collects the connected component of Markdown files that contains [root]. Currently, the dependencies are detected via
-   * [MarkdownLinkDestination].
+   * Collects the connected component of Markdown files that contains [root]. Dependencies are detected via file references.
    *
    * Markdown links are treated as undirected links: the result includes files reachable from [root] through outgoing links,
    * and files that link back to any already discovered file. Cycles and duplicate links are ignored, so each file
@@ -57,12 +55,10 @@ object MarkdownFileGraphUtils {
 
       file.accept(object : PsiRecursiveElementWalkingVisitor() {
         override fun visitElement(element: PsiElement) {
-          if (element is MarkdownLinkDestination) {
-            resolveReferences(element)
-              .mapNotNull { it.target }
-              .mapNotNull { it.containingFile }
-              .forEach { enqueue(it) }
-          }
+          resolveReferences(element)
+            .mapNotNull { it.target }
+            .mapNotNull { it.containingFile }
+            .forEach { enqueue(it) }
           super.visitElement(element)
         }
       })
