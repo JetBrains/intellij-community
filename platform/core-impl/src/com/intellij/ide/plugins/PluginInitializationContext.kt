@@ -124,7 +124,7 @@ fun PluginInitializationContext.validatePluginIsCompatible(plugin: PluginMainDes
   if (AppMode.isDisableNonBundledPlugins()) {
     return NonBundledPluginsAreExplicitlyDisabled(plugin)
   }
-  PluginManagerCore.checkBuildNumberCompatibility(plugin, productBuildNumber)?.let {
+  PluginCompatibilityUtils.checkBuildNumberCompatibility(plugin, productBuildNumber)?.let {
     return it
   }
   // "Show broken plugins in Settings | Plugins so that users can uninstall them and resolve 'Plugin Error' (IDEA-232675)"

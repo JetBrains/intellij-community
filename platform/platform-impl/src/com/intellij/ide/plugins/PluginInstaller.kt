@@ -332,7 +332,7 @@ object PluginInstaller {
         return
       }
 
-      val error = PluginManagerCore.checkBuildNumberCompatibility(pluginDescriptor, PluginManagerCore.buildNumber)
+      val error = PluginCompatibilityUtils.checkBuildNumberCompatibility(pluginDescriptor, PluginManagerCore.buildNumber)
       if (error != null) {
         MessagesEx.showErrorDialog(parent, error.detailedMessage, CommonBundle.getErrorTitle())
         return

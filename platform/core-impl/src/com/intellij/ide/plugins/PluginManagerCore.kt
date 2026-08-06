@@ -6,6 +6,7 @@ import com.intellij.diagnostic.Activity
 import com.intellij.diagnostic.CoroutineTracerShim
 import com.intellij.diagnostic.LoadingState
 import com.intellij.ide.plugins.DisabledPluginsState.Companion.invalidate
+import com.intellij.ide.plugins.PluginCompatibilityUtils.checkBuildNumberCompatibility
 import com.intellij.ide.plugins.PluginInitializationDiagnosticUtils.getIdString
 import com.intellij.ide.plugins.PluginUtils.findEnabledOrInstalledPlugin
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
@@ -23,9 +24,6 @@ import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.PlatformUtils
 import com.intellij.util.lang.ZipEntryResolverPool
-import com.intellij.util.system.CpuArch
-import com.intellij.util.system.LowLevelLocalMachineAccess
-import com.intellij.util.system.OS
 import com.intellij.util.text.VersionComparatorUtil
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -49,15 +47,12 @@ private const val PLATFORM_ALIAS_DEPENDENCY_PREFIX = "com.intellij.module"
 internal val QODANA_PLUGINS_THIRD_PARTY_ACCEPT = System.getProperty("idea.qodana.thirdpartyplugins.accept").toBoolean()
 internal val FLEET_BACKEND_PLUGINS_THIRD_PARTY_ACCEPT = System.getProperty("fleet.backend.third-party.plugins.accept").toBoolean()
 
-private val LOG = Logger.getInstance(PluginManagerCore::class.java)
-
 /**
  * See [Plugin Model](https://youtrack.jetbrains.com/articles/IJPL-A-31/Plugin-Model) documentation.
  *
  * @implNote Prefer to use only JDK classes. Any post-start-up functionality should be placed in [PluginManager] class.
  * @see PluginDetailsService for information about plugins for applied functionality
  */
-@OptIn(LowLevelLocalMachineAccess::class)
 object PluginManagerCore {
   const val META_INF: String = "META-INF/"
   const val CORE_PLUGIN_ID: String = "com.intellij"
@@ -456,101 +451,6 @@ object PluginManagerCore {
   @JvmStatic
   fun isIncompatible(descriptor: IdeaPluginDescriptor, buildNumber: BuildNumber?): Boolean =
     checkBuildNumberCompatibility(descriptor, buildNumber ?: PluginManagerCore.buildNumber) != null
-
-  private val OS_ARCH_DEPENDENCY_VERSION: Regex = Regex("([\\w.]+)-(\\w+)-(\\w+)")
-
-  @ApiStatus.Internal
-  fun getUnfulfilledOsRequirement(descriptor: IdeaPluginDescriptor): IdeaPluginOsRequirement? {
-    if (descriptor.dependencies.isEmpty()) {
-      // try to infer Arch requirement from version, some plugin repositories do not provide dependencies
-      val matchedVersion = descriptor.version?.let { OS_ARCH_DEPENDENCY_VERSION.matchEntire(it) }
-      val osTag = matchedVersion?.groupValues[2] ?: return null
-
-      val logMessage = "Required OS for ${descriptor.pluginId} version: ${descriptor.version} is $osTag"
-      LOG.debug(logMessage)
-
-      return OS.fromString(osTag)
-        .takeIf { it != OS.Other }
-        ?.let { IdeaPluginOsRequirement.fromOs(it) }
-        ?.takeIf { osReq -> !osReq.isHostOs() }
-        ?.also { LOG.warn(logMessage) }
-    }
-
-    return descriptor.getDependencies().asSequence()
-      .mapNotNull { dep -> IdeaPluginOsRequirement.fromModuleId(dep.pluginId).takeIf { !dep.isOptional } }
-      .firstOrNull { osReq -> !osReq.isHostOs() }
-  }
-
-  @ApiStatus.Internal
-  fun getUnfulfilledCpuArchRequirement(descriptor: IdeaPluginDescriptor): PluginCpuArchRequirement? {
-    if (descriptor.dependencies.isEmpty()) {
-      // try to infer Arch requirement from version, some plugin repositories do not provide dependencies
-      val matchedVersion = descriptor.version?.let { OS_ARCH_DEPENDENCY_VERSION.matchEntire(it) }
-      val archTag = matchedVersion?.groupValues[3] ?: return null
-
-      val logMessage = "Required arch for ${descriptor.pluginId} version: ${descriptor.version} is $archTag"
-      LOG.debug(logMessage)
-
-      return CpuArch.fromString(archTag)
-        .takeIf { it != CpuArch.OTHER && it != CpuArch.UNKNOWN }
-        ?.let { PluginCpuArchRequirement.fromArch(it) }
-        ?.takeIf { osReq -> !osReq.isHostArch() }
-        ?.also { LOG.warn(logMessage) }
-    }
-
-    return descriptor.getDependencies().asSequence()
-      .mapNotNull { dep -> PluginCpuArchRequirement.fromPluginId(dep.pluginId).takeIf { !dep.isOptional } }
-      .firstOrNull { osReq -> !osReq.isHostArch() }
-  }
-
-  @ApiStatus.Internal
-  @JvmStatic
-  fun checkBuildNumberCompatibility(descriptor: IdeaPluginDescriptor, ideBuildNumber: BuildNumber): PluginNonLoadReason? {
-    val requiredOs = getUnfulfilledOsRequirement(descriptor)
-    if (requiredOs != null) {
-      return PluginIsIncompatibleWithHostPlatform(descriptor, requiredOs, OS.CURRENT.name)
-    }
-
-    val requiredArch = getUnfulfilledCpuArchRequirement(descriptor)
-    if (requiredArch != null) {
-      return PluginIsIncompatibleWithHostCpu(descriptor, requiredArch, CpuArch.CURRENT)
-    }
-
-    if (isIgnoreCompatibility) {
-      return null
-    }
-
-    try {
-      val sinceBuild = descriptor.getSinceBuild()
-      if (sinceBuild != null) {
-        val pluginName = descriptor.getName()
-        val sinceBuildNumber = try {
-          BuildNumber.fromString(sinceBuild, pluginName, null)
-        }
-        catch (e: RuntimeException) {
-          logger.error(e)
-          null
-        }
-        if (sinceBuildNumber != null && sinceBuildNumber > ideBuildNumber) {
-          return PluginSinceBuildConstraintViolation(descriptor, ideBuildNumber)
-        }
-      }
-
-      val untilBuild = descriptor.getUntilBuild()
-      if (untilBuild != null) {
-        val pluginName = descriptor.getName()
-        val untilBuildNumber = BuildNumber.fromString(untilBuild, pluginName, null)
-        if (untilBuildNumber != null && untilBuildNumber < ideBuildNumber) {
-          return PluginUntilBuildConstraintViolation(descriptor, ideBuildNumber)
-        }
-      }
-    }
-    catch (e: Exception) {
-      logger.error(e)
-      return PluginMalformedSinceUntilConstraints(descriptor)
-    }
-    return null
-  }
 
   @ApiStatus.Internal
   fun initializePlugins(

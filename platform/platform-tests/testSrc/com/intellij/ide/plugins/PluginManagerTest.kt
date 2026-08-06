@@ -289,8 +289,8 @@ class PluginManagerTest {
       val optional = object : TestIdeaPluginDescriptor() {
         override fun getDependencies(): List<IdeaPluginDependency> = listOf(PluginDependency(module.moduleId, true))
       }
-      assertThat(PluginManagerCore.getUnfulfilledOsRequirement(required)).isEqualTo(module.takeIf { !module.isHostOs() })
-      assertThat(PluginManagerCore.getUnfulfilledOsRequirement(optional)).isEqualTo(null)
+      assertThat(PluginCompatibilityUtils.getUnfulfilledOsRequirement(required)).isEqualTo(module.takeIf { !module.isHostOs() })
+      assertThat(PluginCompatibilityUtils.getUnfulfilledOsRequirement(optional)).isEqualTo(null)
     }
   }
 
@@ -302,7 +302,7 @@ class PluginManagerTest {
       override fun getPluginId(): PluginId = PluginId.getId("test.plugin")
     }
     fun assertInferred(version: String?, expected: IdeaPluginOsRequirement?) {
-      assertThat(PluginManagerCore.getUnfulfilledOsRequirement(descriptor(version)))
+      assertThat(PluginCompatibilityUtils.getUnfulfilledOsRequirement(descriptor(version)))
         .isEqualTo(expected?.takeIf { !it.isHostOs() })
     }
 
@@ -327,7 +327,7 @@ class PluginManagerTest {
       override fun getPluginId(): PluginId = PluginId.getId("test.plugin")
     }
     fun assertInferred(version: String?, expected: PluginCpuArchRequirement?) {
-      assertThat(PluginManagerCore.getUnfulfilledCpuArchRequirement(descriptor(version)))
+      assertThat(PluginCompatibilityUtils.getUnfulfilledCpuArchRequirement(descriptor(version)))
         .isEqualTo(expected?.takeIf { !it.isHostArch() })
     }
 
@@ -384,7 +384,7 @@ class PluginManagerTest {
         override fun getVersion(): @NlsSafe String? = null
         override fun getDependencies(): List<IdeaPluginDependency> = listOf()
       }
-      return PluginManagerCore.checkBuildNumberCompatibility(desc, BuildNumber.fromString(ideVersion)!!)
+      return PluginCompatibilityUtils.checkBuildNumberCompatibility(desc, BuildNumber.fromString(ideVersion)!!)
     }
 
     private fun checkCompatibility(platformId: String): Boolean {
@@ -401,7 +401,7 @@ class PluginManagerTest {
           }
         )
       }
-      return PluginManagerCore.checkBuildNumberCompatibility(desc, BuildNumber.fromString("145")!!) == null
+      return PluginCompatibilityUtils.checkBuildNumberCompatibility(desc, BuildNumber.fromString("145")!!) == null
     }
 
     private fun assertCompatible(ideVersion: String?, sinceBuild: String?, untilBuild: String?) {
