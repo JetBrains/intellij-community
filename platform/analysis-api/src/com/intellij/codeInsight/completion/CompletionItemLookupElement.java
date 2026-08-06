@@ -6,11 +6,14 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModUpdateFileText;
 import com.intellij.modcompletion.ModCompletionItem;
 import com.intellij.modcompletion.ModCompletionItemPresentation;
 import com.intellij.openapi.diagnostic.ReportingClassSubstitutor;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.MarkupText;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
@@ -31,10 +34,8 @@ import java.util.stream.Stream;
 @ApiStatus.Internal
 public final class CompletionItemLookupElement extends LookupElement implements ReportingClassSubstitutor {
   private final ModCompletionItem myItem;
-  private volatile @Nullable CachedCommand myCachedCommand;
+  private volatile @Nullable ModCommand myCachedCommand;
   private final AutoCompletionPolicy myPolicy;
-  
-  record CachedCommand(ModCommand command, long stamp) {}
 
   public CompletionItemLookupElement(ModCompletionItem item) {
     this(item, item.autoCompletionPolicy());
@@ -81,7 +82,7 @@ public final class CompletionItemLookupElement extends LookupElement implements 
       return command;
     }
     command = myItem.perform(actionContext, insertionContext);
-    myCachedCommand = new CachedCommand(command, actionContext.file().getFileDocument().getModificationStamp());
+    myCachedCommand = command;
     return command;
   }
 
@@ -97,15 +98,37 @@ public final class CompletionItemLookupElement extends LookupElement implements 
    * @see #computeCommand(ActionContext, ModCompletionItem.InsertionContext)
    */
   public @Nullable ModCommand getCachedCommand(ActionContext actionContext, ModCompletionItem.InsertionContext insertionContext) {
-    if (!insertionContext.equals(ModCompletionItem.DEFAULT_INSERTION_CONTEXT)) return null;
-    CachedCommand cachedCommand = myCachedCommand;
-    if (cachedCommand == null || cachedCommand.stamp() != actionContext.file().getFileDocument().getModificationStamp()) return null;
-    return cachedCommand.command;
+    ModCommand command = myCachedCommand;
+    if (command == null || !insertionContext.equals(ModCompletionItem.DEFAULT_INSERTION_CONTEXT)) {
+      return null;
+    }
+    if (isApplicableToContext(command, actionContext)) {
+      return command;
+    }
+    return null;
   }
 
   @Override
   public Class<?> getSubstitutedClass() {
     return myItem.getClass();
+  }
+
+  private static boolean isApplicableToContext(ModCommand command, ActionContext context) {
+    VirtualFile file = context.file().getVirtualFile();
+    String text = context.file().getFileDocument().getText();
+    TextRange selection = context.selection();
+    if (!selection.isEmpty()) {
+      text = text.substring(0, selection.getStartOffset())
+             + text.substring(selection.getEndOffset());
+    }
+    for (ModCommand subCommand : command.unpack()) {
+      if (subCommand instanceof ModUpdateFileText update) {
+        if (update.file().equals(file)) {
+          return update.oldText().equals(text);
+        }
+      }
+    }
+    return false;
   }
 
   @Override
