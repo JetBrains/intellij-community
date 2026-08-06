@@ -40,6 +40,18 @@ class NioFileTreeModel(
   companion object {
 
     private val LOG = Logger.getInstance(NioFileTreeModel::class.java)
+
+    /**
+     * Whether a node may have children. Resolved from [attrs] when the caller already read them
+     * (children come from [PlatformNioHelper.visitDirectory] with attributes), so expanding
+     * a directory does not `stat` anything again.
+     */
+    private fun resolveIsDirectory(path: Path?, attrs: BasicFileAttributes?): Boolean = when {
+      path == null -> true                                    // a virtual root is a container and must stay expandable
+      attrs != null && !attrs.isSymbolicLink -> attrs.isDirectory
+      path.parent == null -> true                             // a file-system root stays expandable even when unreadable
+      else -> Files.isDirectory(path)                         // symlink or a root without attributes
+    }
   }
 
   private val invoker: Invoker = Invoker.forBackgroundThreadWithoutReadAction(this)
@@ -202,9 +214,95 @@ class NioFileTreeModel(
 
     private fun isHiddenFromAttrs(entry: ChildEntry): Boolean = NioFileChooserUtil.isHidden(entry.path, entry.attrs)
 
-    fun getChildrenWithAttributes(path: Path): List<ChildEntry>? {
-      if (!isValid(path)) return null
-      if (!Files.isDirectory(path)) return null
+    fun getRoots(): List<Root> {
+      if (!model.invoker.isValidThread) {
+        LOG.error(IllegalStateException(Thread.currentThread().name))
+      }
+      if (descriptorRoots != null) {
+        val files = descriptorRoots
+        if (files.isEmpty()) return emptyList()
+        return files.map { file -> Root(this, model.contributor, file, contributorRoot = null) }
+      }
+      val realRoots = model.contributorRoots.filter { it.path != null }
+      val virtualRoots = model.contributorRoots.filter { it.path == null }
+      if (realRoots.isEmpty() && virtualRoots.isEmpty()) return emptyList()
+      val realRootNodes = realRoots.map { root -> Root(this, model.contributor, root.path!!, contributorRoot = root) }
+      val virtualRootNodes = virtualRoots.map { root -> VirtualRoot(this, model.contributor, root) }
+      return realRootNodes + virtualRootNodes
+    }
+
+
+    override fun toString(): String = descriptor.title
+
+    companion object {
+      fun isValid(path: Path?): Boolean = path != null && Files.exists(path)
+
+      fun getRoots(descriptor: FileChooserDescriptor): List<Path>? {
+        val list = descriptor.roots
+          .mapNotNull { vf ->
+            try {
+              vf.toNioPath()
+            }
+            catch (_: UnsupportedOperationException) {
+              null
+            }
+          }
+          .filter { isValid(it) }
+        return if (list.isEmpty() && descriptor.isShowFileSystemRoots) null else list
+      }
+    }
+  }
+
+  private open class Node(
+    protected val contributor: UniversalFileChooserContributor?,
+    path: Path?,
+    attrs: BasicFileAttributes? = null,
+    isDirectory: Boolean? = null,) : NioFileNode(path) {
+    val isDirectory: Boolean = isDirectory ?: resolveIsDirectory(path, attrs)
+    init {
+      updateContent(attrs)
+    }
+
+    protected open fun updateContent(attrs: BasicFileAttributes?) {
+      val p = path
+      check(p != null)
+      updateName(contributor.fileName(p))
+      if (attrs != null) {
+        var icon: Icon? =
+          if (isDirectory) PlatformIcons.FOLDER_ICON
+          else FileTypeRegistry.getInstance().getFileTypeByFileName(p.toString()).icon
+        val isSymlink = attrs.isSymbolicLink
+        if (isSymlink && icon != null) {
+          icon = PredefinedIconOverlayService.getInstance().createSymlinkIcon(icon)
+        }
+        updateIcon(icon)
+        updateValid(true)
+        updateHidden(NioFileChooserUtil.isHidden(path, attrs))
+        updateSymlink(isSymlink)
+      }
+      else if (p.parent == null) {
+        updateIcon(PlatformIcons.FOLDER_ICON)
+        updateValid(true)
+        updateHidden(false)
+        updateSymlink(false)
+      }
+      else {
+        var icon: Icon? =
+          if (isDirectory) PlatformIcons.FOLDER_ICON
+          else FileTypeRegistry.getInstance().getFileTypeByFileName(p.toString()).icon
+        val isSymlink = Files.isSymbolicLink(p)
+        if (isSymlink && icon != null) {
+          icon = PredefinedIconOverlayService.getInstance().createSymlinkIcon(icon)
+        }
+        updateIcon(icon)
+        updateValid(Files.exists(p))
+        updateHidden(NioFileChooserUtil.isHidden(p))
+        updateSymlink(isSymlink)
+      }
+    }
+
+    fun getChildrenWithAttributes(): List<ChildEntry>? {
+      if (path == null || !isDirectory) return null
       return try {
         val result = mutableListOf<ChildEntry>()
         PlatformNioHelper.visitDirectory(path, null) { childPath, attrResult ->
@@ -232,95 +330,6 @@ class NioFileTreeModel(
       }
     }
 
-    fun getRoots(): List<Root> {
-      if (!model.invoker.isValidThread) {
-        LOG.error(IllegalStateException(Thread.currentThread().name))
-      }
-      if (descriptorRoots != null) {
-        val files = descriptorRoots
-        if (files.isEmpty()) return emptyList()
-        return files.map { file -> Root(this, model.contributor, file, contributorRoot = null) }
-      }
-      val realRoots = model.contributorRoots.filter { it.path != null }
-      val virtualRoots = model.contributorRoots.filter { it.path == null }
-      if (realRoots.isEmpty() && virtualRoots.isEmpty()) return emptyList()
-      val realRootNodes = realRoots.map { root -> Root(this, model.contributor, root.path!!, contributorRoot = root) }
-      val virtualRootNodes = virtualRoots.map { root -> VirtualRoot(this, model.contributor, root) }
-      return realRootNodes + virtualRootNodes
-    }
-
-
-    override fun toString(): String = descriptor.title
-
-    companion object {
-      fun isValid(path: Path?): Boolean = path != null && Files.exists(path)
-
-      fun isLeaf(path: Path?): Boolean = path != null && (path.parent != null && !Files.isDirectory(path))
-
-      fun getRoots(descriptor: FileChooserDescriptor): List<Path>? {
-        val list = descriptor.roots
-          .mapNotNull { vf ->
-            try {
-              vf.toNioPath()
-            }
-            catch (_: UnsupportedOperationException) {
-              null
-            }
-          }
-          .filter { isValid(it) }
-        return if (list.isEmpty() && descriptor.isShowFileSystemRoots) null else list
-      }
-    }
-  }
-
-  private open class Node(
-    protected val contributor: UniversalFileChooserContributor?,
-    path: Path?,
-    attrs: BasicFileAttributes? = null,
-    isDirectory: Boolean? = null,
-  ) : NioFileNode(path) {
-
-    init {
-      updateContent(attrs, isDirectory)
-    }
-
-    protected open fun updateContent(attrs: BasicFileAttributes?, isDirectory: Boolean?) {
-      val p = path
-      check(p != null)
-      updateName(contributor.fileName(p))
-      if (attrs != null) {
-        val directory = isDirectory ?: attrs.isDirectory
-        var icon: Icon? =
-          if (directory) PlatformIcons.FOLDER_ICON
-          else FileTypeRegistry.getInstance().getFileTypeByFileName(p.toString()).icon
-        val isSymlink = attrs.isSymbolicLink
-        if (isSymlink && icon != null) {
-          icon = PredefinedIconOverlayService.getInstance().createSymlinkIcon(icon)
-        }
-        updateIcon(icon)
-        updateValid(true)
-        updateHidden(NioFileChooserUtil.isHidden(path, attrs))
-        updateSymlink(isSymlink)
-      }
-      else if (p.parent ==null) {
-        updateIcon(PlatformIcons.FOLDER_ICON)
-        updateValid(true)
-        updateHidden(false)
-        updateSymlink(false)
-      }
-      else {
-        var icon: Icon? = NioFileChooserUtil.getIcon(p)
-        val isSymlink = Files.isSymbolicLink(p)
-        if (isSymlink && icon != null) {
-          icon = PredefinedIconOverlayService.getInstance().createSymlinkIcon(icon)
-        }
-        updateIcon(icon)
-        updateValid(Files.exists(p))
-        updateHidden(NioFileChooserUtil.isHidden(p))
-        updateSymlink(isSymlink)
-      }
-    }
-
     override fun toString(): String = name ?: ""
   }
 
@@ -328,15 +337,13 @@ class NioFileTreeModel(
     state: State,
     contributor: UniversalFileChooserContributor?,
     path: Path?,
-    attrs: BasicFileAttributes? = null,
-    isDirectory: Boolean? = null,
     contributorRoot: UniversalFileChooserContributor.Root? = null,
   ) :
-    Node(contributor, path, attrs, isDirectory) {
+    Node(contributor, path) {
     val tree: MapBasedTree<Path, Node> = MapBasedTree(false, { it.path }, state.path)
 
     init {
-      tree.updateRoot(Pair.create(this, attrs?.let { !(isDirectory ?: it.isDirectory) } ?: State.isLeaf(path)))
+      tree.updateRoot(Pair.create(this, !isDirectory))
       if (contributorRoot != null) {
         val presentation = contributorRoot.presentation
         presentation.icon?.let { updateIcon(it) }
@@ -346,8 +353,8 @@ class NioFileTreeModel(
     }
 
     open fun updateChildren(state: State, parent: Entry<Node>): MapBasedTree.UpdateResult<Node> {
-      val children = parent.node.path?.let{ state.getChildrenWithAttributes(it) }
-        ?: return tree.update(parent, null)
+      val children = parent.node.getChildrenWithAttributes()
+      if (children == null) return tree.update(parent, null)
       if (children.isEmpty()) return tree.update(parent, emptyList())
       return tree.update(parent, children
         .filter { state.isVisible(it) }
@@ -374,7 +381,7 @@ class NioFileTreeModel(
       updateValid(true)
     }
 
-    override fun updateContent(attrs: BasicFileAttributes?, isDirectory: Boolean?) {
+    override fun updateContent(attrs: BasicFileAttributes?) {
     }
 
     override fun updateChildren(state: State, parent: Entry<Node>): MapBasedTree.UpdateResult<Node> {
