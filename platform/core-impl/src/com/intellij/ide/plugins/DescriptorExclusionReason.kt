@@ -35,23 +35,6 @@ class DependencyIsNotVisible(
   val visibilityViolationLogMessage: String,
 ) : DescriptorExclusionReason
 
-@ApiStatus.Internal
-class IncompatibleWithAnotherModule(
-  override val descriptor: IdeaPluginDescriptorImpl,
-  val preferredIncompatibleModule: PluginModuleDescriptor,
-) : DescriptorExclusionReason
-
-@ApiStatus.Internal
-class PartOfDependencyCycle(
-  override val descriptor: IdeaPluginDescriptorImpl,
-  val dependencyCycle: DependencyCycleInfo<IdeaPluginDescriptorImpl>,
-) : DescriptorExclusionReason
-
-@ApiStatus.Internal
-class PartOfRuntimeModuleGroupDependencyCycle(
-  override val descriptor: IdeaPluginDescriptorImpl,
-  val dependencyCycle: DependencyCycleInfo<RuntimeModuleGroup>,
-) : DescriptorExclusionReason
 
 @ApiStatus.Internal
 class DependsParentIsExcluded(
@@ -81,6 +64,24 @@ class RequiredContentModuleIsExcluded(
 @ApiStatus.Internal
 class OnDemandContentModuleHasNoDependentsLeft(
   override val descriptor: ContentModuleDescriptor,
+) : DescriptorExclusionReason
+
+@ApiStatus.Internal
+class PartOfDependencyCycle(
+  override val descriptor: IdeaPluginDescriptorImpl,
+  val dependencyCycle: DependencyCycleInfo<IdeaPluginDescriptorImpl>,
+) : DescriptorExclusionReason
+
+@ApiStatus.Internal
+class PartOfRuntimeModuleGroupDependencyCycle(
+  override val descriptor: IdeaPluginDescriptorImpl,
+  val dependencyCycle: DependencyCycleInfo<RuntimeModuleGroup>,
+) : DescriptorExclusionReason
+
+@ApiStatus.Internal
+class IncompatibleWithAnotherModule(
+  override val descriptor: IdeaPluginDescriptorImpl,
+  val preferredIncompatibleModule: PluginModuleDescriptor,
 ) : DescriptorExclusionReason
 
 @ApiStatus.Internal
