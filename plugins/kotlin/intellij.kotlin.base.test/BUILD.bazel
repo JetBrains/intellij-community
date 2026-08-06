@@ -10,7 +10,11 @@ jvm_library(
     ),
     module_name = "intellij.kotlin.base.test",
     visibility = ["//visibility:public"],
-    runtime_deps = ["//libraries/kotlin/reflect"],
+    runtime_deps = [
+        # do not sort,
+        "//libraries/kotlin/reflect",
+        "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes",
+    ],
 )
 
 jvm_library(
@@ -120,6 +124,8 @@ jvm_library(
         "//plugins/kotlin/code-insight/api:api_test_lib",
         "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
         "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
+        "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes",
+        "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes_test_lib",
         "//plugins/kotlin/frontend-independent",
         "//plugins/kotlin/frontend-independent:frontend-independent_test_lib",
         "//plugins/kotlin/jvm/shared",

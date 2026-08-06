@@ -22,6 +22,7 @@ jvm_library(
         "//plugins/kotlin:kotlin-plugin-community-main",
         "//plugins/kotlin/fir",
         "//plugins/kotlin/base/psi",
+        "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes",
     ],
 )
 
@@ -150,6 +151,8 @@ jvm_library(
         "//java/openapi:java_test_lib",
         "//libraries/kotlinc/analysis-api-platform-interface:libraries-kotlinc-analysis-api-platform-interface",
         "//libraries/kotlinc/analysis-api-platform-interface:libraries-kotlinc-analysis-api-platform-interface_test_lib",
+        "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes",
+        "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes_test_lib",
         "//plugins/kotlin/base/external-build-system:kotlin-base-externalSystem",
         "//plugins/kotlin/base/external-build-system:kotlin-base-externalSystem_test_lib",
         "//platform/util/jdom",

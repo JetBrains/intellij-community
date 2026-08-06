@@ -76,6 +76,7 @@ jvm_library(
         "//platform/util:util-ui",
         "//java/java-impl:impl",
         "//libraries/kotlinc/analysis-api-impl-base:libraries-kotlinc-analysis-api-impl-base",
+        "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes",
         "//libraries/fastutil",
     ],
 )
@@ -133,6 +134,7 @@ jvm_library(
         "//libraries/junit4",
         "//libraries/junit4:junit4_test_lib",
         "//libraries/kotlinc/analysis-api-impl-base:libraries-kotlinc-analysis-api-impl-base_test_lib",
+        "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes_test_lib",
         "//libraries/fastutil:fastutil_test_lib",
     ],
 )

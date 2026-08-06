@@ -75,6 +75,7 @@ jvm_library(
         "//plugins/kotlin/base/facet",
         "//plugins/kotlin/code-insight/utils",
         "//libraries/kotlinc/analysis-api-k2:libraries-kotlinc-analysis-api-k2",
+        "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes",
         "//plugins/kotlin/formatter/minimal",
         "//plugins/kotlin/refactorings/kotlin.refactorings.k2:kotlin-refactorings",
         "//java/openapi:java",
@@ -157,6 +158,7 @@ jvm_library(
         "//plugins/kotlin/base/facet:facet_test_lib",
         "//plugins/kotlin/code-insight/utils:utils_test_lib",
         "//libraries/kotlinc/analysis-api-k2:libraries-kotlinc-analysis-api-k2_test_lib",
+        "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes_test_lib",
         "//plugins/kotlin/formatter/minimal:minimal_test_lib",
         "//plugins/kotlin/refactorings/kotlin.refactorings.k2:kotlin-refactorings_test_lib",
         "//java/openapi:java_test_lib",
@@ -213,7 +215,11 @@ jvm_library(
     ),
     module_name = "intellij.kotlin.codeInsight.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = ["//plugins/kotlin:kotlin-plugin-community-main"],
+    runtime_deps = [
+        # do not sort,
+        "//plugins/kotlin:kotlin-plugin-community-main",
+        "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes",
+    ],
 )
 
 jvm_library(
@@ -341,6 +347,8 @@ jvm_library(
         "//plugins/kotlin/code-insight/utils:utils_test_lib",
         "//libraries/kotlinc/analysis-api-k2:libraries-kotlinc-analysis-api-k2",
         "//libraries/kotlinc/analysis-api-k2:libraries-kotlinc-analysis-api-k2_test_lib",
+        "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes",
+        "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes_test_lib",
         "//plugins/kotlin/formatter/minimal",
         "//plugins/kotlin/formatter/minimal:minimal_test_lib",
         "//plugins/kotlin/refactorings/kotlin.refactorings.k2:kotlin-refactorings",
