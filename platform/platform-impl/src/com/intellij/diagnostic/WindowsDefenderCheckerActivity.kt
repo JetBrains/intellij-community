@@ -18,8 +18,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.eel.isWindows
-import com.intellij.platform.eel.provider.asEelPath
+import com.intellij.platform.eel.provider.LocalEelMachine
+import com.intellij.platform.eel.provider.ownsPath
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.util.io.computeDetached
@@ -68,8 +68,7 @@ internal class WindowsDefenderCheckerActivity : ProjectActivity {
     }
 
     @OptIn(LowLevelLocalMachineAccess::class)
-    fun isLocalWindowsPath(path: Path): Boolean =
-      OS.CURRENT == OS.Windows && path.asEelPath().descriptor.osFamily.isWindows
+    fun isLocalWindowsPath(path: Path): Boolean = OS.CURRENT == OS.Windows && LocalEelMachine.ownsPath(path)
   }
 
   init {
