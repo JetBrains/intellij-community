@@ -52,9 +52,9 @@ import org.jetbrains.intellij.build.impl.copyDistFiles
 import org.jetbrains.intellij.build.impl.createCompilationContext
 import org.jetbrains.intellij.build.impl.createIdeaPropertyFile
 import org.jetbrains.intellij.build.impl.createPlatformLayout
-import org.jetbrains.intellij.build.impl.moduleRepository.generateRuntimeModuleRepositoryForDevBuild
 import org.jetbrains.intellij.build.impl.getOsDistributionBuilder
 import org.jetbrains.intellij.build.impl.layoutPlatformDistribution
+import org.jetbrains.intellij.build.impl.moduleRepository.generateRuntimeModuleRepositoryForDevBuild
 import org.jetbrains.intellij.build.impl.normalizeCompilationContextForBuild
 import org.jetbrains.intellij.build.impl.productInfo.PRODUCT_INFO_FILE_NAME
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ContentReport
@@ -83,7 +83,6 @@ import kotlin.Unit
 import kotlin.also
 import kotlin.checkNotNull
 import kotlin.io.path.createDirectories
-import kotlin.io.path.exists
 import kotlin.io.path.moveTo
 import kotlin.let
 import kotlin.text.StringBuilder
@@ -323,7 +322,7 @@ internal suspend fun buildProduct(request: BuildRequest, createBuildContext: sus
                 coScrambleEntries = coScrambleEntries,
                 // Skip the per-plugin lib/ walk when nothing opts in — pure platform scramble doesn't
                 // need cross-plugin classpath.
-                classpathDirs = if (coScrambleEntries.isEmpty()) emptyList() else collectAllPluginClasspathDirs(descriptors),
+                classpathDirs = if (coScrambleEntries.isEmpty()) emptyList() else collectAllPluginClasspathDirs(descriptors.map { it.buildResult }),
                 context = context,
               )
             }
@@ -361,7 +360,7 @@ internal suspend fun buildProduct(request: BuildRequest, createBuildContext: sus
         val platformLayoutAwaited = platformLayout.await()
         val coreClasspathFromPlugins = generateCoreClasspathFromPlugins(
           platformLayout = platformLayoutAwaited,
-          pluginEntities = pluginDistributionEntities,
+          pluginBuildResults = pluginDistributionEntities.map { it.buildResult },
           context = context
         )
         val classPath = platformClasspath + coreClasspathFromPlugins
@@ -427,7 +426,7 @@ internal suspend fun buildProduct(request: BuildRequest, createBuildContext: sus
           launch(CoroutineName("generate runtime repository")) {
             val contentReport = ContentReport(
               platform = platformFileEntries,
-              bundledPlugins = pluginDistributionEntries.pluginEntries,
+              bundledPlugins = pluginDistributionEntries.pluginEntries.map { it.buildResult },
               nonBundledPlugins = emptyList()
             )
             pluginClasspathJob.join() //this is necessary to have full data in DescriptorCacheContainer
@@ -507,7 +506,7 @@ private suspend fun computeIdeFingerprint(
   for (plugin in pluginDistributionEntries) {
     hasher.putInt(plugin.buildResult.distribution.size)
 
-    debug?.append('\n')?.append(plugin.layout.mainModule)?.append('\n')
+    debug?.append('\n')?.append(plugin.buildResult.mainModule)?.append('\n')
     for (entry in plugin.buildResult.distribution) {
       hasher.putLong(entry.hash)
       debug?.append("  ")?.append(Long.toUnsignedString(entry.hash, Character.MAX_RADIX))?.append(" ")?.append(relativePath(entry.path))?.append('\n')

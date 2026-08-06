@@ -1,25 +1,25 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.projectStructureMapping
 
-import org.jetbrains.intellij.build.classPath.PluginBuildDescriptor
+import org.jetbrains.intellij.build.classPath.PluginBuildResult
 import org.jetbrains.intellij.build.impl.ModuleItem
 import org.jetbrains.intellij.build.impl.ProjectLibraryData
 import java.nio.file.Path
 
 internal data class ContentReport(
   @JvmField val platform: List<DistributionFileEntry>,
-  @JvmField val bundledPlugins: List<PluginBuildDescriptor>,
-  @JvmField val nonBundledPlugins: List<PluginBuildDescriptor>,
+  @JvmField val bundledPlugins: List<PluginBuildResult>,
+  @JvmField val nonBundledPlugins: List<PluginBuildResult>,
 ) {
   fun all(): Sequence<DistributionFileEntry> = sequence {
     yieldAll(platform)
-    yieldAll(bundledPlugins.flatMap { it.buildResult.distribution })
-    yieldAll(nonBundledPlugins.flatMap { it.buildResult.distribution })
+    yieldAll(bundledPlugins.flatMap { it.distribution })
+    yieldAll(nonBundledPlugins.flatMap { it.distribution })
   }
 
   fun bundled(): Sequence<DistributionFileEntry> = sequence {
     yieldAll(platform)
-    yieldAll(bundledPlugins.flatMap { it.buildResult.distribution })
+    yieldAll(bundledPlugins.flatMap { it.distribution })
   }
 }
 

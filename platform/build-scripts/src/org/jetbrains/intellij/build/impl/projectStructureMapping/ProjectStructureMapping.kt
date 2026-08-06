@@ -7,7 +7,7 @@ import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildPaths
 import org.jetbrains.intellij.build.DistFile
 import org.jetbrains.intellij.build.MAVEN_REPO
-import org.jetbrains.intellij.build.classPath.PluginBuildDescriptor
+import org.jetbrains.intellij.build.classPath.PluginBuildResult
 import org.jetbrains.intellij.build.impl.ModuleIncludeReasons
 import org.jetbrains.intellij.build.impl.ModuleItem
 import org.jetbrains.intellij.build.impl.ProjectLibraryData
@@ -69,20 +69,19 @@ internal fun buildJarContentReport(contentReport: ContentReport, zipFileWriter: 
   zipFileWriter.uncompressedData("non-bundled-plugins.yaml", buildPluginContentReport(contentReport.nonBundledPlugins, buildPaths))
 }
 
-private fun buildPluginContentReport(pluginToEntries: List<PluginBuildDescriptor>, buildPaths: BuildPaths): ByteArray {
+private fun buildPluginContentReport(pluginToEntries: List<PluginBuildResult>, buildPaths: BuildPaths): ByteArray {
   val out = ByteArrayOutputStream()
   val writer = createYamlGenerator(out)
 
   writer.writeStartArray()
   val written = HashSet<String>()
-  for (plugin in pluginToEntries) {
-    if (!written.add(createPluginKey(plugin))) {
+  for (buildResult in pluginToEntries) {
+    if (!written.add(createPluginKey(buildResult))) {
       // duplicate, e.g. OS-specific plugin
       continue
     }
 
     val fileToPresentablePath = HashMap<Path, String>()
-    val buildResult = plugin.buildResult
 
     val fileToEntry = TreeMap<String, MutableList<DistributionFileEntry>>()
     for (entry in buildResult.distribution) {
@@ -105,9 +104,9 @@ private fun buildPluginContentReport(pluginToEntries: List<PluginBuildDescriptor
       fileToEntry.computeIfAbsent(presentablePath) { mutableListOf() }.add(entry)
     }
 
-    writePluginStart(writer, plugin)
+    writePluginStart(writer, buildResult)
 
-    val contentModuleReason = "<- ${plugin.layout.mainModule} (plugin content)"
+    val contentModuleReason = "<- ${buildResult.mainModule} (plugin content)"
 
     writeContentEntries(writer, fileToEntry, buildPaths) { w, entries ->
       writeModules(
@@ -223,7 +222,7 @@ private fun buildPlatformContentReport(
 
   writer.writeStartObject()
 
-  fun writeWithoutDuplicates(pairs: List<PluginBuildDescriptor>) {
+  fun writeWithoutDuplicates(pairs: List<PluginBuildResult>) {
     val written = HashSet<String>()
     for (plugin in pairs) {
       if (!written.add(createPluginKey(plugin))) {
@@ -254,15 +253,14 @@ private fun buildPlatformContentReport(
   return out.toByteArray()
 }
 
-private fun writePlugin(writer: JsonGenerator, plugin: PluginBuildDescriptor) {
+private fun writePlugin(writer: JsonGenerator, plugin: PluginBuildResult) {
   writePluginStart(writer, plugin)
   writer.writeEndObject()
 }
 
-private fun writePluginStart(writer: JsonGenerator, plugin: PluginBuildDescriptor) {
+private fun writePluginStart(writer: JsonGenerator, buildResult: PluginBuildResult) {
   writer.writeStartObject()
-  writer.writeStringProperty("mainModule", plugin.layout.mainModule)
-  val buildResult = plugin.buildResult
+  writer.writeStringProperty("mainModule", buildResult.mainModule)
   if (buildResult.os != null) {
     writer.writeStringProperty("os", buildResult.os.osId)
   }
@@ -525,11 +523,10 @@ private fun writeModuleDependents(writer: JsonGenerator, data: ProjectLibraryDat
   writer.writeEndObject()
 }
 
-private fun createPluginKey(plugin: PluginBuildDescriptor): String {
-  val buildResult = plugin.buildResult
+private fun createPluginKey(buildResult: PluginBuildResult): String {
   val osSuffix = if (buildResult.os == null) "" else " (os=${buildResult.os})"
   val archSuffix = if (buildResult.arch == null) "" else " (arch=${buildResult.arch.name})"
-  return plugin.layout.mainModule + osSuffix + archSuffix
+  return buildResult.mainModule + osSuffix + archSuffix
 }
 
 private inline fun <reified T : LibraryFileEntry> groupLibraryEntries(

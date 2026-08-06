@@ -7,6 +7,7 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.platform.util.putMoreLikelyPluginJarsFirst
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.JvmArchitecture
@@ -101,15 +102,13 @@ fun generateClassPathByLayoutReport(libDir: Path, entries: List<DistributionFile
  */
 internal suspend fun generateCoreClasspathFromPlugins(
   platformLayout: PlatformLayout,
-  pluginEntities: List<PluginBuildDescriptor>,
+  pluginBuildResults: List<PluginBuildResult>,
   context: BuildContext,
 ): Set<Path> {
   val classPathResult = LinkedHashSet<Path>()
-  for (pluginEntity in pluginEntities) {
-    val pluginLayout = pluginEntity.layout
-    val buildResult = pluginEntity.buildResult
+  for (buildResult in pluginBuildResults) {
     val cacheContainer = platformLayout.descriptorCacheContainer.forPlugin(buildResult.dir)
-    val classPathModules = getEmbeddedContentModulesOfPluginsWithUseIdeaClassloader(pluginLayout.mainModule, cacheContainer, context)
+    val classPathModules = getEmbeddedContentModulesOfPluginsWithUseIdeaClassloader(buildResult.mainModule, cacheContainer, context)
     for (distributionEntry in buildResult.distribution) {
       if (distributionEntry is ModuleOwnedFileEntry && distributionEntry.owner?.moduleName in classPathModules) {
         classPathResult.add(distributionEntry.path)
@@ -147,8 +146,9 @@ internal suspend fun getEmbeddedContentModulesOfPluginsWithUseIdeaClassloader(
 }
 
 /** Build-scripts internal; not part of the public build API. */
-@org.jetbrains.annotations.ApiStatus.Internal
+@ApiStatus.Internal
 data class PluginBuildResult(
+  @JvmField val mainModule: String,
   @JvmField val dir: Path,
   @JvmField val os: OsFamily?,
   @JvmField val arch: JvmArchitecture?,
@@ -156,7 +156,7 @@ data class PluginBuildResult(
 )
 
 /** Build-scripts internal; not part of the public build API. */
-@org.jetbrains.annotations.ApiStatus.Internal
+@ApiStatus.Internal
 data class PluginBuildDescriptor(
   @JvmField val layout: PluginLayout,
   @JvmField val buildResult: PluginBuildResult,

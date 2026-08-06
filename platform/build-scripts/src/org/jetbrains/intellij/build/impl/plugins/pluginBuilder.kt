@@ -53,7 +53,7 @@ internal suspend fun buildPlugins(
   context: BuildContext,
   copyFiles: Boolean = true,
   layoutOnly: Boolean = false,
-  additionalScrambleDescriptorsProvider: (suspend () -> Collection<PluginBuildDescriptor>)? = null,
+  additionalScrambleDescriptorsProvider: (suspend () -> Collection<PluginBuildResult>)? = null,
   pluginBuilt: (suspend (PluginLayout, pluginDirOrFile: Path) -> List<DistributionFileEntry>)? = null,
 ): List<PluginBuildDescriptor> {
   val scrambleTool = context.proprietaryBuildTools.scrambleTool
@@ -86,17 +86,17 @@ internal suspend fun buildPlugins(
     val platformEntries = platformEntriesProvider?.let { provider ->
       spanBuilder("wait for platform lib for scrambling").use { provider() }
     } ?: emptyList()
-    val descriptors = results.map { it.first }
+    val descriptors = results.map { it.first.buildResult }
     val laidOutDescriptors = additionalScrambleDescriptorsProvider?.let { provider ->
       provider() + descriptors
     } ?: descriptors
     coroutineScope {
       for (scrambleTask in scrambleTasks) {
-        launch(CoroutineName("scramble plugin ${scrambleTask.descriptor.layout.directoryName}")) {
+        launch(CoroutineName("scramble plugin ${scrambleTask.descriptor.buildResult.mainModule}")) {
           scrambleTool.scramblePlugin(
             request = PluginScrambleRequest(
               currentDescriptor = scrambleTask.descriptor,
-              laidOutDescriptors = laidOutDescriptors,
+              laidOutPlugins = laidOutDescriptors,
               platformLayout = state.platformLayout,
               platformContent = platformEntries,
             ),
@@ -129,11 +129,11 @@ internal suspend fun scrambleAlreadyLaidOutPlugins(
   if (toScramble.isEmpty()) return
   coroutineScope {
     for (descriptor in toScramble) {
-      launch(CoroutineName("scramble plugin ${descriptor.layout.directoryName}")) {
+      launch(CoroutineName("scramble plugin ${descriptor.buildResult.mainModule}")) {
         scrambleTool.scramblePlugin(
           request = PluginScrambleRequest(
             currentDescriptor = descriptor,
-            laidOutDescriptors = descriptors,
+            laidOutPlugins = descriptors.map { it.buildResult },
             platformLayout = state.platformLayout,
             platformContent = platformEntries,
           ),
@@ -210,7 +210,7 @@ private suspend fun CoroutineScope.buildPlugin(
 
   val descriptor = PluginBuildDescriptor(
     layout = pluginLayout,
-    buildResult = PluginBuildResult(dir = pluginDir, os = os, arch = arch, distribution = task),
+    buildResult = PluginBuildResult(mainModule = pluginLayout.mainModule, dir = pluginDir, os = os, arch = arch, distribution = task),
   )
   var scrambleTask: ScrambleTask? = null
   if (!pluginLayout.pathsToScramble.isEmpty()) {

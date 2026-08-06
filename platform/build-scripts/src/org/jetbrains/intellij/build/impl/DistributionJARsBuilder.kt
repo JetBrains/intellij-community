@@ -38,6 +38,7 @@ import org.jetbrains.intellij.build.ScrambleTool
 import org.jetbrains.intellij.build.SearchableOptionSetDescriptor
 import org.jetbrains.intellij.build.buildSearchableOptions
 import org.jetbrains.intellij.build.classPath.PluginBuildDescriptor
+import org.jetbrains.intellij.build.classPath.PluginBuildResult
 import org.jetbrains.intellij.build.classPath.generateClassPathByLayoutReport
 import org.jetbrains.intellij.build.classPath.generateCoreClasspathFromPlugins
 import org.jetbrains.intellij.build.executeStep
@@ -155,9 +156,9 @@ internal suspend fun buildDistribution(
 
       val platformItems = buildPlatformJob.await()
       val bundledPluginItems = bundledPluginsResult.descriptors
-      context.bootClassPathJarNames = generateCoreClassPath(platformLayout, context, platformItems, bundledPluginItems)
+      context.bootClassPathJarNames = generateCoreClassPath(platformLayout, context, platformItems, bundledPluginItems.map { it.buildResult })
 
-      ContentReport(platform = platformItems, bundledPlugins = bundledPluginItems, nonBundledPlugins = buildNonBundledPlugins.await())
+      ContentReport(platform = platformItems, bundledPlugins = bundledPluginItems.map { it.buildResult }, nonBundledPlugins = buildNonBundledPlugins.await().map { it.buildResult })
     }
     else {
       val additionalPluginsDeferred = async(CoroutineName("build additional plugins")) {
@@ -192,7 +193,7 @@ internal suspend fun buildDistribution(
             context = context,
             isUpdateFromSources = isUpdateFromSources,
             coScrambleEntriesProvider = { coScrambleEntriesDeferred.await() },
-            classpathDirsProvider = { collectAllPluginClasspathDirs(coScramblePluginLayoutJob.await().descriptors) },
+            classpathDirsProvider = { collectAllPluginClasspathDirs(coScramblePluginLayoutJob.await().descriptors.map { it.buildResult }) },
           )
         }
       }
@@ -246,9 +247,9 @@ internal suspend fun buildDistribution(
         context = context,
       )
 
-      context.bootClassPathJarNames = generateCoreClassPath(platformLayout, context, platformItems, bundledPluginItems)
+      context.bootClassPathJarNames = generateCoreClassPath(platformLayout, context, platformItems, bundledPluginItems.map { it.buildResult })
 
-      ContentReport(platform = platformItems, bundledPlugins = bundledPluginItems, nonBundledPlugins = buildNonBundledPlugins.await())
+      ContentReport(platform = platformItems, bundledPlugins = bundledPluginItems.map { it.buildResult }, nonBundledPlugins = buildNonBundledPlugins.await().map { it.buildResult })
     }
   }
 
@@ -279,7 +280,7 @@ private suspend fun generateCoreClassPath(
   platformLayout: PlatformLayout,
   context: BuildContext,
   platformDistribution: List<DistributionFileEntry>,
-  bundledPluginsDistribution: List<PluginBuildDescriptor>,
+  bundledPluginsDistribution: List<PluginBuildResult>,
 ): List<String> {
   if (context.useModularLoader) {
     return listOf(PLATFORM_LOADER_JAR)
@@ -410,11 +411,11 @@ fun validateCoScramblePluginsAreNotPublished(pluginsToPublish: Collection<Plugin
  * [ScrambleTool.scramble]'s `classpathDirs` so the run can resolve any cross-plugin reference
  * during trim/obfuscate.
  */
-fun collectAllPluginClasspathDirs(descriptors: List<PluginBuildDescriptor>): List<Path> {
-  if (descriptors.isEmpty()) return emptyList()
+fun collectAllPluginClasspathDirs(plugins: List<PluginBuildResult>): List<Path> {
+  if (plugins.isEmpty()) return emptyList()
   val result = LinkedHashSet<Path>()
-  for (descriptor in descriptors) {
-    val libDir = descriptor.buildResult.dir.resolve("lib")
+  for (buildResult in plugins) {
+    val libDir = buildResult.dir.resolve("lib")
     if (!Files.isDirectory(libDir)) continue
     Files.walk(libDir).use { stream ->
       stream
@@ -435,7 +436,7 @@ private fun orderBundledPluginDescriptors(descriptors: List<PluginBuildDescripto
   }
   return descriptors.sortedWith(
     compareBy<PluginBuildDescriptor> { distributionOrder.get(Pair(it.buildResult.os, it.buildResult.arch)) ?: Int.MAX_VALUE }
-      .thenBy { it.layout.mainModule }
+      .thenBy { it.buildResult.mainModule }
   )
 }
 

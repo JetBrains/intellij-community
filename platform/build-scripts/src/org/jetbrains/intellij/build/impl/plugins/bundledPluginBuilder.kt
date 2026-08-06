@@ -19,6 +19,7 @@ import org.jetbrains.intellij.build.LibcImpl
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.SearchableOptionSetDescriptor
 import org.jetbrains.intellij.build.classPath.PluginBuildDescriptor
+import org.jetbrains.intellij.build.classPath.PluginBuildResult
 import org.jetbrains.intellij.build.classPath.generatePluginClassPath
 import org.jetbrains.intellij.build.classPath.generatePluginClassPathFromPrebuiltPluginFiles
 import org.jetbrains.intellij.build.classPath.writePluginClassPathHeader
@@ -123,7 +124,7 @@ internal suspend fun buildBundledPluginsForAllPlatforms(
     searchableOptionSet = searchableOptionSetDescriptor,
     pluginDirs = pluginDirs,
     descriptorCacheContainer = descriptorCacheContainer,
-    commonDescriptors = common,
+    commonPlugins = common.map { it.buildResult },
     layoutOnly = layoutOnly,
   )
   val descriptors = common + specific.values.flatten()
@@ -189,7 +190,7 @@ private suspend fun buildOsSpecificBundledPlugins(
   searchableOptionSet: SearchableOptionSetDescriptor?,
   pluginDirs: List<Pair<SupportedDistribution, Path>>,
   descriptorCacheContainer: DescriptorCacheContainer,
-  commonDescriptors: List<PluginBuildDescriptor>,
+  commonPlugins: List<PluginBuildResult>,
   layoutOnly: Boolean = false,
 ): Map<SupportedDistribution, List<PluginBuildDescriptor>> {
   return spanBuilder("build os-specific bundled plugins")
@@ -221,7 +222,7 @@ private suspend fun buildOsSpecificBundledPlugins(
                 searchableOptionSet = searchableOptionSet,
                 descriptorCacheContainer = descriptorCacheContainer,
                 context = context,
-                additionalScrambleDescriptorsProvider = { commonDescriptors },
+                additionalScrambleDescriptorsProvider = { commonPlugins },
                 layoutOnly = layoutOnly,
               )
             }

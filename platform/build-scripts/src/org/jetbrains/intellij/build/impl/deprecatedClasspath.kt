@@ -9,7 +9,6 @@ import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.MAVEN_REPO
 import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
 import org.jetbrains.intellij.build.classPath.DescriptorSearchScope
-import org.jetbrains.intellij.build.classPath.PluginBuildDescriptor
 import org.jetbrains.intellij.build.classPath.PluginBuildResult
 import org.jetbrains.intellij.build.classPath.XIncludeElementResolverImpl
 import org.jetbrains.intellij.build.classPath.resolveIncludes
@@ -52,7 +51,7 @@ suspend fun createIdeClassPath(platformLayout: PlatformLayout, context: BuildCon
   }
 
   val pluginDir = context.paths.distAllDir.resolve(PLUGINS_DIRECTORY)
-  for (entry in contentReport.second.flatMap { it.buildResult.distribution }) {
+  for (entry in contentReport.second.flatMap { it.distribution }) {
     val relativePath = pluginDir.relativize(entry.path)
     // for plugins, our classloaders load JARs only from the "lib/" and "lib/modules/" directories
     if (!(relativePath.nameCount in 3..4 && relativePath.getName(1).toString() == LIB_DIRECTORY &&
@@ -96,7 +95,7 @@ private fun isFromLocalMavenRepo(path: Path) = path.startsWith(MAVEN_REPO)
 private suspend fun generateProjectStructureMapping(
   platformLayout: PlatformLayout,
   context: BuildContext,
-): Pair<List<DistributionFileEntry>, List<PluginBuildDescriptor>> = coroutineScope {
+): Pair<List<DistributionFileEntry>, List<PluginBuildResult>> = coroutineScope {
   val moduleOutputPatcher = ModuleOutputPatcher()
   val libDirLayout = async(CoroutineName("layout platform distribution")) {
     sortEntries(JarPackager.pack(
@@ -117,7 +116,7 @@ private suspend fun generateProjectStructureMapping(
   val platformDescriptorCache = descriptorCacheContainer.forPlatform(platformLayout)
 
   val allPlugins = getPluginLayoutsByJpsModuleNames(modules = context.getBundledPluginModules(), productLayout = context.productProperties.productLayout)
-  val entries = mutableListOf<PluginBuildDescriptor>()
+  val entries = mutableListOf<PluginBuildResult>()
   for (pluginLayout in allPlugins) {
     if (!satisfiesBundlingRequirements(plugin = pluginLayout, osFamily = null, arch = null, context = context)) {
       continue
@@ -158,10 +157,7 @@ private suspend fun generateProjectStructureMapping(
       descriptorCache = pluginDescriptorCache,
       context = context,
     )
-    entries.add(PluginBuildDescriptor(
-      layout = pluginLayout,
-      buildResult = PluginBuildResult(dir = targetDir, os = null, arch = null, distribution = pluginEntries),
-    ))
+    entries.add(PluginBuildResult(mainModule = pluginLayout.mainModule, dir = targetDir, os = null, arch = null, distribution = pluginEntries))
   }
   libDirLayout.await() to entries
 }

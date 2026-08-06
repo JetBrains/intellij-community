@@ -8,10 +8,11 @@ import com.intellij.platform.runtime.repository.RuntimeModuleId
 import com.intellij.platform.runtime.repository.RuntimeModuleLoadingRule
 import com.intellij.platform.runtime.repository.RuntimeModuleVisibility
 import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
-import org.jetbrains.intellij.build.classPath.PluginBuildDescriptor
+import org.jetbrains.intellij.build.classPath.PluginBuildResult
 import org.jetbrains.intellij.build.impl.PRODUCT_DESCRIPTOR_META_PATH
 import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.ScopedCachedDescriptorContainer
+import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleOutputEntry
 
 /**
  * Represents the data from `plugin.xml` descriptor that is required to generate [com.intellij.platform.runtime.repository.RuntimePluginHeader]
@@ -47,8 +48,8 @@ internal fun fetchPluginDescriptorsData(
   platformLayout: PlatformLayout,
   corePluginDescriptorModuleName: String,
   embeddedFrontendDescriptorModuleName: String?,
-  bundledPlugins: List<PluginBuildDescriptor>,
-  additionalFrontendOnlyPlugins: List<PluginBuildDescriptor>
+  bundledPlugins: List<PluginBuildResult>,
+  additionalFrontendOnlyPlugins: List<PluginBuildResult>
 ): List<PluginDescriptorDataForHeader> {
   val platformContainer = platformLayout.descriptorCacheContainer.forPlatform(platformLayout)
   val corePluginContent = platformContainer.getCachedFileData(PRODUCT_DESCRIPTOR_META_PATH) ?: error("Cannot find core plugin descriptor")
@@ -64,21 +65,23 @@ internal fun fetchPluginDescriptorsData(
   val additionalContainersForEmbeddedFrontend =
     if (embeddedFrontendDescriptorModuleName != null) {
       //descriptors for embedded frontend may be stored inside containers for the platform, and for the corresponding plugin, see deprecatedResolveDescriptorForEmbeddedProduct
-      val pluginWithEmbeddedFrontend = bundledPlugins.find { plugin ->
-        plugin.layout.includedModules.any { it.moduleName == embeddedFrontendDescriptorModuleName } && plugin.layout.includedModules.size > 1
-      } ?: error("Cannot find plugin with embedded frontend $embeddedFrontendDescriptorModuleName")
-      listOf(platformContainer, platformLayout.descriptorCacheContainer.forPlugin(pluginWithEmbeddedFrontend.buildResult.dir))
+      val pluginWithEmbeddedFrontendCandidates = bundledPlugins.filter { plugin ->
+        plugin.distribution.any { it is ModuleOutputEntry && it.owner.moduleName == embeddedFrontendDescriptorModuleName } && plugin.distribution.size > 1
+      }
+      require(pluginWithEmbeddedFrontendCandidates.isNotEmpty()) { "Cannot find plugin with embedded frontend $embeddedFrontendDescriptorModuleName" }
+      require(pluginWithEmbeddedFrontendCandidates.size == 1) { "Found multiple plugins with embedded frontend $embeddedFrontendDescriptorModuleName: $pluginWithEmbeddedFrontendCandidates" }
+      listOf(platformContainer, platformLayout.descriptorCacheContainer.forPlugin(pluginWithEmbeddedFrontendCandidates.single().dir))
     }
     else emptyList()
 
-  fun fetchPluginDescriptorDataForHeader(plugin: PluginBuildDescriptor, additionalFrontendOnlyPlugin: Boolean): PluginDescriptorDataForHeader {
-    val descriptorContainer = platformLayout.descriptorCacheContainer.forPlugin(plugin.buildResult.dir)
+  fun fetchPluginDescriptorDataForHeader(plugin: PluginBuildResult, additionalFrontendOnlyPlugin: Boolean): PluginDescriptorDataForHeader {
+    val descriptorContainer = platformLayout.descriptorCacheContainer.forPlugin(plugin.dir)
     val fileContent = descriptorContainer.getCachedFileData(PLUGIN_XML_RELATIVE_PATH) ?: error(
-      "Cannot find plugin.xml for ${plugin.buildResult.dir} in the cache"
+      "Cannot find plugin.xml for ${plugin.dir} in the cache"
     )
     return fetchPluginDescriptorDataForHeader(
       fileContent,
-      pluginDescriptorJpsModuleName = plugin.layout.mainModule,
+      pluginDescriptorJpsModuleName = plugin.mainModule,
       descriptorContainer,
       additionalContainersForEmbeddedFrontend,
       additionalFrontendOnlyPlugin,
