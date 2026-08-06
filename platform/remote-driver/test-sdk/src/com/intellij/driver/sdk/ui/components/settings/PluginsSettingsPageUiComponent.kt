@@ -332,6 +332,8 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : LoadablePluginsUiCom
     val whatsNewTab = tabbedPane.tab("What's New")
     val reviewsTab = tabbedPane.tab("Reviews")
     val additionalInfoTab = tabbedPane.tab("Additional Info")
+    val updateSourceValue: UiComponent =
+      x("${xQuery { and(byType(JLabel::class.java), byText("Updates from:")) }}/following-sibling::div[1]")
     val versionPanel = x { byType("com.intellij.ide.plugins.newui.VersionPanel") }
     val pluginHomepage = x("Plugin homepage link") { byAccessibleName("Plugin homepage") }
 

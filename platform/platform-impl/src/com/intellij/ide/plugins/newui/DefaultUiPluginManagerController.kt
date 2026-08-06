@@ -38,6 +38,7 @@ import com.intellij.ide.plugins.marketplace.PluginNameAndId
 import com.intellij.ide.plugins.marketplace.PluginReviewComment
 import com.intellij.ide.plugins.marketplace.PluginSearchResult
 import com.intellij.ide.plugins.marketplace.PrepareToUninstallResult
+import com.intellij.ide.plugins.marketplace.ResetPluginsStateResult
 import com.intellij.ide.plugins.marketplace.SetEnabledStateResult
 import com.intellij.ide.plugins.newui.PluginInstallationCustomization.Companion.findPluginInstallationCustomization
 import com.intellij.ide.plugins.pluginRequiresUltimatePluginButItsDisabled
@@ -58,6 +59,8 @@ import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.updateSettings.impl.PluginAutoUpdateService
 import com.intellij.openapi.updateSettings.impl.PluginDownloader
+import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceId
+import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceService
 import com.intellij.openapi.updateSettings.impl.UpdateCheckerFacade
 import com.intellij.openapi.updateSettings.impl.UpdateSettings
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource
@@ -100,7 +103,11 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     val session = createSession(sessionId)
     val initialPluginState = collectInitialPluginState()
     session.pluginStates.putAll(initialPluginState.pluginStates)
-    return InitSessionResult(initialPluginState.visiblePlugins, session.pluginStates.mapValues { it.value?.isEnabled })
+    val initialPluginUpdateSourceStates = collectInitialPluginUpdateSources()
+    session.pluginUpdateSourceStates.putAll(initialPluginUpdateSourceStates)
+    return InitSessionResult(initialPluginState.visiblePlugins,
+                             session.pluginStates.mapValues { it.value?.isEnabled },
+                             initialPluginUpdateSourceStates)
   }
 
   override suspend fun getVisiblePlugins(showImplementationDetails: Boolean): List<PluginUiModel> {
@@ -345,7 +352,8 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
   private fun isSingleSessionModified(session: PluginManagerSession): Boolean = session.dynamicPluginsToInstall.isNotEmpty() ||
                                                                                 session.dynamicPluginsToUninstall.isNotEmpty() ||
                                                                                 session.pluginsToRemoveOnCancel.isNotEmpty() ||
-                                                                                session.statesDiff.isNotEmpty()
+                                                                                session.statesDiff.isNotEmpty() ||
+                                                                                session.pluginUpdateSourceStatesDiff.values.any { it.isChanged() }
 
   override suspend fun apply(parent: JComponent?, project: Project?): ApplyPluginsStateResult {
     val context = parent?.let { (Dispatchers.EDT + ModalityState.stateForComponent(it).asContextElement()) } ?: Dispatchers.EDT
@@ -459,6 +467,19 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
       InstalledPluginsState.getInstance().isRestartRequired = true
     }
 
+    val pluginUpdateSourceStates = session.pluginUpdateSourceStatesDiff.toMap()
+    val pluginUpdateSourceService = PluginUpdateSourceService.getInstance()
+    for ((pluginId, updateSourceChangedState) in pluginUpdateSourceStates) {
+      if (!updateSourceChangedState.isChanged()) continue
+      val pluginUpdateSource = updateSourceChangedState.newValue.value
+      when (pluginUpdateSource) {
+        null -> pluginUpdateSourceService.erasePluginUpdateSourceId(pluginId)
+        else -> pluginUpdateSourceService.setPluginUpdateSourceId(pluginId, pluginUpdateSource)
+      }
+      session.pluginUpdateSourceStates[pluginId] = updateSourceChangedState.newValue
+    }
+    session.pluginUpdateSourceStatesDiff.clear()
+
     session.dynamicPluginsToInstall.clear()
     session.pluginsToRemoveOnCancel.clear()
 
@@ -480,10 +501,11 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
                                    pluginInstallationStates)
   }
 
-  override suspend fun resetSession(sessionId: String, removeSession: Boolean, parentComponent: JComponent?): Map<PluginId, Boolean> {
+  override suspend fun resetSession(sessionId: String, removeSession: Boolean, parentComponent: JComponent?): ResetPluginsStateResult {
     val changedStates = mutableMapOf<PluginId, Boolean>()
+    val updateSourceStatesToRevert = mutableMapOf<PluginId, PluginUpdateSourceState>()
     val sessionManager = PluginManagerSessionService.getInstance()
-    val session = findSession(sessionId) ?: return changedStates
+    val session = findSession(sessionId) ?: return ResetPluginsStateResult(changedStates, updateSourceStatesToRevert)
 
     session.statesDiff.forEach {
       session.pluginStates[it.key.pluginId] = it.value.second
@@ -495,10 +517,18 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
       PluginInstaller.uninstallDynamicPlugin(it.getMainDescriptor())
     }
     session.pluginsToRemoveOnCancel.clear()
+
+    session.pluginUpdateSourceStatesDiff.forEach { (pluginId, diff) ->
+      if (diff.isChanged()) {
+        updateSourceStatesToRevert[pluginId] = diff.initialValue
+      }
+    }
+    session.pluginUpdateSourceStatesDiff.clear()
+
     if (removeSession) {
       sessionManager.removeSession(sessionId)
     }
-    return changedStates
+    return ResetPluginsStateResult(changedStates, updateSourceStatesToRevert)
   }
 
   override suspend fun isPluginEnabled(pluginId: PluginId): Boolean {
@@ -859,6 +889,31 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
   override suspend fun getErrors(sessionId: String, pluginId: PluginId): CheckErrorsResult {
     val session = findSession(sessionId) ?: return CheckErrorsResult()
     return getErrors(session, pluginId)
+  }
+
+  override suspend fun getPluginUpdateSourceId(sessionId: String, pluginId: PluginId): PluginUpdateSourceId? {
+    val session = findSession(sessionId) ?: return null
+    val changedValue = session.pluginUpdateSourceStatesDiff[pluginId]
+    if (changedValue != null) return changedValue.newValue.value
+    return session.pluginUpdateSourceStates[pluginId]?.value
+  }
+
+  override suspend fun setPluginUpdateSourceId(sessionId: String, pluginId: PluginId, pluginUpdateSource: PluginUpdateSourceId?) {
+    val session = findSession(sessionId) ?: return
+    val value = PluginUpdateSourceState(pluginUpdateSource)
+    val diff = session.pluginUpdateSourceStatesDiff[pluginId]
+    val initialValue = session.pluginUpdateSourceStates[pluginId] ?: PluginUpdateSourceState(null)
+    when {
+      diff == null && initialValue == value -> return
+      diff == null -> session.pluginUpdateSourceStatesDiff[pluginId] = PluginUpdateSourceChangedState(initialValue, value)
+      diff.newValue == value -> return
+      initialValue == value -> session.pluginUpdateSourceStatesDiff.remove(pluginId)
+      else -> session.pluginUpdateSourceStatesDiff[pluginId] = PluginUpdateSourceChangedState(initialValue, value)
+    }
+  }
+
+  override suspend fun isPluginUpdateSourceVisibleInUI(): Boolean {
+    return PluginUpdateSourceService.isPluginUpdateSourceShownInUI()
   }
 
   private fun getContextElement(modalityState: ModalityState?): CoroutineContext {
@@ -1351,6 +1406,17 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
       }
     }
     return InitialPluginState(visiblePlugins, pluginStates)
+  }
+
+  private fun collectInitialPluginUpdateSources(): Map<PluginId, PluginUpdateSourceState> {
+    val sources = mutableMapOf<PluginId, PluginUpdateSourceState>()
+    val service = PluginUpdateSourceService.getInstance()
+    for (plugin in getInstalledAndPendingPlugins()) {
+      val pluginId = plugin.pluginId
+      val pluginUpdateSourceId = service.getPluginUpdateSourceId(pluginId)
+      sources[pluginId] = PluginUpdateSourceState(pluginUpdateSourceId)
+    }
+    return sources
   }
 
   private fun isDisabled(pluginId: PluginId): Boolean = PluginManagerCore.isDisabled(pluginId)

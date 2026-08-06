@@ -287,6 +287,8 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
                  description="Enables plugin update sources feature (IJPL-171317)"/>
     <registryKey key="platform.limit.plugin.update.source.by.configured.one" defaultValue="false"
                  description="Restricts updating plugins to the configured source (IJPL-171317)"/>
+    <registryKey key="platform.make.plugin.update.source.visible.in.ui" defaultValue="false"
+                 description="Makes plugin update sources visible in UI (IJPL-171317)"/>
     <applicationService serviceImplementation="com.intellij.openapi.updateSettings.UpdateStrategyCustomization" open="true"/>
     <registryKey defaultValue="true" key="use.dependencies.cache.service" restartRequired="true"
                  description="Rescan delta of AdditionalLibraryProvider, IndexableSetContributor, DirectoryIndexExcludePolicy values instead of full project."/>

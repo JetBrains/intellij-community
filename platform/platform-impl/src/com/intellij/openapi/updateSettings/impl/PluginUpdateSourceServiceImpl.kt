@@ -2,6 +2,7 @@
 package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.RepositoryHelper
 import com.intellij.ide.plugins.marketplace.utils.MarketplaceCustomizationService
 import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.openapi.components.RoamingType
@@ -13,12 +14,7 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceService.Companion.isFunctionalitySupported
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.util.registry.RegistryManager
-import com.intellij.openapi.util.registry.RegistryValue
-import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.util.UriUtil
-import com.intellij.util.containers.MultiMap
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.XMap
@@ -80,6 +76,13 @@ internal class PluginUpdateSourceServiceImpl : PluginUpdateSourceService,
         debug(null as Throwable?, lazyMessage)
       }
     }
+  }
+
+  override fun getAllSources(): List<PluginUpdateSourceId> {
+    val sources = RepositoryHelper.getCustomPluginRepositoryHosts()
+      .map { createRepository(it) }.distinctBy { it.host }.toMutableList()
+    sources.add(createRepository(null))
+    return sources
   }
 
   override fun loadState(state: State) {

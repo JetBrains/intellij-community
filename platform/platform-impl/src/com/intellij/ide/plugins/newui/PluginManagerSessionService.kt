@@ -10,7 +10,9 @@ import com.intellij.ide.plugins.PluginEnabledState
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceId
 import com.intellij.openapi.util.Pair
+import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
@@ -71,9 +73,24 @@ class PluginManagerSession(val sessionId: String) {
   val statesDiff: MutableMap<IdeaPluginDescriptor, Pair<PluginEnableDisableAction, PluginEnabledState>> = ConcurrentHashMap()
   var needRestart = false
 
+  val pluginUpdateSourceStates: MutableMap<PluginId, PluginUpdateSourceState> = ConcurrentHashMap()
+  val pluginUpdateSourceStatesDiff: MutableMap<PluginId, PluginUpdateSourceChangedState> = ConcurrentHashMap()
+
   fun isPluginDisabled(pluginId: PluginId): Boolean = !isPluginEnabled(pluginId)
   
   fun isPluginEnabled(pluginId: PluginId): Boolean {
     return pluginStates[pluginId]?.isEnabled ?: true
+  }
+}
+
+@Serializable
+@ApiStatus.Internal
+data class PluginUpdateSourceState(val value: PluginUpdateSourceId?)
+
+@Serializable
+@ApiStatus.Internal
+class PluginUpdateSourceChangedState(val initialValue: PluginUpdateSourceState, val newValue: PluginUpdateSourceState) {
+  fun isChanged(): Boolean {
+    return initialValue != newValue
   }
 }

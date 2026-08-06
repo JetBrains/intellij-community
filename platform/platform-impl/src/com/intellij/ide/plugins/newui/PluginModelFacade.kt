@@ -8,6 +8,7 @@ import com.intellij.ide.plugins.marketplace.InstallPluginResult
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceId
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import kotlinx.coroutines.CoroutineName
@@ -125,6 +126,14 @@ open class PluginModelFacade(private val pluginModel: MyPluginModel) {
 
   fun isLoaded(model: PluginUiModel): Boolean {
     return pluginModel.isLoaded(model.pluginId)
+  }
+
+  suspend fun getPluginUpdateSource(pluginId: PluginId): PluginUpdateSourceId? {
+    return UiPluginManager.getInstance().getPluginUpdateSource(pluginModel.sessionId, pluginId)
+  }
+
+  suspend fun setPluginUpdateSource(pluginId: PluginId, pluginUpdateSource: PluginUpdateSourceId?) {
+    UiPluginManager.getInstance().setPluginUpdateSource(pluginModel.sessionId, pluginId, pluginUpdateSource)
   }
 
   fun getModel(): MyPluginModel = pluginModel

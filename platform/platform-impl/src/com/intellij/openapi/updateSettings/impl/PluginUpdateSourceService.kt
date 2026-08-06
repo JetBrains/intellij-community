@@ -31,6 +31,10 @@ interface PluginUpdateSourceService {
       return isFunctionalitySupported() && Registry.`is`(REGISTRY_KEY_FILTER_UPDATES_SETTING, false)
     }
 
+    fun isPluginUpdateSourceShownInUI(): Boolean {
+      return isFunctionalitySupported() && Registry.`is`("platform.make.plugin.update.source.visible.in.ui", false)
+    }
+
     @JvmStatic
     fun addPluginUpdateSourceFilteringRegistryListener(coroutineScope: CoroutineScope, listener: (Boolean) -> Unit) {
       RegistryManager.getInstance().get(REGISTRY_KEY_FILTER_UPDATES_SETTING).addListener(
@@ -57,4 +61,6 @@ interface PluginUpdateSourceService {
   fun createMarketplacePluginUpdateSourceId(): PluginUpdateSourceId
 
   fun createCustomRepositoryPluginUpdateSourceId(host: String): PluginUpdateSourceId
+
+  fun getAllSources(): List<PluginUpdateSourceId>
 }
