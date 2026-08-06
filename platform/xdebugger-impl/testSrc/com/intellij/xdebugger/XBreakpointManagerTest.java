@@ -71,6 +71,7 @@ public class XBreakpointManagerTest extends XBreakpointsTestCase {
     breakpoint.setLogExpression("log");
     breakpoint.setSuspendPolicy(SuspendPolicy.NONE);
     breakpoint.setLogMessage(true);
+    breakpoint.setTemporary(true);
     addBreakpoint(myBreakpointManager, new MyBreakpointProperties("z2"));
 
     reload();
@@ -88,6 +89,7 @@ public class XBreakpointManagerTest extends XBreakpointsTestCase {
     assertEquals("cond", lineBreakpoint.getConditionExpression().getExpression());
     assertEquals("log", lineBreakpoint.getLogExpressionObject().getExpression());
     assertTrue(lineBreakpoint.isLogMessage());
+    assertTrue(lineBreakpoint.isTemporary());
     assertEquals(SuspendPolicy.NONE, lineBreakpoint.getSuspendPolicy());
 
     assertEquals("z2", assertInstanceOf(breakpoints.get(2).getProperties(), MyBreakpointProperties.class).myOption);
@@ -395,6 +397,7 @@ public class XBreakpointManagerTest extends XBreakpointsTestCase {
     "<breakpoints>" +
     "<line-breakpoint enabled=\"true\" type=\"" + MY_LINE_BREAKPOINT_TYPE.getId() + "\">" +
     "      <condition>" + condition + "</condition>" +
+    "      <temporary>true</temporary>" +
     "      <url>url</url>" +
     "      <log-expression>" + logExpression + "</log-expression>" +
     "</line-breakpoint>" +
@@ -405,6 +408,7 @@ public class XBreakpointManagerTest extends XBreakpointsTestCase {
     XLineBreakpoint<MyBreakpointProperties> breakpoint = assertOneElement(myBreakpointManager.getBreakpoints(MY_LINE_BREAKPOINT_TYPE));
     assertEquals(condition, breakpoint.getConditionExpression().getExpression());
     assertEquals(logExpression, breakpoint.getLogExpressionObject().getExpression());
+    assertTrue(breakpoint.isTemporary());
   }
 
   private XBreakpoint<MyBreakpointProperties> getSingleBreakpoint() {

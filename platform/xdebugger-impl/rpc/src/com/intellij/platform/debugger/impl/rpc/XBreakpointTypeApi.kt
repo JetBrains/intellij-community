@@ -86,6 +86,7 @@ data class XBreakpointTypeDto(
   val index: Int,
   val title: String,
   val suspendThreadSupported: Boolean,
+  val temporaryBreakpointSupported: Boolean,
   val lineTypeInfo: XLineBreakpointTypeInfo?,
   val defaultSuspendPolicy: SuspendPolicy,
   val standardPanels: Set<XBreakpointTypeSerializableStandardPanels>,

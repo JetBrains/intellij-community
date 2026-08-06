@@ -54,6 +54,8 @@ internal open class MonolithBreakpointTypeProxy @Deprecated("Use type.asProxy() 
     get() = breakpointType.inactiveDependentIcon
   override val isSuspendThreadSupported: Boolean
     get() = breakpointType.isSuspendThreadSupported
+  override val isTemporaryBreakpointSupported: Boolean
+    get() = breakpointType.isTemporaryBreakpointSupported
 
   override val defaultSuspendPolicy: SuspendPolicy
     get() = defaultState.suspendPolicy

@@ -30,6 +30,8 @@ interface XBreakpointProxy : Comparable<XBreakpointProxy> {
   fun getIcon(): Icon
   fun isEnabled(): Boolean
   fun setEnabled(enabled: Boolean)
+  fun isTemporary(): Boolean
+  fun setTemporary(isTemporary: Boolean)
   fun getSourcePosition(): XSourcePosition?
   fun getNavigatable(): Navigatable?
   fun canNavigate(): Boolean

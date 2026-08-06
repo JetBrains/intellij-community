@@ -223,6 +223,16 @@ internal open class FrontendXBreakpointProxy(
     }
   }
 
+  override fun isTemporary(): Boolean = currentState.isTemporary
+
+  override fun setTemporary(isTemporary: Boolean) {
+    updateStateIfNeeded(newValue = isTemporary,
+                        getter = { it.isTemporary },
+                        copy = { it.copy(isTemporary = isTemporary) }) { requestId ->
+      XBreakpointApi.getInstance().setTemporary(id, requestId, isTemporary)
+    }
+  }
+
   override fun getSourcePosition(): XSourcePosition? = currentState.sourcePosition?.sourcePosition()
 
   override fun getNavigatable(): Navigatable? = getSourcePosition()?.createNavigatable(project)
@@ -339,6 +349,7 @@ internal open class FrontendXBreakpointProxy(
            currentState.isConditionEnabled == otherState.isConditionEnabled &&
            currentState.conditionExpression == otherState.conditionExpression &&
            currentState.enabled == otherState.enabled &&
+           currentState.isTemporary == otherState.isTemporary &&
            currentState.suspendPolicy == otherState.suspendPolicy &&
            currentState.group == otherState.group &&
            currentState.lineBreakpointInfo == otherState.lineBreakpointInfo &&

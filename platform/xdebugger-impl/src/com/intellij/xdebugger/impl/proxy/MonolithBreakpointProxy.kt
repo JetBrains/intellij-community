@@ -60,6 +60,12 @@ internal open class MonolithBreakpointProxy @Deprecated("Use breakpoint.asProxy(
     breakpoint.isEnabled = enabled
   }
 
+  override fun isTemporary(): Boolean = breakpoint.isTemporary
+
+  override fun setTemporary(isTemporary: Boolean) {
+    breakpoint.isTemporary = isTemporary
+  }
+
   override fun getSourcePosition(): XSourcePosition? = breakpoint.sourcePosition
 
   override fun getNavigatable(): Navigatable? = breakpoint.getNavigatable()

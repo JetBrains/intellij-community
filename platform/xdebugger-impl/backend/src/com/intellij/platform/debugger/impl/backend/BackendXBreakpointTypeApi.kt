@@ -349,7 +349,7 @@ internal class BackendXBreakpointTypeApi : XBreakpointTypeApi {
     )
     // TODO: do we need to subscribe on [defaultState] changes?
     return XBreakpointTypeDto(
-      XBreakpointTypeId(id), index, title, isSuspendThreadSupported, lineTypeInfo, defaultState.suspendPolicy,
+      XBreakpointTypeId(id), index, title, isSuspendThreadSupported, isTemporaryBreakpointSupported, lineTypeInfo, defaultState.suspendPolicy,
       standardPanels = visibleStandardPanels.mapTo(mutableSetOf()) { it.toDto() },
       isAddBreakpointButtonVisible,
       isNewBadgeVisible,

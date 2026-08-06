@@ -316,6 +316,7 @@ a:com.intellij.xdebugger.breakpoints.XBreakpointType
 - hasCustomCondition(com.intellij.xdebugger.breakpoints.XBreakpoint):Z
 - isAddBreakpointButtonVisible():Z
 - isSuspendThreadSupported():Z
+- isTemporaryBreakpointSupported():Z
 - shouldShowInBreakpointsDialog(com.intellij.openapi.project.Project):Z
 e:com.intellij.xdebugger.breakpoints.XBreakpointType$StandardPanels
 - java.lang.Enum
@@ -354,6 +355,7 @@ a:com.intellij.xdebugger.breakpoints.XLineBreakpointType
 - getShortText(com.intellij.xdebugger.breakpoints.XLineBreakpoint):java.lang.String
 - getSourcePosition(com.intellij.xdebugger.breakpoints.XBreakpoint):com.intellij.xdebugger.XSourcePosition
 - getTemporaryIcon():javax.swing.Icon
+- isTemporaryBreakpointSupported():Z
 - variantAndBreakpointMatch(com.intellij.xdebugger.breakpoints.XLineBreakpoint,com.intellij.xdebugger.breakpoints.XLineBreakpointType$XLineBreakpointVariant):Z
 c:com.intellij.xdebugger.breakpoints.XLineBreakpointType$XLineBreakpointAllVariant
 - com.intellij.xdebugger.breakpoints.XLineBreakpointType$XLineBreakpointVariant

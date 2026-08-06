@@ -136,6 +136,7 @@ private open class FrontendXBreakpointType(
   override val pendingIcon: Icon? = dto.icons.pendingIcon?.icon()
   override val inactiveDependentIcon: Icon = dto.icons.inactiveDependentIcon.icon()
   override val isSuspendThreadSupported: Boolean = dto.suspendThreadSupported
+  override val isTemporaryBreakpointSupported: Boolean = dto.temporaryBreakpointSupported
 
   // TODO: should we support changes from the backend (so we need to subscribe on them)
   private var _defaultSuspendPolicy = dto.defaultSuspendPolicy

@@ -1089,7 +1089,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
 
     positionReachedInternal(suspendContext, true)
 
-    if (doProcessing && breakpoint is XLineBreakpoint<*> && breakpoint.isTemporary()) {
+    if (doProcessing && breakpoint is XBreakpointBase<*, *, *> && breakpoint.isTemporary) {
       handleTemporaryBreakpointHit(breakpoint)
     }
     return true

@@ -81,6 +81,7 @@ private suspend fun XBreakpointBase<*, *, *>.getDtoState(): XBreakpointDtoState 
       isConditionEnabled = isConditionEnabled,
       conditionExpression = conditionExpressionInt?.toRpc(),
       enabled = isEnabled,
+      isTemporary = isTemporary,
       suspendPolicy = suspendPolicy,
       userDescription = userDescription,
       group = group,

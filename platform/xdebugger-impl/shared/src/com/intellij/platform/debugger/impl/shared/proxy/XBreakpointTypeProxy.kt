@@ -25,6 +25,7 @@ interface XBreakpointTypeProxy {
   val inactiveDependentIcon: Icon
 
   val isSuspendThreadSupported: Boolean
+  val isTemporaryBreakpointSupported: Boolean
 
   val defaultSuspendPolicy: SuspendPolicy
 

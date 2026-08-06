@@ -190,6 +190,18 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     updateStateIfNeededAndNotify(requestId, enabled, myState::isEnabled, myState::setEnabled);
   }
 
+  public boolean isTemporary() {
+    return withStateLock(() -> myState.isTemporary());
+  }
+
+  public void setTemporary(boolean temporary) {
+    setTemporary(-1, temporary);
+  }
+
+  public void setTemporary(long requestId, boolean temporary) {
+    updateStateIfNeededAndNotify(requestId, temporary, this::isTemporary, myState::setTemporary);
+  }
+
   @Override
   public @NotNull SuspendPolicy getSuspendPolicy() {
     return withStateLock(() -> myState.getSuspendPolicy());
