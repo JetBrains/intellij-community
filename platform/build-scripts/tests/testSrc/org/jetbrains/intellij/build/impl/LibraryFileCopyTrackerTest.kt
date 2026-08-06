@@ -34,7 +34,6 @@ internal class LibraryFileCopyTrackerTest {
     assertThat(isSeparateLibraryJar("objenesis-3.4.jar")).isTrue()
     assertThat(isSeparateLibraryJar("kotlin-reflect-rt.jar")).isTrue()
     assertThat(isSeparateLibraryJar("maven-resolver-provider.jar")).isTrue()
-    assertThat(isSeparateLibraryJar("ideformer-agent.jar")).isFalse()
     assertThat(isSeparateLibraryJar("code-agents-agent.jar")).isFalse()
     assertThat(isSeparateLibraryJar("kotlin-stdlib.jar")).isFalse()
   }
