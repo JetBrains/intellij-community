@@ -36,5 +36,6 @@ One row per skill in this directory. `SKILL.md` holds the full instructions.
 | [symbols-api](symbols-api/SKILL.md) | Use IntelliJ Symbol API for declarations, references, search, and rename outside PolySymbols. |
 | [testing](testing/SKILL.md) | Run or troubleshoot IntelliJ `tests.cmd` tests and discovery. |
 | [testing-internals](testing-internals/SKILL.md) | Debug IntelliJ `tests.cmd` execution, discovery, and runner internals. |
+| [treehouse](treehouse/SKILL.md) | Safely acquire, inspect, and return leased Treehouse workspaces. |
 | [ui-accessibility](ui-accessibility/SKILL.md) | Review IntelliJ UI accessibility for keyboard, focus, labels, and screen readers. |
 | [writing-tests](writing-tests/SKILL.md) | Write IntelliJ JUnit 5 tests with fixtures, lifecycle, EDT, and registry. |
