@@ -820,7 +820,7 @@ object PluginManagerCore {
           registerLoadingError(PluginPackagePrefixConflict(plugin, exclusionReason.descriptor, exclusionReason.preferredConflictingModule))
         }
         is ProductRulesImposedExclusion -> {
-          val productReason = exclusionReason.productReason as? IntellijImposedModuleExclusionReason
+          val productReason = exclusionReason.productReason as? IntelliJImposedModuleExclusionReason
           if (productReason == null) {
             logger.warn("Unexpected product-based exclusion of plugin: ${exclusionReason.productReason} $plugin")
           }

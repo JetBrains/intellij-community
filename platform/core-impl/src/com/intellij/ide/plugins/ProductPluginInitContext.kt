@@ -406,15 +406,6 @@ class ProductPluginInitContext(
   }
 }
 
-@ApiStatus.Internal
-sealed interface IntellijImposedModuleExclusionReason : ProductRulesImposedExclusionReason
-
-@ApiStatus.Internal
-class PluginHasExpiredLicense : IntellijImposedModuleExclusionReason
-
-@ApiStatus.Internal
-class ThirdPartyPrivacyNoticeIsNotAccepted : IntellijImposedModuleExclusionReason
-
 // alias in most cases points to Core plugin, so we cannot use computed dependencies to check
 private fun doesDependOnPluginAlias(plugin: IdeaPluginDescriptorImpl, aliasId: PluginId): Boolean {
   return plugin.dependencies.any { it.pluginId == aliasId } || plugin.moduleDependencies.plugins.any { it == aliasId }
