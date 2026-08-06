@@ -63,22 +63,7 @@
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.json" />
     <orderEntry type="module" module-name="intellij.libraries.caffeine" />
     <orderEntry type="module" module-name="intellij.platform.refactoring" />
-    <orderEntry type="module-library">
-      <library name="terminal-completion-db-with-extensions" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.terminal:completion-db-with-extensions:0.7.0">
-          <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/terminal/completion-db-with-extensions/0.7.0/completion-db-with-extensions-0.7.0.jar">
-              <sha256sum>e6c3f413c2893e2b76f8de02f55f6b04e52b164379c951819c5dc5fb33dae68f</sha256sum>
-            </artifact>
-          </verification>
-        </properties>
-        <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/terminal/completion-db-with-extensions/0.7.0/completion-db-with-extensions-0.7.0.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
+    <orderEntry type="module" module-name="intellij.terminal.libraries.completionDbWithExtensions" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
     <orderEntry type="module" module-name="intellij.platform.util.text.matching" />
     <orderEntry type="module" module-name="intellij.libraries.completion.ranking.sh" />

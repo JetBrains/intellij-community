@@ -99,6 +99,7 @@
   </content>
   <content>
     <module name="intellij.libraries.completion.ranking.sh" loading="embedded"/>
+    <module name="intellij.terminal.libraries.completionDbWithExtensions" loading="embedded"/>
   </content>
 
   <resource-bundle>messages.TerminalBundle</resource-bundle>

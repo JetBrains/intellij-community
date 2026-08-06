@@ -20459,7 +20459,7 @@ copy_file(
 )
 
 jvm_import(
-    name = "terminal-terminal-completion-db-with-extensions",
+    name = "terminal-libraries-completion_db_with_extensions-terminal-completion-db-with-extensions",
     jar = "@org_jetbrains_terminal-completion-db-with-extensions-0_7_0_http//file",
     visibility = ["//visibility:public"],
 )
