@@ -23254,6 +23254,21 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 runTest("testData/inspectionsLocal/sortModifiers/annotationOverrideFinal.kt");
             }
 
+            @TestMetadata("combination.kt")
+            public void testCombination() throws Exception {
+                runTest("testData/inspectionsLocal/sortModifiers/combination.kt");
+            }
+
+            @TestMetadata("combination2.kt")
+            public void testCombination2() throws Exception {
+                runTest("testData/inspectionsLocal/sortModifiers/combination2.kt");
+            }
+
+            @TestMetadata("combination3.kt")
+            public void testCombination3() throws Exception {
+                runTest("testData/inspectionsLocal/sortModifiers/combination3.kt");
+            }
+
             @TestMetadata("contextParameters.kt")
             public void testContextParameters() throws Exception {
                 runTest("testData/inspectionsLocal/sortModifiers/contextParameters.kt");
@@ -23282,6 +23297,16 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             @TestMetadata("contextParametersOverride.kt")
             public void testContextParametersOverride() throws Exception {
                 runTest("testData/inspectionsLocal/sortModifiers/contextParametersOverride.kt");
+            }
+
+            @TestMetadata("kDocMisplaced.kt")
+            public void testKDocMisplaced() throws Exception {
+                runTest("testData/inspectionsLocal/sortModifiers/kDocMisplaced.kt");
+            }
+
+            @TestMetadata("kDocMisplaced2.kt")
+            public void testKDocMisplaced2() throws Exception {
+                runTest("testData/inspectionsLocal/sortModifiers/kDocMisplaced2.kt");
             }
 
             @TestMetadata("overrideFinal.kt")
