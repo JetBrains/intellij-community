@@ -14,7 +14,7 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
-class RemoteDevBackgroundRun(
+open class RemoteDevBackgroundRun(
   val backendRun: BackgroundRun,
   frontendProcess: IDEHandle,
   frontendDriver: Driver,
@@ -44,6 +44,10 @@ class RemoteDevBackgroundRun(
   private fun waitAndPrepareForTest() {
     awaitBackendIsConnected()
     awaitVisibleFrameFrontend()
+    awaitFrontendReadyForTest()
+  }
+
+  protected open fun awaitFrontendReadyForTest() {
     driver.awaitLuxInitialized()
   }
 

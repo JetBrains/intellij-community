@@ -1,8 +1,8 @@
 package com.intellij.lambda.testFramework.utils
 
-import com.intellij.ide.starter.driver.driver.remoteDev.RemDevDriverRunner
 import com.intellij.ide.starter.driver.driver.remoteDev.RemoteDevBackgroundRun
 import com.intellij.ide.starter.driver.engine.LocalDriverRunner
+import com.intellij.ide.starter.driver.engine.selectedDriverRunner
 import com.intellij.ide.starter.ide.IDERemDevTestContext
 import com.intellij.ide.starter.ide.IDETestContext
 import com.intellij.ide.starter.ide.onRemDevContext
@@ -74,7 +74,8 @@ internal fun IDERemDevTestContext.runIdeWithLambda(
   collectNativeThreads: Boolean = false,
   configure: IDERunContext.() -> Unit = {},
 ): IdeWithLambda {
-  val driverRunner = RemDevDriverRunner()
+  // the split-mode runner, unless a launch mode was selected through the DriverRunner binding - same choice runIdeWithDriver makes
+  val driverRunner = selectedDriverRunner()
   LambdaTestPluginHolder.additionalPluginDirNames(OnlyFrontend, All)
     .forEach { addCustomFrontendPlugin(it) }
   val backendRdSession = setUpRdTestSession(BACKEND)

@@ -21,6 +21,8 @@ import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.ScrambleTool
 import org.jetbrains.intellij.build.dev.BuildRequest
 import org.jetbrains.intellij.build.dev.buildProductInProcess
+import org.jetbrains.intellij.build.dev.readCustomCommand
+import org.jetbrains.intellij.build.dev.resolveAdditionalJvmArguments
 import org.kodein.di.direct
 import org.kodein.di.instance
 import java.nio.file.Path
@@ -58,6 +60,9 @@ object DevBuildServerRunnerImpl : DevBuildServerRunner {
 
   override suspend fun readVmOptions(installationDirectory: Path): List<String> =
     org.jetbrains.intellij.build.dev.readVmOptions(installationDirectory)
+
+  override fun readCustomCommandJvmArguments(installationDirectory: Path, command: String): List<String>? =
+    readCustomCommand(installationDirectory, command)?.resolveAdditionalJvmArguments(installationDirectory)
 
   /** Returns IDE installation directory */
   override suspend fun startDevBuild(ideInfo: IdeInfo): Path {

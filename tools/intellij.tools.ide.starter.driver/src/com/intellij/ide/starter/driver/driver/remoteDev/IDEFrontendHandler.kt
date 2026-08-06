@@ -45,7 +45,7 @@ internal class IDEFrontendHandler(
 
   fun runInBackground(
     launchName: String,
-    joinLink: String,
+    commandLine: IDECommandLine,
     runTimeout: Duration,
     configure: IDERunContext.() -> Unit = {},
   ): Pair<Deferred<IDEStartResult>, IDEHandle> {
@@ -69,11 +69,8 @@ internal class IDEFrontendHandler(
     }
     val result = scopeForProcesses.async {
       try {
-        val thinClientCommand =
-          if (frontendContext.ide.vmOptions.data().contains("-Djava.awt.headless=true")) "thinClient-headless" else "thinClient"
-
         frontendContext.runIdeSuspending(
-          commandLine = IDECommandLine.Args(listOf(thinClientCommand, joinLink)),
+          commandLine = commandLine,
           commands = CommandChain(),
           runTimeout = runTimeout,
           launchName = launchName,

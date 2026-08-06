@@ -23,7 +23,6 @@ import com.intellij.ide.starter.runner.events.IdeAfterLaunchEvent
 import com.intellij.ide.starter.runner.events.IdeLaunchEvent
 import com.intellij.ide.starter.screenRecorder.IDEScreenRecorder
 import com.intellij.ide.starter.utils.FileSystem.listDirectoryEntriesQuietly
-import com.intellij.ide.starter.utils.JvmUtils
 import com.intellij.ide.starter.utils.catchAll
 import com.intellij.ide.starter.utils.formatArtifactName
 import com.intellij.ide.starter.utils.startProfileNativeThreads
@@ -206,7 +205,20 @@ data class IDERunContext(
       // Allow an overridden script file, required for migration of Rider performance tests
       else if (!this.hasOption(TEST_SCRIPT_FILE_OPTION))
         installTestScript(testName = contextName, paths = testContext.paths, commands = commands)
+
+      applyCustomCommandJvmArguments()
     }
+  }
+
+  private fun VMOptions.applyCustomCommandJvmArguments() {
+    if (!testContext.ide.isFromSources) return
+    val customCommand = commandLine(this@IDERunContext) as? IDECommandLine.CustomCommand ?: return
+    val customCommandJvmArguments = requireNotNull(
+      DevBuildServerRunner.instance.readCustomCommandJvmArguments(testContext.ide.installationPath, customCommand.command)
+    ) {
+      "No '${customCommand.command}' custom command in the product info of ${testContext.ide.installationPath}"
+    }
+    customCommandJvmArguments.forEach { addLine(it) }
   }
 
   fun runIDE(): IDEStartResult {

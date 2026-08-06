@@ -7,7 +7,7 @@ import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
 
 open class RemoteDevRun : BeforeAllCallback, BeforeEachCallback {
-  private fun configure() {
+  protected open fun configure() {
     ConfigurationStorage.splitMode(true)
   }
 
