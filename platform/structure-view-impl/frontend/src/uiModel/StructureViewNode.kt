@@ -21,7 +21,7 @@ import javax.swing.tree.TreeNode
  * confined to the EDT together with the rest of the UI state
  * see [StructureUiModelImpl].
  */
-internal class StructureViewNode : StructureUiTreeElement, TreeNode, PathElementIdProvider, Queryable {
+internal class StructureViewNode : StructureUiTreeElement, PathElementIdProvider, Queryable {
   private var dto: StructureViewTreeElementDto? = null
   private var myPresentation: ItemPresentation = EMPTY_PRESENTATION
 
@@ -29,9 +29,9 @@ internal class StructureViewNode : StructureUiTreeElement, TreeNode, PathElement
 
   // sourceChildren is the reusable backend graph. projectedChildren caches action-applied topology,
   // visibleChildren is the current Swing projection after narrow-down / speed search.
-  internal val sourceChildren: MutableList<StructureViewNode> = mutableListOf()
-  internal val projectedChildren: MutableList<StructureViewNode> = mutableListOf()
-  internal val visibleChildren: MutableList<StructureViewNode> = mutableListOf()
+  override val sourceChildren: MutableList<StructureViewNode> = mutableListOf()
+  override val projectedChildren: MutableList<StructureUiTreeElement> = mutableListOf()
+  override val visibleChildren: MutableList<StructureUiTreeElement> = mutableListOf()
 
   override val id: Int
     get() = dto?.id ?: ROOT_ID
@@ -62,9 +62,6 @@ internal class StructureViewNode : StructureUiTreeElement, TreeNode, PathElement
 
   override val filterResults: List<Boolean>
     get() = dto?.filterResults ?: emptyList()
-
-  override val children: List<StructureUiTreeElement>
-    get() = sourceChildren
 
   @RequiresEdt
   internal fun update(dto: StructureViewTreeElementDto) {

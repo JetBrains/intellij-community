@@ -66,7 +66,6 @@ import com.intellij.platform.structureView.frontend.uiModel.NodeProviderTreeActi
 import com.intellij.platform.structureView.frontend.uiModel.StructureTreeAction
 import com.intellij.platform.structureView.frontend.uiModel.StructureUiModel
 import com.intellij.platform.structureView.frontend.uiModel.StructureUiModelListener
-import com.intellij.platform.structureView.frontend.uiModel.StructureViewNode
 import com.intellij.platform.structureView.impl.StructureViewScopeHolder
 import com.intellij.platform.structureView.impl.uiModel.StructureUiTreeElement
 import com.intellij.platform.util.coroutines.childScope
@@ -141,7 +140,7 @@ class FileStructurePopup(
   private var myPopup: JBPopup? = null
   private var myTitle: @NlsContexts.PopupTitle String? = null
 
-  private val rootNode = myModel.rootElement as StructureViewNode
+  private val rootNode = myModel.rootElement
   private val treeModel = DefaultTreeModel(rootNode)
   private val tree: Tree
   private val mySpeedSearch: MyTreeSpeedSearch
@@ -578,9 +577,9 @@ class FileStructurePopup(
   }
 
   /**
-   * Rebuilds the Swing-visible tree projection. Backend DTOs are already applied to [StructureViewNode.sourceChildren] by the UI
-   * model; this method caches the action-projected topology in [StructureViewNode.projectedChildren] and rewrites
-   * [StructureViewNode.visibleChildren].
+   * Rebuilds the Swing-visible tree projection. Backend DTOs are already applied to [StructureUiTreeElement.sourceChildren] by the UI
+   * model; this method caches the action-projected topology in [StructureUiTreeElement.projectedChildren] and rewrites
+   * [StructureUiTreeElement.visibleChildren].
    *
    * Existing expansion is restored by [TreeState]. The previous popup selection is then replayed explicitly so Swing applies expansion
    * from the selected path. If the previous popup selection is no longer visible, the current editor selection is selected when
@@ -667,11 +666,11 @@ class FileStructurePopup(
   }
 
   private fun rebuildProjectedAndVisibleChildren(
-    node: StructureViewNode,
+    node: StructureUiTreeElement,
     projectionSnapshot: ProjectionSnapshot,
     visibilitySnapshot: VisibilitySnapshot,
   ): Boolean {
-    val children = ArrayList<StructureViewNode>()
+    val children = ArrayList<StructureUiTreeElement>()
     children.addAll(node.sourceChildren)
     for (provider in projectionSnapshot.enabledNodeProviders) {
       children.addAll(provider.getNodes(node))
@@ -704,7 +703,7 @@ class FileStructurePopup(
     return hasMatchingDescendant
   }
 
-  private fun rebuildVisibleChildrenFromProjected(node: StructureViewNode, visibilitySnapshot: VisibilitySnapshot): Boolean {
+  private fun rebuildVisibleChildrenFromProjected(node: StructureUiTreeElement, visibilitySnapshot: VisibilitySnapshot): Boolean {
     node.visibleChildren.clear()
     var hasMatchingDescendant = false
     for (child in node.projectedChildren) {
@@ -721,19 +720,19 @@ class FileStructurePopup(
     return hasMatchingDescendant
   }
 
-  private fun clearProjectedAndVisibleChildren(node: StructureViewNode) {
+  private fun clearProjectedAndVisibleChildren(node: StructureUiTreeElement) {
     node.projectedChildren.clear()
     clearVisibleChildren(node)
   }
 
-  private fun clearVisibleChildren(node: StructureViewNode) {
+  private fun clearVisibleChildren(node: StructureUiTreeElement) {
     for (child in node.visibleChildren) {
       clearVisibleChildren(child)
     }
     node.visibleChildren.clear()
   }
 
-  private fun VisibilitySnapshot.matchesSpeedSearch(node: StructureViewNode): Boolean {
+  private fun VisibilitySnapshot.matchesSpeedSearch(node: StructureUiTreeElement): Boolean {
     if (!narrowDown) return false
 
     val prefix = searchPrefix ?: return false
@@ -743,14 +742,14 @@ class FileStructurePopup(
 
   private fun expandAllVisibleNodes(path: TreePath) {
     tree.expandPath(path)
-    val node = path.lastPathComponent as? StructureViewNode ?: return
+    val node = path.lastPathComponent as? StructureUiTreeElement ?: return
     for (child in node.visibleChildren) {
       expandAllVisibleNodes(path.pathByAddingChild(child))
     }
   }
 
   private fun expandAutoNodes(path: TreePath, depth: Int = 0) {
-    val node = path.lastPathComponent as? StructureViewNode ?: return
+    val node = path.lastPathComponent as? StructureUiTreeElement ?: return
     val shouldExpand = depth < myModel.minimumAutoExpandDepth ||
                        node.shouldAutoExpand ||
                        // Preserve com.intellij.ide.structureView.newStructureView.StructureViewComponent.MyExpandListener smart-expand
@@ -792,16 +791,16 @@ class FileStructurePopup(
     return elements
   }
 
-  private fun StructureViewNode.findVisibleChild(element: StructureUiTreeElement): StructureViewNode? {
+  private fun StructureUiTreeElement.findVisibleChild(element: StructureUiTreeElement): StructureUiTreeElement? {
     return visibleChildren.firstOrNull { it.id == element.id }
   }
 
-  private fun findPath(node: StructureViewNode, predicate: (StructureViewNode) -> Boolean): TreePath? {
+  private fun findPath(node: StructureUiTreeElement, predicate: (StructureUiTreeElement) -> Boolean): TreePath? {
     return findPath(TreePath(node), predicate)
   }
 
-  private fun findPath(path: TreePath, predicate: (StructureViewNode) -> Boolean): TreePath? {
-    val node = path.lastPathComponent as? StructureViewNode ?: return null
+  private fun findPath(path: TreePath, predicate: (StructureUiTreeElement) -> Boolean): TreePath? {
+    val node = path.lastPathComponent as? StructureUiTreeElement ?: return null
     if (predicate(node)) return path
 
     for (child in node.visibleChildren) {
@@ -1059,12 +1058,12 @@ class FileStructurePopup(
     }
   }
 
-  private fun unwrapTreeElement(o: Any?): StructureViewNode? {
-    return TreeUtil.getUserObject(o) as? StructureViewNode
+  private fun unwrapTreeElement(o: Any?): StructureUiTreeElement? {
+    return TreeUtil.getUserObject(o) as? StructureUiTreeElement
   }
 
-  private fun unwrapTreeElement(o: TreePath?): StructureViewNode? {
-    return TreeUtil.getLastUserObject(o) as? StructureViewNode
+  private fun unwrapTreeElement(o: TreePath?): StructureUiTreeElement? {
+    return TreeUtil.getLastUserObject(o) as? StructureUiTreeElement
   }
 
   private inner class ToggleNarrowDownAction :

@@ -3,8 +3,9 @@ package com.intellij.platform.structureView.impl.uiModel
 
 import com.intellij.navigation.ItemPresentation
 import com.intellij.openapi.vcs.FileStatus
+import javax.swing.tree.TreeNode
 
-interface StructureUiTreeElement {
+interface StructureUiTreeElement : TreeNode {
   val id: Int
   val parent: StructureUiTreeElement?
   val indexInParent: Int
@@ -15,5 +16,7 @@ interface StructureUiTreeElement {
   val shouldAutoExpand: Boolean
   val fileStatus: FileStatus
   val filterResults: List<Boolean>
-  val children: List<StructureUiTreeElement>
+  val sourceChildren: List<StructureUiTreeElement>
+  val projectedChildren: MutableList<StructureUiTreeElement>
+  val visibleChildren: MutableList<StructureUiTreeElement>
 }
