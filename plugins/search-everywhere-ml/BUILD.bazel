@@ -1,6 +1,14 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+jps_test(
+    name = "searchEverywhereMl-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":searchEverywhereMl-tests_test_lib"],
+)
+### skip generation section `test intellij.searchEverywhereMl.tests`
+
 ### auto-generated section `build intellij.searchEverywhereMl` start
 jvm_library(
     name = "search-everywhere-ml",
@@ -118,6 +126,22 @@ jvm_library(
         "//platform/projectModel-api:projectModel_test_lib",
         "//platform/testFramework/junit5",
         "//platform/testFramework/junit5:junit5_test_lib",
+        "//json/backend",
+        "//json/backend:backend_test_lib",
+        "//platform/ml-logs",
+        "//platform/ml-logs:ml-logs_test_lib",
+        "//plugins/search-everywhere-ml/typos",
+        "//plugins/search-everywhere-ml/typos:typos_test_lib",
+        "//plugins/search-everywhere-ml/ranking/ext",
+        "//plugins/search-everywhere-ml/ranking/ext:ext_test_lib",
+        "//plugins/search-everywhere-ml/ranking/core",
+        "//plugins/search-everywhere-ml/ranking/core:core_test_lib",
+        "//plugins/search-everywhere-ml/ranking/java",
+        "//plugins/search-everywhere-ml/ranking/java:java_test_lib",
+        "//plugins/search-everywhere-ml/ranking/yaml",
+        "//plugins/search-everywhere-ml/ranking/yaml:yaml_test_lib",
+        "//plugins/search-everywhere-ml/ranking/vcs",
+        "//plugins/search-everywhere-ml/ranking/vcs:vcs_test_lib",
         "//libraries/junit4",
         "//libraries/junit4:junit4_test_lib",
         "//libraries/junit5",
@@ -136,10 +160,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.searchEverywhereMl.tests` end
-
-### auto-generated section `test intellij.searchEverywhereMl.tests` start
-jps_test(
-    name = "searchEverywhereMl-tests_test",
-    runtime_deps = [":searchEverywhereMl-tests_test_lib"],
-)
-### auto-generated section `test intellij.searchEverywhereMl.tests` end

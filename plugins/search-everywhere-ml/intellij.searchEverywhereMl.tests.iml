@@ -84,7 +84,15 @@
     </orderEntry>
     <orderEntry type="module" module-name="intellij.platform.projectModel" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.json.backend" scope="TEST" />
     <orderEntry type="module" module-name="intellij.searchEverywhereMl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ml.logs" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.searchEverywhereMl.typos" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.searchEverywhereMl.ranking.ext" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.searchEverywhereMl.ranking.core" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.searchEverywhereMl.ranking.java" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.searchEverywhereMl.ranking.yaml" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.searchEverywhereMl.ranking.vcs" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit5.params" scope="TEST" />

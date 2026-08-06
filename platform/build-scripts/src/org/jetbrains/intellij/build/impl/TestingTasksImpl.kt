@@ -1599,6 +1599,7 @@ private val COMMUNITY_AGGREGATOR_BAZEL_MIGRATED_MODULES = listOf(
   "intellij.relaxng.tests",
   "intellij.repository.search.completion.tests",
   "intellij.searchEverywhereLucene.backend.tests",
+  "intellij.searchEverywhereMl.tests",
   "intellij.searchEverywhereMl.typos.tests",
   "intellij.statsCollector.tests",
   "intellij.platform.jewel.ui.tests",
