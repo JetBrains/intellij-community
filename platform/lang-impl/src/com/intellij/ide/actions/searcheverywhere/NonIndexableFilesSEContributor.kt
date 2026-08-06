@@ -302,16 +302,19 @@ class NonIndexableFilesSEContributor(event: AnActionEvent) : WeightedSearchEvery
               val matcher = otherNameMatchers[i]
               val matchingDegree = matcher.matchingDegree(file.name)
               if (matchingDegree > 0) {
-                // These locks slow the throughput less than the locks in the producerJob iteration
-                // because these are really just file leftovers
-                val psiItem = when {
-                  file.isDirectory -> readActionUndispatched { PsiManager.getInstance(project).findDirectory(file) }
-                  else -> readActionUndispatched { PsiManager.getInstance(project).findFile(file) }
-                } ?: continue
-                val weight = matchingDegree * (otherNameMatchers.size - i) / (otherNameMatchers.size + 1)
-                val itemDescriptor = FoundItemDescriptor<Any>(psiItem, weight)
-                if (!consumer.process(itemDescriptor)) return@runBlockingCancellable
-                break
+                val shouldBreak = readActionUndispatched {
+                  // These locks slow the throughput less than the locks in the producerJob iteration
+                  // because these are really just file leftovers
+                  val psiItem = when {
+                    file.isDirectory -> PsiManager.getInstance(project).findDirectory(file)
+                    else -> PsiManager.getInstance(project).findFile(file)
+                  } ?: return@readActionUndispatched false
+                  val weight = matchingDegree * (otherNameMatchers.size - i) / (otherNameMatchers.size + 1)
+                  val itemDescriptor = FoundItemDescriptor<Any>(psiItem, weight)
+                  if (consumer.process(itemDescriptor)) return@readActionUndispatched true
+                  return@readActionUndispatched true
+                }
+                if (shouldBreak) break
               }
             }
           }
