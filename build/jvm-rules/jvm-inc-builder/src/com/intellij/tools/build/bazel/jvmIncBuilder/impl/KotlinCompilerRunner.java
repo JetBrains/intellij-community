@@ -475,7 +475,6 @@ public class KotlinCompilerRunner implements CompilerRunner {
       arguments.setJvmDefaultStable(jvmDefault);
     }
     arguments.setInlineClasses(CLFlags.X_INLINE_CLASSES.isFlagSet(flags));
-    arguments.setContextReceivers(CLFlags.X_CONTEXT_RECEIVERS.isFlagSet(flags));
     arguments.setContextParameters(CLFlags.X_CONTEXT_PARAMETERS.isFlagSet(flags));
     arguments.setNoCallAssertions(CLFlags.X_NO_CALL_ASSERTIONS.isFlagSet(flags));
     arguments.setNoParamAssertions(CLFlags.X_NO_PARAM_ASSERTIONS.isFlagSet(flags));
