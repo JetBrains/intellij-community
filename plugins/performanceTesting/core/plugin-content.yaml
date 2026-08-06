@@ -61,6 +61,9 @@
 - name: lib/modules/intellij.performanceTesting.remoteDriver.jcef.jar
   contentModules:
   - name: intellij.performanceTesting.remoteDriver.jcef
+- name: lib/modules/intellij.performanceTesting.structureView.jar
+  contentModules:
+  - name: intellij.performanceTesting.structureView
 - name: lib/modules/intellij.performanceTesting.vcs.jar
   contentModules:
   - name: intellij.performanceTesting.vcs

@@ -55,7 +55,6 @@
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.projectModel.impl"/>
     <module name="intellij.platform.statistics"/>
-    <module name="intellij.platform.structureView"/>
     <module name="intellij.platform.usageView"/>
     <module name="intellij.platform.usageView.impl"/>
     <module name="intellij.platform.util.ex"/>
@@ -70,6 +69,7 @@
     <module name="intellij.performanceTesting.vcs"/>
     <module name="intellij.performanceTesting.frontend"/>
     <module name="intellij.performanceTesting.problemsView"/>
+    <module name="intellij.performanceTesting.structureView"/>
     <module name="intellij.performanceTesting.backend"/>
     <module name="intellij.performanceTesting.frontend.split"/>
     <module name="intellij.performanceTesting.backend.split"/>
