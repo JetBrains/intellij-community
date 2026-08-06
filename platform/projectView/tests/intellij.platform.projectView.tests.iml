@@ -6,6 +6,7 @@
       <sourceFolder url="file://$MODULE_DIR$/testSrc" isTestSource="true" />
     </content>
     <orderEntry type="inheritedJdk" />
+    <orderEntry type="module" module-name="intellij.platform.util.ui" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.projectView.frontend" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.projectView" scope="TEST" />

@@ -660,6 +660,7 @@ private class LoadingDomainModel : TreeNodeDomainModel {
     icon = null,
     mainText = LoadingNode.getText(),
     fullText = listOf(TreeNodeTextFragment(LoadingNode.getText(), SimpleTextAttributes.GRAY_ATTRIBUTES)),
+    background = null,
     toolTip = null,
     textAttributesKey = null,
   )

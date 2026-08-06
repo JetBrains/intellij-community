@@ -40,6 +40,7 @@ import kotlinx.coroutines.flow.last
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
+import java.awt.Color
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
@@ -481,6 +482,7 @@ class TreeNodePresentationBuilderImpl : TreeNodePresentationBuilder {
   // these "Value" suffixes to avoid signature clashes with the setters
   private var iconValue: Icon? = null
   private var mainTextValue: String? = null
+  private var backgroundValue: Color? = null
   private var fullTextValue: MutableList<TreeNodeTextFragment>? = null
   private var toolTipValue: String? = null
   private var textAttributesKeyValue: TextAttributesKey? = null
@@ -490,6 +492,7 @@ class TreeNodePresentationBuilderImpl : TreeNodePresentationBuilder {
     isLeafValue = presentation.isLeaf
     iconValue = presentation.icon
     mainTextValue = presentation.mainText
+    backgroundValue = presentation.background
     fullTextValue = presentation.fullText.toMutableList()
     toolTipValue = presentation.toolTip
     textAttributesKeyValue = presentation.textAttributesKey
@@ -505,6 +508,10 @@ class TreeNodePresentationBuilderImpl : TreeNodePresentationBuilder {
 
   override fun setMainText(text: String) {
     this.mainTextValue = text
+  }
+
+  override fun setBackground(background: Color?) {
+    this.backgroundValue = background
   }
 
   override fun appendTextFragment(text: String, attributes: SimpleTextAttributes) {
@@ -550,6 +557,7 @@ class TreeNodePresentationBuilderImpl : TreeNodePresentationBuilder {
       icon = iconValue,
       mainText = mainText,
       fullText = fullText,
+      background = backgroundValue,
       toolTip = toolTipValue,
       textAttributesKey = textAttributesKeyValue,
     )

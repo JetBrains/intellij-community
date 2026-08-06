@@ -10,6 +10,7 @@ jvm_library(
     ),
     module_name = "intellij.platform.projectView.tests",
     visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/util:util-ui"],
 )
 
 jvm_library(
@@ -36,6 +37,8 @@ jvm_library(
     ],
     deps = [
         # do not sort,
+        "//platform/util:util-ui",
+        "//platform/util:util-ui_test_lib",
         "//platform/projectView/shared:projectView",
         "//platform/projectView/shared:projectView_test_lib",
         "//platform/projectView/backend",

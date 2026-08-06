@@ -9,6 +9,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.ApiStatus
+import java.awt.Color
 import javax.swing.Icon
 
 @ApiStatus.Experimental
@@ -74,6 +75,7 @@ data class TreeNodePresentationImpl(
   val icon: Icon?,
   val mainText: String,
   val fullText: List<TreeNodeTextFragment>,
+  val background: Color?,
   val toolTip: String?,
   val textAttributesKey: TextAttributesKey?,
 ) : TreeNodePresentation

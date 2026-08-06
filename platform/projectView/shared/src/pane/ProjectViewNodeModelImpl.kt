@@ -4,10 +4,12 @@ package com.intellij.platform.projectView.pane
 
 import com.intellij.ide.util.treeView.PathElementIdProvider
 import com.intellij.ide.util.treeView.TreeState
+import com.intellij.ui.BackgroundSupplier
 import com.intellij.ui.tree.TreeNodePresentationBuilderImpl
 import com.intellij.ui.treeStructure.TreeNodePresentationBuilder
 import com.intellij.ui.treeStructure.TreeNodePresentationImpl
 import org.jetbrains.annotations.ApiStatus
+import java.awt.Color
 
 
 internal class ProjectViewNodeModelBuilderImpl<T : Any>(private val id: Long, private val userObject: T) : ProjectViewNodeModelBuilder {
@@ -87,7 +89,7 @@ data class ProjectViewNodeModelImpl<T : Any>(
   private val pathElementType: String,
   private val pathElementId: String,
   val flags: Int = 0,
-) : BackendProjectViewNodeModel<T>, PathElementIdProvider {
+) : BackendProjectViewNodeModel<T>, PathElementIdProvider, BackgroundSupplier {
   constructor(
     maybeUserObject: T?,
     id: Long,
@@ -106,6 +108,8 @@ data class ProjectViewNodeModelImpl<T : Any>(
     pathElementId,
     flags(canNavigate, canNavigateToSource, isIncludedInExpandAll, isDirectory),
   )
+
+  override fun getElementBackground(row: Int): Color? = presentation.background
 
   override val userObject: T
     get() = checkNotNull(maybeUserObject) { "The user object is only available on the backend" }

@@ -5,6 +5,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.ui.SimpleTextAttributes
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
+import java.awt.Color
 import javax.swing.Icon
 
 @ApiStatus.Experimental
@@ -29,6 +30,7 @@ interface TreeNodePresentationBuilder {
   fun setLeaf(isLeaf: Boolean)
   fun setIcon(icon: Icon?)
   fun setMainText(text: String)
+  fun setBackground(background: Color?)
   fun appendTextFragment(text: String, attributes: SimpleTextAttributes)
   fun setToolTipText(toolTip: String?)
   fun setTextAttributesKey(textAttributesKey: TextAttributesKey?)

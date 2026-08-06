@@ -25,6 +25,7 @@ fun TreeNodePresentationImpl.toDTO(): TreeNodePresentationDTO = TreeNodePresenta
   iconId = icon?.rpcId(),
   mainText = mainText,
   fullText = fullText.map { it.toDTO() },
+  backgroundId = background?.rpcId(),
   toolTip = toolTip,
   textAttributeKeyId = textAttributesKey?.rpcId(),
 )
@@ -35,6 +36,7 @@ fun TreeNodePresentationDTO.toPresentation(): TreeNodePresentation = TreeNodePre
   icon = iconId?.icon(),
   mainText = mainText,
   fullText = fullText.map { it.toTextFragment() },
+  background = backgroundId?.color(),
   toolTip = toolTip,
   textAttributesKey = textAttributeKeyId?.key(),
 )
@@ -46,6 +48,7 @@ data class TreeNodePresentationDTO(
   val iconId: IconId?,
   val mainText: String,
   val fullText: List<TreeNodeTextFragmentDTO>,
+  val backgroundId: ColorId?,
   val toolTip: String?,
   val textAttributeKeyId: TextAttributeKeyId?,
 )

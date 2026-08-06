@@ -13,7 +13,10 @@ import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.SimpleTextAttributes
-import com.intellij.ui.treeStructure.*
+import com.intellij.ui.treeStructure.TreeDomainModel
+import com.intellij.ui.treeStructure.TreeNodeDomainModel
+import com.intellij.ui.treeStructure.TreeNodePresentation
+import com.intellij.ui.treeStructure.TreeNodePresentationBuilder
 import com.intellij.util.SmartList
 import com.intellij.util.ui.tree.LegacyCompatibilityTreeNode
 import kotlinx.coroutines.flow.Flow
@@ -172,6 +175,7 @@ fun buildTreeNodeDescriptorPresentation(
       val suffix = presentation.locationSuffix
       appendTextFragment(prefix + location + suffix, locationAttributes)
     }
+    setBackground(presentation.background)
     setToolTipText(presentation.tooltip)
     setTextAttributesKey(presentation.textAttributesKey)
     build()
