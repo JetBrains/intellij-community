@@ -1,16 +1,17 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application
 
+import com.intellij.ide.plugins.DescriptorExclusionReason
 import com.intellij.ide.plugins.DiscoveredPluginsList
 import com.intellij.ide.plugins.PluginInitContextFactory
 import com.intellij.ide.plugins.PluginInitializationContext
 import com.intellij.ide.plugins.PluginInitializationDiagnosticUtils
 import com.intellij.ide.plugins.PluginInstaller
 import com.intellij.ide.plugins.PluginMainDescriptor
-import com.intellij.ide.plugins.PluginNonLoadReason
 import com.intellij.ide.plugins.PluginVersionIsSuperseded
 import com.intellij.ide.plugins.PluginsDiscoveryResult
 import com.intellij.ide.plugins.PluginsSourceContext
+import com.intellij.ide.plugins.getMainDescriptor
 import com.intellij.ide.plugins.isExcluded
 import com.intellij.ide.plugins.loadDescriptorFromArtifact
 import com.intellij.ide.plugins.loadDescriptors
@@ -149,10 +150,10 @@ object PluginAutoUpdater {
     val composedDiscoveryResult = PluginsDiscoveryResult.build(
       discoveredPlugins + DiscoveredPluginsList(updates.values.toList(), PluginsSourceContext.Custom)
     )
-    val excludedDescriptors = mutableMapOf<PluginMainDescriptor, PluginNonLoadReason>()
-    val pluginsToLoad = initContext.selectPluginsToLoad(composedDiscoveryResult) { descriptor, reason ->
+    val excludedDescriptors = mutableMapOf<PluginMainDescriptor, DescriptorExclusionReason>()
+    val pluginsToLoad = initContext.selectPluginsToLoad(composedDiscoveryResult) { reason ->
       if (reason !is PluginVersionIsSuperseded) {
-        excludedDescriptors[descriptor] = reason
+        excludedDescriptors[reason.descriptor.getMainDescriptor()] = reason
       }
     }
     val pluginSet = initContext.resolveConstraints(pluginsToLoad)
@@ -182,8 +183,8 @@ object PluginAutoUpdater {
       if (plugin == null || plugin !== updateDesc) {
         val nonLoadReason = excludedDescriptors[updateDesc]
         rejectedUpdates[id] = "plugin ${updateDesc.shortLogDescription} would not load after the update" +
-                              (nonLoadReason?.let { ": ${it.logMessage}" } ?:
-                              plugin?.let { ": version ${it.version} is selected for loading instead" }.orEmpty())
+                              (nonLoadReason?.let { ": ${PluginInitializationDiagnosticUtils.getLogMessageForRootExclusionReason(it)}" } ?:
+                               plugin?.let { ": version ${it.version} is selected for loading instead" }.orEmpty())
         continue
       }
       if (pluginSet.isExcluded(plugin)) {

@@ -43,8 +43,16 @@ class PluginInitializationSelectPluginsToLoadTest {
 
   private data class ExcludedPluginInfo(
     val plugin: PluginMainDescriptor,
-    val reason: PluginNonLoadReason
+    val reason: DescriptorExclusionReason,
   )
+
+  private inline fun <reified T : PluginIncompatibilityReason> DescriptorExclusionReason.hasIncompatibilityReason(): Boolean {
+    return this is PluginIsIncompatibleWithProduct && incompatibilityReason is T
+  }
+
+  private inline fun <reified T : IntelliJImposedModuleExclusionReason> DescriptorExclusionReason.hasProductReason(): Boolean {
+    return this is ProductRulesImposedExclusion && productReason is T
+  }
 
   private fun createInitContext(
     essentialPlugins: Set<PluginId> = emptySet(),
@@ -83,7 +91,7 @@ class PluginInitializationSelectPluginsToLoadTest {
 
     val result = initContext.selectPluginsToLoad(
       discoveryResult,
-      onPluginExcluded = { plugin, reason -> excludedPlugins.add(ExcludedPluginInfo(plugin, reason)) }
+      onPluginExcluded = { reason -> excludedPlugins.add(ExcludedPluginInfo(reason.descriptor.getMainDescriptor(), reason)) }
     )
 
     return result to excludedPlugins
@@ -128,7 +136,7 @@ class PluginInitializationSelectPluginsToLoadTest {
       assertThat(result.plugins).hasSize(1)
       assertThat(result.plugins[0].version).isEqualTo("1.0")
       assertThat(excludedPlugins).hasSize(1)
-      assertThat(excludedPlugins[0].reason).isInstanceOf(PluginUntilBuildConstraintViolation::class.java)
+      assertThat(excludedPlugins[0].reason.hasIncompatibilityReason<PluginIncompatibilityReason.UntilBuildConstraintViolation>()).isTrue()
       assertThat(excludedPlugins[0].plugin.version).isEqualTo("2.0")
     }
 
@@ -154,7 +162,7 @@ class PluginInitializationSelectPluginsToLoadTest {
       
       val result = initContext.selectPluginsToLoad(
         discoveredPlugins,
-        onPluginExcluded = { plugin, reason -> excludedPlugins.add(ExcludedPluginInfo(plugin, reason)) }
+        onPluginExcluded = { reason -> excludedPlugins.add(ExcludedPluginInfo(reason.descriptor.getMainDescriptor(), reason)) }
       )
 
       assertThat(result.plugins).hasSize(1)
@@ -229,7 +237,7 @@ class PluginInitializationSelectPluginsToLoadTest {
       assertThat(result.plugins).hasSize(1)
       assertThat(result.plugins[0].pluginId.idString).isEqualTo("foo")
       assertThat(excludedPlugins).hasSize(1)
-      assertThat(excludedPlugins[0].reason).isInstanceOf(PluginUntilBuildConstraintViolation::class.java)
+      assertThat(excludedPlugins[0].reason.hasIncompatibilityReason<PluginIncompatibilityReason.UntilBuildConstraintViolation>()).isTrue()
       assertThat(excludedPlugins[0].plugin.pluginId.idString).isEqualTo("bar")
     }
 
@@ -253,7 +261,9 @@ class PluginInitializationSelectPluginsToLoadTest {
 
       assertThat(result.plugins).isEmpty()
       assertThat(excludedPlugins).hasSize(2)
-      assertThat(excludedPlugins.all { it.reason is PluginUntilBuildConstraintViolation }).isTrue()
+      assertThat(excludedPlugins.all {
+        it.reason.hasIncompatibilityReason<PluginIncompatibilityReason.UntilBuildConstraintViolation>()
+      }).isTrue()
     }
 
     @Test
@@ -263,7 +273,7 @@ class PluginInitializationSelectPluginsToLoadTest {
       
       val result = initContext.selectPluginsToLoad(
         PluginsDiscoveryResult.build(emptyList()),
-        onPluginExcluded = { plugin, reason -> excludedPlugins.add(ExcludedPluginInfo(plugin, reason)) }
+        onPluginExcluded = { reason -> excludedPlugins.add(ExcludedPluginInfo(reason.descriptor.getMainDescriptor(), reason)) }
       )
 
       assertThat(result.plugins).isEmpty()
@@ -314,7 +324,9 @@ class PluginInitializationSelectPluginsToLoadTest {
       
       // Versions 2.0 and 3.0 are incompatible
       assertThat(excludedPlugins).hasSize(2)
-      assertThat(excludedPlugins.all { it.reason is PluginUntilBuildConstraintViolation }).isTrue()
+      assertThat(excludedPlugins.all {
+        it.reason.hasIncompatibilityReason<PluginIncompatibilityReason.UntilBuildConstraintViolation>()
+      }).isTrue()
       assertThat(excludedPlugins.map { it.plugin.version }).containsExactlyInAnyOrder("2.0", "3.0")
     }
 
@@ -334,13 +346,13 @@ class PluginInitializationSelectPluginsToLoadTest {
 
       val result = initContext.selectPluginsToLoad(
         discoveryResult,
-        onPluginExcluded = { plugin, reason -> excludedPlugins.add(ExcludedPluginInfo(plugin, reason)) }
+        onPluginExcluded = { reason -> excludedPlugins.add(ExcludedPluginInfo(reason.descriptor.getMainDescriptor(), reason)) }
       )
 
       // Plugin should be excluded as incompatible (compatibility check happens first)
       assertThat(result.plugins).isEmpty()
       assertThat(excludedPlugins).hasSize(1)
-      assertThat(excludedPlugins[0].reason).isInstanceOf(PluginUntilBuildConstraintViolation::class.java)
+      assertThat(excludedPlugins[0].reason.hasIncompatibilityReason<PluginIncompatibilityReason.UntilBuildConstraintViolation>()).isTrue()
       assertThat(excludedPlugins[0].plugin.pluginId.idString).isEqualTo("foo")
     }
   }
@@ -545,7 +557,7 @@ class PluginInitializationSelectPluginsToLoadTest {
 
       val filteredResult = initContext.selectPluginsToLoad(
         discoveryResult,
-        onPluginExcluded = { plugin, reason -> excludedPlugins.add(ExcludedPluginInfo(plugin, reason)) }
+        onPluginExcluded = { reason -> excludedPlugins.add(ExcludedPluginInfo(reason.descriptor.getMainDescriptor(), reason)) }
       )
 
       // Both foo and bar should be loaded (bar is required by essential foo)
@@ -568,7 +580,7 @@ class PluginInitializationSelectPluginsToLoadTest {
 
       val filteredResult = initContext.selectPluginsToLoad(
         discoveryResult,
-        onPluginExcluded = { plugin, reason -> excludedPlugins.add(ExcludedPluginInfo(plugin, reason)) }
+        onPluginExcluded = { reason -> excludedPlugins.add(ExcludedPluginInfo(reason.descriptor.getMainDescriptor(), reason)) }
       )
 
       // Only foo should be loaded, bar is disabled and not required
@@ -599,7 +611,7 @@ class PluginInitializationSelectPluginsToLoadTest {
 
       val filteredResult = initContext.selectPluginsToLoad(
         discoveryResult,
-        onPluginExcluded = { plugin, reason -> excludedPlugins.add(ExcludedPluginInfo(plugin, reason)) }
+        onPluginExcluded = { reason -> excludedPlugins.add(ExcludedPluginInfo(reason.descriptor.getMainDescriptor(), reason)) }
       )
 
       // foo and bar loaded (bar required by foo), baz excluded
@@ -632,7 +644,7 @@ class PluginInitializationSelectPluginsToLoadTest {
 
       val filteredResult = initContext.selectPluginsToLoad(
         discoveryResult,
-        onPluginExcluded = { plugin, reason -> excludedPlugins.add(ExcludedPluginInfo(plugin, reason)) }
+        onPluginExcluded = { reason -> excludedPlugins.add(ExcludedPluginInfo(reason.descriptor.getMainDescriptor(), reason)) }
       )
 
       // Only foo should be loaded, bar is incompatible with essential foo
@@ -640,7 +652,7 @@ class PluginInitializationSelectPluginsToLoadTest {
       assertThat(filteredResult.plugins[0].pluginId.idString).isEqualTo("foo")
       
       assertThat(excludedPlugins).hasSize(1)
-      assertThat(excludedPlugins[0].reason).isInstanceOf(PluginIsIncompatibleWithAnotherPlugin::class.java)
+      assertThat(excludedPlugins[0].reason).isInstanceOf(IncompatibleWithAnotherModule::class.java)
       assertThat(excludedPlugins[0].plugin.pluginId.idString).isEqualTo("bar")
     }
 
@@ -662,7 +674,7 @@ class PluginInitializationSelectPluginsToLoadTest {
 
       val filteredResult = initContext.selectPluginsToLoad(
         discoveryResult,
-        onPluginExcluded = { plugin, reason -> excludedPlugins.add(ExcludedPluginInfo(plugin, reason)) }
+        onPluginExcluded = { reason -> excludedPlugins.add(ExcludedPluginInfo(reason.descriptor.getMainDescriptor(), reason)) }
       )
 
       // Both foo and bar loaded (dependency wins over incompatibility)
@@ -686,7 +698,7 @@ class PluginInitializationSelectPluginsToLoadTest {
 
       val filteredResult = initContext.selectPluginsToLoad(
         discoveryResult,
-        onPluginExcluded = { plugin, reason -> excludedPlugins.add(ExcludedPluginInfo(plugin, reason)) }
+        onPluginExcluded = { reason -> excludedPlugins.add(ExcludedPluginInfo(reason.descriptor.getMainDescriptor(), reason)) }
       )
 
       // Both loaded (only essential incompatibilities matter)
@@ -715,7 +727,7 @@ class PluginInitializationSelectPluginsToLoadTest {
 
       val filteredResult = initContext.selectPluginsToLoad(
         discoveryResult,
-        onPluginExcluded = { plugin, reason -> excludedPlugins.add(ExcludedPluginInfo(plugin, reason)) }
+        onPluginExcluded = { reason -> excludedPlugins.add(ExcludedPluginInfo(reason.descriptor.getMainDescriptor(), reason)) }
       )
 
       // Only foo should be loaded, bar is incompatible (via alias resolution)
@@ -723,7 +735,7 @@ class PluginInitializationSelectPluginsToLoadTest {
       assertThat(filteredResult.plugins[0].pluginId.idString).isEqualTo("foo")
       
       assertThat(excludedPlugins).hasSize(1)
-      assertThat(excludedPlugins[0].reason).isInstanceOf(PluginIsIncompatibleWithAnotherPlugin::class.java)
+      assertThat(excludedPlugins[0].reason).isInstanceOf(IncompatibleWithAnotherModule::class.java)
       assertThat(excludedPlugins[0].plugin.pluginId.idString).isEqualTo("bar")
     }
   }
@@ -754,7 +766,7 @@ class PluginInitializationSelectPluginsToLoadTest {
 
       val filteredResult = initContext.selectPluginsToLoad(
         discoveryResult,
-        onPluginExcluded = { plugin, reason -> excludedPlugins.add(ExcludedPluginInfo(plugin, reason)) }
+        onPluginExcluded = { reason -> excludedPlugins.add(ExcludedPluginInfo(reason.descriptor.getMainDescriptor(), reason)) }
       )
 
       // bar and its dependency foo should be loaded
@@ -763,7 +775,7 @@ class PluginInitializationSelectPluginsToLoadTest {
 
       // baz excluded as not required
       assertThat(excludedPlugins).hasSize(1)
-      assertThat(excludedPlugins[0].reason).isInstanceOf(PluginIsNotRequiredForLoadingTheExplicitlyConfiguredSubsetOfPlugins::class.java)
+      assertThat(excludedPlugins[0].reason.hasProductReason<PluginIsNotContainedInTheExplicitlyConfiguredSubsetOfPluginsForLoading>()).isTrue()
       assertThat(excludedPlugins[0].plugin.pluginId.idString).isEqualTo("baz")
     }
 
@@ -782,7 +794,7 @@ class PluginInitializationSelectPluginsToLoadTest {
 
       val filteredResult = initContext.selectPluginsToLoad(
         discoveryResult,
-        onPluginExcluded = { plugin, reason -> excludedPlugins.add(ExcludedPluginInfo(plugin, reason)) }
+        onPluginExcluded = { reason -> excludedPlugins.add(ExcludedPluginInfo(reason.descriptor.getMainDescriptor(), reason)) }
       )
 
       // foo (essential) and bar (explicit) should be loaded
@@ -791,7 +803,7 @@ class PluginInitializationSelectPluginsToLoadTest {
 
       // baz excluded
       assertThat(excludedPlugins).hasSize(1)
-      assertThat(excludedPlugins[0].reason).isInstanceOf(PluginIsNotRequiredForLoadingTheExplicitlyConfiguredSubsetOfPlugins::class.java)
+      assertThat(excludedPlugins[0].reason.hasProductReason<PluginIsNotContainedInTheExplicitlyConfiguredSubsetOfPluginsForLoading>()).isTrue()
       assertThat(excludedPlugins[0].plugin.pluginId.idString).isEqualTo("baz")
     }
 
@@ -816,7 +828,7 @@ class PluginInitializationSelectPluginsToLoadTest {
 
       val filteredResult = initContext.selectPluginsToLoad(
         discoveryResult,
-        onPluginExcluded = { plugin, reason -> excludedPlugins.add(ExcludedPluginInfo(plugin, reason)) }
+        onPluginExcluded = { reason -> excludedPlugins.add(ExcludedPluginInfo(reason.descriptor.getMainDescriptor(), reason)) }
       )
 
       // c, b, and a should be loaded (transitive chain)
@@ -825,7 +837,7 @@ class PluginInitializationSelectPluginsToLoadTest {
 
       // d excluded
       assertThat(excludedPlugins).hasSize(1)
-      assertThat(excludedPlugins[0].reason).isInstanceOf(PluginIsNotRequiredForLoadingTheExplicitlyConfiguredSubsetOfPlugins::class.java)
+      assertThat(excludedPlugins[0].reason.hasProductReason<PluginIsNotContainedInTheExplicitlyConfiguredSubsetOfPluginsForLoading>()).isTrue()
       assertThat(excludedPlugins[0].plugin.pluginId.idString).isEqualTo("d")
     }
 
@@ -846,7 +858,7 @@ class PluginInitializationSelectPluginsToLoadTest {
 
       val filteredResult = initContext.selectPluginsToLoad(
         discoveryResult,
-        onPluginExcluded = { plugin, reason -> excludedPlugins.add(ExcludedPluginInfo(plugin, reason)) }
+        onPluginExcluded = { reason -> excludedPlugins.add(ExcludedPluginInfo(reason.descriptor.getMainDescriptor(), reason)) }
       )
 
       // Both bar and foo should be loaded (explicit subset does not care about disabled plugins)
@@ -874,7 +886,7 @@ class PluginInitializationSelectPluginsToLoadTest {
 
       val filteredResult = initContext.selectPluginsToLoad(
         discoveryResult,
-        onPluginExcluded = { plugin, reason -> excludedPlugins.add(ExcludedPluginInfo(plugin, reason)) }
+        onPluginExcluded = { reason -> excludedPlugins.add(ExcludedPluginInfo(reason.descriptor.getMainDescriptor(), reason)) }
       )
 
       // Only bar should remain
@@ -883,7 +895,7 @@ class PluginInitializationSelectPluginsToLoadTest {
 
       // foo excluded as incompatible (not as "not required")
       assertThat(excludedPlugins).hasSize(1)
-      assertThat(excludedPlugins[0].reason).isInstanceOf(PluginUntilBuildConstraintViolation::class.java)
+      assertThat(excludedPlugins[0].reason.hasIncompatibilityReason<PluginIncompatibilityReason.UntilBuildConstraintViolation>()).isTrue()
       assertThat(excludedPlugins[0].plugin.pluginId.idString).isEqualTo("foo")
     }
 
@@ -901,7 +913,7 @@ class PluginInitializationSelectPluginsToLoadTest {
 
       val filteredResult = initContext.selectPluginsToLoad(
         discoveryResult,
-        onPluginExcluded = { plugin, reason -> excludedPlugins.add(ExcludedPluginInfo(plugin, reason)) }
+        onPluginExcluded = { reason -> excludedPlugins.add(ExcludedPluginInfo(reason.descriptor.getMainDescriptor(), reason)) }
       )
 
       // Only bar should remain
@@ -911,7 +923,9 @@ class PluginInitializationSelectPluginsToLoadTest {
       // Both foo versions excluded: 1.0 superseded, 2.0 not required
       assertThat(excludedPlugins).hasSize(2)
       val supersededExclusion = excludedPlugins.find { it.reason is PluginVersionIsSuperseded }
-      val notRequiredExclusion = excludedPlugins.find { it.reason is PluginIsNotRequiredForLoadingTheExplicitlyConfiguredSubsetOfPlugins }
+      val notRequiredExclusion = excludedPlugins.find {
+        it.reason.hasProductReason<PluginIsNotContainedInTheExplicitlyConfiguredSubsetOfPluginsForLoading>()
+      }
       
       assertThat(supersededExclusion).isNotNull()
       assertThat(supersededExclusion!!.plugin.version).isEqualTo("1.0")
@@ -936,7 +950,7 @@ class PluginInitializationSelectPluginsToLoadTest {
 
       val filteredResult = initContext.selectPluginsToLoad(
         discoveryResult,
-        onPluginExcluded = { plugin, reason -> excludedPlugins.add(ExcludedPluginInfo(plugin, reason)) }
+        onPluginExcluded = { reason -> excludedPlugins.add(ExcludedPluginInfo(reason.descriptor.getMainDescriptor(), reason)) }
       )
 
       // CORE and foo (essential) should be loaded
@@ -945,7 +959,7 @@ class PluginInitializationSelectPluginsToLoadTest {
 
       // bar excluded
       assertThat(excludedPlugins).hasSize(1)
-      assertThat(excludedPlugins[0].reason).isInstanceOf(PluginIsNotRequiredForLoadingTheExplicitlyConfiguredSubsetOfPlugins::class.java)
+      assertThat(excludedPlugins[0].reason.hasProductReason<PluginIsNotContainedInTheExplicitlyConfiguredSubsetOfPluginsForLoading>()).isTrue()
       assertThat(excludedPlugins[0].plugin.pluginId.idString).isEqualTo("bar")
     }
   }
@@ -964,15 +978,17 @@ class PluginInitializationSelectPluginsToLoadTest {
 
       val filteredResult = initContext.selectPluginsToLoad(
         discoveryResult,
-        onPluginExcluded = { plugin, reason -> excludedPlugins.add(ExcludedPluginInfo(plugin, reason)) }
+        onPluginExcluded = { reason -> excludedPlugins.add(ExcludedPluginInfo(reason.descriptor.getMainDescriptor(), reason)) }
       )
 
       // No plugins should be loaded (CORE is not in our test set)
       assertThat(filteredResult.plugins).isEmpty()
 
-      // All plugins excluded with PluginLoadingIsDisabledCompletely
+      // All plugins are excluded because plugin loading is disabled
       assertThat(excludedPlugins).hasSize(2)
-      assertThat(excludedPlugins.all { it.reason is PluginLoadingIsDisabledCompletely }).isTrue()
+      assertThat(excludedPlugins.all {
+        it.reason.hasProductReason<PluginLoadingIsDisabledCompletelyExceptCore>()
+      }).isTrue()
       assertThat(excludedPlugins.map { it.plugin.pluginId.idString }).containsExactlyInAnyOrder("foo", "bar")
     }
 
@@ -987,7 +1003,7 @@ class PluginInitializationSelectPluginsToLoadTest {
 
       val filteredResult = initContext.selectPluginsToLoad(
         discoveryResult,
-        onPluginExcluded = { plugin, reason -> excludedPlugins.add(ExcludedPluginInfo(plugin, reason)) }
+        onPluginExcluded = { reason -> excludedPlugins.add(ExcludedPluginInfo(reason.descriptor.getMainDescriptor(), reason)) }
       )
 
       // Only CORE should be loaded
@@ -996,7 +1012,7 @@ class PluginInitializationSelectPluginsToLoadTest {
 
       // Only foo excluded
       assertThat(excludedPlugins).hasSize(1)
-      assertThat(excludedPlugins[0].reason).isInstanceOf(PluginLoadingIsDisabledCompletely::class.java)
+      assertThat(excludedPlugins[0].reason.hasProductReason<PluginLoadingIsDisabledCompletelyExceptCore>()).isTrue()
       assertThat(excludedPlugins[0].plugin.pluginId.idString).isEqualTo("foo")
     }
 
@@ -1007,7 +1023,7 @@ class PluginInitializationSelectPluginsToLoadTest {
 
       val filteredResult = initContext.selectPluginsToLoad(
         PluginsDiscoveryResult.build(emptyList()),
-        onPluginExcluded = { plugin, reason -> excludedPlugins.add(ExcludedPluginInfo(plugin, reason)) }
+        onPluginExcluded = { reason -> excludedPlugins.add(ExcludedPluginInfo(reason.descriptor.getMainDescriptor(), reason)) }
       )
 
       assertThat(filteredResult.plugins).isEmpty()

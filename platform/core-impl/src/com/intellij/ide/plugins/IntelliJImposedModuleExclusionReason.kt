@@ -7,7 +7,31 @@ import org.jetbrains.annotations.ApiStatus
 sealed interface IntelliJImposedModuleExclusionReason : ProductRulesImposedExclusion.ProductRulesImposedExclusionReason
 
 @ApiStatus.Internal
-class PluginHasExpiredLicense : IntelliJImposedModuleExclusionReason
+object PluginHasExpiredLicense : IntelliJImposedModuleExclusionReason {
+  override fun getLogMessage(): String = "plugin has expired license"
+}
 
 @ApiStatus.Internal
-class ThirdPartyPrivacyNoticeIsNotAccepted : IntelliJImposedModuleExclusionReason
+object ThirdPartyPrivacyNoticeIsNotAccepted : IntelliJImposedModuleExclusionReason {
+  override fun getLogMessage(): String = "third-party privacy notice is not accepted"
+}
+
+@ApiStatus.Internal
+object NonBundledPluginsLoadingIsDisabled : IntelliJImposedModuleExclusionReason {
+  override fun getLogMessage(): String = "non-bundled plugins loading is disabled"
+}
+
+@ApiStatus.Internal
+object PluginIsNotContainedInTheExplicitlyConfiguredSubsetOfPluginsForLoading : IntelliJImposedModuleExclusionReason {
+  override fun getLogMessage(): String = "plugin is not contained in the explicitly configured subset of plugins for loading"
+}
+
+@ApiStatus.Internal
+object PluginLoadingIsDisabledCompletelyExceptCore : IntelliJImposedModuleExclusionReason {
+  override fun getLogMessage(): String = "plugin loading is disabled completely except core"
+}
+
+@ApiStatus.Internal
+object LegacyPluginIsCompatibleOnlyWithIntelliJIDEA : IntelliJImposedModuleExclusionReason {
+  override fun getLogMessage(): String = "legacy plugin is compatible only with IntelliJ IDEA"
+}

@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
+import com.intellij.openapi.extensions.PluginId
 import org.jetbrains.annotations.ApiStatus
 
 
@@ -79,6 +80,18 @@ class PartOfRuntimeModuleGroupDependencyCycle(
 ) : DescriptorExclusionReason
 
 @ApiStatus.Internal
+class PluginVersionIsSuperseded(
+  override val descriptor: PluginMainDescriptor,
+  val supersededBy: PluginMainDescriptor,
+): DescriptorExclusionReason
+
+@ApiStatus.Internal
+class PluginIsIncompatibleWithProduct(
+  override val descriptor: PluginMainDescriptor,
+  val incompatibilityReason: PluginIncompatibilityReason,
+) : DescriptorExclusionReason
+
+@ApiStatus.Internal
 class IncompatibleWithAnotherModule(
   override val descriptor: IdeaPluginDescriptorImpl,
   val preferredIncompatibleModule: PluginModuleDescriptor,
@@ -88,6 +101,29 @@ class IncompatibleWithAnotherModule(
 class PackagePrefixConflictWithAnotherModule(
   override val descriptor: PluginModuleDescriptor,
   val preferredConflictingModule: PluginModuleDescriptor,
+) : DescriptorExclusionReason
+
+/**
+ * Exactly one of [conflictingPluginId] or [conflictingModuleId] is not null
+ */
+@ApiStatus.Internal
+class PluginDeclaresConflictingId(
+  override val descriptor: PluginMainDescriptor,
+  val declarationOrigin: PluginModuleDescriptor,
+  val conflictingModule: PluginModuleDescriptor,
+  val conflictingPluginId: PluginId? = null,
+  val conflictingModuleId: PluginModuleId? = null,
+) : DescriptorExclusionReason {
+  init {
+    require((conflictingPluginId != null) != (conflictingModuleId != null))
+  }
+
+  val conflictingId: Any get() = conflictingPluginId ?: conflictingModuleId!!
+}
+
+@ApiStatus.Internal
+class PluginIsMarkedDisabled(
+  override val descriptor: PluginMainDescriptor,
 ) : DescriptorExclusionReason
 
 @ApiStatus.Internal
@@ -101,7 +137,9 @@ class ProductRulesImposedExclusion(
   override val descriptor: PluginModuleDescriptor,
   val productReason: ProductRulesImposedExclusionReason,
 ) : DescriptorExclusionReason {
-  interface ProductRulesImposedExclusionReason
+  interface ProductRulesImposedExclusionReason {
+    fun getLogMessage(): String
+  }
 }
 
 @ApiStatus.Internal

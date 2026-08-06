@@ -44,6 +44,7 @@ object PluginCompatibilityUtils {
       PluginIncompatibilityReason.MalformedSinceUntilConstraints -> PluginMalformedSinceUntilConstraints(descriptor)
       is PluginIncompatibilityReason.SinceBuildConstraintViolation -> PluginSinceBuildConstraintViolation(descriptor, productBuildNumber)
       is PluginIncompatibilityReason.UntilBuildConstraintViolation -> PluginUntilBuildConstraintViolation(descriptor, productBuildNumber)
+      is PluginIncompatibilityReason.PluginIsMarkedBroken -> PluginIsMarkedBroken(descriptor)
     }
   }
 
@@ -154,4 +155,18 @@ sealed interface PluginIncompatibilityReason {
   class UntilBuildConstraintViolation(val productBuildNumber: BuildNumber): PluginIncompatibilityReason
 
   object MalformedSinceUntilConstraints : PluginIncompatibilityReason
+
+  class PluginIsMarkedBroken : PluginIncompatibilityReason
+}
+
+@ApiStatus.Internal
+fun PluginIncompatibilityReason.getLogMessageForRootExclusionReason(plugin: PluginMainDescriptor): String {
+  return when (this) {
+    is PluginIncompatibilityReason.IncompatibleWithCpuArch -> "incompatible with host CPU architecture: required ${requiredArch.name.lowercase()}, host ${hostArch.name.lowercase()}"
+    is PluginIncompatibilityReason.IncompatibleWithHostPlatform -> "incompatible with host OS: required ${requiredOS.name.lowercase()}, host ${hostOS.name.lowercase()}"
+    PluginIncompatibilityReason.MalformedSinceUntilConstraints -> "malformed since/until constraints"
+    is PluginIncompatibilityReason.PluginIsMarkedBroken -> "known to be broken"
+    is PluginIncompatibilityReason.SinceBuildConstraintViolation -> "requires build >= ${plugin.sinceBuild}, actual ${productBuildNumber.withoutProductCode()}"
+    is PluginIncompatibilityReason.UntilBuildConstraintViolation -> "requires build <= ${plugin.untilBuild}, actual ${productBuildNumber.withoutProductCode()}"
+  }
 }

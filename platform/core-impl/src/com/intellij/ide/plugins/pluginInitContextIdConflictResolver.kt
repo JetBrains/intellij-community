@@ -19,15 +19,15 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 fun PluginInitializationContext.resolveIdConflicts(
   compatiblePlugins: List<PluginMainDescriptor>,
-  onPluginExcluded: (PluginMainDescriptor, PluginNonLoadReason) -> Unit,
+  onPluginExcluded: (DescriptorExclusionReason) -> Unit,
 ): UnambiguousPluginSet {
   UnambiguousPluginSet.tryBuild(compatiblePlugins)
     ?.let { return it }
   // slow path: there are conflicts
   val toExclude = HashSet<PluginMainDescriptor>()
-  compatiblePlugins.resolveConflicts(essentialPlugins) { plugin, reason ->
-    onPluginExcluded(plugin, reason)
-    toExclude.add(plugin)
+  compatiblePlugins.resolveConflicts(essentialPlugins) { reason ->
+    onPluginExcluded(reason)
+    toExclude.add(reason.descriptor.getMainDescriptor())
   }
   val filteredPlugins = compatiblePlugins.filter { it !in toExclude }
   return UnambiguousPluginSet.tryBuild(filteredPlugins)
@@ -52,13 +52,13 @@ private fun PluginMainDescriptor.getLastKeyDeclarationOrigin(key: Any): PluginMo
 
 private fun List<PluginMainDescriptor>.resolveConflicts(
   essentialPlugins: Set<PluginId>,
-  exclude: (PluginMainDescriptor, PluginNonLoadReason) -> Unit,
+  exclude: (DescriptorExclusionReason) -> Unit,
 ) {
   val resolutionMapBuilder = ResolutionMapBuilder<Any, PluginMainDescriptor>(getKeys = PluginMainDescriptor::sequenceAllKeys) { existing, candidate, key ->
     if (existing === candidate) {
       val firstDecl = existing.getKeyDeclarationOrigin(key)
       val lastDecl = existing.getLastKeyDeclarationOrigin(key)
-      exclude(existing, PluginDeclaresConflictingId(firstDecl, lastDecl, key))
+      exclude(createIdConflictReason(existing, firstDecl, lastDecl, key))
       return@ResolutionMapBuilder null
     }
     val existingDecl = existing.getKeyDeclarationOrigin(key)
@@ -66,15 +66,15 @@ private fun List<PluginMainDescriptor>.resolveConflicts(
     val existingEssential = existing.pluginId in essentialPlugins
     val candidateEssential = candidate.pluginId in essentialPlugins
     if (existingEssential && !candidateEssential) {
-      exclude(candidate, PluginDeclaresConflictingId(candidateDecl, existingDecl, key))
+      exclude(createIdConflictReason(candidate, candidateDecl, existingDecl, key))
       return@ResolutionMapBuilder existing
     }
     if (!existingEssential && candidateEssential) {
-      exclude(existing, PluginDeclaresConflictingId(existingDecl, candidateDecl, key))
+      exclude(createIdConflictReason(existing, existingDecl, candidateDecl, key))
       return@ResolutionMapBuilder candidate
     }
-    exclude(existing, PluginDeclaresConflictingId(existingDecl, candidateDecl, key))
-    exclude(candidate, PluginDeclaresConflictingId(candidateDecl, existingDecl, key))
+    exclude(createIdConflictReason(existing, existingDecl, candidateDecl, key))
+    exclude(createIdConflictReason(candidate, candidateDecl, existingDecl, key))
     null
   }
   for (plugin in this) {
@@ -147,4 +147,10 @@ private class AmbiguousPluginSetImpl(
   override fun resolveContentModuleId(id: PluginModuleId): Sequence<ContentModuleDescriptor> = contentModuleIdMap[id]?.asSequence() ?: emptySequence()
   override fun sequenceAllPluginIds(): Sequence<PluginId> = pluginIdMap.keys.asSequence()
   override fun sequenceAllContentModuleIds(): Sequence<PluginModuleId> = contentModuleIdMap.keys.asSequence()
+}
+
+private fun createIdConflictReason(plugin: PluginMainDescriptor, declarationOrigin: PluginModuleDescriptor, conflictingModule: PluginModuleDescriptor, key: Any) = when (key) {
+  is PluginId -> PluginDeclaresConflictingId(plugin, declarationOrigin, conflictingModule, conflictingPluginId = key)
+  is PluginModuleId -> PluginDeclaresConflictingId(plugin, declarationOrigin, conflictingModule, conflictingModuleId = key)
+  else -> error("unexpected key: $key")
 }

@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
-import com.intellij.ide.plugins.PluginCompatibilityUtils.convertToUIError
 import com.intellij.ide.plugins.PluginDependencyAnalysis.DependencyRef
 import com.intellij.ide.plugins.ProductRulesImposedExclusion.ProductRulesImposedExclusionReason
 import com.intellij.idea.AppMode
@@ -118,22 +117,22 @@ interface PluginInitializationContext {
 }
 
 @ApiStatus.Internal
-fun PluginInitializationContext.validatePluginIsCompatible(plugin: PluginMainDescriptor): PluginNonLoadReason? {
+fun PluginInitializationContext.validatePluginIsCompatible(plugin: PluginMainDescriptor): DescriptorExclusionReason? {
   if (plugin.isBundled) {
     return null
   }
-  if (AppMode.isDisableNonBundledPlugins()) {
-    return NonBundledPluginsAreExplicitlyDisabled(plugin)
+  if (AppMode.isDisableNonBundledPlugins()) { // TODO: move this out of here
+    return ProductRulesImposedExclusion(plugin, NonBundledPluginsLoadingIsDisabled)
   }
   PluginCompatibilityUtils.checkBuildNumberCompatibility(plugin, productBuildNumber)?.let {
-    return it.convertToUIError(plugin)
+    return PluginIsIncompatibleWithProduct(plugin, it)
   }
   // "Show broken plugins in Settings | Plugins so that users can uninstall them and resolve 'Plugin Error' (IDEA-232675)"
   if (isPluginBroken(plugin.pluginId, plugin.version)) {
-    return PluginIsMarkedBroken(plugin)
+    return PluginIsIncompatibleWithProduct(plugin, PluginIncompatibilityReason.PluginIsMarkedBroken())
   }
   if (requirePlatformAliasDependencyForLegacyPlugins && PluginCompatibilityUtils.isLegacyPluginWithoutPlatformAliasDependencies(plugin)) {
-    return PluginIsCompatibleOnlyWithIntelliJIDEA(plugin)
+    return ProductRulesImposedExclusion(plugin, LegacyPluginIsCompatibleOnlyWithIntelliJIDEA)
   }
   return null
 }

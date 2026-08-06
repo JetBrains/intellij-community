@@ -14,6 +14,7 @@ import com.intellij.ide.plugins.BrokenPluginFileKt;
 import com.intellij.ide.plugins.DisabledPluginsState;
 import com.intellij.ide.plugins.ExpiredPluginsState;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.IdeaPluginDescriptorImplKt;
 import com.intellij.ide.plugins.PluginDescriptorLoader;
 import com.intellij.ide.plugins.PluginInitContextFactory;
 import com.intellij.ide.plugins.PluginInitContextSelectPluginsToLoadKt;
@@ -1075,10 +1076,11 @@ public final class ConfigImportHelper {
       var loadablePlugins = PluginInitContextSelectPluginsToLoadKt.selectPluginsToLoad(
         initContext,
         oldIdePlugins,
-        (plugin, reason) -> {
+        reason -> {
           if (reason instanceof PluginVersionIsSuperseded) {
             return Unit.INSTANCE;
           }
+          var plugin = IdeaPluginDescriptorImplKt.getMainDescriptor(reason.getDescriptor());
           var previousNonLoadable = nonLoadablePlugins.get(plugin.getPluginId());
           if (previousNonLoadable == null || VersionComparatorUtil.compare(plugin.getVersion(), previousNonLoadable.getVersion()) > 0) {
             nonLoadablePlugins.put(plugin.getPluginId(), plugin);

@@ -435,7 +435,8 @@ object DynamicPlugins {
     )
 
     val incompletePlugins = mutableMapOf<PluginId, PluginMainDescriptor> ()
-    val pluginsToLoad = newInitContext.selectPluginsToLoad(newDiscoveryResult) { plugin, reason ->
+    val pluginsToLoad = newInitContext.selectPluginsToLoad(newDiscoveryResult) { reason ->
+      val plugin = reason.descriptor.getMainDescriptor()
       incompletePlugins[plugin.pluginId] = plugin
     }
     val resolvedSet = newInitContext.resolveConstraints(pluginsToLoad)

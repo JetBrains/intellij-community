@@ -389,11 +389,11 @@ class ProductPluginInitContext(
         for (expiredPluginId in expiredPlugins) {
           val plugin = pluginSet.resolvePluginId(expiredPluginId)
                        ?: continue
-          yield(plugin to PluginHasExpiredLicense())
+          yield(plugin to PluginHasExpiredLicense)
         }
         thirdPartyPluginsWithoutConsentCheckResult?.let {
           for (plugin in it.pluginsToExcludeFromLoading) {
-            yield(plugin to ThirdPartyPrivacyNoticeIsNotAccepted())
+            yield(plugin to ThirdPartyPrivacyNoticeIsNotAccepted)
           }
         }
       }

@@ -335,7 +335,7 @@ object PluginManagerCore {
   ): List<PluginLoadingError> {
     // name shadowing is intended
     val pluginNonLoadReasons = pluginNonLoadReasons.filterValues {
-      it !is PluginIsMarkedDisabled && !initContext.isPluginDisabled(it.plugin.pluginId)
+      !initContext.isPluginDisabled(it.plugin.pluginId)
     }
     val globalErrors = ArrayList<PluginLoadingError>().apply {
       for (descriptorLoadingError in descriptorLoadingErrors) {
@@ -463,9 +463,12 @@ object PluginManagerCore {
     configureClassLoaders: Boolean,
   ): PluginManagerState {
     var initStagesActivity = parentActivity?.startChild("selectPluginsToLoad") // no safe end() call, because if it fails, it won't matter
-    val excludedFromLoading = IdentityHashMap<PluginMainDescriptor, PluginNonLoadReason>()
-    val pluginsToLoad = initContext.selectPluginsToLoad(discoveredPlugins) { plugin, reason ->
-      excludedFromLoading[plugin] = reason
+    val excludedFromLoading = IdentityHashMap<PluginMainDescriptor, DescriptorExclusionReason>()
+    val pluginsToLoad = initContext.selectPluginsToLoad(discoveredPlugins) { reason ->
+      if (reason.descriptor !is PluginMainDescriptor) {
+        logger.error("Non-main descriptor passed to selectPluginsToLoad: ${reason.descriptor}")
+      }
+      excludedFromLoading[reason.descriptor.getMainDescriptor()] = reason
     }
     initStagesActivity = initStagesActivity?.endAndStart("selectPluginsToLoad post-process")
     val incompletePlugins = HashMap<PluginId, PluginMainDescriptor>()
@@ -487,12 +490,19 @@ object PluginManagerCore {
       }
     }
     val totalPluginSet = AmbiguousPluginSet.build(pluginsToLoad.plugins + incompletePlugins.values)
-    val pluginNonLoadReasons = incompletePlugins.values.associateByTo(mutableMapOf(), { it.pluginId }, { excludedFromLoading[it]!! })
     val fullIdMap = totalPluginSet.buildFullPluginIdMapping().mapValues { it.value.first() }
+    val pluginNonLoadReasons = incompletePlugins.values.mapNotNull { plugin ->
+      excludedFromLoading[plugin]!!.toSelectionPluginNonLoadReason()?.let { plugin.pluginId to it }
+    }.toMap(mutableMapOf())
 
     if (initContext.checkEssentialPlugins && pluginsToLoad.resolvePluginId(CORE_ID) == null) {
       throw EssentialPluginMissingException(listOf("$CORE_ID (platform prefix: ${System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY)})"))
-        .apply { pluginNonLoadReasons[CORE_ID]?.let { addSuppressed(Exception(it.logMessage)) } }
+        .apply {
+          incompletePlugins[CORE_ID]
+            ?.let(excludedFromLoading::get)
+            ?.let(PluginInitializationDiagnosticUtils::getLogMessageForRootExclusionReason)
+            ?.let { addSuppressed(Exception(it)) }
+        }
     }
 
     initStagesActivity = initStagesActivity?.endAndStart("initContext startup configuration")
@@ -525,7 +535,7 @@ object PluginManagerCore {
     )
 
     initStagesActivity = initStagesActivity?.endAndStart("error reporting")
-    pluginsState.addPluginNonLoadReasons(pluginNonLoadReasons.filter { it.value !is PluginIsMarkedDisabled })
+    pluginsState.addPluginNonLoadReasons(pluginNonLoadReasons)
     val loadingErrors = preparePluginErrors(pluginNonLoadReasons, descriptorLoadingErrors, cycleErrors, initContext, reportingPolicy)
 
     if (initContext.checkEssentialPlugins) {
@@ -733,8 +743,17 @@ object PluginManagerCore {
             is ThirdPartyPrivacyNoticeIsNotAccepted -> {
               logger.warn("Plugin $plugin is excluded because the third-party privacy notice is not accepted")
             }
+            is LegacyPluginIsCompatibleOnlyWithIntelliJIDEA,
+            is NonBundledPluginsLoadingIsDisabled,
+            is PluginIsNotContainedInTheExplicitlyConfiguredSubsetOfPluginsForLoading,
+            is PluginLoadingIsDisabledCompletelyExceptCore ->
+              exclusionReason.toSelectionPluginNonLoadReason()?.let(registerLoadingError)
           }
         }
+        is PluginDeclaresConflictingId,
+        is PluginIsIncompatibleWithProduct -> exclusionReason.toSelectionPluginNonLoadReason()?.let(registerLoadingError)
+        is PluginIsMarkedDisabled,
+        is PluginVersionIsSuperseded -> {}
         is PartOfDependencyCycle -> {} // logged elsewhere
         is PartOfRuntimeModuleGroupDependencyCycle -> {} // logged elsewhere
         is ChainedExclusion -> error("expected a root cause: $exclusionReason")
