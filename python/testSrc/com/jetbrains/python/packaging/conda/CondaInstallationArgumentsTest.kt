@@ -23,7 +23,7 @@ class CondaInstallationArgumentsTest {
 
     val args = request.buildCondaInstallationArguments().getOrThrow()
 
-    assertEquals(specs.map { it.nameWithVersionSpec }, args)
+    assertEquals(specs.map { it.nameWithVersionSpecs }, args)
     assertTrue(args.none { it.contains('"') }, "Conda specs must not contain quote characters: $args")
   }
 }

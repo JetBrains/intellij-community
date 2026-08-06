@@ -290,7 +290,7 @@ private class UvLowLevelImpl<P : PathHolder>(
   }
 
   fun PythonPackageInstallRequest.formatPackageName(): Array<String> = when (this) {
-    is PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications -> specifications.map { it.nameWithVersionsSpec }.toTypedArray()
+    is PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications -> specifications.map { it.nameWithVersionSpecs }.toTypedArray()
     is PythonPackageInstallRequest.ByLocation -> arrayOf(location.toString())
   }
 
@@ -306,15 +306,18 @@ private class UvLowLevelImpl<P : PathHolder>(
 
     val result = mutableListOf<Array<String>>()
     if (pypiSpecs.isNotEmpty()) {
-      result.add((options + pypiSpecs.map { it.nameWithVersionsSpec }).toTypedArray())
+      result.add((options + pypiSpecs.map { it.nameWithVersionSpecs }).toTypedArray())
     }
 
     nonPypi
       .groupBy { it.repository.urlForInstallation?.toString() }
       .forEach { (url, specs) ->
         if (url == null || specs.isEmpty()) return@forEach
-        val names = specs.map { it.nameWithVersionsSpec }
-        result.add((options + listOf("--index-url", url) + names).toTypedArray())
+        result.add(buildList {
+          addAll(options)
+          addAll(listOf("--index-url", url))
+          specs.mapTo(this) { it.nameWithVersionSpecs }
+        }.toTypedArray())
       }
 
     return result

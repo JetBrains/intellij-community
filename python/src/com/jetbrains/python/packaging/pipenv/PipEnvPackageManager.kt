@@ -36,14 +36,21 @@ internal class PipEnvPackageManager(project: Project, sdk: Sdk) : PythonPackageM
       is PythonPackageInstallRequest.ByLocation -> TODO("Not yet implemented")
       is PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications -> {
 
-        val args = listOf("install") + installRequest.specifications.map { it.nameWithVersionSpec } + options
+        val args = buildList {
+          addAll(listOf("install"))
+          installRequest.specifications.mapTo(this) { it.nameWithVersionSpecs }
+          addAll(options)
+        }
         runPipEnvWithSdk(sdk, *args.toTypedArray()).mapSuccess { }
       }
     }
   }
 
   override suspend fun updatePackageCommand(vararg specifications: PythonRepositoryPackageSpecification): PyResult<Unit> {
-    val args = listOf("install") + specifications.map { it.nameWithVersionSpec }
+    val args = buildList {
+      addAll(listOf("install"))
+      specifications.mapTo(this) { it.nameWithVersionSpecs }
+    }
     return runPipEnvWithSdk(sdk, *args.toTypedArray()).mapSuccess { }
   }
 

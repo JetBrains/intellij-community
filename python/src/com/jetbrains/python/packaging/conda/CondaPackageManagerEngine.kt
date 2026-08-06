@@ -67,7 +67,7 @@ internal fun PythonPackageInstallRequest.buildCondaInstallationArguments(): PyRe
   is PythonPackageInstallRequest.ByLocation -> PyResult.localizedError(PyBundle.message("python.packaging.conda.does.not.support.location.uri"))
   is PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications -> {
     val condaSpecs = specifications.filter { it.repository is CondaPackageRepository }
-    val specs = condaSpecs.map { it.nameWithVersionSpec }
+    val specs = condaSpecs.map { it.nameWithVersionSpecs }
 
     // Each spec is passed to conda as a single argv element (no shell), so it must not be quoted.
     // conda's docs recommend double quotes only for shell command lines to protect characters like <, >, *, |.

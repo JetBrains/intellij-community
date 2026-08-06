@@ -70,7 +70,7 @@ internal class TestPythonPackageManager(project: Project, sdk: Sdk) : PythonPack
 
     val specification = installRequest.specifications.single()
     return if (repositoryManager.hasPackageSnapshot(specification.name)) {
-      val version = specification.versionSpec?.version.orEmpty()
+      val version = specification.requirement.versionSpecs.firstOrNull()?.version.orEmpty()
       installedPackages = installedPackages?.plus(PythonPackage(specification.name, version, false))
       PyResult.success(Unit)
     }

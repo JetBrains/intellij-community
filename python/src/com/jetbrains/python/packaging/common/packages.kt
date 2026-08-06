@@ -10,7 +10,6 @@ import com.intellij.python.requirements.pyRequirement
 import com.intellij.python.requirements.pyRequirementVersionSpec
 import com.jetbrains.python.packaging.repository.PyPackageRepository
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation
-import com.jetbrains.python.packaging.requirement.PyRequirementVersionSpec
 import org.jetbrains.annotations.ApiStatus
 import java.net.URI
 import kotlin.collections.emptyList
@@ -166,17 +165,13 @@ data class PythonRepositoryPackageSpecification(
   val requirement: PyRequirement,
 ) {
   val name: String = requirement.name
-  val versionSpec: PyRequirementVersionSpec? = requirement.versionSpecs.firstOrNull()
 
-  val nameWithVersionSpec: String
-    get() = "$name${versionSpec?.presentableText ?: ""}"
-
-  val nameWithVersionsSpec: String
-    get() {
-      val versionSpecsString = requirement.versionSpecs.joinToString(",") { it.presentableText }
-      return "$name${versionSpecsString}"
-    }
-
+  /**
+   * The package name followed by its full PEP-440 specifier set, e.g. `pytest>=7.0,<8.0`.
+   * Every version spec is rendered: rendering only the first one silently drops the upper bound (PY-91457).
+   */
+  val nameWithVersionSpecs: String
+    get() = "$name${requirement.versionSpecs.joinToString(",") { it.presentableText }}"
 
   constructor(
     repository: PyPackageRepository,

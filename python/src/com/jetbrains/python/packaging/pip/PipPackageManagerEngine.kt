@@ -142,17 +142,18 @@ internal class PipPackageManagerEngine(
           return@mapNotNull null
         }
 
-        val argsStr = options + listOf(
-          "--index-url",
-          url
-        ) + specs.map { it.nameWithVersionSpec }
+        val argsStr = buildList {
+          addAll(options)
+          addAll(listOf("--index-url", url))
+          specs.mapTo(this) { it.nameWithVersionSpecs }
+        }
 
         Args().addArgs(argsStr)
       }
 
     val pypi = mutableListOf<Args>()
     if (pypiSpecs.isNotEmpty()) {
-      pypi.add(Args().addArgs(options + pypiSpecs.map { it.nameWithVersionsSpec }))
+      pypi.add(Args().addArgs(options + pypiSpecs.map { it.nameWithVersionSpecs }))
     }
 
     return pypi + byRepository

@@ -246,7 +246,10 @@ internal class PoetryPackageManager(project: Project, sdk: Sdk) : PythonPackageM
   }
 
   private fun PythonRepositoryPackageSpecification.getPackageWithVersionInPoetryFormat(): String {
-    return versionSpec?.let { "$name@${it.presentableText}" } ?: name
+    // Render the full PEP-440 specifier set (poetry accepts comma-separated constraints after '@');
+    // rendering only the first spec silently drops the upper bound (PY-91457).
+    val constraint = requirement.versionSpecs.joinToString(",") { it.presentableText }
+    return if (constraint.isEmpty()) name else "$name@$constraint"
   }
 
   override suspend fun getPackageTree(): PackageStructureNode {
