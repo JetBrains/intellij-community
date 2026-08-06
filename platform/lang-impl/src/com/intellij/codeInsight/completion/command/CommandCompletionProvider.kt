@@ -81,6 +81,7 @@ private val CHAR_TO_FILTER_WITH_SPACE = setOf('\'', '"', '_', '-', ' ')
 
 /**
  * Tag automatically attached to AI-backed commands, so that typing `ai` finds all of them at once.
+ * A case variant declared by a command itself is replaced with this exact spelling.
  */
 private const val AI_COMMAND_TAG: @NonNls String = "AI"
 
@@ -319,8 +320,17 @@ internal class CommandCompletionProvider(val contributor: CommandCompletionContr
     synonyms.remove(lookupString)
     synonyms.addFirst(lookupString)
     // the icon is the only marker of an AI-backed command so far, there is no declarative API for it yet
-    if (command.icon === AiIntentionBulb && synonyms.none { it.equals(AI_COMMAND_TAG, ignoreCase = true) }) {
-      synonyms.add(AI_COMMAND_TAG)
+    if (command.icon === AiIntentionBulb) {
+      val aiTagIndex = synonyms.indexOfFirst { it.equals(AI_COMMAND_TAG, ignoreCase = true) }
+      if (aiTagIndex == -1) {
+        synonyms.add(AI_COMMAND_TAG)
+      }
+      else {
+        // a command may declare its own case variant ('Ai'); replace it with the standard tag,
+        // so that all AI commands are found by exactly the same one
+        synonyms[aiTagIndex] = AI_COMMAND_TAG
+        synonyms.removeAll { it != AI_COMMAND_TAG && it.equals(AI_COMMAND_TAG, ignoreCase = true) }
+      }
     }
     if (customPrefixMatcher != null) {
       val element: LookupElement = createElement(
@@ -732,6 +742,8 @@ internal class LimitedToleranceMatcher(
     val allLookupStrings = this.currentTags.ifEmpty { element.allLookupStrings }
     if (!matched(allLookupStrings)) return false
     if (this.otherTags.isEmpty()) return true
+    val fullyCovered = this.otherTags.firstOrNull { it.equals(prefix, ignoreCase = true) }
+    if (fullyCovered != null) return allLookupStrings.contains(fullyCovered)
     val indexOfFirst = this.otherTags.indexOfFirst { allLookupStrings.contains(it) }
     if (indexOfFirst <= 0) return true
     if (matched(this.otherTags.subList(0, indexOfFirst))) return false
