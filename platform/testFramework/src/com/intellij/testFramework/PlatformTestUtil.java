@@ -102,6 +102,8 @@ import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.AppScheduledExecutorService;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.Decompressor;
@@ -110,6 +112,7 @@ import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import junit.framework.AssertionFailedError;
+import kotlin.ReplaceWith;
 import kotlin.Unit;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -594,6 +597,7 @@ public final class PlatformTestUtil {
    * Should only be invoked in Swing thread (asserted inside {@link IdeEventQueue#dispatchEvent(AWTEvent)})
    */
   @RequiresEdt
+  @RequiresBlockingContext(replaceWith = @ReplaceWith(expression = "yield()", imports = {}))
   public static void dispatchAllInvocationEventsInIdeEventQueue() {
     assertDispatchThreadWithoutWriteAccess();
     var eventQueue = IdeEventQueue.getInstance();
@@ -699,8 +703,10 @@ public final class PlatformTestUtil {
 
   /**
    * Dispatch all pending events (if any) in the {@link IdeEventQueue}. Should only be invoked from EDT.
+   * In suspend context, use `yield` on the UI dispatcher
    */
   @RequiresEdt
+  @RequiresBlockingContext(replaceWith = @ReplaceWith(expression = "yield()", imports = {}))
   public static void dispatchAllEventsInIdeEventQueue() {
     var canary = new Ref<>(false);
     launchCanary(canary);
