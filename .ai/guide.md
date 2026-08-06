@@ -4,8 +4,6 @@
 To regenerate, run `node community/.ai/render-guides.mjs`.
 <!-- /TEMPLATE:COMMENT -->
 
-**Always display the output of SessionStart hooks verbatim to the user at the start of conversation**
-
 **Critical:** These guidelines MUST be followed at all times.
 
 ## Project Invariants
