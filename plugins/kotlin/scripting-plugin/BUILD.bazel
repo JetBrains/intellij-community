@@ -1,6 +1,11 @@
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
 ### auto-generated section `build intellij.kotlin.jsr223.plugin` start
+jvm_provided_library(
+    name = "libraries_kotlinc_libraries-kotlinc-kotlin-compiler-common_provided",
+    lib = "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+)
+
 jvm_library(
     name = "jsr223-plugin",
     srcs = glob(
@@ -22,8 +27,7 @@ jvm_library(
         "@lib//:kotlin-stdlib",
         "//plugins/kotlin/jsr223",
         "//platform/util",
-        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
-        "//platform/core-impl",
+        ":libraries_kotlinc_libraries-kotlinc-kotlin-compiler-common_provided",
     ],
 )
 
@@ -41,8 +45,8 @@ jvm_library(
         ":jsr223-plugin",
         "//plugins/kotlin/jsr223:jsr223_test_lib",
         "//platform/util:util_test_lib",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
-        "//platform/core-impl:core-impl_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.jsr223.plugin` end
