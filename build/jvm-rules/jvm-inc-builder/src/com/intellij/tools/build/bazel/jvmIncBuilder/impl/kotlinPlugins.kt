@@ -4,13 +4,14 @@ package com.intellij.tools.build.bazel.jvmIncBuilder.impl
 import androidx.compose.compiler.plugins.kotlin.ComposeCommandLineProcessor
 import androidx.compose.compiler.plugins.kotlin.ComposePluginRegistrar
 import org.jetbrains.kotlin.backend.common.output.OutputFileCollection
+import org.jetbrains.kotlin.cli.CliDiagnostics
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity
 import org.jetbrains.kotlin.cli.jvm.plugins.PluginCliParser.RegisteredPluginInfo
 import org.jetbrains.kotlin.cli.plugins.PluginOrderConstraint
 import org.jetbrains.kotlin.cli.plugins.extractPluginOrderConstraint
+import org.jetbrains.kotlin.cli.report
 import org.jetbrains.kotlin.compiler.plugin.*
 import org.jetbrains.kotlin.config.CompilerConfiguration
-import org.jetbrains.kotlin.config.messageCollector
 import org.jetbrains.kotlin.jvm.abi.JvmAbiCommandLineProcessor
 import org.jetbrains.kotlin.jvm.abi.JvmAbiComponentRegistrar
 import org.jetbrains.kotlin.util.ServiceLoaderLite
@@ -100,13 +101,11 @@ fun sortCompilerPluginRegistrarsByOrderConstraints(configuration: CompilerConfig
     return
   }
 
-  val messageCollector = configuration.messageCollector
-
   val orderConstraints = ArrayList<PluginOrderConstraint>(rawConstraints.size)
   for (rawConstraint in rawConstraints) {
     val constraint = extractPluginOrderConstraint(rawConstraint)
     if (constraint == null) {
-      messageCollector.report(CompilerMessageSeverity.ERROR, "Could not parse plugin order constraint: $rawConstraint")
+      configuration.report(CliDiagnostics.COMPILER_ARGUMENTS_ERROR, "Could not parse plugin order constraint: $rawConstraint")
       return
     }
     orderConstraints.add(constraint)
@@ -145,7 +144,7 @@ fun sortCompilerPluginRegistrarsByOrderConstraints(configuration: CompilerConfig
     configuration.put(CompilerPluginRegistrar.COMPILER_PLUGIN_REGISTRARS, sorted.asReversed().toMutableList())
   }
   catch (e: PluginProcessingException) {
-    messageCollector.report(CompilerMessageSeverity.ERROR, e.message!!)
+    configuration.report(CliDiagnostics.COMPILER_ARGUMENTS_ERROR, e.message!!)
   }
 }
 
