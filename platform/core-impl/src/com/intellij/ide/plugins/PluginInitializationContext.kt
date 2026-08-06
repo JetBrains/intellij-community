@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
+import com.intellij.ide.plugins.PluginCompatibilityUtils.convertToUIError
 import com.intellij.ide.plugins.PluginDependencyAnalysis.DependencyRef
 import com.intellij.ide.plugins.ProductRulesImposedExclusion.ProductRulesImposedExclusionReason
 import com.intellij.idea.AppMode
@@ -125,7 +126,7 @@ fun PluginInitializationContext.validatePluginIsCompatible(plugin: PluginMainDes
     return NonBundledPluginsAreExplicitlyDisabled(plugin)
   }
   PluginCompatibilityUtils.checkBuildNumberCompatibility(plugin, productBuildNumber)?.let {
-    return it
+    return it.convertToUIError(plugin)
   }
   // "Show broken plugins in Settings | Plugins so that users can uninstall them and resolve 'Plugin Error' (IDEA-232675)"
   if (isPluginBroken(plugin.pluginId, plugin.version)) {

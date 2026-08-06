@@ -8,6 +8,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.InstalledPluginsState
 import com.intellij.ide.plugins.PluginCompatibilityUtils
+import com.intellij.ide.plugins.PluginCompatibilityUtils.convertToUIError
 import com.intellij.ide.plugins.PluginDependencyImpl
 import com.intellij.ide.plugins.PluginInstaller
 import com.intellij.ide.plugins.PluginMainDescriptor
@@ -242,6 +243,7 @@ class PluginDownloader private constructor(
 
     val buildNumber = myBuildNumber ?: PluginManagerCore.buildNumber
     val incompatibleError = PluginCompatibilityUtils.checkBuildNumberCompatibility(actualDescriptor, buildNumber)
+      ?.convertToUIError(actualDescriptor)
     if (incompatibleError != null) {
       LOG.info(
         "Plugin " + myPluginId + " is incompatible with current installation " +

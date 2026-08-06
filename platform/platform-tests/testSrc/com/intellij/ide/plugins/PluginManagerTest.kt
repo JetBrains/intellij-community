@@ -375,7 +375,7 @@ class PluginManagerTest {
       Assert.assertNotNull(checkCompatibility(ideVersion, sinceBuild, untilBuild))
     }
 
-    private fun checkCompatibility(ideVersion: String?, sinceBuild: String?, untilBuild: String?): PluginNonLoadReason? {
+    private fun checkCompatibility(ideVersion: String?, sinceBuild: String?, untilBuild: String?): PluginIncompatibilityReason? {
       val desc = object : TestIdeaPluginDescriptor() {
         override fun getPluginId(): PluginId = PluginId.getId("test")
         override fun getName(): @NlsSafe String? = pluginId.idString

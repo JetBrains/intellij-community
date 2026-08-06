@@ -5,6 +5,7 @@ import com.intellij.CommonBundle
 import com.intellij.core.CoreBundle
 import com.intellij.diagnostic.LoadingState
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.plugins.PluginCompatibilityUtils.convertToUIError
 import com.intellij.ide.plugins.marketplace.MarketplacePluginDownloadService
 import com.intellij.ide.plugins.marketplace.PluginSignatureVerifier
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector
@@ -333,6 +334,7 @@ object PluginInstaller {
       }
 
       val error = PluginCompatibilityUtils.checkBuildNumberCompatibility(pluginDescriptor, PluginManagerCore.buildNumber)
+        ?.convertToUIError(pluginDescriptor)
       if (error != null) {
         MessagesEx.showErrorDialog(parent, error.detailedMessage, CommonBundle.getErrorTitle())
         return

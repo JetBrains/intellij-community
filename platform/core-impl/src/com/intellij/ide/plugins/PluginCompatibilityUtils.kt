@@ -36,17 +36,28 @@ object PluginCompatibilityUtils {
     return false
   }
 
+  /** temporary migration helper */
+  fun PluginIncompatibilityReason.convertToUIError(descriptor: IdeaPluginDescriptorImpl): PluginNonLoadReason {
+    return when (this) {
+      is PluginIncompatibilityReason.IncompatibleWithCpuArch -> PluginIsIncompatibleWithHostCpu(descriptor, requiredArch, hostArch)
+      is PluginIncompatibilityReason.IncompatibleWithHostPlatform -> PluginIsIncompatibleWithHostPlatform(descriptor, requiredOS, hostOS.name)
+      PluginIncompatibilityReason.MalformedSinceUntilConstraints -> PluginMalformedSinceUntilConstraints(descriptor)
+      is PluginIncompatibilityReason.SinceBuildConstraintViolation -> PluginSinceBuildConstraintViolation(descriptor, productBuildNumber)
+      is PluginIncompatibilityReason.UntilBuildConstraintViolation -> PluginUntilBuildConstraintViolation(descriptor, productBuildNumber)
+    }
+  }
+
   @JvmStatic
   @OptIn(LowLevelLocalMachineAccess::class)
-  fun checkBuildNumberCompatibility(descriptor: IdeaPluginDescriptor, ideBuildNumber: BuildNumber): PluginNonLoadReason? {
+  fun checkBuildNumberCompatibility(descriptor: IdeaPluginDescriptor, ideBuildNumber: BuildNumber): PluginIncompatibilityReason? {
     val requiredOs = getUnfulfilledOsRequirement(descriptor)
     if (requiredOs != null) {
-      return PluginIsIncompatibleWithHostPlatform(descriptor, requiredOs, OS.CURRENT.name)
+      return PluginIncompatibilityReason.IncompatibleWithHostPlatform(requiredOs, OS.CURRENT)
     }
 
     val requiredArch = getUnfulfilledCpuArchRequirement(descriptor)
     if (requiredArch != null) {
-      return PluginIsIncompatibleWithHostCpu(descriptor, requiredArch, CpuArch.CURRENT)
+      return PluginIncompatibilityReason.IncompatibleWithCpuArch(requiredArch, CpuArch.CURRENT)
     }
 
     if (isIgnoreCompatibility) {
@@ -65,7 +76,7 @@ object PluginCompatibilityUtils {
           null
         }
         if (sinceBuildNumber != null && sinceBuildNumber > ideBuildNumber) {
-          return PluginSinceBuildConstraintViolation(descriptor, ideBuildNumber)
+          return PluginIncompatibilityReason.SinceBuildConstraintViolation(ideBuildNumber)
         }
       }
 
@@ -74,13 +85,13 @@ object PluginCompatibilityUtils {
         val pluginName = descriptor.getName()
         val untilBuildNumber = BuildNumber.fromString(untilBuild, pluginName, null)
         if (untilBuildNumber != null && untilBuildNumber < ideBuildNumber) {
-          return PluginUntilBuildConstraintViolation(descriptor, ideBuildNumber)
+          return PluginIncompatibilityReason.UntilBuildConstraintViolation(ideBuildNumber)
         }
       }
     }
     catch (e: Exception) {
       logger.error(e)
-      return PluginMalformedSinceUntilConstraints(descriptor)
+      return PluginIncompatibilityReason.MalformedSinceUntilConstraints
     }
     return null
   }
@@ -130,4 +141,17 @@ object PluginCompatibilityUtils {
       .mapNotNull { dep -> PluginCpuArchRequirement.fromPluginId(dep.pluginId).takeIf { !dep.isOptional } }
       .firstOrNull { osReq -> !osReq.isHostArch() }
   }
+}
+
+@ApiStatus.Internal
+sealed interface PluginIncompatibilityReason {
+  class IncompatibleWithHostPlatform(val requiredOS: IdeaPluginOsRequirement, val hostOS: OS) : PluginIncompatibilityReason
+
+  class IncompatibleWithCpuArch(val requiredArch: PluginCpuArchRequirement, val hostArch: CpuArch) : PluginIncompatibilityReason
+
+  class SinceBuildConstraintViolation(val productBuildNumber: BuildNumber): PluginIncompatibilityReason
+
+  class UntilBuildConstraintViolation(val productBuildNumber: BuildNumber): PluginIncompatibilityReason
+
+  object MalformedSinceUntilConstraints : PluginIncompatibilityReason
 }
