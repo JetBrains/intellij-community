@@ -503,6 +503,7 @@ object PluginManagerCore {
       .firstOrNull { osReq -> !osReq.isHostArch() }
   }
 
+  @ApiStatus.Internal
   @JvmStatic
   fun checkBuildNumberCompatibility(descriptor: IdeaPluginDescriptor, ideBuildNumber: BuildNumber): PluginNonLoadReason? {
     val requiredOs = getUnfulfilledOsRequirement(descriptor)
