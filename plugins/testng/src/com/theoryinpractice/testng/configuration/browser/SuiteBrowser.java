@@ -21,7 +21,8 @@ public class SuiteBrowser extends BrowseModuleValueActionListener {
     var descriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
       .withExtensionFilter(IdeCoreBundle.message("file.chooser.files.label", "XML|YAML"), "xml", "yaml")
       .withTitle(TestngBundle.message("testng.suite.browser.select.suite"))
-      .withDescription((TestngBundle.message("testng.suite.browser.select.xml.or.yaml.suite.file")));
+      .withDescription((TestngBundle.message("testng.suite.browser.select.xml.or.yaml.suite.file")))
+      .withEnvironmentRestricted(true);
     var file = FileChooser.chooseFile(descriptor, getProject(), null);
     return file != null ? file.getPath() : null;
   }
