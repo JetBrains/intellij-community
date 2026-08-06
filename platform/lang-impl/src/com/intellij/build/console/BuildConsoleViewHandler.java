@@ -170,17 +170,21 @@ public final class BuildConsoleViewHandler implements Disposable.Default {
     var nodeConsoleViewName = getNodeConsoleViewName(node);
     myNodeConsoleViewName.set(nodeConsoleViewName);
 
-    var console = myView.getView(nodeConsoleViewName);
-    if (console == null) {
-      var consoleImpl = new BuildTextConsoleView(myProject, true, myExecutionConsoleFilters);
-      console = new BuildConsoleViewImpl(myProject, consoleImpl);
-      myView.addView(console, nodeConsoleViewName);
-    }
+    var console = myView.getOrAddView(nodeConsoleViewName, this::createExecutionConsole);
     myView.showView(nodeConsoleViewName, false);
 
     showTextConsoleToolbarActions(console);
 
     myPanel.setVisible(true);
+  }
+
+  private @NotNull ExecutionConsole createExecutionConsole() {
+    return new BuildConsoleViewImpl(myProject, new BuildTextConsoleView(myProject, true, myExecutionConsoleFilters));
+  }
+
+  @TestOnly
+  public @NotNull ExecutionConsole resolveExecutionConsole(@NotNull ExecutionNode node) {
+    return myView.getOrAddView(getNodeConsoleViewName(node), this::createExecutionConsole);
   }
 
   public void maybeAddExecutionConsole(@NotNull ExecutionNode node, @NotNull BuildEventPresentationData presentationData) {

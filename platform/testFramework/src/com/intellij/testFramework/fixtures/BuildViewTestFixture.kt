@@ -13,16 +13,16 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.testFramework.assertion.BuildViewAssertions
+import com.intellij.platform.testFramework.assertion.BuildViewNodeAssertion
 import com.intellij.platform.testFramework.assertion.collectionAssertion.CollectionAssertions
-import com.intellij.platform.testFramework.assertion.treeAssertion.SimpleTreeAssertion
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.replaceService
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.concurrency.Semaphore
 import junit.framework.TestCase
-import org.junit.jupiter.api.Assertions.assertEquals
 
+@Suppress("DeprecatedCallableAddReplaceWith")
 class BuildViewTestFixture(
   private val project: Project,
 ) : IdeaTestFixture {
@@ -57,101 +57,103 @@ class BuildViewTestFixture(
 
   fun getSyncViewRerunActions(): List<AnAction> = syncView.restartActions
 
-  fun assertSyncViewTree(assert: SimpleTreeAssertion.Node<Nothing?>.() -> Unit) {
+  @Deprecated("Use BuildViewAssertions directly")
+  fun assertSyncViewTree(assert: BuildViewNodeAssertion.() -> Unit) {
     BuildViewAssertions.assertBuildViewTree(syncView, assert)
   }
 
+  @Deprecated("Use BuildViewAssertions directly")
   fun assertSyncViewTreeEquals(executionTreeText: String) {
-    BuildViewAssertions.assertBuildViewTreeText(syncView) {
-      assertEquals(executionTreeText.trim(), it.trim())
-    }
+    BuildViewAssertions.assertBuildViewTreeText(syncView, executionTreeText)
   }
 
+  @Deprecated("Use BuildViewAssertions directly")
   fun assertSyncViewTreeSame(executionTreeText: String) {
     BuildViewAssertions.assertBuildViewTreeText(syncView) {
       CollectionAssertions.assertEqualsUnordered(buildTasksNodesAsList(it.trim()), buildTasksNodesAsList(executionTreeText.trim()))
     }
   }
 
+  @Deprecated("Use BuildViewAssertions directly")
   fun assertSyncViewTreeEquals(treeTestPresentationChecker: (String) -> Unit) {
     BuildViewAssertions.assertBuildViewTreeText(syncView, treeTestPresentationChecker)
   }
 
+  @Deprecated("Use BuildViewAssertions directly")
   fun assertSyncViewNode(nodeText: String, consoleText: String) {
-    BuildViewAssertions.assertBuildViewNodeConsoleText(syncView, nodeText) {
-      assertEquals(consoleText, it)
-    }
+    BuildViewAssertions.assertBuildViewNodeConsoleText(syncView, nodeText, consoleText)
   }
 
+  @Deprecated("Use BuildViewAssertions directly")
   fun assertSyncViewNode(nodeText: String, consoleTextChecker: (String) -> Unit) {
     BuildViewAssertions.assertBuildViewNodeConsoleText(syncView, nodeText, consoleTextChecker)
   }
 
+  @Deprecated("Use BuildViewAssertions directly")
   fun assertSyncViewSelectedNode(nodeText: String, consoleText: String) {
-    BuildViewAssertions.assertBuildViewNodeIsSelected(syncView, nodeText)
-    BuildViewAssertions.assertBuildViewNodeConsoleText(syncView, nodeText) {
-      assertEquals(consoleText, it)
-    }
+    BuildViewAssertions.assertBuildViewSelectedNodeConsoleText(syncView, nodeText, consoleText)
   }
 
+  @Deprecated("Use BuildViewAssertions directly")
   fun assertSyncViewSelectedNode(nodeText: String, consoleTextChecker: (String) -> Unit) {
-    BuildViewAssertions.assertBuildViewNodeIsSelected(syncView, nodeText)
-    BuildViewAssertions.assertBuildViewNodeConsoleText(syncView, nodeText, consoleTextChecker)
+    BuildViewAssertions.assertBuildViewSelectedNodeConsoleText(syncView, nodeText, consoleTextChecker)
   }
 
+  @Deprecated("Use BuildViewAssertions directly")
   fun assertSyncViewSelectedNode(nodeText: Regex, consoleTextChecker: (String) -> Unit) {
-    BuildViewAssertions.assertBuildViewNodeIsSelected(syncView, nodeText)
-    BuildViewAssertions.assertBuildViewNodeConsoleText(syncView, nodeText, consoleTextChecker)
+    BuildViewAssertions.assertBuildViewSelectedNodeConsoleText(syncView, nodeText, consoleTextChecker)
   }
 
-  fun assertBuildViewTree(assert: SimpleTreeAssertion.Node<Nothing?>.() -> Unit) {
+  @Deprecated("Use BuildViewAssertions directly")
+  fun assertBuildViewTree(assert: BuildViewNodeAssertion.() -> Unit) {
     BuildViewAssertions.assertBuildViewTree(buildView, assert)
   }
 
+  @Deprecated("Use BuildViewAssertions directly")
   fun assertBuildViewTreeEquals(executionTree: String) {
-    BuildViewAssertions.assertBuildViewTreeText(buildView) {
-      assertEquals(executionTree.trim(), it.trim())
-    }
+    BuildViewAssertions.assertBuildViewTreeText(buildView, executionTree)
   }
 
+  @Deprecated("Use BuildViewAssertions directly")
   fun assertBuildViewTreeSame(executionTree: String) {
     BuildViewAssertions.assertBuildViewTreeText(buildView) {
       CollectionAssertions.assertEqualsUnordered(buildTasksNodesAsList(it.trim()), buildTasksNodesAsList(executionTree.trim()))
     }
   }
 
-  fun assertBuildViewTreeEquals(treeTestPresentationChecker: (String?) -> Unit): Unit =
+  @Deprecated("Use BuildViewAssertions directly")
+  fun assertBuildViewTreeEquals(treeTestPresentationChecker: (String?) -> Unit) {
     BuildViewAssertions.assertBuildViewTreeText(buildView, treeTestPresentationChecker)
-
-  fun assertBuildViewNode(nodeText: String, consoleText: String) {
-    BuildViewAssertions.assertBuildViewNodeConsoleText(buildView, nodeText) {
-      assertEquals(consoleText, it)
-    }
   }
 
+  @Deprecated("Use BuildViewAssertions directly")
+  fun assertBuildViewNode(nodeText: String, consoleText: String) {
+    BuildViewAssertions.assertBuildViewNodeConsoleText(buildView, nodeText, consoleText)
+  }
+
+  @Deprecated("Use BuildViewAssertions directly")
   fun assertBuildViewNode(nodeText: String, consoleTextChecker: (String) -> Unit) {
     BuildViewAssertions.assertBuildViewNodeConsoleText(buildView, nodeText, consoleTextChecker)
   }
 
+  @Deprecated("Use BuildViewAssertions directly")
   fun assertBuildViewNodeConsole(nodeText: String, consoleChecker: (ExecutionConsole) -> Unit) {
     BuildViewAssertions.assertBuildViewNodeConsole(buildView, nodeText, consoleChecker)
   }
 
+  @Deprecated("Use BuildViewAssertions directly")
   fun assertBuildViewSelectedNode(nodeText: String, consoleText: String) {
-    BuildViewAssertions.assertBuildViewNodeIsSelected(buildView, nodeText)
-    BuildViewAssertions.assertBuildViewNodeConsoleText(buildView, nodeText) {
-      assertEquals(consoleText, it)
-    }
+    BuildViewAssertions.assertBuildViewSelectedNodeConsoleText(buildView, nodeText, consoleText)
   }
 
+  @Deprecated("Use BuildViewAssertions directly")
   fun assertBuildViewSelectedNode(nodeText: String, consoleTextChecker: (String) -> Unit) {
-    BuildViewAssertions.assertBuildViewNodeIsSelected(buildView, nodeText)
-    BuildViewAssertions.assertBuildViewNodeConsoleText(buildView, nodeText, consoleTextChecker)
+    BuildViewAssertions.assertBuildViewSelectedNodeConsoleText(buildView, nodeText, consoleTextChecker)
   }
 
+  @Deprecated("Use BuildViewAssertions directly")
   fun assertBuildViewSelectedNodeConsole(nodeText: String, consoleChecker: (ExecutionConsole) -> Unit) {
-    BuildViewAssertions.assertBuildViewNodeIsSelected(buildView, nodeText)
-    BuildViewAssertions.assertBuildViewNodeConsole(buildView, nodeText, consoleChecker)
+    BuildViewAssertions.assertBuildViewSelectedNodeConsole(buildView, nodeText, consoleChecker)
   }
 
   private fun buildTasksNodesAsList(treeStringPresentation: String): List<String> {

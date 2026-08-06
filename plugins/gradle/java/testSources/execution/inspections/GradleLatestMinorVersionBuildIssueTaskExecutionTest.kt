@@ -3,7 +3,7 @@ package org.jetbrains.plugins.gradle.execution.inspections
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectEx
-import com.intellij.platform.testFramework.assertion.treeAssertion.SimpleTreeAssertion
+import com.intellij.platform.testFramework.assertion.BuildViewNodeAssertion
 import com.intellij.testFramework.InspectionTestUtil
 import com.intellij.testFramework.enableInspectionTool
 import org.assertj.core.api.Assertions
@@ -78,7 +78,7 @@ class GradleLatestMinorVersionBuildIssueTaskExecutionTest : GradleExecutionTestC
       enableInspectionTool(project, tool, (project as ProjectEx).getEarlyDisposable())
     }
 
-    internal fun SimpleTreeAssertion.Node<Nothing?>.assertNodeWithNewMinorGradleVersionInfo(gradleVersion: GradleVersion) {
+    internal fun BuildViewNodeAssertion.assertNodeWithNewMinorGradleVersionInfo(gradleVersion: GradleVersion) {
       if (shouldShowMinorGradleVersionWarning(gradleVersion)) {
         assertNode("New Minor Gradle Version Available")
       }

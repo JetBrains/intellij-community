@@ -35,6 +35,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 /**
  * @author Vladislav.Soroka
@@ -109,6 +110,15 @@ public class CompositeView<T extends ComponentContainer> extends JPanel implemen
   public @Nullable <U> U getView(@NotNull String viewName, @NotNull Class<U> viewClass) {
     T view = getView(viewName);
     return viewClass.isInstance(view) ? viewClass.cast(view) : null;
+  }
+
+  public @NotNull T getOrAddView(@NotNull String viewName, @NotNull Supplier<? extends T> createView) {
+    var view = getView(viewName);
+    if (view == null) {
+      view = createView.get();
+      addView(view, viewName);
+    }
+    return view;
   }
 
   public void withView(@NotNull String viewName, @NotNull Consumer<? super T> consumer) {

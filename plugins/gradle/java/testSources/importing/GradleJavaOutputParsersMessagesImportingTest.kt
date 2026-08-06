@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.importing
 
-import com.intellij.platform.testFramework.assertion.treeAssertion.SimpleTreeAssertion
+import com.intellij.platform.testFramework.assertion.BuildViewNodeAssertion
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.importProject
@@ -77,7 +77,7 @@ class GradleJavaOutputParsersMessagesImportingTest : GradleOutputParsersMessages
       }
     }
 
-    fun SimpleTreeAssertion.Node<Nothing?>.assertCompilationReportErrors() {
+    fun BuildViewNodeAssertion.assertCompilationReportErrors() {
       when {
         isGradleAtLeast("8.14") -> {
           assertNode("invalid method declaration; return type required")

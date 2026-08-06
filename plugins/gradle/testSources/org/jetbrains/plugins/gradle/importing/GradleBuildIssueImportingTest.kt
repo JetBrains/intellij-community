@@ -7,7 +7,7 @@ import com.intellij.build.events.BuildEvent
 import com.intellij.build.issue.BuildIssue
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import com.intellij.openapi.Disposable
-import com.intellij.platform.testFramework.assertion.treeAssertion.SimpleTreeAssertion
+import com.intellij.platform.testFramework.assertion.BuildViewNodeAssertion
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
@@ -196,11 +196,11 @@ class GradleBuildIssueImportingTest(private val gradleVersion: GradleVersion) {
         GradleDsl.KOTLIN -> code("throw $className(\"$message\")")
       }
 
-    private fun SimpleTreeAssertion<*>.assertFilePositionNode(
+    private fun BuildViewNodeAssertion.assertFilePositionNode(
       gradleVersion: GradleVersion,
       gradleDsl: GradleDsl,
       brokenFile: BrokenFile,
-      assert: SimpleTreeAssertion<*>.() -> Unit,
+      assert: BuildViewNodeAssertion.() -> Unit,
     ) {
       if (gradleDsl == GradleDsl.KOTLIN && GradleVersionUtil.isGradleOlderThan(gradleVersion, "6.8")) {
         // For old Gradle versions there are no information about exception location with Kotlin scripts:
