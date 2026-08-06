@@ -145,17 +145,22 @@ internal suspend fun getEmbeddedContentModulesOfPluginsWithUseIdeaClassloader(
   return embeddedModules
 }
 
-/** Build-scripts internal; not part of the public build API. */
+/** Describe a built plugin distribution */
 @ApiStatus.Internal
 data class PluginBuildResult(
+  /** Name of JPS module containing `plugin.xml` file */
   @JvmField val mainModule: String,
+  /** Path to the directory where the plugin distribution is built */
   @JvmField val dir: Path,
   @JvmField val os: OsFamily?,
   @JvmField val arch: JvmArchitecture?,
   @JvmField val distribution: Collection<DistributionFileEntry>,
 )
 
-/** Build-scripts internal; not part of the public build API. */
+/**
+ * Describes a built plugin distribution and includes the information about the original layout.
+ * Since plugins built by Bazel won't have [PluginLayout] instance, [PluginBuildResult] should be used instead where possible.
+ */
 @ApiStatus.Internal
 data class PluginBuildDescriptor(
   @JvmField val layout: PluginLayout,
@@ -221,22 +226,22 @@ suspend fun createCachedProductDescriptor(
 
 @Suppress("BlockingMethodInNonBlockingContext")
 internal suspend fun generatePluginClassPath(
-  pluginEntries: List<PluginBuildDescriptor>,
+  pluginEntries: List<PluginBuildResult>,
   descriptorFileProvider: DescriptorCacheContainer,
   platformLayout: PlatformLayout,
+  layoutsOfPluginsToScramble: Map<String, PluginLayout>,
   context: BuildContext,
 ): ByteArray {
   val byteOut = ByteArrayOutputStream()
   val out = DataOutputStream(byteOut)
 
   val uniqueGuard = HashSet<Path>()
-  for (pluginAsset in pluginEntries) {
-    val buildResult = pluginAsset.buildResult
-    val pluginDir = buildResult.dir
+  for (plugin in pluginEntries) {
+    val pluginDir = plugin.dir
 
-    val files = ArrayList<Path>(buildResult.distribution.size)
+    val files = ArrayList<Path>(plugin.distribution.size)
     uniqueGuard.clear()
-    for (entry in buildResult.distribution) {
+    for (entry in plugin.distribution) {
       val relativeOutputFile = entry.relativeOutputFile
       if (relativeOutputFile != null && relativeOutputFile.contains('/')) {
         continue
@@ -263,10 +268,13 @@ internal suspend fun generatePluginClassPath(
     var pluginDescriptorContent = requireNotNull(pluginDescriptorContainer.getCachedFileData(PLUGIN_XML_RELATIVE_PATH)) {
       "Cannot find plugin descriptor file $PLUGIN_XML_RELATIVE_PATH in $pluginDir (descriptorFileProvider=$descriptorFileProvider"
     }
-    val pluginLayout = pluginAsset.layout
     val rootElement = JDOMUtil.load(pluginDescriptorContent)
 
-    if (!pluginLayout.pathsToScramble.isEmpty()) {
+    val pluginLayout = layoutsOfPluginsToScramble[plugin.mainModule]
+    if (pluginLayout != null) {
+      require(pluginLayout.pathsToScramble.isNotEmpty()) {
+        "Plugin layout for ${plugin.mainModule} does not contain any paths to scramble"
+      }
       val platformDescriptorContainer = descriptorFileProvider.forPlatform(platformLayout)
       val xIncludeResolver = XIncludeElementResolverImpl(
         searchPath = listOf(

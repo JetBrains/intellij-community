@@ -3,9 +3,10 @@
 
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.io.NioFiles
 import com.intellij.platform.buildData.productInfo.ProductInfoLaunchData
+import com.intellij.platform.buildScripts.licenses.SoftwareBillOfMaterials
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.system.CpuArch
 import io.opentelemetry.api.common.AttributeKey
@@ -38,7 +39,6 @@ import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.PluginBundlingRestrictions
 import org.jetbrains.intellij.build.PluginDistribution
-import com.intellij.platform.buildScripts.licenses.SoftwareBillOfMaterials
 import org.jetbrains.intellij.build.VmProperties
 import org.jetbrains.intellij.build.WindowsLibcImpl
 import org.jetbrains.intellij.build.add64IfNeeded
@@ -872,6 +872,7 @@ private suspend fun buildCrossPlatformOnlyPlugins(context: BuildContext): Pair<P
 
   val targetDir = context.paths.tempDir.resolve("cross-platform-only-plugins")
 
+  val mainModuleToPluginLayout = crossPlatformPlugins.associateBy { it.mainModule }
   val builtPlugins = spanBuilder("build cross-platform-only plugins")
     .setAttribute("count", crossPlatformPlugins.size.toLong())
     .use {
@@ -889,7 +890,10 @@ private suspend fun buildCrossPlatformOnlyPlugins(context: BuildContext): Pair<P
       )
     }
 
-  return targetDir to builtPlugins
+  val descriptorsOfBuiltPlugins = builtPlugins.map { buildResult ->
+    PluginBuildDescriptor(mainModuleToPluginLayout.getValue(buildResult.mainModule), buildResult)
+  }
+  return targetDir to descriptorsOfBuiltPlugins
 }
 
 private suspend fun checkClassFiles(root: Path, isDistAll: Boolean, context: BuildContext) {

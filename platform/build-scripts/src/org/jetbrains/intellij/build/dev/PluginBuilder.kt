@@ -14,7 +14,7 @@ import org.jetbrains.intellij.build.LibcImpl
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.PluginBundlingRestrictions
 import org.jetbrains.intellij.build.SearchableOptionSetDescriptor
-import org.jetbrains.intellij.build.classPath.PluginBuildDescriptor
+import org.jetbrains.intellij.build.classPath.PluginBuildResult
 import org.jetbrains.intellij.build.impl.DistributionBuilderState
 import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.PluginLayout
@@ -32,7 +32,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 
 internal data class PluginsLayoutResult(
-  @JvmField val pluginEntries: List<PluginBuildDescriptor>,
+  @JvmField val pluginEntries: List<PluginBuildResult>,
   @JvmField val additionalPlugins: List<Pair<Path, List<Path>>>?,
 )
 
@@ -41,11 +41,11 @@ internal enum class DevModePluginBuildStrategy {
   LAYOUT_BEFORE_PLATFORM_SCRAMBLE,
 }
 
-internal fun selectDevModePluginBuildStrategy(request: BuildRequest, context: BuildContext): DevModePluginBuildStrategy {
+internal fun selectDevModePluginBuildStrategy(request: BuildRequest, context: BuildContext, pluginLayouts: List<PluginLayout>): DevModePluginBuildStrategy {
   if (!context.productProperties.scrambleMainJar || request.scrambleTool == null || context.isStepSkipped(BuildOptions.SCRAMBLING_STEP)) {
     return DevModePluginBuildStrategy.NORMAL
   }
-  return if (devModePluginCandidates(request, context).any { it.scrambleWithPlatform }) {
+  return if (pluginLayouts.any { it.scrambleWithPlatform }) {
     DevModePluginBuildStrategy.LAYOUT_BEFORE_PLATFORM_SCRAMBLE
   }
   else {
@@ -55,16 +55,16 @@ internal fun selectDevModePluginBuildStrategy(request: BuildRequest, context: Bu
 
 internal suspend fun buildPluginsForDevMode(
   request: BuildRequest,
+  pluginLayouts: List<PluginLayout>,
   context: BuildContext,
   runDir: Path,
   platformLayout: Deferred<PlatformLayout>,
   searchableOptionSet: SearchableOptionSetDescriptor?,
   platformEntriesProvider: suspend () -> List<DistributionFileEntry>,
 ): PluginsLayoutResult {
-  val plugins = devModePluginCandidates(request, context)
   val descriptors = buildPluginDescriptorsForDevMode(
     os = request.os,
-    plugins = plugins,
+    plugins = pluginLayouts,
     context = context,
     runDir = runDir,
     platformLayout = platformLayout,
@@ -83,15 +83,15 @@ internal suspend fun buildPluginsForDevMode(
  */
 internal suspend fun layoutAllPluginsForDevMode(
   request: BuildRequest,
+  pluginLayouts: List<PluginLayout>,
   context: BuildContext,
   runDir: Path,
   platformLayout: Deferred<PlatformLayout>,
   searchableOptionSet: SearchableOptionSetDescriptor?,
-): List<PluginBuildDescriptor> {
-  val plugins = devModePluginCandidates(request, context)
+): List<PluginBuildResult> {
   return buildPluginDescriptorsForDevMode(
     os = request.os,
-    plugins = plugins,
+    plugins = pluginLayouts,
     context = context,
     runDir = runDir,
     platformLayout = platformLayout,
@@ -110,7 +110,7 @@ private suspend fun buildPluginDescriptorsForDevMode(
   searchableOptionSet: SearchableOptionSetDescriptor?,
   platformEntriesProvider: (suspend () -> List<DistributionFileEntry>)?,
   layoutOnly: Boolean,
-): List<PluginBuildDescriptor> {
+): List<PluginBuildResult> {
   if (plugins.isEmpty()) return emptyList()
   val pluginRootDir = runDir.resolve("plugins")
   withContext(Dispatchers.IO) {
@@ -144,10 +144,11 @@ private suspend fun buildPluginDescriptorsForDevMode(
 
 /** Per-plugin scramble for non-co-scramble plugins after platform scramble has completed (dev mode). */
 internal suspend fun scrambleAlreadyLaidOutPluginsForDevMode(
-  descriptors: List<PluginBuildDescriptor>,
+  descriptors: List<PluginBuildResult>,
   context: BuildContext,
   runDir: Path,
   platformLayout: Deferred<PlatformLayout>,
+  layoutsOfPluginsToScramble: Map<String, PluginLayout>,
   platformEntriesProvider: suspend () -> List<DistributionFileEntry>,
 ): PluginsLayoutResult {
   val platform = platformLayout.await()
@@ -158,6 +159,7 @@ internal suspend fun scrambleAlreadyLaidOutPluginsForDevMode(
     descriptors = descriptors,
     state = state,
     platformEntries = platformEntries,
+    layoutsOfPluginsToScramble = layoutsOfPluginsToScramble,
     context = context,
   )
   val pluginRootDir = runDir.resolve("plugins")
@@ -165,10 +167,17 @@ internal suspend fun scrambleAlreadyLaidOutPluginsForDevMode(
   return PluginsLayoutResult(descriptors, additionalPlugins)
 }
 
-private fun devModePluginCandidates(request: BuildRequest, context: BuildContext): List<PluginLayout> {
+internal fun devModePluginCandidates(request: BuildRequest, context: BuildContext): List<PluginLayout> {
   val bundledMainModuleNames = getBundledMainModuleNames(context, request.additionalModules)
   return getPluginLayoutsByJpsModuleNames(bundledMainModuleNames, context.productProperties.productLayout)
     .filter { isPluginApplicable(bundledMainModuleNames = bundledMainModuleNames, plugin = it, os = request.os, context = context) }
+}
+
+internal fun collectLayoutsOfPluginsToScramble(pluginLayouts: Collection<PluginLayout>): Map<String, PluginLayout> {
+  return pluginLayouts.asSequence()
+    .filter { it.pathsToScramble.isNotEmpty() }
+    .groupBy { it.mainModule }
+    .mapValues { it.value.singleOrNull() ?: error("Multiple layouts for plugin ${it.key}") }
 }
 
 private fun isPluginApplicable(bundledMainModuleNames: Set<String>, plugin: PluginLayout, os: OsFamily, context: BuildContext): Boolean {

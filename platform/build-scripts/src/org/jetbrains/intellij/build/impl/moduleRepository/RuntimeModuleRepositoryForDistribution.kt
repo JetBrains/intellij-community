@@ -318,7 +318,7 @@ private suspend fun computeDescriptorsForAdditionalFrontendPlugins(
         context = context,
         copyFiles = false,
         layoutOnly = true
-      ).map { it.buildResult })
+      ))
     }
     additionalFrontendPlugins
   }
