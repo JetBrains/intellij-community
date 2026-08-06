@@ -56,20 +56,25 @@ private fun GeneratorContext.symbolicIdPropertyToRepresentation(property: OwnPro
   return SymbolicIdRepresentation(javaType = symbolicIdType, args = args)
 }
 
-fun CodeContext.symbolicIdReferenceCode(receiver: ObjClass<*>, field: ObjProperty<*, *>) {
-  val referencesInSymbolicId = referencesInSymbolicId(receiver) ?: return
-  val referenceInSymbolicId = referencesInSymbolicId.find { it.name == field.name }
-  if (referenceInSymbolicId != null) {
-    val syntheticName = referenceNameToSyntheticSymbolicIdFieldName(field.name)
-    val referencedSymbolicId = unwrapReferenceType(referenceInSymbolicId.valueType)?.target?.symbolicIdField
-    if (referencedSymbolicId == null) {
-      reportPropertyError("Cannot find reference ${field.name} or the referenced entity symbolic id", field)
-      return
-    }
-    val newRefSymbolicIdValue = symbolicIdPropertyToRepresentation(referencedSymbolicId).constructorUsingReceiver("value")
-    line("getEntityData(true).${syntheticName} = $newRefSymbolicIdValue")
-    line("changedProperty.add(\"${syntheticName}\")")
+fun CodeContext.symbolicIdReferenceCode(referencesInSymbolicId: Set<OwnProperty<*, *>>, changedReferenceProperty: ObjProperty<*, *>) {
+  val referenceInSymbolicId = referencesInSymbolicId.find { it.name == changedReferenceProperty.name } ?: run {
+    reportPropertyError("${changedReferenceProperty.name} was expected to be referenced in symbolicId", changedReferenceProperty)
+    return
   }
+  val syntheticName = referenceNameToSyntheticSymbolicIdFieldName(changedReferenceProperty.name)
+  val referencedSymbolicId = unwrapReferenceType(referenceInSymbolicId.valueType)?.target?.symbolicIdField
+  if (referencedSymbolicId == null) {
+    reportPropertyError("Cannot find reference ${changedReferenceProperty.name} or the referenced entity symbolic id",
+                        changedReferenceProperty)
+    return
+  }
+  val argNameInUpdateSymbolicId = "parent"
+  val parentBuilderType = getJavaBuilderTypeWithGeneric(changedReferenceProperty)
+  val newRefSymbolicIdValue = symbolicIdPropertyToRepresentation(referencedSymbolicId).constructorUsingReceiver(argNameInUpdateSymbolicId)
+  +"$argNameInUpdateSymbolicId as $parentBuilderType"
+  +"getEntityData(true).${syntheticName} = $newRefSymbolicIdValue"
+  +"changedProperty.add(\"${syntheticName}\")"
+
 }
 
 fun GeneratorContext.symbolicIdImplCode(objClass: ObjClass<*>): String {

@@ -3,33 +3,43 @@ package com.intellij.workspaceModel.codegen.impl.writer.entityImplementation
 
 import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
 import com.intellij.workspaceModel.codegen.deft.meta.ObjProperty
+import com.intellij.workspaceModel.codegen.deft.meta.OwnProperty
 import com.intellij.workspaceModel.codegen.deft.meta.ValueType
 import com.intellij.workspaceModel.codegen.impl.dsl.CodeContext
-import com.intellij.workspaceModel.codegen.impl.dsl.GeneratorContext
 import com.intellij.workspaceModel.codegen.impl.dsl.annotation
 import com.intellij.workspaceModel.codegen.impl.dsl.notReferenceError
 import com.intellij.workspaceModel.codegen.impl.dsl.unsupportedTypeError
 import com.intellij.workspaceModel.codegen.impl.writer.EntityLink
 import com.intellij.workspaceModel.codegen.impl.writer.Instrumentation
 import com.intellij.workspaceModel.codegen.impl.writer.LibraryRoot
-import com.intellij.workspaceModel.codegen.impl.writer.ModifiableWorkspaceEntityBase
-import com.intellij.workspaceModel.codegen.impl.writer.MutableEntityStorageInstrumentation
 import com.intellij.workspaceModel.codegen.impl.writer.MutableWorkspaceList
 import com.intellij.workspaceModel.codegen.impl.writer.MutableWorkspaceSet
-import com.intellij.workspaceModel.codegen.impl.writer.QualifiedName
 import com.intellij.workspaceModel.codegen.impl.writer.SdkRoot
 import com.intellij.workspaceModel.codegen.impl.writer.VirtualFileUrl
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.isReferenceType
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.javaName
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.kotlinClassName
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.refsFields
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.unwrapReferenceType
 import com.intellij.workspaceModel.codegen.impl.writer.getJavaBuilderTypeWithGeneric
 import com.intellij.workspaceModel.codegen.impl.writer.getJavaMutableType
 import com.intellij.workspaceModel.codegen.impl.writer.getJavaType
-import com.intellij.workspaceModel.codegen.impl.writer.symbolicIdReferenceCode
 
-fun CodeContext.getImplWsBuilderFieldCode(receiver: ObjClass<*>, property: ObjProperty<*, *>) {
-  implWsBuilderBlockingCode(receiver, property.valueType, property)
+fun CodeContext.getImplWsBuilderFieldCode(
+  receiver: ObjClass<*>,
+  property: ObjProperty<*, *>,
+  referencesInSymbolicId: Set<OwnProperty<*, *>>?
+) {
+  if (property.valueType.isReferenceType()) {
+    entityReferencePropertyBuilderCode(receiver, property, referencesInSymbolicId)
+  }
+  else {
+    implWsBuilderBlockingCode(receiver, property.valueType, property)
+  }
+}
+
+private fun CodeContext.unexpectedReference(objProperty: ObjProperty<*, *>) {
+  reportPropertyError("Unexpected reference while building regular property code", objProperty)
 }
 
 private fun CodeContext.implWsBuilderBlockingCode(
@@ -61,195 +71,37 @@ private fun CodeContext.implWsBuilderBlockingCode(
     }
 
     is ValueType.ObjRef -> {
-      val connectionName = connectionIdForReference(objProperty)
-      val getterSetterNames = refNames(objProperty)
-      val unwrappedType = unwrapReferenceType(valueType)
-      if (getterSetterNames == null || unwrappedType == null) {
-        notReferenceError("implWsBuilderBlockingCode", objProperty)
-        return
-      }
-
-      // Opposite field may be either one-to-one or one-to-many
-      val notNullAssertion =
-        if (optionalSuffix.isBlank()) " ?: error(\"${objProperty.name} is null for ${objProperty.receiver.name}\")" else ""
-      sectionNoBrackets("override var ${objProperty.javaName}: ${getJavaBuilderTypeWithGeneric(objProperty, valueType)}$optionalSuffix") {
-        section("get()") {
-          line("val _diff = diff")
-          line("return if (_diff != null) {")
-          line("((_diff as $MutableEntityStorageInstrumentation).${getterSetterNames.getterBuilder}($connectionName, this) as? ${
-            getJavaBuilderTypeWithGeneric(objProperty,
-                                          valueType)
-          }) ?: (this.entityLinks[${EntityLink}(${unwrappedType.child}, ${
-            connectionIdForReference(
-              objProperty)
-          })] as? ${getJavaBuilderTypeWithGeneric(objProperty, valueType)})$notNullAssertion")
-          line("} else {")
-          line("(this.entityLinks[${EntityLink}(${unwrappedType.child}, ${connectionIdForReference(objProperty)})] as? ${
-            getJavaBuilderTypeWithGeneric(objProperty,
-                                          valueType)
-          })$notNullAssertion")
-          line("}")
-        }
-        section("set(value)") {
-          line("checkModificationAllowed()")
-          line("val _diff = diff")
-          `if`("_diff != null && value is ${ModifiableWorkspaceEntityBase}<*, *> && value.diff == null") {
-            backrefSetup(objProperty, checkedForModifiable = true)
-            suppressUncheckedCast()
-            line("_diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)")
-          }
-          section("if (_diff != null && (value !is ${ModifiableWorkspaceEntityBase}<*, *> || value.diff != null))") {
-            if (valueType.child) {
-              line("_diff.${Instrumentation.replaceChildren}($connectionName, this, listOfNotNull(value))")
-            }
-            else {
-              line("_diff.${Instrumentation.addChild}($connectionName, value, this)")
-            }
-          }
-          section("else") {
-            backrefSetup(objProperty)
-            line("this.entityLinks[${EntityLink}(${unwrappedType.child}, ${connectionIdForReference(objProperty)})] = value")
-          }
-          line("changedProperty.add(\"${objProperty.javaName}\")")
-          symbolicIdReferenceCode(receiver, objProperty)
-        }
-      }
-
+      unexpectedReference(objProperty)
+      return
     }
 
     is ValueType.List<*> -> {
       val elementType = valueType.elementType
       if (elementType.isReferenceType()) {
-        val isChild = unwrapReferenceType(objProperty.valueType)?.child
-        if (isChild == null) {
-          notReferenceError("list property", objProperty)
-          return
-        }
-        val connectionName = connectionIdForReference(objProperty)
-        val notNullAssertion = if (optionalSuffix.isBlank()) "!!"
-        else {
-          reportPropertyError("Nullable reference lists are prohibited", objProperty)
-          return
-        }
-        if ((elementType as ValueType.ObjRef<*>).target.openness.extendable) {
-          sectionNoBrackets("override var ${objProperty.javaName}: ${
-            getJavaBuilderTypeWithGeneric(objProperty, valueType)
-          }$optionalSuffix") {
-            section("get()") {
-              line("val _diff = diff")
-              line("return if (_diff != null) {")
-              line("((_diff as $MutableEntityStorageInstrumentation).getManyChildrenBuilders($connectionName, this)$notNullAssertion.toList() as ${
-                getJavaBuilderTypeWithGeneric(objProperty,
-                                              valueType)
-              }) + (this.entityLinks[${EntityLink}($isChild, ${connectionIdForReference(objProperty)})] as? ${
-                getJavaBuilderTypeWithGeneric(objProperty,
-                                              valueType)
-              } ?: emptyList())")
-              line("} else {")
-              suppressUncheckedCast()
-              line("this.entityLinks[${EntityLink}($isChild, ${connectionIdForReference(objProperty)})] as ${
-                getJavaBuilderTypeWithGeneric(objProperty,
-                                              valueType)
-              } ${if (notNullAssertion.isNotBlank()) "?: emptyList()" else ""}")
-              line("}")
-            }
-            section("set(value)") {
-              lineComment("Set list of ref types for abstract entities")
-              line("checkModificationAllowed()")
-              line("val _diff = diff")
-              `if`("_diff != null") {
-                `for`("item_value in value") {
-                  `if`("item_value is ${ModifiableWorkspaceEntityBase}<*, *> && (item_value as? ${ModifiableWorkspaceEntityBase}<*, *>)?.diff == null") {
-                    lineComment("Backref setup before adding to store an abstract entity")
-                    backrefSetup(objProperty, "item_value", true)
-                    suppressUncheckedCast()
-                    line("_diff.addEntity(item_value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)")
-                  }
-                }
-                line("_diff.${Instrumentation.replaceChildren}($connectionName, this, value)")
-              }
-              `else` {
-                backrefListSetup(objProperty)
-                line("this.entityLinks[${EntityLink}($isChild, ${connectionIdForReference(objProperty)})] = value")
-              }
-              line("changedProperty.add(\"${objProperty.javaName}\")")
-            }
-          }
-
-        }
-        else {
-          lineComment("List of non-abstract referenced types")
-          sectionNoBrackets("override var ${objProperty.javaName}: ${
-            getJavaBuilderTypeWithGeneric(objProperty,
-                                          valueType)
-          }$optionalSuffix") {
-            section("get()") {
-              lineComment("Getter of the list of non-abstract referenced types")
-              line("val _diff = diff")
-              line("return if (_diff != null) {")
-              suppressUncheckedCast()
-              line("((_diff as $MutableEntityStorageInstrumentation).getManyChildrenBuilders($connectionName, this).toList() as ${
-                getJavaBuilderTypeWithGeneric(objProperty,
-                                              valueType)
-              }) + (this.entityLinks[${EntityLink}($isChild, ${
-                connectionIdForReference(
-                  objProperty)
-              })] as? ${getJavaBuilderTypeWithGeneric(objProperty, valueType)} ?: emptyList())")
-              line("} else {")
-              suppressUncheckedCast()
-              line("this.entityLinks[${EntityLink}($isChild, ${connectionIdForReference(objProperty)})] as? ${
-                getJavaBuilderTypeWithGeneric(objProperty,
-                                              valueType)
-              } ${if (notNullAssertion.isNotBlank()) "?: emptyList()" else ""}")
-              line("}")
-            }
-            section("set(value)") {
-              lineComment("Setter of the list of non-abstract referenced types")
-              line("checkModificationAllowed()")
-              line("val _diff = diff")
-              `if`("_diff != null") {
-                `for`("item_value in value") {
-                  `if`("item_value is ${ModifiableWorkspaceEntityBase}<*, *> && (item_value as? ${ModifiableWorkspaceEntityBase}<*, *>)?.diff == null") {
-                    lineComment("Backref setup before adding to store")
-                    backrefSetup(objProperty, "item_value", true)
-                    suppressUncheckedCast()
-                    line("_diff.addEntity(item_value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)")
-                  }
-                }
-                line("_diff.${Instrumentation.replaceChildren}($connectionName, this, value)")
-              }
-              `else` {
-                backrefListSetup(objProperty)
-                line("this.entityLinks[${EntityLink}($isChild, ${connectionIdForReference(objProperty)})] = value")
-              }
-              line("changedProperty.add(\"${objProperty.javaName}\")")
-            }
-          }
-
-        }
+        unexpectedReference(objProperty)
+        return
       }
-      else {
-        +"private val ${objProperty.javaName}Updater: (value: List<${getJavaType(objProperty, elementType)}>) -> Unit = { value ->"
-        +elementType.addVirtualFileIndex(objProperty)
-        +"changedProperty.add(\"${objProperty.javaName}\")"
+      +"private val ${objProperty.javaName}Updater: (value: List<${getJavaType(objProperty, elementType)}>) -> Unit = { value ->"
+      +elementType.addVirtualFileIndex(objProperty)
+      +"changedProperty.add(\"${objProperty.javaName}\")"
+      +"}"
+      +"override var ${objProperty.javaName}: MutableList<${getJavaType(objProperty, elementType)}>"
+      section("get()") {
+        +"val collection_${objProperty.javaName} = getEntityData().${objProperty.javaName}"
+        +"if (collection_${objProperty.javaName} !is ${MutableWorkspaceList}) return collection_${objProperty.javaName}"
+        +"if (diff == null || modifiable.get()) {"
+        +"collection_${objProperty.javaName}.setModificationUpdateAction(${objProperty.javaName}Updater)"
+        +"} else {"
+        +"collection_${objProperty.javaName}.cleanModificationUpdateAction()"
         +"}"
-        +"override var ${objProperty.javaName}: MutableList<${getJavaType(objProperty, elementType)}>"
-        section("get()") {
-          +"val collection_${objProperty.javaName} = getEntityData().${objProperty.javaName}"
-          +"if (collection_${objProperty.javaName} !is ${MutableWorkspaceList}) return collection_${objProperty.javaName}"
-          +"if (diff == null || modifiable.get()) {"
-          +"collection_${objProperty.javaName}.setModificationUpdateAction(${objProperty.javaName}Updater)"
-          +"} else {"
-          +"collection_${objProperty.javaName}.cleanModificationUpdateAction()"
-          +"}"
-          +"return collection_${objProperty.javaName}"
-        }
-        section("set(value)") {
-          +"checkModificationAllowed()"
-          +"getEntityData(true).${objProperty.javaName} = value"
-          +"${objProperty.javaName}Updater.invoke(value)"
-        }
+        +"return collection_${objProperty.javaName}"
       }
+      section("set(value)") {
+        +"checkModificationAllowed()"
+        +"getEntityData(true).${objProperty.javaName} = value"
+        +"${objProperty.javaName}Updater.invoke(value)"
+      }
+
     }
 
     // TODO: suspicious that code for List and Set is different
@@ -312,62 +164,6 @@ private fun CodeContext.implWsBuilderBlockingCode(
     else -> {
       unsupportedTypeError(valueType, objProperty)
     }
-  }
-}
-
-private fun CodeContext.backrefSetup(
-  field: ObjProperty<*, *>,
-  varName: String = "value",
-  checkedForModifiable: Boolean = false,
-) {
-  val referencedField = getReferencedField(field) ?: return
-  val type = referencedField.valueType
-  val isChild = unwrapReferenceType(type)?.child
-  if (isChild == null) {
-    notReferenceError("backref", field)
-    return
-  }
-  when (type) {
-    is ValueType.List<*> -> {
-      lineComment("Setting backref of the list")
-      ifif(!checkedForModifiable, "$varName is ${ModifiableWorkspaceEntityBase}<*, *>") {
-        suppressUncheckedCast()
-        line("val data = ($varName.entityLinks[${EntityLink}($isChild, ${connectionIdForReference(field)})] as? List<Any> ?: emptyList()) + this")
-        line("$varName.entityLinks[${EntityLink}($isChild, ${connectionIdForReference(field)})] = data")
-      }
-      // else you're attaching a new entity to an existing entity that is not modifiable
-    }
-
-    // TODO: sets are not supported ?
-    is ValueType.Set<*> -> {
-      lineComment("Setting backref of the set")
-      ifif(!checkedForModifiable, "$varName is ${ModifiableWorkspaceEntityBase}<*, *>") {
-        line("val data = ($varName.entityLinks[${EntityLink}($isChild, ${connectionIdForReference(field)})] as? Set<Any> ?: emptySet()) + this")
-        line("$varName.entityLinks[${EntityLink}($isChild, ${connectionIdForReference(field)})] = data")
-      }
-      // else you're attaching a new entity to an existing entity that is not modifiable
-    }
-
-    is ValueType.Optional<*>, is ValueType.ObjRef<*> -> {
-      ifif(!checkedForModifiable, "$varName is ${ModifiableWorkspaceEntityBase}<*, *>") {
-        line("$varName.entityLinks[${EntityLink}($isChild, ${connectionIdForReference(field)})] = this")
-      }
-      // else you're attaching a new entity to an existing entity that is not modifiable
-    }
-
-    else -> {
-      reportPropertyError("Expected $type to be an entity reference", referencedField)
-    }
-  }
-}
-
-private fun CodeContext.backrefListSetup(
-  field: ObjProperty<*, *>,
-  varName: String = "value",
-) {
-  val itemName = "item_$varName"
-  `for`("$itemName in $varName") {
-    backrefSetup(field, itemName)
   }
 }
 
@@ -450,57 +246,89 @@ private fun ValueType<*>.addVirtualFileIndex(field: ObjProperty<*, *>): String {
   }
 }
 
-data class RefMethods(
-  val getter: QualifiedName,
-  val getterBuilder: String,
-  val setter: QualifiedName,
-  val many: Boolean = false,
-)
-
-fun GeneratorContext.refNames(objProperty: ObjProperty<*, *>): RefMethods? {
-  if (!objProperty.valueType.isReferenceType()) return null
-  return when (objProperty.valueType) {
-    is ValueType.ObjRef -> constructCode(objProperty, objProperty.valueType)
-    is ValueType.Optional -> constructCode(objProperty, (objProperty.valueType as ValueType.Optional<*>).type)
-    is ValueType.List<*> -> RefMethods(Instrumentation.getManyChildrenBuilders,
-                                       "getManyChildrenBuilders",
-                                       Instrumentation.replaceChildren,
-                                       true)
-    else -> null
-  }
-}
-
-private fun GeneratorContext.constructCode(objProperty: ObjProperty<*, *>, type: ValueType<*>): RefMethods? {
-  type as ValueType.ObjRef<*>
-
-  return if (type.child) {
-    RefMethods(Instrumentation.getOneChild, "getOneChildBuilder", Instrumentation.replaceChildren, true)
-  }
-  else {
-    val valueType = getReferencedField(objProperty)?.valueType?.let { if (it is ValueType.Optional<*>) it.type else it }
-    if (valueType == null) {
-      notReferenceError("constructCode", objProperty)
-      return null
-    }
-    if (valueType !is ValueType.List<*> && valueType !is ValueType.ObjRef<*>) {
-      reportPropertyError("Unsupported reference type", objProperty)
-      return null
-    }
-    RefMethods(Instrumentation.getParent, "getParentBuilder", Instrumentation.addChild)
-  }
-}
-
 fun CodeContext.suppressUncheckedCast() {
   annotation("Suppress(\"UNCHECKED_CAST\")")
 }
 
-private fun CodeContext.ifif(conditionForCondition: Boolean, conditionCode: String, blockCode: CodeContext.() -> Unit) {
-  if (conditionForCondition) {
-    `if`(conditionCode) {
-      blockCode()
+private enum class ReferenceType {
+  Child,
+  Children,
+  Parent,
+  ParentOfMany
+}
+
+// TODO: assumption that `checkReference` was called previously
+private fun CodeContext.entityReferencePropertyBuilderCode(
+  receiver: ObjClass<*>,
+  property: ObjProperty<*, *>,
+  referencesInSymbolicId: Set<OwnProperty<*, *>>?
+) {
+  val usedInSymbolicId = referencesInSymbolicId?.contains(property) ?: false
+  val connectionName = connectionIdForReference(property)
+  val referencedEntityType = unwrapReferenceType(property.valueType) ?: run {
+    reportPropertyError("entityReferencePropertyBuilderCode: null referencedEntityType", property)
+    return
+  }
+  val backReference = run {
+    val relevantReferences =
+      referencedEntityType.target.refsFields + setOf(referencedEntityType.target.module, receiver.module).flatMap { it.extensions }
+    relevantReferences.filter { referenceProperty ->
+      val unwrapped = unwrapReferenceType(referenceProperty.valueType) ?: return@filter false
+      unwrapped.target == property.receiver && referenceProperty.receiver == referencedEntityType.target && referenceProperty != property
+    }.singleOrNull()
+  } ?: run {
+    reportPropertyError("entityReferencePropertyBuilderCode: null backReference", property)
+    return
+  }
+
+  val referenceType = when {
+    referencedEntityType.child && property.valueType is ValueType.List<*> -> ReferenceType.Children
+    referencedEntityType.child && property.valueType is ValueType.Optional<*> -> ReferenceType.Child
+    !referencedEntityType.child && backReference.valueType is ValueType.List<*> -> ReferenceType.ParentOfMany
+    !referencedEntityType.child -> ReferenceType.Parent
+    else -> {
+      reportPropertyError("entityReferencePropertyBuilderCode", property)
+      return
     }
   }
-  else {
-    blockCode()
+  
+  val receiverName = property.receiver.name
+
+
+  val referenceBuilderType = getJavaBuilderTypeWithGeneric(property)
+  sectionNoBrackets("override var ${property.javaName}: $referenceBuilderType") {
+    when (referenceType) {
+      ReferenceType.Parent -> {
+        +"get() = getParent($connectionName) as? $referenceBuilderType ?: error(\"${property.name} is null for $receiverName\")"
+        section("set(value)") {
+          +"changeParent(value, $connectionName)"
+          +"changedProperty.add(\"${property.name}\")"
+          if (usedInSymbolicId) +"updateSymbolicId(value, $connectionName)"
+        }
+      }
+      ReferenceType.ParentOfMany -> {
+        +"get() = getParent($connectionName) as? $referenceBuilderType ?: error(\"${property.name} is null for $receiverName\")"
+        section("set(value)") {
+          +"changeParentOfMany(value, $connectionName)"
+          +"changedProperty.add(\"${property.name}\")"
+          if (usedInSymbolicId) +"updateSymbolicId(value, $connectionName)"
+        }
+      }
+      ReferenceType.Children -> {
+        suppressUncheckedCast()
+        +"get() = getChildren($connectionName) as $referenceBuilderType"
+        section("set(value)") {
+          +"changeChildren(value, $connectionName)"
+          +"changedProperty.add(\"${property.name}\")"
+        }
+      }
+      ReferenceType.Child -> {
+        +"get() = getChild($connectionName) as? $referenceBuilderType"
+        section("set(value)") {
+          +"changeChild(value, $connectionName)"
+          +"changedProperty.add(\"${property.name}\")"
+        }
+      }
+    }
   }
 }

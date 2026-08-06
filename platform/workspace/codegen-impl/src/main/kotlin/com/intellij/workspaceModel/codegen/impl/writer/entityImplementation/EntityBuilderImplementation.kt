@@ -17,7 +17,9 @@ import com.intellij.workspaceModel.codegen.impl.writer.extensions.javaFullName
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.javaName
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.vfuFields
 import com.intellij.workspaceModel.codegen.impl.writer.getAllProperties
+import com.intellij.workspaceModel.codegen.impl.writer.referencesInSymbolicId
 import com.intellij.workspaceModel.codegen.impl.writer.symbolicIdIsInitializedCode
+import com.intellij.workspaceModel.codegen.impl.writer.symbolicIdReferenceCode
 
 fun CodeContext.entityBuilderImplementationCode(objClass: ObjClass<*>, hasConnections: Boolean) {
   section("internal class Builder(result: ${objClass.javaDataName}?): ${ModifiableWorkspaceEntityBase}<${objClass.javaFullName}, ${objClass.javaDataName}>(result), ${objClass.compatibleJavaBuilderName}") {
@@ -114,12 +116,25 @@ fun CodeContext.entityBuilderImplementationCode(objClass: ObjClass<*>, hasConnec
       }
     }
 
+    val referencesInSymbolicId = referencesInSymbolicId(objClass)
+
     val propertiesToGenerate = getAllProperties(objClass, withSymbolicId = false)
     for (property in propertiesToGenerate) {
-      getImplWsBuilderFieldCode(objClass, property)
+      getImplWsBuilderFieldCode(objClass, property, referencesInSymbolicId)
     }
 
     +"override fun getEntityClass(): Class<${objClass.javaFullName}> = ${objClass.javaFullName}::class.java"
+    
+    if (!referencesInSymbolicId.isNullOrEmpty()) {
+      section("override fun updateSymbolicId(parent: WorkspaceEntityBuilder<*>, connectionId: ConnectionId)") {
+        for (reference in referencesInSymbolicId) {
+          val connectionName = connectionIdForReference(reference)
+          `if`("connectionId == $connectionName") {
+            symbolicIdReferenceCode(referencesInSymbolicId, reference)
+          }
+        }
+      }
+    }
   }
 }
 
