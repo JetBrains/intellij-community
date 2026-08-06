@@ -54,9 +54,6 @@ abstract class ObservableState {
   inline fun <reified T> property(noinline defaultValueCalculator: () -> T): StateProperty<T> = property(
     defaultValueCalculator(), SyncDefaultValueCalculator(defaultValueCalculator))
 
-  inline fun <reified T> property(alwaysTransfer: Boolean, noinline defaultValueCalculator: () -> T): StateProperty<T> = property(
-    defaultValueCalculator(), SyncDefaultValueCalculator(defaultValueCalculator), alwaysTransfer = alwaysTransfer)
-
   /**
    * You MUST NOT refer to other properties while calculating [initialValue] here, because normally this method
    * is called during construction of the state and some properties are not initialized yet.

@@ -88,7 +88,7 @@ class EditorSettingsState(private val editor: EditorImpl?,
   // Use for code-style-derived properties: their defaults depend on backend-side data (e.g. .clang-format, .editorconfig)
   // that the frontend in Remote Development cannot compute independently, so they must always be transferred.
   private inline fun <reified T> codeStyleProperty(noinline defaultValueCalculator: () -> T): StateProperty<T> =
-    property(alwaysTransfer = true, defaultValueCalculator = defaultValueCalculator)
+    property(defaultValueCalculator(), SyncDefaultValueCalculator(defaultValueCalculator), alwaysTransfer = true)
 
   // This group of settings does not have a UI
   var myAdditionalLinesCount: Int by property(Registry.intValue("editor.virtual.lines", 5))
