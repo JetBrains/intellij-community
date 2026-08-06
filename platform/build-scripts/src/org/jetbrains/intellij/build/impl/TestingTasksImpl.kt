@@ -1647,6 +1647,7 @@ private val COMMUNITY_AGGREGATOR_BAZEL_MIGRATED_MODULES = listOf(
   "intellij.platform.vcs.dvcs.impl.tests",
   "intellij.platform.vcs.impl.frontend.tests",
   "intellij.platform.vcs.impl.tests",
+  "intellij.platform.vcs.impl.shared.tests",
   "intellij.platform.whatsNew.tests",
   "intellij.settingsSync.tests",
   "intellij.testng.tests",
