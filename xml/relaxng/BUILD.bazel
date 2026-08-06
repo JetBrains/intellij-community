@@ -1,6 +1,14 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+jps_test(
+    name = "relaxng-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":relaxng-tests_test_lib"],
+)
+### skip generation section `test intellij.relaxng.tests`
+
 ### auto-generated section `build intellij.relaxng` start
 jvm_library(
     name = "relaxng",
@@ -145,6 +153,7 @@ jvm_library(
         ":relaxng-tests",
         "//platform/backend:backend_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/platform-impl/internal:internal_test_lib",
     ],
     deps = [
         # do not sort,
@@ -170,7 +179,10 @@ jvm_library(
         "//xml/impl:impl_test_lib",
         "//xml/dom-openapi:dom",
         "//xml/dom-openapi:dom_test_lib",
+        "//xml/dom-impl",
+        "//xml/dom-impl:dom-impl_test_lib",
         "//platform/platform-impl:ide-impl",
+        "//platform/platform-impl/internal",
         "//platform/lang-impl",
         "//platform/lang-impl:lang-impl_test_lib",
         "//platform/testFramework",
@@ -218,10 +230,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.relaxng.tests` end
-
-### auto-generated section `test intellij.relaxng.tests` start
-jps_test(
-    name = "relaxng-tests_test",
-    runtime_deps = [":relaxng-tests_test_lib"],
-)
-### auto-generated section `test intellij.relaxng.tests` end
