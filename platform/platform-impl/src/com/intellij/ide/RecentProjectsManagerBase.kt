@@ -9,6 +9,8 @@ import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.impl.ProjectUtil.isSameProject
 import com.intellij.ide.impl.ProjectUtilService
+import com.intellij.ide.impl.effectiveImplOptions
+import com.intellij.ide.impl.withImplOptions
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.idea.AppMode
 import com.intellij.openapi.actionSystem.AnAction
@@ -461,13 +463,12 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
 
   open suspend fun openProject(projectFile: Path, options: OpenProjectTask): Project? {
     var effectiveOptions = options
-    if (options.implOptions == null) {
+    if (options.effectiveImplOptions == null) {
       getProjectMetaInfo(projectFile)?.let { info ->
         effectiveOptions = effectiveOptions.copy(
           projectWorkspaceId = info.projectWorkspaceId,
           projectFrameTypeId = info.projectFrameTypeId,
-          implOptions = OpenProjectImplOptions(recentProjectMetaInfo = info, frameInfo = info.frame)
-        )
+        ).withImplOptions(OpenProjectImplOptions(recentProjectMetaInfo = info, frameInfo = info.frame))
       }
     }
 
@@ -1195,13 +1196,13 @@ data class OpenProjectImplOptions(
 )
 
 val OpenProjectTask.frame: IdeFrameImpl?
-  @Internal get() = (implOptions as OpenProjectImplOptions?)?.frame
+  @Internal get() = (effectiveImplOptions as OpenProjectImplOptions?)?.frame
 
 val OpenProjectTask.frameInfo: FrameInfo?
-  @Internal get() = (implOptions as OpenProjectImplOptions?)?.frameInfo
+  @Internal get() = (effectiveImplOptions as OpenProjectImplOptions?)?.frameInfo
 
 val OpenProjectTask.recentProjectMetaInfo: RecentProjectMetaInfo?
-  @Internal get() = (implOptions as OpenProjectImplOptions?)?.recentProjectMetaInfo
+  @Internal get() = (effectiveImplOptions as OpenProjectImplOptions?)?.recentProjectMetaInfo
 
 @Internal
 interface SystemDock {
