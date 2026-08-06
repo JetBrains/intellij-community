@@ -2,6 +2,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.projectView.pane
 
+import com.intellij.ide.util.treeView.ExpandOnDoubleClickSupport
 import com.intellij.ui.treeStructure.TreeNodePresentation
 import com.intellij.ui.treeStructure.TreeNodePresentationBuilder
 import org.jetbrains.annotations.ApiStatus
@@ -23,10 +24,11 @@ sealed interface ProjectViewNodeModelBuilder {
   fun setCanNavigateToSource(canNavigateToSource: Boolean)
   fun setIncludedInExpandAll(includedInExpandAll: Boolean)
   fun setIsDirectory(isDirectory: Boolean)
+  fun setExpandOnDoubleClick(isExpandOnDoubleClick: Boolean)
 }
 
 @ApiStatus.Experimental
-sealed interface ProjectViewNodeModel {
+sealed interface ProjectViewNodeModel : ExpandOnDoubleClickSupport {
   val id: Long
   val presentation: TreeNodePresentation
   fun canNavigate(): Boolean

@@ -58,6 +58,10 @@ private data class TreeStructureProjectViewNodeImpl(
   fun isDirectory(): Boolean {
     return elementDescriptor is PsiDirectoryNode
   }
+
+  fun isExpandOnDoubleClick(): Boolean {
+    return elementDescriptor.expandOnDoubleClick()
+  }
 }
 
 @ApiStatus.Experimental
@@ -130,6 +134,7 @@ class TreeStructureProjectViewNodeProvider(
       nodeBuilder.setCanNavigateToSource(node.canNavigateToSource())
       nodeBuilder.setIncludedInExpandAll(node.isIncludedInExpandAll())
       nodeBuilder.setIsDirectory(node.isDirectory())
+      nodeBuilder.setExpandOnDoubleClick(node.isExpandOnDoubleClick())
     }
   }
 

@@ -14,6 +14,7 @@ import com.intellij.ide.projectView.impl.ProjectViewPane
 import com.intellij.ide.projectView.impl.ProjectViewState
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode
 import com.intellij.ide.util.treeView.AbstractTreeNode
+import com.intellij.ide.util.treeView.NodeDescriptor
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor
 import com.intellij.idea.AppMode
 import com.intellij.openapi.actionSystem.DataSink
@@ -490,6 +491,7 @@ private class AbstractProjectViewPaneStateManager(
         nodeBuilder.setCanNavigateToSource(canNavigateToSource(node))
         nodeBuilder.setIncludedInExpandAll(isIncludedInExpandAll(node))
         nodeBuilder.setIsDirectory(isDirectory(node))
+        nodeBuilder.setExpandOnDoubleClick(isExpandOnDoubleClick(node))
       }
     }
   }
@@ -557,6 +559,8 @@ private class AbstractProjectViewPaneStateManager(
   private fun isIncludedInExpandAll(node: Any): Boolean = (TreeUtil.getUserObject(node) as? AbstractTreeNode<*>)?.isIncludedInExpandAll != false
 
   private fun isDirectory(node: Any): Boolean = (TreeUtil.getUserObject(node) as? AbstractTreeNode<*>) is PsiDirectoryNode
+
+  private fun isExpandOnDoubleClick(node: Any): Boolean = (TreeUtil.getUserObject(node) as? NodeDescriptor<*>)?.expandOnDoubleClick() != false
 
   suspend fun navigate(id: Long, requestFocus: Boolean) {
     val node = nodeById[id] ?: return

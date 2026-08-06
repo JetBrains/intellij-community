@@ -3,7 +3,7 @@ package com.intellij.util
 
 import com.intellij.ide.DataManager
 import com.intellij.ide.ui.IdeUiService
-import com.intellij.ide.util.treeView.NodeDescriptor
+import com.intellij.ide.util.treeView.ExpandOnDoubleClickSupport
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.EDT
@@ -169,7 +169,7 @@ object EditSourceOnDoubleClickHandler {
     }
 
     // for backward compatibility
-    val descriptor = TreeUtil.getLastUserObject(NodeDescriptor::class.java, path)
+    val descriptor = TreeUtil.getLastUserObject(ExpandOnDoubleClickSupport::class.java, path)
     return descriptor == null || descriptor.expandOnDoubleClick()
   }
 

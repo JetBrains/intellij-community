@@ -605,6 +605,8 @@ f:com.intellij.ide.util.treeView.AlphaComparator
 - sf:INSTANCE:com.intellij.ide.util.treeView.AlphaComparator
 - compare(com.intellij.ide.util.treeView.NodeDescriptor,com.intellij.ide.util.treeView.NodeDescriptor):I
 - s:getInstance():com.intellij.ide.util.treeView.AlphaComparator
+com.intellij.ide.util.treeView.ExpandOnDoubleClickSupport
+- expandOnDoubleClick():Z
 c:com.intellij.ide.util.treeView.FileNameComparator
 - java.util.Comparator
 - sf:INSTANCE:java.util.Comparator
@@ -618,6 +620,7 @@ f:com.intellij.ide.util.treeView.IndexComparator
 com.intellij.ide.util.treeView.InplaceCommentAppender
 - a:append(java.lang.String,com.intellij.ui.SimpleTextAttributes):V
 a:com.intellij.ide.util.treeView.NodeDescriptor
+- com.intellij.ide.util.treeView.ExpandOnDoubleClickSupport
 - p:myClosedIcon:javax.swing.Icon
 - p:myColor:java.awt.Color
 - p:myName:java.lang.String

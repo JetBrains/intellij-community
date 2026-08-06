@@ -10,7 +10,7 @@ import javax.swing.Icon;
 import java.awt.Color;
 import java.util.Comparator;
 
-public abstract class NodeDescriptor<E> {
+public abstract class NodeDescriptor<E> implements ExpandOnDoubleClickSupport {
   private static final NodeDescriptor<?>[] EMPTY_ARRAY = new NodeDescriptor[0];
   private static final int DEFAULT_WEIGHT = 30;
 
@@ -83,6 +83,7 @@ public abstract class NodeDescriptor<E> {
     return myProject;
   }
 
+  @Override
   public boolean expandOnDoubleClick() {
     return true;
   }
