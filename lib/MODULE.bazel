@@ -7260,6 +7260,20 @@ http_file(
 )
 
 http_file(
+    name = "org_awaitility-awaitility-4_3_0_http",
+    downloaded_file_path = "awaitility-4.3.0.jar",
+    sha256 = "ee58568ea5945dcf988551501655183dc184e23e45a8e013fdfd9036194e6f7b",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/awaitility/awaitility/4.3.0/awaitility-4.3.0.jar",
+)
+
+http_file(
+    name = "org_awaitility-awaitility-4_3_0-sources_http",
+    downloaded_file_path = "awaitility-4.3.0-sources.jar",
+    sha256 = "92d209bd0135b04ca6bb7689c6b921819896ec2d517a5357760f598faafee46c",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/awaitility/awaitility/4.3.0/awaitility-4.3.0-sources.jar",
+)
+
+http_file(
     name = "org_jetbrains_intellij_deps_batik-batik-transcoder-1_16_0-35_http",
     downloaded_file_path = "batik-transcoder-1.16.0-35.jar",
     sha256 = "72d9d8d4bb8b7cef3522db4811aae30d87d39442419c7747920bd07ddb6f807c",

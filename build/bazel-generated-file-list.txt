@@ -387,6 +387,7 @@ libraries/asm
 libraries/asm-tools
 libraries/assertj-core
 libraries/automaton
+libraries/awaitility
 libraries/batik
 libraries/blockmap
 libraries/bouncy-castle-pgp

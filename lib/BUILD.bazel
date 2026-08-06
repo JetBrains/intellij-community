@@ -9420,6 +9420,30 @@ jvm_import(
 )
 
 copy_file(
+    name = "org.awaitility/awaitility-4.3.0.jar_copy",
+    src = "@org_awaitility-awaitility-4_3_0_http//file",
+    out = "org.awaitility/awaitility-4.3.0.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+java_library(
+    name = "libraries-awaitility-awaitility",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        ":org_awaitility-awaitility-4_3_0_http_import",
+        ":org_hamcrest-hamcrest-2_1_http_import",
+    ],
+)
+
+jvm_import(
+    name = "org_awaitility-awaitility-4_3_0_http_import",
+    jar = "@org_awaitility-awaitility-4_3_0_http//file",
+    source_jar = "@org_awaitility-awaitility-4_3_0-sources_http//file",
+)
+
+copy_file(
     name = "org.jetbrains.intellij.deps.batik/batik-transcoder-1.16.0-35.jar_copy",
     src = "@org_jetbrains_intellij_deps_batik-batik-transcoder-1_16_0-35_http//file",
     out = "org.jetbrains.intellij.deps.batik/batik-transcoder-1.16.0-35.jar",
