@@ -6,7 +6,6 @@ import com.intellij.ide.plugins.DEPENDENCY_SUPPORT_FEATURE
 import com.intellij.ide.plugins.DependencyCollectorBean
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
-import com.intellij.ide.plugins.PluginCompatibilityUtils
 import com.intellij.ide.plugins.PluginFeatureService
 import com.intellij.ide.plugins.PluginManagementPolicy
 import com.intellij.ide.plugins.PluginManagerConfigurable
@@ -245,10 +244,8 @@ open class PluginAdvertiserServiceImpl(
   /**
    * Checks if the plugin is compatible with the current build of the IDE.
    */
-  private fun isPluginCompatible(descriptor: IdeaPluginDescriptor): Boolean {
-    val incompatibilityReason = PluginCompatibilityUtils.checkBuildNumberCompatibility(descriptor, PluginManagerCore.buildNumber)
-    return incompatibilityReason == null
-  }
+  private fun isPluginCompatible(descriptor: IdeaPluginDescriptor): Boolean =
+    PluginManagerCore.isCompatible(descriptor, PluginManagerCore.buildNumber)
 
   private suspend fun fetchFeatures(
     features: Collection<UnknownFeature>,
