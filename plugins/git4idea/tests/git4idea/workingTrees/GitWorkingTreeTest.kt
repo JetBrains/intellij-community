@@ -17,6 +17,7 @@ import git4idea.commands.Git
 import git4idea.repo.GitRefUtil
 import git4idea.test.GitSingleRepoContext
 import git4idea.test.git
+import git4idea.test.gitSingleRepoContextFixture
 import git4idea.test.initRepo
 import git4idea.test.tac
 import org.assertj.core.api.Assertions.assertThat
@@ -30,7 +31,7 @@ private const val MAIN_REPO_RELATIVE_PATH = "mainRepo"
 private const val PROJECT_DIR_NAME = "project"
 
 @TestApplication
-internal class GitWorkingTreeOnMainRepoTest : GitWorkingTreeTest(gitWorkingTreeSingleRepoFixture()) {
+internal class GitWorkingTreeOnMainRepoTest : GitWorkingTreeTest(gitSingleRepoContextFixture()) {
   override val mainRepoPath: Path
     get() = repo.root.toNioPath()
 

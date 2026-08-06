@@ -1,48 +1,62 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.update
 
-import com.intellij.openapi.vcs.Executor.cd
 import com.intellij.openapi.vcs.update.UpdatedFiles
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.vcs.log.impl.HashImpl
+import com.intellij.vcs.test.assertErrorNotification
+import com.intellij.vcs.test.updateChangeListManager
+import git4idea.config.GitSaveChangesPolicy
 import git4idea.config.UpdateMethod
 import git4idea.config.UpdateMethod.REBASE
 import git4idea.config.UpdateMethod.RESET
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
+import git4idea.test.GitPlatformTestContext
 import git4idea.test.TestFile
 import git4idea.test.assertStatus
 import git4idea.test.cd
 import git4idea.test.checkout
+import git4idea.test.createBroRepo
 import git4idea.test.createRepository
 import git4idea.test.file
 import git4idea.test.git
+import git4idea.test.gitPlatformContextFixture
 import git4idea.test.last
 import git4idea.test.modify
+import git4idea.test.prepareRemoteRepo
 import git4idea.test.resolveConflicts
 import git4idea.test.runUnderProgress
 import git4idea.test.tac
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import java.nio.file.Path
 import kotlin.test.assertNotEquals
 
-class GitSingleRepoUpdateTest : GitUpdateBaseTest() {
+@TestApplication
+internal class GitSingleRepoUpdateTest {
+  private val contextFixture = gitPlatformContextFixture(saveChangesPolicy = GitSaveChangesPolicy.STASH)
+  private val context: GitPlatformTestContext get() = contextFixture.get()
+
   private lateinit var repo: GitRepository
   private lateinit var broRepo: Path
 
-  override fun setUp() {
-    super.setUp()
+  @BeforeEach
+  fun setUp() {
+    with(context) {
+      repo = createRepository(project, projectNioRoot, true)
+      cd(projectPath)
 
-    repo = createRepository(project, projectNioRoot, true)
-    cd(projectPath)
-
-    val parent = prepareRemoteRepo(repo)
-    git("push -u origin master")
-    broRepo = createBroRepo("bro", parent)
-    repo.update()
+      val parent = prepareRemoteRepo(repo)
+      git("push -u origin master")
+      broRepo = createBroRepo("bro", parent)
+      repo.update()
+    }
   }
 
-  override fun getDebugLogCategories() = super.getDebugLogCategories().plus("#git4idea.update")
-
-  fun `test stash is called for rebase if there are local changes and local commits`() {
+  @Test
+  fun `test stash is called for rebase if there are local changes and local commits`(): Unit = with(context) {
     commitAndPushFromBro()
     tac("a.txt")
     val localFile = file("a.txt").append("content").add().file
@@ -55,12 +69,13 @@ class GitSingleRepoUpdateTest : GitUpdateBaseTest() {
 
     val (result, _) = updateWith(REBASE)
     assertSuccessfulUpdate(result)
-    assertTrue("Stash should have been called for dirty working tree", stashCalled)
+    assertThat(stashCalled).describedAs("Stash should have been called for dirty working tree").isTrue()
     repo.assertStatus(localFile, 'M')
   }
 
   // "Fast-forward merge" optimization
-  fun `test stash is not called for rebase if there are local changes, but no local commits`() {
+  @Test
+  fun `test stash is not called for rebase if there are local changes, but no local commits`(): Unit = with(context) {
     commitAndPushFromBro()
     val localFile = file("a.txt").append("content").add().file
     updateChangeListManager()
@@ -72,12 +87,13 @@ class GitSingleRepoUpdateTest : GitUpdateBaseTest() {
 
     val (result, _) = updateWith(REBASE)
     assertSuccessfulUpdate(result)
-    assertFalse("Stash shouldn't be called, because of fast-forward merge optimization", stashCalled)
+    assertThat(stashCalled).describedAs("Stash shouldn't be called, because of fast-forward merge optimization").isFalse()
     repo.assertStatus(localFile, 'A')
   }
 
   // IDEA-167688
-  fun `test stash is not called for rebase if there are no local changes`() {
+  @Test
+  fun `test stash is not called for rebase if there are no local changes`(): Unit = with(context) {
     commitAndPushFromBro()
 
     var stashCalled = false
@@ -86,11 +102,12 @@ class GitSingleRepoUpdateTest : GitUpdateBaseTest() {
     }
 
     updateWith(REBASE)
-    assertFalse("Stash shouldn't be called for clean working tree", stashCalled)
+    assertThat(stashCalled).describedAs("Stash shouldn't be called for clean working tree").isFalse()
   }
 
   // IDEA-76760
-  fun `test stash is called for rebase in case of AD changes`() {
+  @Test
+  fun `test stash is called for rebase in case of AD changes`(): Unit = with(context) {
     commitAndPushFromBro()
 
     var stashCalled = false
@@ -99,16 +116,17 @@ class GitSingleRepoUpdateTest : GitUpdateBaseTest() {
     }
 
     cd(repo)
-    val file = file("a.txt").create().add().delete().file
+    val addedDeletedFile = file("a.txt").create().add().delete().file
     updateChangeListManager()
 
     val (result, _) = updateWith(REBASE)
     assertSuccessfulUpdate(result)
-    assertTrue("Stash should be called for clean working tree", stashCalled)
-    repo.assertStatus(file, 'A')
+    assertThat(stashCalled).describedAs("Stash should be called for clean working tree").isTrue()
+    repo.assertStatus(addedDeletedFile, 'A')
   }
 
-  fun `test update range if only incoming commits`() {
+  @Test
+  fun `test update range if only incoming commits`(): Unit = with(context) {
     cd(broRepo)
     val before = last().asHash()
     commitSomethingToBroRepo()
@@ -118,11 +136,11 @@ class GitSingleRepoUpdateTest : GitUpdateBaseTest() {
 
     val (_, updateProcess) = updateWith(REBASE)
 
-    val range = getUpdatedRange(updateProcess)
-    assertEquals("Updated range is incorrect", HashRange(before, after), range)
+    assertThat(getUpdatedRange(updateProcess)).describedAs("Updated range is incorrect").isEqualTo(HashRange(before, after))
   }
 
-  fun `test update range if tracked branch has been fetched before update`() {
+  @Test
+  fun `test update range if tracked branch has been fetched before update`(): Unit = with(context) {
     cd(broRepo)
     val before = last().asHash()
     commitSomethingToBroRepo()
@@ -138,11 +156,11 @@ class GitSingleRepoUpdateTest : GitUpdateBaseTest() {
 
     val (_, updateProcess) = updateWith(REBASE)
 
-    val range = getUpdatedRange(updateProcess)
-    assertEquals("Updated range is incorrect", HashRange(before, after), range)
+    assertThat(getUpdatedRange(updateProcess)).describedAs("Updated range is incorrect").isEqualTo(HashRange(before, after))
   }
 
-  fun `test update range if there are unpushed commits`() {
+  @Test
+  fun `test update range if there are unpushed commits`(): Unit = with(context) {
     cd(broRepo)
     val before = last().asHash()
     commitSomethingToBroRepo()
@@ -155,11 +173,11 @@ class GitSingleRepoUpdateTest : GitUpdateBaseTest() {
 
     val (_, updateProcess) = updateWith(REBASE)
 
-    val range = getUpdatedRange(updateProcess)
-    assertEquals("Updated range is incorrect", HashRange(before, after), range)
+    assertThat(getUpdatedRange(updateProcess)).describedAs("Updated range is incorrect").isEqualTo(HashRange(before, after))
   }
 
-  fun `test local branch equals remote after reset update`() {
+  @Test
+  fun `test local branch equals remote after reset update`(): Unit = with(context) {
     repeat(3) {
       commitAndPushFromBro()
     }
@@ -174,11 +192,12 @@ class GitSingleRepoUpdateTest : GitUpdateBaseTest() {
     val (result, _) = updateWith(RESET)
     assertSuccessfulUpdate(result)
 
-    assertEquals("Local branch should equal remote after reset", remoteHead, last())
-    assertTrue("Files from local commits should not exist after reset", localFiles.none { it.exists() })
+    assertThat(last()).describedAs("Local branch should equal remote after reset").isEqualTo(remoteHead)
+    assertThat(localFiles.none { it.exists() }).describedAs("Files from local commits should not exist after reset").isTrue()
   }
 
-  fun `test non conflicting local changes persist after reset update`() {
+  @Test
+  fun `test non conflicting local changes persist after reset update`(): Unit = with(context) {
     commitAndPushFromBro()
 
     val localFiles = listOf(file("local1.txt"), file("local2.txt"))
@@ -187,10 +206,11 @@ class GitSingleRepoUpdateTest : GitUpdateBaseTest() {
     val (result, _) = updateWith(RESET)
     assertSuccessfulUpdate(result)
 
-    assertTrue("Locally changed uncommited files should exist after reset", localFiles.all { it.exists() })
+    assertThat(localFiles.all { it.exists() }).describedAs("Locally changed uncommited files should exist after reset").isTrue()
   }
 
-  fun `test stash is called for reset update and merge dialog is shown if there are conflicting tracked local changes`() {
+  @Test
+  fun `test stash is called for reset update and merge dialog is shown if there are conflicting tracked local changes`(): Unit = with(context) {
     commitAndPushFromBro()
     val localFile = file("bro.txt").create("local content").add().file // bro.txt exists in broRepo
     updateChangeListManager()
@@ -204,12 +224,13 @@ class GitSingleRepoUpdateTest : GitUpdateBaseTest() {
     }
     val (result, _) = updateWith(RESET)
     assertSuccessfulUpdate(result)
-    assertTrue("Stash should have been called for dirty working tree", stashCalled)
-    assertTrue(vcsHelper.mergeDialogWasShown())
+    assertThat(stashCalled).describedAs("Stash should have been called for dirty working tree").isTrue()
+    assertThat(vcsHelper.mergeDialogWasShown()).isTrue()
     repo.assertStatus(localFile, 'M')
   }
 
-  fun `test update range on reset update for diverged branches`() {
+  @Test
+  fun `test update range on reset update for diverged branches`(): Unit = with(context) {
     commitAndPushFromBro()
 
     updateWith(REBASE) // fast-forward
@@ -226,12 +247,12 @@ class GitSingleRepoUpdateTest : GitUpdateBaseTest() {
     commitLocalFilesToRepo()
 
     val (_, updateProcess) = updateWith(RESET)
-    val range = getUpdatedRange(updateProcess)
 
-    assertEquals("Updated range is incorrect", HashRange(before, after), range)
+    assertThat(getUpdatedRange(updateProcess)).describedAs("Updated range is incorrect").isEqualTo(HashRange(before, after))
   }
 
-  fun `test reset update when remote branch is not set`() {
+  @Test
+  fun `test reset update when remote branch is not set`(): Unit = with(context) {
     repeat(3) {
       commitAndPushFromBro()
     }
@@ -245,7 +266,8 @@ class GitSingleRepoUpdateTest : GitUpdateBaseTest() {
                             GitUpdateProcess.getNoTrackedBranchError(repo, "master"))
   }
 
-  fun `test reset update when remote branch is deleted`() {
+  @Test
+  fun `test reset update when remote branch is deleted`(): Unit = with(context) {
     cd(broRepo)
     checkout("-b feature")
     commitSomethingToBroRepo()
@@ -266,7 +288,8 @@ class GitSingleRepoUpdateTest : GitUpdateBaseTest() {
                             GitUpdateProcess.getNoTrackedBranchError(repo, "feature"))
   }
 
-  fun `test reset drops local commits when remote branch has no new commits`() {
+  @Test
+  fun `test reset drops local commits when remote branch has no new commits`(): Unit = with(context) {
     cd(repo)
     val before = last()
 
@@ -277,26 +300,27 @@ class GitSingleRepoUpdateTest : GitUpdateBaseTest() {
     val (result, _) = updateWith(RESET)
     assertSuccessfulUpdate(result)
 
-    assertEquals(before, last())
+    assertThat(last()).isEqualTo(before)
   }
 
   private fun getUpdatedRange(updateProcess: GitUpdateProcess): HashRange {
     return requireNotNull(updateProcess.updatedRanges)[repo].let(::requireNotNull)
   }
 
-  private fun updateWith(method: UpdateMethod): Pair<GitUpdateResult, GitUpdateProcess> = runUnderProgress { indicator ->
-    val process = GitUpdateProcess(project, indicator, listOf(repo), UpdatedFiles.create(), null, false, true)
-    process.update(method) to process
-  }
+  private fun GitPlatformTestContext.updateWith(method: UpdateMethod): Pair<GitUpdateResult, GitUpdateProcess> =
+    runUnderProgress { indicator ->
+      val process = GitUpdateProcess(project, indicator, listOf(repo), UpdatedFiles.create(), null, false, true)
+      process.update(method) to process
+    }
 
-  private fun commitAndPushFromBro() {
+  private fun GitPlatformTestContext.commitAndPushFromBro() {
     cd(broRepo)
     commitSomethingToBroRepo()
     git("push -u origin master")
     cd(repo)
   }
 
-  private fun commitSomethingToBroRepo() {
+  private fun GitPlatformTestContext.commitSomethingToBroRepo() {
     cd(broRepo)
     modify("bro.txt")
   }
@@ -306,11 +330,11 @@ class GitSingleRepoUpdateTest : GitUpdateBaseTest() {
     return listOf(file("local1.txt"), file("local2.txt")).map { it.create().addCommit("local commit") }
   }
 
+  private fun file(path: String) = repo.file(path)
+
   private fun String.asHash() = HashImpl.build(this)
 
   private fun assertSuccessfulUpdate(result: GitUpdateResult) {
-    assertEquals("Incorrect update result", GitUpdateResult.SUCCESS, result)
+    assertThat(result).describedAs("Incorrect update result").isEqualTo(GitUpdateResult.SUCCESS)
   }
-
-  private fun file(path: String) = repo.file(path)
 }

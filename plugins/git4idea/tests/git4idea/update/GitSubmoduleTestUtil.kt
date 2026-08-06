@@ -1,11 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.update
 
-import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.Executor.cd
-import git4idea.config.GitSaveChangesPolicy
-import git4idea.test.GitPlatformTest
 import git4idea.test.git
 import git4idea.test.gitInit
 import git4idea.test.setupDefaultUsername
@@ -13,18 +12,9 @@ import git4idea.test.tac
 import java.nio.file.Path
 import kotlin.io.path.invariantSeparatorsPathString
 
-abstract class GitSubmoduleTestBase : GitPlatformTest() {
-  override fun getDefaultSaveChangesPolicy(): GitSaveChangesPolicy = GitSaveChangesPolicy.STASH
-
-  protected fun createPlainRepo(repoName: String): RepositoryAndParent = createPlainRepo(project, testNioRoot, repoName)
-
-  protected fun addSubmodule(superProject: Path, submoduleUrl: Path, relativePath: String? = null): Path =
-    addSubmodule(project, superProject, submoduleUrl, relativePath)
-}
-
 data class RepositoryAndParent(val name: String, val local: Path, val remote: Path)
 
-private val LOG = logger<GitSubmoduleTestBase>()
+private val LOG = fileLogger()
 
 internal fun createPlainRepo(project: Project, testRoot: Path, repoName: String): RepositoryAndParent {
   LOG.info("----- creating plain repository $repoName -----")

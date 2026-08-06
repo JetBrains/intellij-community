@@ -8,6 +8,7 @@ import git4idea.GitWorkingTree
 import git4idea.actions.ref.GitSingleRefAction
 import git4idea.test.GitSingleRepoContext
 import git4idea.test.git
+import git4idea.test.gitSingleRepoContextFixture
 import git4idea.test.registerRepo
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -15,7 +16,7 @@ import org.junit.jupiter.api.Test
 @TestApplication
 @RegistryKey("git.enable.working.trees.feature", "true")
 internal class GitWorkingTreeCurrentDetectionTest {
-  private val contextFixture = gitWorkingTreeSingleRepoFixture()
+  private val contextFixture = gitSingleRepoContextFixture()
   private val context: GitSingleRepoContext get() = contextFixture.get()
 
   @Test

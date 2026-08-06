@@ -129,6 +129,7 @@ internal fun tac(project: Project, file: String, content: String): String {
 
 fun GitRepository.tacp(file: String) = cd { tacp(project, file) }
 fun GitPlatformTest.tacp(file: String) = tacp(project, file)
+fun GitPlatformTestContext.tacp(file: String) = tacp(project, file)
 private fun tacp(project: Project, file: String): String {
   touch(file)
   addCommit(project, "Touched $file")
@@ -144,14 +145,16 @@ private fun appendAndCommit(project: Project, file: String, additionalContent: S
 
 fun GitRepository.modify(file: String): String = cd { modify(project, file) }
 fun GitPlatformTest.modify(file: String): String = modify(project, file)
-private fun modify(project: Project, file: String): String {
+fun GitPlatformTestContext.modify(file: String): String = modify(project, file)
+internal fun modify(project: Project, file: String): String {
   overwrite(file, "content" + Math.random())
   return addCommit(project, "modified $file")
 }
 
 fun GitRepository.last() = cd { last(project) }
 fun GitPlatformTest.last() = last(project)
-private fun last(project: Project) = git(project, "log -1 --pretty=%H")
+fun GitPlatformTestContext.last() = last(project)
+internal fun last(project: Project) = git(project, "log -1 --pretty=%H")
 
 fun GitRepository.getHash(depth: Int) = cd { getHash(project, depth) }
 fun GitPlatformTest.getHash(depth: Int) = getHash(project, depth)

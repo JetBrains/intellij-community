@@ -10,13 +10,14 @@ import com.intellij.testFramework.utils.io.deleteRecursively
 import git4idea.actions.workingTree.GitWorkingTreeTabActionsDataKeys
 import git4idea.test.GitSingleRepoContext
 import git4idea.test.git
+import git4idea.test.gitSingleRepoContextFixture
 import git4idea.workingTrees.ui.PruneWorkingTreesAction
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 @TestApplication
 internal class PruneWorkingTreesActionTest {
-  private val contextFixture = gitWorkingTreeSingleRepoFixture()
+  private val contextFixture = gitSingleRepoContextFixture()
   private val context: GitSingleRepoContext get() = contextFixture.get()
 
   @Test

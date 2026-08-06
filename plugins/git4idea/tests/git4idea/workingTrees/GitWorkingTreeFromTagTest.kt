@@ -8,12 +8,13 @@ import git4idea.GitWorkingTree
 import git4idea.actions.workingTree.GitWorkingTreeDialogData
 import git4idea.repo.GitRefUtil
 import git4idea.test.git
+import git4idea.test.gitSingleRepoContextFixture
 import git4idea.test.tac
 import org.junit.jupiter.api.Test
 import java.nio.file.Path
 
 @TestApplication
-internal class GitWorkingTreeFromTagTest : GitWorkingTreeTestBase(gitWorkingTreeSingleRepoFixture()) {
+internal class GitWorkingTreeFromTagTest : GitWorkingTreeTestBase(gitSingleRepoContextFixture()) {
 
   override val mainRepoPath: Path
     get() = repo.root.toNioPath()

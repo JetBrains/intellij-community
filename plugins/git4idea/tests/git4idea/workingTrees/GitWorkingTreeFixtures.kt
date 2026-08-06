@@ -1,10 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.workingTrees
 
-import com.intellij.openapi.project.Project
 import com.intellij.testFramework.junit5.fixture.TestFixture
-import com.intellij.testFramework.junit5.fixture.projectFixture
-import com.intellij.vcs.test.vcsPlatformFixture
 import com.intellij.vcs.test.vcsTestProjectPathFixture
 import git4idea.GitLocalBranch
 import git4idea.config.GitSaveChangesPolicy
@@ -14,19 +11,12 @@ import git4idea.test.GitPlatformTestContext
 import git4idea.test.GitSingleRepoContext
 import git4idea.test.branch
 import git4idea.test.gitExistingSingleRepoFixture
-import git4idea.test.gitPlatformFixture
-import git4idea.test.gitSingleRepoFixture
+import git4idea.test.gitPlatformContextFixture
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
 import java.nio.file.Path
-
-/**
- * A project in `<testNioRoot>/project` with a Git repository created in the project root.
- */
-internal fun gitWorkingTreeSingleRepoFixture(): TestFixture<GitSingleRepoContext> =
-  gitWorkingTreePlatformFixture().gitSingleRepoFixture(makeInitialCommit = true)
 
 /**
  * A project whose directory (and Git repository in it) is prepared by [projectPathFixture] before the project
@@ -41,11 +31,8 @@ internal fun gitWorkingTreeExistingRepoFixture(projectPathFixture: TestFixture<P
 internal fun gitWorkingTreePlatformFixture(
   projectPathFixture: TestFixture<Path> = vcsTestProjectPathFixture(),
   saveChangesPolicy: GitSaveChangesPolicy = GitSaveChangesPolicy.SHELVE,
-): TestFixture<GitPlatformTestContext> {
-  val projectFixture: TestFixture<Project> = projectFixture(projectPathFixture, openAfterCreation = true)
-  return projectFixture.vcsPlatformFixture()
-    .gitPlatformFixture(projectFixture, defaultSaveChangesPolicy = saveChangesPolicy, hasRemoteGitOperation = false)
-}
+): TestFixture<GitPlatformTestContext> =
+  gitPlatformContextFixture(projectPathFixture, saveChangesPolicy)
 
 internal fun GitRepository.ensureWorkingTreesUpToDateForTests() {
   runBlocking {
