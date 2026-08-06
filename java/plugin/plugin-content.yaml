@@ -83,6 +83,9 @@
 - name: lib/modules/intellij.debugger.jvm.advanced.java.logpoints.jar
   contentModules:
   - name: intellij.debugger.jvm.advanced.java.logpoints
+- name: lib/modules/intellij.debugger.jvm.advanced.mcpServer.jar
+  contentModules:
+  - name: intellij.debugger.jvm.advanced.mcpServer
 - name: lib/modules/intellij.debugger.logpoints.backend.jar
   contentModules:
   - name: intellij.debugger.logpoints.backend
