@@ -668,7 +668,8 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
                 if (parameterIndex in parameterInfoState.usedParameterIndices) continue
                 appendValueParameter(
                     parameterIndex,
-                    shouldHighlight = !parameterInfoState.namedMode && !parameterInfoState.wasParameterHighlighted,
+                    shouldHighlight = parameterIndex == highlightParameterIndex ||
+                            (highlightParameterIndex == null && !parameterInfoState.namedMode && !parameterInfoState.wasParameterHighlighted),
                     markUsedUnusedParameterBorder = parameterInfoState.namedMode && !parameterInfoState.wasParameterHighlighted,
                     parameterInfoState = parameterInfoState
                 )

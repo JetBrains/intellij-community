@@ -97,6 +97,11 @@ public abstract class FirMultilineParameterInfoTestGenerated extends AbstractFir
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("contextArgumentInFocus.kt")
+        public void testContextArgumentInFocus() throws Exception {
+            runTest("../../idea/tests/testData/parameterInfo/explicitContextArguments/contextArgumentInFocus.kt");
+        }
+
         @TestMetadata("contextArgumentStartsNamedMode.kt")
         public void testContextArgumentStartsNamedMode() throws Exception {
             runTest("../../idea/tests/testData/parameterInfo/explicitContextArguments/contextArgumentStartsNamedMode.kt");

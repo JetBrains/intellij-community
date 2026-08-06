@@ -1,1 +1,0 @@
-Text: (string: String), Disabled: true, Strikeout: false, Green: true
