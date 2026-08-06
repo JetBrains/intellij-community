@@ -12,6 +12,7 @@ import com.intellij.mcpserver.McpToolset
 import com.intellij.mcpserver.toolwindow.TransportType
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.project.Project
 import com.intellij.util.resettableLazy
 import com.jetbrains.fus.reporting.api.IEventContext
 import com.jetbrains.fus.reporting.api.ValidationResultType
@@ -41,8 +42,25 @@ internal enum class McpToolCallOutcome {
   CANCELLED,
 }
 
+internal enum class LintFilesResultKind {
+  CLEAN,
+  PROBLEMS_FOUND,
+  INCOMPLETE,
+}
+
+internal fun lintFilesResultKind(
+  problemCount: Int,
+  timedOutFileCount: Int,
+  notAnalyzedFileCount: Int,
+  more: Boolean,
+): LintFilesResultKind = when {
+  more || timedOutFileCount > 0 || notAnalyzedFileCount > 0 -> LintFilesResultKind.INCOMPLETE
+  problemCount > 0 -> LintFilesResultKind.PROBLEMS_FOUND
+  else -> LintFilesResultKind.CLEAN
+}
+
 object McpServerCounterUsagesCollector : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("mcpserver.events", 6)
+  private val GROUP = EventLogGroup("mcpserver.events", 7)
 
   private val TOOL_NAME = EventFields.StringValidatedByCustomRule<McpToolNameValidator>("tool_name")
   private val OUTCOME = EventFields.Enum("outcome", McpToolCallOutcome::class.java)
@@ -65,6 +83,33 @@ object McpServerCounterUsagesCollector : CounterUsagesCollector() {
     ARG_COUNT,
     DISPATCHED_TOOL_FOUND,
     SUCCESS,
+    EventFields.DurationMs,
+  )
+
+  private val LINT_FILES_MIN_SEVERITY = EventFields.String(
+    "min_severity",
+    listOf("warning", "strong_warning", "error"),
+  )
+  private val LINT_FILES_RESULT = EventFields.Enum("result", LintFilesResultKind::class.java)
+  private val REQUESTED_FILE_COUNT = EventFields.RoundedInt("requested_file_count")
+  private val PROBLEM_FILE_COUNT = EventFields.RoundedInt("problem_file_count")
+  private val PROBLEM_COUNT = EventFields.RoundedInt("problem_count")
+  private val ERROR_COUNT = EventFields.RoundedInt("error_count")
+  private val TIMED_OUT_FILE_COUNT = EventFields.RoundedInt("timed_out_file_count")
+  private val NOT_ANALYZED_FILE_COUNT = EventFields.RoundedInt("not_analyzed_file_count")
+  private val MORE = EventFields.Boolean("more")
+
+  private val LINT_FILES_FINISHED_EVENT: VarargEventId = GROUP.registerVarargEvent(
+    "mcp.lint.files.finished",
+    LINT_FILES_MIN_SEVERITY,
+    LINT_FILES_RESULT,
+    REQUESTED_FILE_COUNT,
+    PROBLEM_FILE_COUNT,
+    PROBLEM_COUNT,
+    ERROR_COUNT,
+    TIMED_OUT_FILE_COUNT,
+    NOT_ANALYZED_FILE_COUNT,
+    MORE,
     EventFields.DurationMs,
   )
 
@@ -128,6 +173,34 @@ object McpServerCounterUsagesCollector : CounterUsagesCollector() {
     )
   }
 
+  fun logLintFilesFinished(
+    project: Project,
+    minSeverity: String,
+    requestedFileCount: Int,
+    problemFileCount: Int,
+    problemCount: Int,
+    errorCount: Int,
+    timedOutFileCount: Int,
+    notAnalyzedFileCount: Int,
+    more: Boolean,
+    durationMs: Long,
+  ) {
+    val result = lintFilesResultKind(problemCount, timedOutFileCount, notAnalyzedFileCount, more)
+    LINT_FILES_FINISHED_EVENT.log(
+      project,
+      LINT_FILES_MIN_SEVERITY.with(minSeverity),
+      LINT_FILES_RESULT.with(result),
+      REQUESTED_FILE_COUNT.with(requestedFileCount),
+      PROBLEM_FILE_COUNT.with(problemFileCount),
+      PROBLEM_COUNT.with(problemCount),
+      ERROR_COUNT.with(errorCount),
+      TIMED_OUT_FILE_COUNT.with(timedOutFileCount),
+      NOT_ANALYZED_FILE_COUNT.with(notAnalyzedFileCount),
+      MORE.with(more),
+      EventFields.DurationMs.with(durationMs),
+    )
+  }
+
   fun logSessionStarted(
     clientName: String,
     clientVersion: String,
@@ -177,4 +250,30 @@ object McpServerCounterUsagesCollector : CounterUsagesCollector() {
       McpToolset.EP.addChangeListener(coroutineScope) { valueMap.reset() }
     }
   }
+}
+
+fun logLintFilesFinished(
+  project: Project,
+  minSeverity: String,
+  requestedFileCount: Int,
+  problemFileCount: Int,
+  problemCount: Int,
+  errorCount: Int,
+  timedOutFileCount: Int,
+  notAnalyzedFileCount: Int,
+  more: Boolean,
+  durationMs: Long,
+) {
+  McpServerCounterUsagesCollector.logLintFilesFinished(
+    project = project,
+    minSeverity = minSeverity,
+    requestedFileCount = requestedFileCount,
+    problemFileCount = problemFileCount,
+    problemCount = problemCount,
+    errorCount = errorCount,
+    timedOutFileCount = timedOutFileCount,
+    notAnalyzedFileCount = notAnalyzedFileCount,
+    more = more,
+    durationMs = durationMs,
+  )
 }

@@ -12,6 +12,7 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl
 import com.intellij.codeInspection.ex.InspectionProfileWrapper
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.mcpserver.mcpFail
+import com.intellij.mcpserver.statistics.logLintFilesFinished
 import com.intellij.mcpserver.util.awaitExternalChangesAndIndexing
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
@@ -73,6 +74,18 @@ data class LintFilesBatchTimeouts(
 )
 
 @Internal
+data class LintFilesTelemetry(
+  @JvmField val minSeverity: String,
+  @JvmField val requestedFileCount: Int,
+  @JvmField val problemFileCount: Int,
+  @JvmField val problemCount: Int,
+  @JvmField val errorCount: Int,
+  @JvmField val timedOutFileCount: Int,
+  @JvmField val notAnalyzedFileCount: Int,
+  @JvmField val more: Boolean,
+)
+
+@Internal
 fun createLintFilesBatchTimeouts(timeoutMs: Int, currentTimeMs: Long = System.currentTimeMillis()): LintFilesBatchTimeouts {
   val headroomMs = (timeoutMs / LINT_FILES_TIMEOUT_HEADROOM_DIVISOR)
     .coerceIn(LINT_FILES_MIN_TIMEOUT_HEADROOM_MILLISECONDS, LINT_FILES_MAX_TIMEOUT_HEADROOM_MILLISECONDS)
@@ -92,6 +105,8 @@ private typealias LintBeforeMainPassesOverride = suspend (String) -> Unit
 
 private typealias LintMainPassesRunnerOverride = suspend (LintMainPassesRunnerRequest) -> List<HighlightInfo>
 
+private typealias LintFilesTelemetryReporterOverride = (LintFilesTelemetry, Long) -> Unit
+
 @Service(Service.Level.PROJECT)
 private class LintFilesAnalysisSupportState {
   val mainPassesMutex = Mutex()
@@ -104,6 +119,9 @@ private class LintFilesAnalysisSupportState {
 
   @Volatile
   var mainPassesRunnerOverride: LintMainPassesRunnerOverride? = null
+
+  @Volatile
+  var telemetryReporterOverride: LintFilesTelemetryReporterOverride? = null
 }
 
 private suspend fun getLintFilesAnalysisSupportState(project: Project): LintFilesAnalysisSupportState = project.serviceAsync<LintFilesAnalysisSupportState>()
@@ -162,6 +180,39 @@ suspend fun <T> withLintFilesCollectorOverride(
   newValue = collector,
   getCurrent = { it.collectorOverride },
   setCurrent = { state, value -> state.collectorOverride = value },
+  action = action,
+)
+
+internal suspend fun reportLintFilesTelemetry(project: Project, telemetry: LintFilesTelemetry, durationMs: Long) {
+  val override = getLintFilesAnalysisSupportState(project).telemetryReporterOverride
+  if (override != null) {
+    override(telemetry, durationMs)
+    return
+  }
+  logLintFilesFinished(
+    project = project,
+    minSeverity = telemetry.minSeverity,
+    requestedFileCount = telemetry.requestedFileCount,
+    problemFileCount = telemetry.problemFileCount,
+    problemCount = telemetry.problemCount,
+    errorCount = telemetry.errorCount,
+    timedOutFileCount = telemetry.timedOutFileCount,
+    notAnalyzedFileCount = telemetry.notAnalyzedFileCount,
+    more = telemetry.more,
+    durationMs = durationMs,
+  )
+}
+
+@TestOnly
+suspend fun <T> withLintFilesTelemetryReporterOverride(
+  project: Project,
+  reporter: (LintFilesTelemetry, Long) -> Unit,
+  action: suspend () -> T,
+): T = withLintFilesAnalysisSupportOverride(
+  project = project,
+  newValue = reporter,
+  getCurrent = { it.telemetryReporterOverride },
+  setCurrent = { state, value -> state.telemetryReporterOverride = value },
   action = action,
 )
 

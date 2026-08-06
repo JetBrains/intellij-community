@@ -11,6 +11,7 @@ import com.intellij.build.events.FileMessageEvent
 import com.intellij.build.events.FinishBuildEvent
 import com.intellij.build.events.MessageEvent
 import com.intellij.build.events.StartBuildEvent
+import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.mcpserver.McpProjectDependenciesProvider
 import com.intellij.mcpserver.McpServerBundle
 import com.intellij.mcpserver.McpToolset
@@ -53,6 +54,7 @@ import org.jetbrains.concurrency.await
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.TimeSource
 
 private val logger = logger<AnalysisToolset>()
 
@@ -86,13 +88,18 @@ class AnalysisToolset : McpToolset {
     timeout: Int = LINT_FILES_DEFAULT_TIMEOUT_MILLISECONDS_VALUE,
   ): LintFilesResult {
     currentCoroutineContext().reportToolActivity(McpServerBundle.message("tool.activity.collecting.file.problems.batch", files.size))
-    return collectLintFiles(
+    val project = currentCoroutineContext().project
+    val started = TimeSource.Monotonic.markNow()
+    val execution = collectLintFiles(
       filePaths = files,
       minSeverityValue = min_severity,
       timeout = timeout,
       progressTitle = McpServerBundle.message("progress.title.analyzing.files", files.size),
       useBatchTimeouts = true,
     )
+    val telemetry = execution.telemetry
+    reportLintFilesTelemetry(project, telemetry, started.elapsedNow().inWholeMilliseconds)
+    return execution.result
   }
 
   @McpToolHints(readOnlyHint = TRUE, openWorldHint = FALSE)
@@ -118,7 +125,7 @@ class AnalysisToolset : McpToolset {
       minSeverityValue = LintMinSeverity.fromErrorsOnly(errorsOnly).apiValue,
       timeout = timeout,
       progressTitle = McpServerBundle.message("progress.title.analyzing.file", filePath.substringAfterLast('/').substringAfterLast('\\')),
-    )
+    ).result
     val item = lintResult.items.firstOrNull()
     if (item?.notAnalyzedReason != null) {
       mcpFail("File cannot be analyzed: ${item.notAnalyzedReason}")
@@ -415,7 +422,7 @@ class AnalysisToolset : McpToolset {
     timeout: Int,
     progressTitle: @ProgressTitle String,
     useBatchTimeouts: Boolean = false,
-  ): LintFilesResult {
+  ): LintFilesExecution {
     val project = currentCoroutineContext().project
     val requestedFiles = prepareRequestedLintFiles(project, filePaths)
     val minSeverity = LintMinSeverity.parse(minSeverityValue)
@@ -448,8 +455,25 @@ class AnalysisToolset : McpToolset {
     logger.trace {
       "lint_files completed: more=$more, finishedInTime=$completedInTime, filesCount=${items.size}, completedCount=${completedFilePaths.size}, requestedCount=${requestedFiles.size}"
     }
-    return LintFilesResult(items = items, more = more)
+    return LintFilesExecution(
+      result = LintFilesResult(items = items, more = more),
+      telemetry = LintFilesTelemetry(
+        minSeverity = minSeverity.apiValue,
+        requestedFileCount = requestedFiles.size,
+        problemFileCount = items.count { it.problems.isNotEmpty() },
+        problemCount = items.sumOf { it.problems.size },
+        errorCount = items.sumOf { result -> result.problems.count { it.severity == HighlightSeverity.ERROR.name } },
+        timedOutFileCount = items.count { it.timedOut == true },
+        notAnalyzedFileCount = items.count { it.notAnalyzedReason != null },
+        more = more,
+      ),
+    )
   }
+
+  private data class LintFilesExecution(
+    val result: LintFilesResult,
+    val telemetry: LintFilesTelemetry,
+  )
 
   private fun LintProblem.toLegacyFileProblem(): FileProblem {
     return FileProblem(
