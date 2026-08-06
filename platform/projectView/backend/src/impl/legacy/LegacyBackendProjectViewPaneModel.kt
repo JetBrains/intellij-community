@@ -478,10 +478,13 @@ private class AbstractProjectViewPaneStateManager(
   }
 
   private suspend fun createNodeModel(id: Long, node: Any): ProjectViewNodeModel {
+    val isLeaf = withContext(Dispatchers.UI) {
+      treeModel.isLeaf(node)
+    }
     return readAction {
       buildProjectViewNodeModel(id, node) { nodeBuilder ->
         nodeBuilder.buildPresentation { presentationBuilder ->
-          buildNodePresentation(node, presentationBuilder)
+          buildNodePresentation(node, presentationBuilder, isLeaf)
         }
         nodeBuilder.setCanNavigate(canNavigate(node))
         nodeBuilder.setCanNavigateToSource(canNavigateToSource(node))
@@ -491,8 +494,8 @@ private class AbstractProjectViewPaneStateManager(
     }
   }
 
-  private fun buildNodePresentation(node: Any, builder: TreeNodePresentationBuilder): TreeNodePresentation {
-    builder.setLeaf(treeModel.isLeaf(node))
+  private fun buildNodePresentation(node: Any, builder: TreeNodePresentationBuilder, isLeaf: Boolean): TreeNodePresentation {
+    builder.setLeaf(isLeaf)
     return when (val userObject = TreeUtil.getUserObject(node)) {
       is PresentableNodeDescriptor<*> -> {
         buildTreeNodeDescriptorPresentation(userObject, builder)
