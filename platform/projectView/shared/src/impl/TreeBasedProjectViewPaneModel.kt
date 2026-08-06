@@ -232,8 +232,8 @@ abstract class TreeBasedProjectViewPaneModel<T : Any>(protected val project: Pro
     ProjectViewFileNestingService.getInstance().setRules(fileNestingValue.nestingRules)
   }
 
-  suspend fun visitTree(visitNode: suspend (BackendProjectViewNodeModel<T>) -> TreeVisitor.Action): BackendProjectViewNodeModel<T>? {
-    return currentTreeState.load()?.visitTree(visitNode)
+  suspend fun visitTree(allowLoading: Boolean, visitNode: suspend (BackendProjectViewNodeModel<T>) -> TreeVisitor.Action): BackendProjectViewNodeModel<T>? {
+    return currentTreeState.load()?.visitTree(allowLoading = allowLoading, visitNode)
   }
 
   fun updateNode(nodeId: Long, options: ((ProjectViewNodeUpdateOptionsBuilder) -> Unit)? = null) {
@@ -472,13 +472,14 @@ abstract class TreeBasedProjectViewPaneModel<T : Any>(protected val project: Pro
       pendingUpdatesSignal.update { it + 1L }
     }
 
-    suspend fun visitTree(visitNode: suspend (BackendProjectViewNodeModel<T>) -> TreeVisitor.Action): BackendProjectViewNodeModel<T>? {
+    suspend fun visitTree(allowLoading: Boolean, visitNode: suspend (BackendProjectViewNodeModel<T>) -> TreeVisitor.Action): BackendProjectViewNodeModel<T>? {
       val superRoot = suspendingState.getNodeById(SUPER_ROOT_ID) ?: return null
-      val listOfMaybeSingleRoot = suspendingState.getChildren(superRoot) ?: return null
-      return visitNodes(listOfMaybeSingleRoot, visitNode)
+      val listOfMaybeSingleRoot = getOrMaybeLoadChildren(superRoot, allowLoading) ?: return null
+      return visitNodes(allowLoading, listOfMaybeSingleRoot, visitNode)
     }
 
     private suspend fun visitNodes(
+      allowLoading: Boolean,
       nodes: List<BackendProjectViewNodeModel<T>>,
       visitNode: suspend (BackendProjectViewNodeModel<T>) -> TreeVisitor.Action,
     ): BackendProjectViewNodeModel<T>? {
@@ -486,8 +487,8 @@ abstract class TreeBasedProjectViewPaneModel<T : Any>(protected val project: Pro
         when (visitNode(node)) {
           TreeVisitor.Action.INTERRUPT -> return node // found here
           TreeVisitor.Action.CONTINUE -> {
-            val children = suspendingState.getChildren(node) ?: continue // the node is gone
-            val resultFromChildren = visitNodes(children, visitNode)
+            val children = getOrMaybeLoadChildren(node, allowLoading) ?: continue // the node is gone
+            val resultFromChildren = visitNodes(allowLoading, children, visitNode)
             if (resultFromChildren != null) return resultFromChildren // found deeper
           }
           TreeVisitor.Action.SKIP_CHILDREN -> continue
@@ -495,6 +496,20 @@ abstract class TreeBasedProjectViewPaneModel<T : Any>(protected val project: Pro
         }
       }
       return null
+    }
+
+    private suspend fun getOrMaybeLoadChildren(parent: BackendProjectViewNodeModel<T>, allowLoading: Boolean): List<BackendProjectViewNodeModel<T>>? {
+      var existingChildren = suspendingState.getChildren(parent)
+      if (existingChildren == null && allowLoading) {
+        scheduleLoadChildren(parent.id)
+        while (existingChildren == null) {
+          val currentEpoch = appliedUpdateEpoch.value
+          appliedUpdateEpoch.first { it > currentEpoch }
+          if (suspendingState.getNodeById(parent.id) == null) return null // the parent is gone
+          existingChildren = suspendingState.getChildren(parent)
+        }
+      }
+      return existingChildren
     }
 
     private suspend fun selectElementImpl(element: PsiElement) {
@@ -534,7 +549,7 @@ abstract class TreeBasedProjectViewPaneModel<T : Any>(protected val project: Pro
     }
 
     private suspend fun tryFindPath(visitor: ProjectViewSelectNodeVisitor<T>): ProjectViewNodePath? {
-      val node = visitTree { node -> visitor.visitNodeForSelect(node) } ?: return null
+      val node = visitTree(allowLoading = true) { node -> visitor.visitNodeForSelect(node) } ?: return null
       return suspendingState.getNodePathById(node.id) // null if the node has just been removed
     }
 

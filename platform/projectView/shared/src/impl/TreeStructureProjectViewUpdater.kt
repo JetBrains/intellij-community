@@ -288,14 +288,14 @@ private class UpdateSession(
 
   private suspend fun updateAll() {
     // visitTree starts at the (single) root, so a deep update of it reloads the whole loaded tree.
-    model.visitTree { node ->
+    model.visitTree(allowLoading = false) { node ->
       model.updateNode(node.id) { it.deep = true }
       TreeVisitor.Action.SKIP_CHILDREN
     }
   }
 
   private suspend fun updateAllPresentations() {
-    model.visitTree { node ->
+    model.visitTree(allowLoading = false) { node ->
       model.updateNode(node.id) { it.deep = false }
       TreeVisitor.Action.CONTINUE
     }
@@ -303,7 +303,7 @@ private class UpdateSession(
 
   private suspend fun updateByFiles(deepFiles: Set<VirtualFile>, presentationFiles: Set<VirtualFile>) {
     if (deepFiles.isEmpty() && presentationFiles.isEmpty()) return
-    model.visitTree { node ->
+    model.visitTree(allowLoading = false) { node ->
       val treeNode = node.userObject.elementDescriptor as? AbstractTreeNode<*>
                      ?: return@visitTree TreeVisitor.Action.CONTINUE
       readAction {
@@ -343,7 +343,7 @@ private class UpdateSession(
       target = target.parent
     }
     val validTarget = target ?: return
-    model.visitTree { node ->
+    model.visitTree(allowLoading = false) { node ->
       val treeNode = node.userObject.elementDescriptor as? AbstractTreeNode<*>
                      ?: return@visitTree TreeVisitor.Action.CONTINUE
       readAction {
@@ -363,7 +363,7 @@ private class UpdateSession(
   }
 
   private suspend fun updateByElement(pointer: SmartPsiElementPointer<PsiElement>, deep: Boolean) {
-    model.visitTree { node ->
+    model.visitTree(allowLoading = false) { node ->
       val treeNode = node.userObject.elementDescriptor as? AbstractTreeNode<*>
                      ?: return@visitTree TreeVisitor.Action.CONTINUE
       readAction {
