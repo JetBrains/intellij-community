@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lsp.client.playground
 
-import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil
 import com.intellij.icons.AllIcons
@@ -33,7 +32,7 @@ class LuaLspServerDescriptor(project: Project) : ProjectWideLspClientDescriptor(
 
   override fun createCommandLine(): GeneralCommandLine {
     val luaLanguageServerPath = findLuaLanguageServerPath()
-                                ?: throw ExecutionException(LspClientPlaygroundBundle.message("lua.lsp.executable.not.found"))
+                                ?: throwMissingLspExecutable(project, "Lua", "lua.lsp.executable.not.found")
     return GeneralCommandLine(luaLanguageServerPath)
   }
 }

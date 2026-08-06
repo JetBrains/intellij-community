@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lsp.client.playground
 
-import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil
 import com.intellij.icons.AllIcons
@@ -33,7 +32,7 @@ class DartLspServerDescriptor(project: Project) : ProjectWideLspClientDescriptor
 
   override fun createCommandLine(): GeneralCommandLine {
     val dartPath = findDartPath()
-                   ?: throw ExecutionException(LspClientPlaygroundBundle.message("dart.lsp.executable.not.found"))
+                   ?: throwMissingLspExecutable(project, "Dart", "dart.lsp.executable.not.found")
     return GeneralCommandLine(dartPath, "language-server")
   }
 }
