@@ -4,7 +4,7 @@ package org.jetbrains.jewel.foundation.state
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.ExperimentalTestApi
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.junit4.v2.createComposeRule
 import org.jetbrains.jewel.foundation.theme.LocalSwingCompatMode
 import org.junit.Assert.assertEquals
 import org.junit.Rule
