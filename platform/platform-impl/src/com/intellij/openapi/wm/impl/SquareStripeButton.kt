@@ -42,7 +42,6 @@ import com.intellij.ui.icons.loadIconCustomVersionOrScale
 import com.intellij.ui.icons.toStrokeIcon
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.concurrency.SynchronizedClearableLazy
-import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
@@ -143,13 +142,17 @@ class SquareStripeButton(val toolWindow: ToolWindowImpl) :
   override fun checkSkipPressForEvent(e: MouseEvent): Boolean = e.button != MouseEvent.BUTTON1
 
   private fun getAlignment(anchor: ToolWindowAnchor, splitMode: Boolean): HelpTooltip.Alignment {
-    return when (anchor) {
-      ToolWindowAnchor.RIGHT -> HelpTooltip.Alignment.LEFT
-      ToolWindowAnchor.LEFT -> HelpTooltip.Alignment.RIGHT
-      ToolWindowAnchor.TOP,
-      ToolWindowAnchor.BOTTOM,
-        -> if (splitMode) HelpTooltip.Alignment.LEFT else HelpTooltip.Alignment.RIGHT
-      else -> HelpTooltip.Alignment.RIGHT
+    return when (anchor.toEnum()) {
+      ToolWindowAnchorEnum.RIGHT -> HelpTooltip.Alignment.LEFT
+      ToolWindowAnchorEnum.LEFT -> HelpTooltip.Alignment.RIGHT
+      ToolWindowAnchorEnum.TOP -> HelpTooltip.Alignment.BOTTOM // Only with the ToolWindowExtension
+      ToolWindowAnchorEnum.BOTTOM,
+        -> {
+        if (ToolWindowExtension.exists) HelpTooltip.Alignment.TOP
+        else {
+          if (splitMode) HelpTooltip.Alignment.LEFT else HelpTooltip.Alignment.RIGHT
+        }
+      }
     }
   }
 
@@ -451,12 +454,12 @@ fun ToolWindowAnchorEnum.isHorizontal(): Boolean {
 }
 
 @ApiStatus.Internal
-fun ToolWindowImpl.getAnchorEnum(): ToolWindowAnchorEnum {
-  return when (anchor) {
+fun ToolWindowAnchor.toEnum(): ToolWindowAnchorEnum {
+  return when (this) {
     ToolWindowAnchor.LEFT -> ToolWindowAnchorEnum.LEFT
     ToolWindowAnchor.RIGHT -> ToolWindowAnchorEnum.RIGHT
     ToolWindowAnchor.TOP -> ToolWindowAnchorEnum.TOP
     ToolWindowAnchor.BOTTOM -> ToolWindowAnchorEnum.BOTTOM
-    else -> throw IllegalStateException("Unknown anchor: $anchor")
+    else -> throw IllegalStateException("Unknown anchor: $this")
   }
 }

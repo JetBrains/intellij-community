@@ -184,6 +184,12 @@ public class HelpTooltip {
       }
     },
 
+    TOP {
+      @Override public Point getPointFor(Component owner, Dimension popupSize, Point mouseLocation) {
+        return new Point(JBUIScale.scale(1) + X_OFFSET.get(), -JBUIScale.scale(5) - popupSize.height + Y_OFFSET.get());
+      }
+    },
+
     BOTTOM {
       @Override public Point getPointFor(Component owner, Dimension popupSize, Point mouseLocation) {
         Dimension size = owner.getSize();

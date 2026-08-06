@@ -568,6 +568,7 @@ e:com.intellij.ide.HelpTooltip$Alignment
 - sf:HELP_BUTTON:com.intellij.ide.HelpTooltip$Alignment
 - sf:LEFT:com.intellij.ide.HelpTooltip$Alignment
 - sf:RIGHT:com.intellij.ide.HelpTooltip$Alignment
+- sf:TOP:com.intellij.ide.HelpTooltip$Alignment
 - a:getPointFor(java.awt.Component,java.awt.Dimension,java.awt.Point):java.awt.Point
 - s:valueOf(java.lang.String):com.intellij.ide.HelpTooltip$Alignment
 - s:values():com.intellij.ide.HelpTooltip$Alignment[]

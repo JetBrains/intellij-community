@@ -74,24 +74,29 @@ internal open class ToolWindowPaneNewButtonManager(paneId: String, isPrimary: Bo
   }
 
   internal fun updateToolStripesVisibility(): Boolean {
-    val oldSquareVisible = left.isVisible && right.isVisible
     val visible = this.showButtons || this.isStripesOverlaid
     val isLeftVisible = visible && left.hasVisibleButtons()
     val isRightVisible = visible && right.hasVisibleButtons()
+    var result = left.isVisible != isLeftVisible || right.isVisible != isRightVisible
     left.isVisible = isLeftVisible
     right.isVisible = isRightVisible
     left.updateNamedState()
     right.updateNamedState()
+
     top?.let {
-      it.isVisible = visible && it.hasVisibleButtons()
+      val newVisible = visible && it.hasVisibleButtons()
+      result = result || it.isVisible != newVisible
+      it.isVisible = newVisible
     }
     bottom?.let {
-      it.isVisible = visible && it.hasVisibleButtons()
+      val newVisible = visible && it.hasVisibleButtons()
+      result = result || it.isVisible != newVisible
+      it.isVisible = newVisible
     }
-    visibleToolbarsListeners.forEach { it(isLeftVisible, isRightVisible) }
-    return oldSquareVisible != visible
-  }
 
+    visibleToolbarsListeners.forEach { it(isLeftVisible, isRightVisible) }
+    return result
+  }
   internal fun addVisibleToolbarsListener(listener: (Boolean, Boolean) -> Unit) {
     visibleToolbarsListeners.add(listener)
   }

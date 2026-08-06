@@ -6,7 +6,7 @@ import com.intellij.openapi.wm.impl.SquareStripeButton
 import com.intellij.openapi.wm.impl.SquareStripeButtonLook
 import com.intellij.openapi.wm.impl.SquareStripeButtonLookExtension
 import com.intellij.openapi.wm.impl.ToolWindowAnchorEnum
-import com.intellij.openapi.wm.impl.getAnchorEnum
+import com.intellij.openapi.wm.impl.toEnum
 import com.intellij.openapi.wm.impl.isHorizontal
 import com.intellij.toolWindow.StripeButtonUi
 import com.intellij.toolWindow.extendedToolWindowsUi.ToolWindowExtension
@@ -90,7 +90,7 @@ private class SquareStripeButtonLookVerticalText(button: SquareStripeButton) : S
       return
     }
 
-    val anchorEnum = toolWindow.getAnchorEnum()
+    val anchorEnum = toolWindow.anchor.toEnum()
     val isHorizontal = anchorEnum.isHorizontal()
     val labelWidth = getLabelWidth()
     val scaledInsets = getButtonScaledInsets()
@@ -190,7 +190,7 @@ private class SquareStripeButtonLookVerticalText(button: SquareStripeButton) : S
 
   override fun getPreferredSize(size: Dimension): Dimension {
     val labelAndExtraSpace = getButtonScaledInsets().fullWidth + getLabelWidth()
-    if (toolWindow.getAnchorEnum().isHorizontal()) {
+    if (toolWindow.anchor.toEnum().isHorizontal()) {
       size.width += labelAndExtraSpace
     }
     else {

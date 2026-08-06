@@ -416,6 +416,14 @@ internal abstract class AbstractDroppableStripe(val paneId: String, layoutManage
       layoutMoreButton(data, visibleMoreButton, setBounds, moreY)
     }
 
+    // With a ToolWindowExtension the More button is a child of the stripe, and the preferred size doesn't take the More button into account
+    if (ToolWindowExtension.exists && visibleMoreButton != null && buttonsToLayOut.isEmpty()) {
+      visibleMoreButton.preferredSize.let {
+        data.size.width = it.width
+        data.size.height = it.height
+      }
+    }
+
     dragButton?.getComponent()?.let {
       val dragSize = it.preferredSize
       if (data.shouldSwapCoordinates) {
