@@ -590,7 +590,12 @@ internal class BazelBuildFileGenerator(
     val productionJars: List<String>,
     val testTargets: List<String>,
     val testJars: List<String>,
-    val pluginDistributionTarget: String?,
+    val pluginDistributionTarget: PluginDistributionTarget?,
+  )
+
+  internal data class PluginDistributionTarget(
+    @JvmField val target: String,
+    @JvmField val distributionDirectory: String,
   )
 
   private fun BuildFile.generateTestTargets(moduleDescriptor: ModuleDescriptor, moduleList: ModuleList) {
@@ -781,25 +786,6 @@ internal class BazelBuildFileGenerator(
       renderDeps(deps = testDeps, target = this, resourceDependencies = emptyList(), forTests = true)
     }
 
-    val pluginDescriptorContentData = if (!skipGenerationOfPluginTargets) {
-      moduleDescriptor.resources.firstNotNullOfOrNull { descriptor -> parsePluginXmlContent(descriptor) }
-    }
-    else {
-      null
-    }
-    val pluginDistributionTarget = pluginDescriptorContentData?.let {
-      load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
-      target("ij_plugin") {
-        option("name", moduleDescriptor.targetName + "_plugin")
-        option("descriptor_module", ":${moduleDescriptor.targetName}")
-        if (pluginDescriptorContentData.contentModuleNames.isNotEmpty()) {
-          val contentModuleLabels = pluginDescriptorContentData.contentModuleNames.map { getBazelDependencyLabel(moduleList.getModuleDescriptor(it), moduleDescriptor) }
-          option("content_modules", contentModuleLabels.unsorted())
-        }
-      }
-      BazelLabel(moduleDescriptor.targetName + "_plugin", moduleDescriptor)
-    }
-
     val relativePathFromRoot = moduleDescriptor.relativePathFromProjectRoot.invariantSeparatorsPathString
     val bazelModuleRelativePath = if (moduleDescriptor.isCommunity) {
       if (relativePathFromRoot == "community") {
@@ -819,7 +805,7 @@ internal class BazelBuildFileGenerator(
       else -> "//${bazelModuleRelativePath}"
     }
 
-    val jarOutputDirectory = when {
+    val outputDirectory = when {
       customModule != null -> customModule.outputDirectory
       moduleDescriptor.isCommunity -> "out/bazel-out/jvm-fastbuild/bin/external/community+/$bazelModuleRelativePath"
       else -> "out/bazel-out/jvm-fastbuild/bin/$bazelModuleRelativePath"
@@ -833,7 +819,30 @@ internal class BazelBuildFileGenerator(
       // like @community//plugins/env-files-support:dotenv-go_resources
       jarName.label.startsWith("@community//") ->
         "out/bazel-out/jvm-fastbuild/bin/external/community+/${jarName.label.substringAfter("@community//").replace(':', '/')}.jar"
-      else -> "$jarOutputDirectory/${jarName.label}.jar"
+      else -> "$outputDirectory/${jarName.label}.jar"
+    }
+
+    val pluginDescriptorContentData = if (!skipGenerationOfPluginTargets) {
+      moduleDescriptor.resources.firstNotNullOfOrNull { descriptor -> parsePluginXmlContent(descriptor) }
+    }
+    else {
+      null
+    }
+    val pluginDistributionTarget = pluginDescriptorContentData?.let {
+      load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
+      target("ij_plugin") {
+        option("name", moduleDescriptor.targetName + "_plugin")
+        option("descriptor_module", ":${moduleDescriptor.targetName}")
+        if (pluginDescriptorContentData.contentModuleNames.isNotEmpty()) {
+          val contentModuleLabels = pluginDescriptorContentData.contentModuleNames.map { getBazelDependencyLabel(moduleList.getModuleDescriptor(it), moduleDescriptor) }
+          option("content_modules", contentModuleLabels.unsorted())
+        }
+      }
+      val label = BazelLabel(moduleDescriptor.targetName + "_plugin", moduleDescriptor)
+      PluginDistributionTarget(
+        target = addPackagePrefix(label),
+        distributionDirectory = "$outputDirectory/${label.label}",
+      )
     }
 
     return ModuleTargets(
@@ -842,7 +851,7 @@ internal class BazelBuildFileGenerator(
       productionJars = productionCompileJars.map { getJarLocation(it) } + customModule?.additionalProductionJars.orEmpty(),
       testTargets = testCompileTargets.map { addPackagePrefix(it) },
       testJars = testCompileTargets.map { getJarLocation(it) },
-      pluginDistributionTarget = pluginDistributionTarget?.let { addPackagePrefix(it) },
+      pluginDistributionTarget = pluginDistributionTarget,
     )
   }
 

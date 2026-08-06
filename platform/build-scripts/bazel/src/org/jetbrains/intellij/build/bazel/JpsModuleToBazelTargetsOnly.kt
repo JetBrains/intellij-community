@@ -223,7 +223,12 @@ internal class JpsModuleToBazelTargetsOnly {
       assertTargetsEqual("test", starlarkTest.sorted(), jsonTest.sorted(), allowDuplicates = false)
       assertTargetsEqual("library", starlarkLibrary.sorted(), jsonLibrary.sorted().toList(), allowDuplicates = true)
       assertTargetsEqual("imlTargets", starlarkIml.sorted(), targets.imlTargets.sorted(), allowDuplicates = false)
-      assertTargetsEqual("pluginDistributionTargets", starlarkPluginDistribution.sorted(), targets.pluginDistributionTargets.values.sorted(), allowDuplicates = false)
+      assertTargetsEqual(
+        "pluginDistributionTargets",
+        starlarkPluginDistribution.sorted(),
+        targets.pluginDistributionTargets.values.map { it.target }.sorted(),
+        allowDuplicates = false,
+      )
     }
 
     private fun assertTargetsEqual(kind: String, starlarkTargets: List<String>, jsonTargets: List<String>, allowDuplicates: Boolean) {

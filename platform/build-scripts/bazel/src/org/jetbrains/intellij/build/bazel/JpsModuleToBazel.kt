@@ -245,11 +245,17 @@ internal class JpsModuleToBazel {
     )
 
     @Serializable
+    data class PluginDistributionTargetDescription(
+      @JvmField val target: String,
+      @JvmField val distributionDirectory: String,
+    )
+
+    @Serializable
     data class TargetsFile(
       val modules: Map<String, TargetsFileModuleDescription>,
       val imlTargets: List<String>,
       val projectLibraries: Map<String, LibraryDescription>,
-      val pluginDistributionTargets: Map<String, String>,
+      val pluginDistributionTargets: Map<String, PluginDistributionTargetDescription>,
     )
 
     fun saveTargets(
@@ -415,7 +421,7 @@ internal class JpsModuleToBazel {
 
       // When generating community-only file (ultimateRoot == null), strip the external/community+/ prefix
       // because community is the main workspace, not an external repository
-      fun adjustJarPath(path: String): String {
+      fun adjustOutputPath(path: String): String {
         return if (ultimateRoot == null) {
           path.replace("external/community+/", "")
         } else {
@@ -434,9 +440,9 @@ internal class JpsModuleToBazel {
           val moduleName = moduleTarget.moduleDescriptor.module.name
           moduleName to TargetsFileModuleDescription(
             productionTargets = moduleTarget.productionTargets.map { "$it.jar" },
-            productionJars = moduleTarget.productionJars.map { adjustJarPath(it) },
+            productionJars = moduleTarget.productionJars.map { adjustOutputPath(it) },
             testTargets = moduleTarget.testTargets.map { "$it.jar" },
-            testJars = moduleTarget.testJars.map { adjustJarPath(it) },
+            testJars = moduleTarget.testJars.map { adjustOutputPath(it) },
             exports = moduleList.deps[moduleTarget.moduleDescriptor]?.exports?.map { it.label } ?: emptyList(),
             moduleLibraries = module2Libraries[moduleName]
                                 ?.associateTo(TreeMap()) { it.target.jpsName to makeLibraryDescription(it) } ?: emptyMap(),
@@ -462,7 +468,14 @@ internal class JpsModuleToBazel {
         pluginDistributionTargets =
           targets
             .asSequence()
-            .mapNotNull { it.pluginDistributionTarget?.let { target -> it.moduleDescriptor.module.name to target } }
+            .mapNotNull { moduleTarget ->
+              moduleTarget.pluginDistributionTarget?.let { pluginTarget ->
+                moduleTarget.moduleDescriptor.module.name to PluginDistributionTargetDescription(
+                  target = pluginTarget.target,
+                  distributionDirectory = adjustOutputPath(pluginTarget.distributionDirectory),
+                )
+              }
+            }
             .sortedBy { it.first }
             .toMap()
       )

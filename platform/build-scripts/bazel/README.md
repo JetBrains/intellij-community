@@ -372,8 +372,11 @@ The generator searches for marker files to find project roots:
     }
   },
   "pluginDistributionTargets": {
-    //mapping from name of module with `plugin.xml` to the target that builds the plugin
-    "intellij.plugin": "@community//plugin:plugin_plugin"
+    //mapping from name of module with `plugin.xml` to the target and its project-relative output directory
+    "intellij.plugin": {
+      "target": "@community//plugin:plugin_plugin",
+      "distributionDirectory": "out/bazel-out/jvm-fastbuild/bin/plugin/plugin_plugin"
+    }
   }
 }
 ```
