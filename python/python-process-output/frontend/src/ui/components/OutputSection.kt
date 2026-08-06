@@ -1,6 +1,5 @@
 package com.intellij.python.processOutput.frontend.ui.components
 
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
@@ -50,8 +49,8 @@ internal fun OutputSection(controller: ProcessOutputController) {
                 }
             }
 
-            FilterActionGroup(
-                tooltipText = message("process.output.viewOptions.tooltip"),
+            ComposeFilterActionGroup(
+                tooltipText = message("process.output.buttons.displayOptions"),
                 state = controller.processOutputUiState.filters,
                 onFilterItemToggled = { filterItem, enabled ->
                     controller.onOutputFilterItemToggled(filterItem, enabled)
@@ -84,7 +83,6 @@ internal fun OutputSection(controller: ProcessOutputController) {
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun OutputView(controller: ProcessOutputController) {
     val isInfoExpanded by controller.processOutputUiState.isInfoExpanded.collectAsState()

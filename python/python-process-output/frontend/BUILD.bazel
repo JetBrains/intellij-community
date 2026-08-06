@@ -58,6 +58,7 @@ jvm_library(
         "//python/python-process-output/common",
         "//libraries/kotlin/reflect",
         "//python/common",
+        "//platform/util/coroutines",
     ],
 )
 
@@ -126,6 +127,7 @@ jvm_library(
         "//python/python-test-env/junit5",
         "//python/python-test-env/junit5:junit5_test_lib",
         "//python/common:common_test_lib",
+        "//platform/util/coroutines:coroutines_test_lib",
     ],
 )
 ### auto-generated section `build intellij.python.processOutput.frontend` end
