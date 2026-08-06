@@ -13,7 +13,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
-import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.io.BaseDataReader;
 import com.intellij.util.io.BaseOutputReader;
 import org.jetbrains.annotations.ApiStatus;
@@ -103,7 +103,7 @@ public class OSProcessHandler extends BaseOSProcessHandler {
 
   @ApiStatus.Internal
   public static void checkEdtAndReadAction() {
-    ThreadingAssertions.checkEdtAndReadActionForHeavyActivity();
+    SlowOperations.assertNonCancelableSlowOperationsAreAllowed();
   }
 
   private static void deleteTempFiles(Set<? extends File> tempFiles) {

@@ -16,8 +16,8 @@ import com.intellij.openapi.vfs.DiskQueryRelay;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.mac.foundation.Foundation;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence;
 import com.intellij.util.system.OS;
@@ -95,7 +95,7 @@ final class GotoDesktopDirAction extends FileChooserAction implements LightEditC
   @RequiresBackgroundThread
   @RequiresReadLockAbsence
   static Path getDesktopDirectory() {
-    ThreadingAssertions.checkEdtAndReadActionForHeavyActivity();
+    SlowOperations.assertNonCancelableSlowOperationsAreAllowed();
 
     if (OS.CURRENT == OS.Windows && JnaLoader.isLoaded()) {
       var path = new char[WinDef.MAX_PATH];
