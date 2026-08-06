@@ -13,6 +13,7 @@ import com.intellij.build.events.OutputBuildEvent
 import com.intellij.execution.filters.LazyFileHyperlinkInfo
 import com.intellij.execution.ui.ConsoleView
 import com.intellij.execution.ui.ConsoleViewContentType
+import com.intellij.execution.ui.ConsoleViewWithDelegate
 import com.intellij.execution.ui.ExecutionConsole
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -33,11 +34,11 @@ private val NEW_LINES = mutableSetOf<@NlsSafe String?>("<br>", "</br>", "<br/>",
 
 internal class BuildConsoleViewImpl(
   private val project: Project,
-  override val consoleView: ConsoleView,
-) : BuildConsoleView, ExecutionConsole by consoleView {
+  override val delegate: ConsoleView,
+) : BuildConsoleView, ConsoleViewWithDelegate, ExecutionConsole by delegate {
 
   init {
-    Disposer.register(this, consoleView)
+    Disposer.register(this, delegate)
   }
 
   override fun dispose() {
@@ -55,8 +56,8 @@ internal class BuildConsoleViewImpl(
 
   private fun onBuildIssueEvent(event: BuildIssueEvent) {
     val quickFixes = event.issue.quickFixes.associateBy { it.id }
-    consoleView.printHtml(event.issue.description, event.result.kind.contentType) {
-      quickFixes[it.description]?.runQuickFix(project, BuildConsoleUtils.getDataContext(consoleView))
+    delegate.printHtml(event.issue.description, event.result.kind.contentType) {
+      quickFixes[it.description]?.runQuickFix(project, BuildConsoleUtils.getDataContext(delegate))
     }
   }
 
@@ -64,26 +65,26 @@ internal class BuildConsoleViewImpl(
     val description = event.description
     val contentType = event.result.kind.contentType
     if (!description.isNullOrEmpty()) {
-      consoleView.print(description, contentType)
+      delegate.print(description, contentType)
     }
     else {
       val hyperlinkText = getHyperlinkText(event.filePosition) ?: return
       val hyperlinkInfo = getHyperlinkInfo(project, event.filePosition) ?: return
-      consoleView.printHyperlink(hyperlinkText, hyperlinkInfo)
-      consoleView.print(": ", contentType)
-      consoleView.print(event.message, contentType)
+      delegate.printHyperlink(hyperlinkText, hyperlinkInfo)
+      delegate.print(": ", contentType)
+      delegate.print(event.message, contentType)
     }
   }
 
   private fun onMessageEvent(event: MessageEvent) {
     val details = event.result.details
     if (!details.isNullOrEmpty()) {
-      consoleView.printHtml(details, event.result.kind.contentType, null)
+      delegate.printHtml(details, event.result.kind.contentType, null)
     }
   }
 
   private fun onOutputEvent(event: OutputBuildEvent) {
-    val console = consoleView
+    val console = delegate
     if (console is BuildTextConsoleView) {
       // Route through the ANSI-decoding print so that escape sequences in the build output
       // are converted into text attributes instead of leaking into the console text.
@@ -96,14 +97,14 @@ internal class BuildConsoleViewImpl(
 
   override fun onFailure(failure: Failure) {
     val text = (failure.description ?: failure.message ?: failure.error?.message).nullize() ?: return
-    consoleView.printHtml(text, ConsoleViewContentType.ERROR_OUTPUT) {
+    delegate.printHtml(text, ConsoleViewContentType.ERROR_OUTPUT) {
       val notification = failure.notification ?: return@printHtml
       notification.listener?.hyperlinkUpdate(notification, it)
     }
   }
 
   private fun onBuildEvent(event: BuildEvent) {
-    consoleView.print(event.description ?: event.message, ConsoleViewContentType.SYSTEM_OUTPUT)
+    delegate.print(event.description ?: event.message, ConsoleViewContentType.SYSTEM_OUTPUT)
   }
 
   companion object {
