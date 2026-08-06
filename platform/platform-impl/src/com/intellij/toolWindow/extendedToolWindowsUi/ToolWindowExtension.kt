@@ -5,9 +5,12 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.impl.SquareStripeButton
 import com.intellij.openapi.wm.impl.SquareStripeButtonLook
+import com.intellij.openapi.wm.impl.ToolWindowAnchorEnum
 import com.intellij.toolWindow.ToolWindowToolbar
 import com.intellij.ui.ExperimentalUI
 import org.jetbrains.annotations.ApiStatus
+import java.awt.Dimension
+import java.awt.Insets
 
 @ApiStatus.Internal
 interface ToolWindowExtension {
@@ -34,9 +37,11 @@ interface ToolWindowExtension {
 
   fun getStripeIconUnscaledSize(): Int
 
-  fun getStripeButtonUnscaledSize(): Int
-
   fun createSquareStripeButtonLook(button: SquareStripeButton): SquareStripeButtonLook
+
+  fun getIconPadding(toolbarAnchor: ToolWindowAnchorEnum): Insets
+
+  fun getButtonMinSize(): Dimension
 
   fun createTopToolWindowToolbar(paneId: String, isPrimary: Boolean): ToolWindowToolbar? {
     return ToolWindowHorizontalToolbar(paneId, ToolWindowAnchor.TOP, isPrimary)
@@ -45,5 +50,4 @@ interface ToolWindowExtension {
   fun createBottomToolWindowToolbar(paneId: String, isPrimary: Boolean): ToolWindowToolbar? {
     return ToolWindowHorizontalToolbar(paneId, ToolWindowAnchor.BOTTOM, isPrimary)
   }
-
 }

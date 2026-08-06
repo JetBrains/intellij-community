@@ -5,6 +5,7 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.ActionButtonComponent
 import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook
 import com.intellij.toolWindow.ResizeStripeManager
+import com.intellij.toolWindow.extendedToolWindowsUi.ToolWindowExtension
 import com.intellij.ui.icons.HoledIcon
 import com.intellij.ui.icons.toStrokeIcon
 import com.intellij.util.ui.JBInsets
@@ -34,19 +35,17 @@ open class SquareStripeButtonLook(private val button: AbstractSquareStripeButton
     }
 
     fun getIconPadding(toolbarAnchor: ToolWindowAnchorEnum): Insets {
+      val extension = ToolWindowExtension.getInstance()
+      if (extension != null) {
+        return extension.getIconPadding(toolbarAnchor)
+      }
+
       return when (toolbarAnchor) {
         ToolWindowAnchorEnum.LEFT,
         ToolWindowAnchorEnum.RIGHT,
-          -> {
-          JBUI.CurrentTheme.Toolbar.stripeToolbarButtonIconPadding(toolbarAnchor == ToolWindowAnchorEnum.LEFT,
-                                                                   ResizeStripeManager.isShowNames())
-        }
-        ToolWindowAnchorEnum.TOP ->
-          if (UISettings.getInstance().compactMode) JBUI.insets(5, 4, 3, 4)
-          else JBUI.insets(5, 5, 2, 5)
-        ToolWindowAnchorEnum.BOTTOM ->
-          if (UISettings.getInstance().compactMode) JBUI.insets(3, 4, 5, 4)
-          else JBUI.insets(2, 5, 5, 5)
+          -> JBUI.CurrentTheme.Toolbar.stripeToolbarButtonIconPadding(
+          toolbarAnchor == ToolWindowAnchorEnum.LEFT, ResizeStripeManager.isShowNames())
+        else -> JBUI.emptyInsets() // Not possible without ToolWindowExtension
       }
     }
 

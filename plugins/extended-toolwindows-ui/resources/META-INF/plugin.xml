@@ -4,7 +4,7 @@
   <vendor>JetBrains</vendor>
 
   <dependencies>
-    <module name="intellij.platform.monolith"/>
+    <module name="intellij.platform.frontend"/>
     <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.platform.core.ui"/>
     <module name="intellij.platform.editor.ui"/>
@@ -15,7 +15,6 @@
     <!-- endregion -->
   </dependencies>
   <content namespace="jetbrains"/>
-  <incompatible-with>com.intellij.jetbrains.client</incompatible-with>
 
   <description><![CDATA[
     Extends the New UI tool window layout with additional options:

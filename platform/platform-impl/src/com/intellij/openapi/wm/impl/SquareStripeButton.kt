@@ -345,10 +345,9 @@ internal fun getStripeToolbarButtonIconSize(): Int {
   return JBUIScale.scale(extension.getStripeIconUnscaledSize())
 }
 
-internal fun getStripeToolbarButtonSize(): Dimension {
-  val extension = ToolWindowExtension.getInstance() ?: return JBUI.CurrentTheme.Toolbar.stripeToolbarButtonSize()
-  val size = extension.getStripeButtonUnscaledSize()
-  return JBDimension(size, size)
+private fun getStripeToolbarButtonSize(): Dimension {
+  val extension = ToolWindowExtension.getInstance()
+  return if (extension == null) JBUI.CurrentTheme.Toolbar.stripeToolbarButtonSize() else extension.getButtonMinSize()
 }
 
 private fun scaleIcon(icon: ScalableIcon): Icon {

@@ -12,6 +12,8 @@ import com.intellij.toolWindow.StripeButtonUi
 import com.intellij.toolWindow.extendedToolWindowsUi.ToolWindowExtension
 import com.intellij.ui.icons.toStrokeIcon
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.ui.EmptyIcon
+import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
@@ -20,11 +22,18 @@ import java.awt.Color
 import java.awt.Dimension
 import java.awt.Graphics
 import java.awt.Graphics2D
+import java.awt.Insets
+import java.awt.Point
 import java.awt.Rectangle
 import javax.swing.Icon
 import javax.swing.UIManager
 
 internal class ToolWindowExtensionImpl : ToolWindowExtension {
+
+  private val TOP_INSETS = JBUI.insets(5, 5, 2, 5)
+  private val TOP_COMPACT_INSETS = JBUI.insets(5, 4, 3, 4)
+  private val BOTTOM_INSETS = JBUI.insets(2, 5, 5, 5)
+  private val BOTTOM_COMPACT_INSETS = JBUI.insets(3, 4, 5, 4)
 
   override fun isStripeResizable(): Boolean {
     return false
@@ -35,17 +44,37 @@ internal class ToolWindowExtensionImpl : ToolWindowExtension {
   }
 
   override fun getStripeIconUnscaledSize(): Int {
-    return 16
-  }
-
-  override fun getStripeButtonUnscaledSize(): Int {
-    return if (compactMode) 28 else 32
+    return ICON_UNSCALED_SIZE
   }
 
   override fun createSquareStripeButtonLook(button: SquareStripeButton): SquareStripeButtonLook {
     return SquareStripeButtonLookVerticalText(button)
   }
+
+  override fun getIconPadding(toolbarAnchor: ToolWindowAnchorEnum): Insets {
+    return when (toolbarAnchor) {
+      ToolWindowAnchorEnum.LEFT,
+      ToolWindowAnchorEnum.RIGHT,
+        -> JBUI.CurrentTheme.Toolbar.stripeToolbarButtonIconPadding(toolbarAnchor == ToolWindowAnchorEnum.LEFT, false)
+      ToolWindowAnchorEnum.TOP -> if (compactMode) TOP_COMPACT_INSETS else TOP_INSETS
+      ToolWindowAnchorEnum.BOTTOM -> if (compactMode) BOTTOM_COMPACT_INSETS else BOTTOM_INSETS
+    }
+  }
+
+  override fun getButtonMinSize(): Dimension {
+    val size = getStripeButtonUnscaledSize()
+
+    // The visible button should be square
+    val heightCorrection = if (compactMode) 0 else 3
+    return JBDimension(size, size + heightCorrection)
+  }
+
+  private fun getStripeButtonUnscaledSize(): Int {
+    return if (compactMode) 28 else 32
+  }
 }
+
+private const val ICON_UNSCALED_SIZE = 16
 
 private val compactMode: Boolean
   get() = UISettings.getInstance().compactMode
@@ -83,21 +112,21 @@ private class SquareStripeButtonLookVerticalText(button: SquareStripeButton) : S
 
     val color = UIManager.getColor("ToolWindow.Button.selectedForeground")
     val renderedIcon = if (!toolWindow.isActive || color == null) icon else toStrokeIcon(icon, color)
-    val iconPosition = getIconPosition(buttonWrapper, renderedIcon)
 
-    when (anchorEnum) {
-      ToolWindowAnchorEnum.LEFT -> {
-        iconPosition.y += scaledInsets.leftRightExtraInset + scaledInsets.iconLabelInset + labelWidth
-      }
-      ToolWindowAnchorEnum.RIGHT -> {
-        iconPosition.y += scaledInsets.leftRightExtraInset
-      }
+    // Avoid "dancing" for icons with badges, see com.intellij.openapi.wm.impl.SquareStripeButtonLook.getIconPosition
+    val labelIconSize = JBUIScale.scale(ICON_UNSCALED_SIZE)
+    val iconPosition = getIconPosition(buttonWrapper, renderedIcon)
+    val labelIconPosition = getIconPosition(buttonWrapper, EmptyIcon.create(labelIconSize))
+
+    val iconOffset = when (anchorEnum) {
+      ToolWindowAnchorEnum.LEFT -> Point(0, scaledInsets.leftRightExtraInset + scaledInsets.iconLabelInset + labelWidth)
+      ToolWindowAnchorEnum.RIGHT -> Point(0, scaledInsets.leftRightExtraInset)
       ToolWindowAnchorEnum.TOP,
       ToolWindowAnchorEnum.BOTTOM,
-        -> {
-        iconPosition.x += scaledInsets.leftRightExtraInset
-      }
+        -> Point(scaledInsets.leftRightExtraInset, 0)
     }
+    iconPosition.translate(iconOffset.x, iconOffset.y)
+    labelIconPosition.translate(iconOffset.x, iconOffset.y)
 
     super.paintIcon(g, buttonWrapper, renderedIcon, iconPosition.x, iconPosition.y)
 
@@ -113,23 +142,23 @@ private class SquareStripeButtonLookVerticalText(button: SquareStripeButton) : S
       when (anchorEnum) {
         ToolWindowAnchorEnum.LEFT -> {
           g2.rotate(-Math.PI / 2)
-          val iconCenterX = iconPosition.x + renderedIcon.iconWidth / 2
+          val iconCenterX = labelIconPosition.x + labelIconSize / 2
           val baselineX = iconCenterX + (fm.ascent - fm.descent) / 2
-          val textBottomY = iconPosition.y - scaledInsets.iconLabelInset
+          val textBottomY = labelIconPosition.y - scaledInsets.iconLabelInset
           g2.drawString(text, -textBottomY, baselineX)
         }
         ToolWindowAnchorEnum.RIGHT -> {
           g2.rotate(Math.PI / 2)
-          val iconCenterX = iconPosition.x + renderedIcon.iconWidth / 2
+          val iconCenterX = labelIconPosition.x + labelIconSize / 2
           val baselineX = iconCenterX - (fm.ascent - fm.descent) / 2
-          val textTopY = iconPosition.y + renderedIcon.iconHeight + scaledInsets.iconLabelInset
+          val textTopY = labelIconPosition.y + labelIconSize + scaledInsets.iconLabelInset
           g2.drawString(text, textTopY, -baselineX)
         }
         ToolWindowAnchorEnum.TOP,
         ToolWindowAnchorEnum.BOTTOM,
           -> {
-          val textX = iconPosition.x + renderedIcon.iconWidth + scaledInsets.iconLabelInset
-          val iconCenterY = iconPosition.y + renderedIcon.iconHeight / 2
+          val textX = labelIconPosition.x + labelIconSize + scaledInsets.iconLabelInset
+          val iconCenterY = labelIconPosition.y + labelIconSize / 2
           val baselineY = iconCenterY + (fm.ascent - fm.descent) / 2
           g2.drawString(text, textX, baselineY)
         }
