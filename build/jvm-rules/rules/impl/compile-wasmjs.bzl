@@ -34,8 +34,8 @@ KtWasmJsInfo = provider(
     },
 )
 
-def npm_package_entries(npm_packages_attr):
-    """Converts an `npm_packages` attribute (bare import specifier -> npm package files target) into
+def npm_package_entries(runtime_npm_package_deps_attr):
+    """Converts an `runtime_npm_package_deps_attr` attribute (bare import specifier -> npm package files target) into
     the entries carried by `KtWasmJsInfo.npm_packages`."""
     return [
         struct(
@@ -43,7 +43,7 @@ def npm_package_entries(npm_packages_attr):
             label = target.label,
             files = target[DefaultInfo].files,
         )
-        for specifier, target in npm_packages_attr.items()
+        for specifier, target in runtime_npm_package_deps_attr.items()
     ]
 
 def merged_npm_packages(entries, owner):
@@ -113,7 +113,7 @@ def wasmjs_compile_actions(ctx):
 
     # npm packages follow the runtime (link) closure, like link_klibs
     npm_packages = depset(
-        npm_package_entries(ctx.attr.npm_packages),
+        npm_package_entries(ctx.attr.runtime_npm_package_deps),
         transitive = [d[KtWasmJsInfo].npm_packages for d in ctx.attr.exports + ctx.attr.deps + ctx.attr.runtime_deps],
     )
 

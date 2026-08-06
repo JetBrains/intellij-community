@@ -420,11 +420,10 @@
     },
     "//fleet/build/rules:kmp.bzl%kmp": {
       "general": {
-        "bzlTransitiveDigest": "JxApLU0Va246Ilj+lRuHF2d7S2RJlePox/mxPWwyV/A=",
+        "bzlTransitiveDigest": "BrYJ1Se7Thq06TTkJSfbGu8cwV2cN1JRDFTiNpZEjeg=",
         "usagesDigest": "d1NbLQ6+0cCvFWqB2eepaU0bdsmkWqF6G9cWsj5w/Tg=",
         "recordedInputs": [
-          "REPO_MAPPING:,bazel_tools bazel_tools",
-          "REPO_MAPPING:,nodejs_darwin_arm64 rules_nodejs++node+nodejs_darwin_arm64"
+          "REPO_MAPPING:,bazel_tools bazel_tools"
         ],
         "generatedRepoSpecs": {
           "io_github_turansky_seskar-seskar-core-wasm-js-4_40_0-sources_http": {

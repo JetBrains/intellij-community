@@ -418,6 +418,20 @@ def _render_aliases_block(aliases):
     return "\n\n".join(blocks)
 
 def _render_wasmjs_import(target):
+    """
+    Renders `wasmjs_import` target from a `bazel-kmp-resolver` Bazel manifest entry.
+
+    Example:
+
+        wasmjs_import(
+          name = "org_jetbrains_kotlinx_kotlinx_datetime_wasm_js_0_7_1_0_6_x_compat",
+          klib = "@@community++kmp+org_jetbrains_kotlinx-kotlinx-datetime-wasm-js-0_7_1-0_6_x-compat_http//file:file",
+          source_jar = "@@community++kmp+org_jetbrains_kotlinx-kotlinx-datetime-wasm-js-0_7_1-0_6_x-compat-sources_http//file:file",
+          exported_deps = ["@kmp_deps//:org_jetbrains_kotlin_kotlin_stdlib", "@kmp_deps//:org_jetbrains_kotlinx_kotlinx_serialization_core"],
+          npm_packages = {"@js-joda/core": "@@community++kmp+npm-js-joda_core-3_2_0_http//:package"},
+        )
+    """
+
     lines = [
         "wasmjs_import(",
         "    name = %s," % _quote(target["name"]),
@@ -486,7 +500,7 @@ def _read_configure_tag(module_ctx):
         deps = [],
         repositories = [],
         substitutions = {},
-        npm_package_versions = {},
+        npm_package_version_overrides = {},
     )
 
 def _resolve_with_facts(module_ctx, config):
@@ -562,8 +576,8 @@ def _resolve_fresh(module_ctx, config):
         _validate_maven_module_id(source_module_id)
         _maven_coordinate_parts(target_coordinate)
         args.extend(["--substitution", "%s=%s" % (source_module_id, target_coordinate)])
-    for package_name in sorted(config.npm_package_versions.keys()):
-        args.extend(["--npm-package-version", "%s=%s" % (package_name, config.npm_package_versions[package_name])])
+    for package_name in sorted(config.npm_package_version_overrides.keys()):
+        args.extend(["--npm-package-version", "%s=%s" % (package_name, config.npm_package_version_overrides[package_name])])
 
     netrc = module_ctx.os.environ.get("NETRC", "")  # Read NETRC without taking into account as an input of the repository_rule, authentication does not matter in the reproducibility of the resolution
     repository_credentials = _repository_credentials(module_ctx, config.repositories, netrc)
@@ -627,7 +641,7 @@ def _resolution_fact_key(config):
         config.deps,
         config.repositories,
         _sorted_dict_items(config.substitutions),
-        _sorted_dict_items(config.npm_package_versions),
+        _sorted_dict_items(config.npm_package_version_overrides),
     ])
 
 def _sorted_dict_items(values):
@@ -714,9 +728,9 @@ kmp = module_extension(
             "substitutions": attr.string_dict(
                 doc = "Maven module substitutions, keyed by group:artifact and resolved to group:artifact:version.",
             ),
-            "npm_package_versions": attr.string_dict(
-                doc = """Hardcoded NPM package versions, keyed by package name, resolving manually the version
-                         conflicts between the NPM dependencies declared by different klibs.""",
+            "npm_package_version_overrides": attr.string_dict(
+                doc = """Overrides of NPM package versions, keyed by package name.
+                Escape hatch to resolve manually the version conflicts between the NPM dependencies declared by different klibs.""",
             ),
         }),
     },
