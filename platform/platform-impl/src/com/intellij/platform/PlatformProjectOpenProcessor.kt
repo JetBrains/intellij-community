@@ -122,13 +122,14 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
         projectName = dummyProjectName,
         runConfigurators = false,
         runConversionBeforeOpen = false,
-        // both callers of this go on to `openFileFromCommandLine`, which is what releases the hold this asks for
-        opensFileAfterProjectOpen = true,
         beforeOpen = { project ->
           project.service<OpenProjectSettingsService>().state.isLocatedInTempDirectory = true
           options.beforeOpen?.invoke(project) ?: true
         }
-      )
+      ).let {
+        // both callers of this go on to `openFileFromCommandLine`, which is what releases the hold this asks for
+        it.markAsOpeningFileAfterProjectOpen()
+      }
     }
 
     private fun createTempProjectAndOpenFile(file: Path, options: OpenProjectTask): Project? {
@@ -216,7 +217,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
           options
         }
         else {
-          options.copy(projectName = file.fileName.toString(), opensFileAfterProjectOpen = true)
+          options.copy(projectName = file.fileName.toString()).markAsOpeningFileAfterProjectOpen()
         }
       )
       if (project != null && file != baseDir) {
@@ -290,7 +291,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
           options
         }
         else {
-          options.copy(projectName = file.fileName.toString(), opensFileAfterProjectOpen = true)
+          options.copy(projectName = file.fileName.toString()).markAsOpeningFileAfterProjectOpen()
         }
       )
       if (project != null && file != baseDir) {
