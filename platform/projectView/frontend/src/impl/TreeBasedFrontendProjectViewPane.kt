@@ -36,6 +36,7 @@ import com.intellij.platform.projectView.settings.ProjectViewPaneOptionDTO
 import com.intellij.ui.AutoScrollToSourceHandler
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.ScrollPaneFactory
+import com.intellij.ui.TreeUIHelper
 import com.intellij.ui.stripe.ErrorStripe
 import com.intellij.ui.stripe.ErrorStripePainter
 import com.intellij.ui.stripe.TreeUpdater
@@ -85,6 +86,7 @@ internal class TreeBasedFrontendProjectViewPane(
   private val tree = Tree(paneTreeModel.treeModel).also {
     it.isRootVisible = false
     CustomizationUtil.installPopupHandler(it, IdeActions.GROUP_PROJECT_VIEW_POPUP, ActionPlaces.PROJECT_VIEW_POPUP)
+    TreeUIHelper.getInstance().installTreeSpeedSearch(it)
   }
   private val scrollPane = ScrollPaneFactory.createScrollPane(tree, true)
   private val expandRequests = Channel<ExpandRequest>(capacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
