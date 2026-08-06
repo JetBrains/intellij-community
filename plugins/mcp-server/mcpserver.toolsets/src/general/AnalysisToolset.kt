@@ -70,14 +70,17 @@ class AnalysisToolset : McpToolset {
         |Batch responses may include file entries with `timedOut: true` and empty `problems` when individual files exceed the available budget.
         |File entries with a `notAnalyzedReason` indicate files that could not be analyzed (e.g., outside project content roots, excluded, or unsupported file type).
         |Top-level `more: true` means the batch is incomplete.
-        |`min_severity` must be `warning` or `error`; defaults to `warning`.
+        |`min_severity` must be `warning`, `strong_warning`, or `error`; defaults to `warning`.
         |Note: Only analyzes files within the project directory.
         |Note: Lines and Columns are 1-based.
     """)
   suspend fun lint_files(
     @McpDescription("List of project-relative files to analyze. Duplicate paths are ignored after normalization.")
     files: List<String>,
-    @McpDescription("Minimum severity to include: `warning` or `error`. Defaults to `warning`.")
+    @McpDescription(
+      "Minimum severity to include: `warning` (includes weak warnings), `strong_warning`, or `error`. " +
+      "Defaults to `warning`.",
+    )
     min_severity: String = LintMinSeverity.WARNING.apiValue,
     @McpDescription(Constants.TIMEOUT_MILLISECONDS_DESCRIPTION)
     timeout: Int = LINT_FILES_DEFAULT_TIMEOUT_MILLISECONDS_VALUE,
@@ -461,6 +464,8 @@ class AnalysisToolset : McpToolset {
   @Serializable
   data class LintProblem(
     @JvmField val severity: String,
+    @EncodeDefault(mode = EncodeDefault.Mode.NEVER)
+    @JvmField val inspectionId: String? = null,
     @JvmField val description: String,
     @JvmField val lineText: String,
     @JvmField val line: Int,

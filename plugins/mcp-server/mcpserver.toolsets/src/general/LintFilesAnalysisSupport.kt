@@ -524,6 +524,7 @@ private fun createLintProblem(document: Document, info: HighlightInfo): Analysis
 
   return AnalysisToolset.LintProblem(
     severity = info.severity.name,
+    inspectionId = info.inspectionToolId,
     description = info.description ?: "",
     lineText = lineText,
     line = startLine + 1,

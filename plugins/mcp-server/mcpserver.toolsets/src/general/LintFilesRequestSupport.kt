@@ -13,12 +13,14 @@ enum class LintMinSeverity(
   @JvmField val highlightSeverity: HighlightSeverity,
 ) {
   WARNING("warning", HighlightSeverity.WEAK_WARNING),
+  STRONG_WARNING("strong_warning", HighlightSeverity.WARNING),
   ERROR("error", HighlightSeverity.ERROR);
 
   companion object {
     fun parse(value: String): LintMinSeverity {
       val normalized = value.trim().lowercase()
-      return entries.firstOrNull { it.apiValue == normalized } ?: mcpFail("min_severity must be one of: warning, error")
+      return entries.firstOrNull { it.apiValue == normalized }
+             ?: mcpFail("min_severity must be one of: ${entries.joinToString { it.apiValue }}")
     }
 
     fun fromErrorsOnly(errorsOnly: Boolean): LintMinSeverity = if (errorsOnly) ERROR else WARNING
