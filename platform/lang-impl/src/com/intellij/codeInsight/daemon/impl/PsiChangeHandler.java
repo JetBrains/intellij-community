@@ -10,6 +10,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.impl.TestOnlyThreading;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -365,12 +366,14 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter implements Runnable {
     assert ApplicationManager.getApplication().isUnitTestMode();
     CountDownLatch s = new CountDownLatch(1);
     myUpdateFileStatusAlarm.addRequest(() -> s.countDown(), 0);
-    try {
-      s.await();
-    }
-    catch (InterruptedException e) {
-      throw new RuntimeException(e);
-    }
+    TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(() -> {
+      try {
+        s.await();
+      }
+      catch (InterruptedException e) {
+        throw new RuntimeException(e);
+      }
+    });
   }
 
   void runAfterUpdateFileStatusQueue(@NotNull Runnable runnable) {
