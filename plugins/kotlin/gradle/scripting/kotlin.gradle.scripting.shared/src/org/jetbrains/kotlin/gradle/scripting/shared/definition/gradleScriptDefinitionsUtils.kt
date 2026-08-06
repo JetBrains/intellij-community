@@ -36,7 +36,6 @@ fun loadGradleDefinitions(params: GradleDefinitionsParams): List<GradleScriptDef
     val gradleLibDir = params.gradleHome.toGradleHomePath()
     val templateClasspath = getFullDefinitionsClasspath(gradleLibDir)
     val kotlinLibsClassPath = kotlinStdlibAndCompiler(gradleLibDir)
-    val languageVersionCompilerOptions = findStdLibLanguageVersion(kotlinLibsClassPath)
 
     val templateClasses = getGradleTemplatesNames(params.gradleVersion?.let { GradleVersion.version(it) })
 
@@ -70,17 +69,6 @@ fun getGradleTemplatesNames(gradleVersion: GradleVersion?): List<String> {
         )
     }
     return templateClasses
-}
-
-private fun findStdLibLanguageVersion(kotlinLibsClassPath: List<Path>): List<String> {
-    if (kotlinLibsClassPath.isEmpty()) return emptyList()
-
-    val kotlinStdLibSelector = Regex("^(kotlin-compiler-embeddable|kotlin-stdlib)-(\\d+\\.\\d+).*\\.jar\$")
-    val result = kotlinStdLibSelector.find(kotlinLibsClassPath.first().name) ?: return emptyList()
-
-    if (result.groupValues.size < 3) return emptyList()
-    val version = result.groupValues[2]
-    return LanguageVersion.fromVersionString(version)?.let { listOf("-language-version", it.versionString) } ?: emptyList()
 }
 
 private fun GradleDefinitionsParams.toHostConfiguration(): ScriptingHostConfiguration =

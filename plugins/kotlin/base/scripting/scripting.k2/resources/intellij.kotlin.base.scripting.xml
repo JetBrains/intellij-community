@@ -127,6 +127,12 @@
 
   <extensionPoints>
     <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.kotlinScriptFilter"
+            interface="org.jetbrains.kotlin.idea.core.script.k2.configurations.KotlinScriptProcessingFilter"
+            area="IDEA_PROJECT"
+            dynamic="true"/>
+
+    <extensionPoint
             qualifiedName="org.jetbrains.kotlin.scriptEntityProvider"
             interface="org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntityProvider"
             area="IDEA_PROJECT"

@@ -4,9 +4,8 @@ package org.jetbrains.kotlin.gradle.scripting.k2
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.kotlin.gradle.scripting.k2.definition.GradleScriptDefinitionsSource
-import org.jetbrains.kotlin.idea.core.script.shared.KotlinScriptProcessingFilter
+import org.jetbrains.kotlin.idea.core.script.k2.configurations.KotlinScriptProcessingFilter
 import org.jetbrains.kotlin.idea.core.script.shared.scriptDefinitionsSourceOfType
-import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 
 private const val GRADLE_KTS = ".gradle.kts"
 

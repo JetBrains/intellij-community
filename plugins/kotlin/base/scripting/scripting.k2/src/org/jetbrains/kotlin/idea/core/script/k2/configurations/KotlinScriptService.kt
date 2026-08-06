@@ -43,7 +43,6 @@ import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntit
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntityId
 import org.jetbrains.kotlin.idea.core.script.k2.modules.modifyKotlinScriptLibraryEntity
 import org.jetbrains.kotlin.idea.core.script.shared.KotlinBaseScriptingBundle
-import org.jetbrains.kotlin.idea.core.script.shared.KotlinScriptProcessingFilter
 import org.jetbrains.kotlin.idea.core.script.shared.definition.javaHomePath
 import org.jetbrains.kotlin.idea.core.script.shared.definition.jdkSupplier
 import org.jetbrains.kotlin.idea.core.script.v1.ScriptDependenciesModificationTracker

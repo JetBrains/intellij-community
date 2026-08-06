@@ -26,10 +26,7 @@ internal class ScriptingSettingsFUSCollector: ProjectUsagesCollector() {
 
         // filling up scriptingAutoReloadEnabled Event
         project.service<ScriptDefinitionProvider>().currentDefinitions.forEach { definition ->
-            if (definition.canAutoReloadScriptConfigurationsBeSwitchedOff) {
-                val scriptingAutoReloadEnabled = KotlinScriptingSettings.getInstance(project).autoReloadConfigurations(definition)
-                metrics.add(scriptingAREvent.metric(definition.name, scriptingAutoReloadEnabled, pluginInfo))
-            }
+            metrics.add(scriptingAREvent.metric(definition.name, true, pluginInfo))
         }
 
         return metrics

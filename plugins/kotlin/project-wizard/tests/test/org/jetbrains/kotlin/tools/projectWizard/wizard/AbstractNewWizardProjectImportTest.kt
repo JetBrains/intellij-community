@@ -3,14 +3,17 @@
 package org.jetbrains.kotlin.tools.projectWizard.wizard
 
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.getSettings
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.psi.PsiManager
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.PlatformTestUtil
@@ -24,7 +27,6 @@ import org.jetbrains.kotlin.gradle.scripting.k2.workspaceModel.GradleKotlinScrip
 import org.jetbrains.kotlin.idea.codeInsight.inspections.ReplaceUntilWithRangeUntilInspection
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntity
 import org.jetbrains.kotlin.idea.core.script.v1.alwaysVirtualFile
-import org.jetbrains.kotlin.idea.core.script.v1.getKtFile
 import org.jetbrains.kotlin.idea.test.KotlinSdkCreationChecker
 import org.jetbrains.kotlin.idea.test.PluginTestCaseBase
 import org.jetbrains.kotlin.idea.test.runAll
@@ -173,7 +175,7 @@ abstract class AbstractNewWizardProjectImportTest : HeavyPlatformTestCase() {
 
         scripts.map { it.canonicalFile }.forEach { file ->
             val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file)!!
-            val psiFile = project.getKtFile(virtualFile) ?: error("Cannot find KtFile for $file")
+            val psiFile = PsiManager.getInstance(project).findFile(virtualFile) as? KtFile ?: error("Cannot find KtFile for $file")
             assertTrue(
                 "Configuration for ${file.path} is missing",
                 psiFile.isProcessedAsKotlinScript()
