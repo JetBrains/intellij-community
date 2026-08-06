@@ -137,7 +137,7 @@ suspend fun isDirectoryGitRepo(directory: File, runner: CommandRunner = DefaultC
  * @return true if the branch exists, false otherwise.
  */
 suspend fun branchExists(branch: String, directory: File, runner: CommandRunner = DefaultCommandRunner): Boolean =
-    runner("git rev-parse --verify $branch", directory).isSuccess
+    runner("git rev-parse --verify $branch", directory, exitOnError = false).isSuccess
 
 /**
  * Gets the date of the latest release from the "RELEASE NOTES.md" file.
@@ -215,7 +215,14 @@ private suspend fun runCommand(
             if (!streamOutput) {
                 CompletableFuture.supplyAsync { process.inputStream.bufferedReader().readText() }
             } else null
-        val exitCode = process.waitFor()
+
+        val finishedInTime = process.waitFor(timeoutAmount.inWholeSeconds, TimeUnit.SECONDS)
+        if (!finishedInTime) {
+            process.destroyForcibly()
+            error("Command '$command' timed out after $timeoutAmount".asError())
+        }
+
+        val exitCode = process.exitValue()
         val output = outputFuture?.get(timeoutAmount.inWholeSeconds, TimeUnit.SECONDS) ?: ""
 
         if (exitCode == 0) {

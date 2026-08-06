@@ -388,7 +388,7 @@ suspend fun isDirectoryGitRepo(directory: File): Boolean =
  * @return true if the branch exists, false otherwise.
  */
 suspend fun branchExists(branch: String, directory: File): Boolean =
-    runCommand("git rev-parse --verify $branch", directory).isSuccess
+    runCommand("git rev-parse --verify $branch", directory, exitOnError = false).isSuccess
 
 val isWindows = "windows" in System.getProperty("os.name").lowercase()
 
