@@ -132,7 +132,7 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
         context.setCurrentParameter(currentArgumentIndex)
 
         val callInfos = createCallInfos(argumentList, currentArgumentIndex)
-        for (index in 0 until min (context.objectsToView.size, callInfos.size)) {
+        for (index in 0 until min(context.objectsToView.size, callInfos.size)) {
             // Number of candidates somehow changed while UI is shown, which should NOT be possible. Bail out to be safe.
             context.objectsToView[index] = callInfos[index]
         }
@@ -521,12 +521,13 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
         val supportsTrailingCommas: Boolean,
     ) {
         internal fun appendValueParameter(
-            parameterIndex: Int,
+            parameterIndex: Int?,
             shouldHighlight: Boolean = false,
             isNamed: Boolean = false,
             markUsedUnusedParameterBorder: Boolean = false,
             parameterInfoState: ParameterInfoState,
         ) {
+            if (parameterIndex == null) return
             val surroundInBrackets = isNamed || parameterInfoState.namedMode
             val parameterText = buildString {
                 if (surroundInBrackets) append("[")
@@ -590,26 +591,30 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
             val parameterInfoState = ParameterInfoState()
 
             if (valueArguments.isNotEmpty()) {
-                for (valueArgument in valueArguments) {
+                for ((argumentPosition, valueArgument) in valueArguments.withIndex()) {
                     val argumentExpression = valueArgument.getArgumentExpression()
+                    var parameterIndex: Int?
+                    var onMapped: (_: Int) -> Unit
                     if (argumentExpression in contextArgumentToParameterIndexMap) {
-                        processArgument(
-                            currentArgumentIndex,
-                            contextArgumentToParameterIndexMap[argumentExpression],
-                            parameterInfoState,
-                        ) { absoluteParameterIndex ->
-                            parameterInfoState.usedContextParameterIndices += absoluteParameterIndex
+                        parameterIndex = contextArgumentToParameterIndexMap[argumentExpression]
+                        onMapped = { index ->
+                            parameterInfoState.usedContextParameterIndices += index
                             parameterInfoState.argumentIndex++
                         }
+
                     } else {
                         if (valueArgument == firstArgumentInNamedMode) {
                             parameterInfoState.namedMode = true
                         }
-                        processArgument(
-                            currentArgumentIndex,
-                            valueArgumentToParameterIndexMap[argumentExpression],
-                            parameterInfoState,
-                        ) { parameterIndex ->
+                        parameterIndex = valueArgumentToParameterIndexMap[argumentExpression]
+                            ?: argumentPosition.takeIf {
+                                argumentExpression == null &&
+                                        !parameterInfoState.namedMode &&
+                                        argumentPosition == valueArguments.lastIndex &&
+                                        currentArgumentIndex == arguments.size &&
+                                        it < valueParameterTextList.size
+                            }
+                        onMapped = { _ ->
                             appendValueParameter(
                                 parameterIndex,
                                 shouldHighlight = parameterIndex == highlightParameterIndex,
@@ -618,6 +623,7 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
                             )
                         }
                     }
+                    processArgument(currentArgumentIndex, parameterIndex, parameterInfoState, onMapped)
                 }
 
                 appendValueParameters(parameterInfoState)

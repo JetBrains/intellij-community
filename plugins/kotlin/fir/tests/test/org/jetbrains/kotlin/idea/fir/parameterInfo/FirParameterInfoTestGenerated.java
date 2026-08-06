@@ -483,6 +483,11 @@ public abstract class FirParameterInfoTestGenerated extends AbstractFirParameter
             runTest("../../idea/tests/testData/parameterInfo/functionCall/SimpleConstructor.kt");
         }
 
+        @TestMetadata("SkippedParameter.kt")
+        public void testSkippedParameter() throws Exception {
+            runTest("../../idea/tests/testData/parameterInfo/functionCall/SkippedParameter.kt");
+        }
+
         @TestMetadata("SmartCastReceiver.kt")
         public void testSmartCastReceiver() throws Exception {
             runTest("../../idea/tests/testData/parameterInfo/functionCall/SmartCastReceiver.kt");
