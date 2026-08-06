@@ -3,7 +3,10 @@ package org.jetbrains.plugins.gradle.execution.inspections
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectEx
+import com.intellij.platform.testFramework.assertion.BuildViewAssertions.assertBuildViewNode
+import com.intellij.platform.testFramework.assertion.BuildViewAssertions.assertBuildViewTree
 import com.intellij.platform.testFramework.assertion.BuildViewNodeAssertion
+import com.intellij.platform.testFramework.assertion.consoleText
 import com.intellij.testFramework.InspectionTestUtil
 import com.intellij.testFramework.enableInspectionTool
 import org.assertj.core.api.Assertions
@@ -35,7 +38,7 @@ class GradleLatestMinorVersionBuildIssueTaskExecutionTest : GradleExecutionTestC
         }
       })
       executeTasks(":task")
-      assertRunViewTree {
+      assertBuildViewTree(runView) {
         assertNode("successful") {
           assertNodeWithDeprecatedGradleWarning(gradleVersion)
           assertNodeWithNewMinorGradleVersionInfo(gradleVersion)
@@ -43,8 +46,8 @@ class GradleLatestMinorVersionBuildIssueTaskExecutionTest : GradleExecutionTestC
         }
       }
       if (shouldShowMinorGradleVersionWarning(gradleVersion)) {
-        assertRunViewConsoleText("New Minor Gradle Version Available") { consoleText ->
-          assertNewMinorGradleVersionNodeConsoleText(gradleVersion, consoleText)
+        assertBuildViewNode(runView, "New Minor Gradle Version Available") {
+          assertNewMinorGradleVersionNodeConsoleText(gradleVersion, it.consoleText)
         }
       }
     }
@@ -63,7 +66,7 @@ class GradleLatestMinorVersionBuildIssueTaskExecutionTest : GradleExecutionTestC
         }
       })
       executeTasks(":task")
-      assertRunViewTree {
+      assertBuildViewTree(runView) {
         assertNode("successful") {
           assertNodeWithDeprecatedGradleWarning(gradleVersion)
           assertNode(":task")

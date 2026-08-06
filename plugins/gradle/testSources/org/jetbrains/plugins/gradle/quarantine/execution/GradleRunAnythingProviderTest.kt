@@ -209,58 +209,58 @@ class GradleRunAnythingProviderTest : GradleRunAnythingProviderTestCase() {
       """.trimIndent())
     }
     executeAndWait("help")
-      .assertExecutionTree("""
-        |-
-        | -successful
-        |  :help
-      """.trimMargin())
+      .assertExecutionTree {
+        assertNode("successful") {
+          assertNode(":help")
+        }
+      }
 
     if (isGradleAtLeast("9.6.0")) {
       executeAndWait("--unknown-option help")
-        .assertExecutionTree("""
-        |-
-        | -failed
-        |  Selection failed
-      """.trimMargin())
+        .assertExecutionTree {
+          assertNode("failed") {
+            assertNode("Selection failed")
+          }
+        }
         .assertExecutionTreeNode("Selection failed") {
           assertThat(it).contains("Task '--unknown-option' not found in root project 'project'.")
         }
     } else {
       executeAndWait("--unknown-option help")
-        .assertExecutionTree("""
-        |-
-        | -failed
-        |  Task '--unknown-option' not found in root project 'project'.
-      """.trimMargin())
+        .assertExecutionTree {
+          assertNode("failed") {
+            assertNode("Task '--unknown-option' not found in root project 'project'.")
+          }
+        }
     }
 
     if (isGradleAtLeast("7.0")) {
       executeAndWait("taskWithArgs")
-        .assertExecutionTree("""
-          |-
-          | -failed
-          |  :taskWithArgs
-          |  A problem was found with the configuration of task ':taskWithArgs' (type 'ArgsTask').
-        """.trimMargin())
+        .assertExecutionTree {
+          assertNode("failed") {
+            assertNode(":taskWithArgs")
+            assertNode("A problem was found with the configuration of task ':taskWithArgs' (type 'ArgsTask').")
+          }
+        }
     }
     else {
       executeAndWait("taskWithArgs")
-        .assertExecutionTree("""
-          |-
-          | -failed
-          |  :taskWithArgs
-          |  No value has been specified for property 'myArgs'
-        """.trimMargin())
+        .assertExecutionTree {
+          assertNode("failed") {
+            assertNode(":taskWithArgs")
+            assertNode("No value has been specified for property 'myArgs'")
+          }
+        }
     }
 
     // test known build CLI option before tasks and with task quoted argument with apostrophe (')
     // (<build_option> <task> <arg>='<arg_value>')
     executeAndWait("-q taskWithArgs --my_args='test args'")
-      .assertExecutionTree("""
-        |-
-        | -successful
-        |  :taskWithArgs
-      """.trimMargin())
+      .assertExecutionTree {
+        assertNode("successful") {
+          assertNode(":taskWithArgs")
+        }
+      }
       .assertExecutionTreeNode("successful") {
         assertThat(it).matches(getExecutionOutputRegexString("taskWithArgs --my_args='test args' -q", "test args"))
       }
@@ -271,11 +271,11 @@ class GradleRunAnythingProviderTest : GradleRunAnythingProviderTestCase() {
     // test known build CLI option before tasks and with task quoted argument with quote (")
     // (<build_option> <task> <arg>="<arg_value>")
     executeAndWait("--info taskWithArgs --my_args=\"test args\"")
-      .assertExecutionTree("""
-        |-
-        | -successful
-        |  :taskWithArgs
-      """.trimMargin())
+      .assertExecutionTree {
+        assertNode("successful") {
+          assertNode(":taskWithArgs")
+        }
+      }
       .assertExecutionTreeNode(":taskWithArgs") {
         assertThat(it).matches("""
           |> Task :taskWithArgs
@@ -292,11 +292,11 @@ class GradleRunAnythingProviderTest : GradleRunAnythingProviderTestCase() {
     // test with task argument and known build CLI option after tasks
     // (<task> <arg>=<arg_value> <build_option>)
     executeAndWait("taskWithArgs --my_args=test_args --quiet")
-      .assertExecutionTree("""
-        |-
-        | -successful
-        |  :taskWithArgs
-      """.trimMargin())
+      .assertExecutionTree {
+        assertNode("successful") {
+          assertNode(":taskWithArgs")
+        }
+      }
       .assertExecutionTreeNode("successful") {
         assertThat(it).matches(getExecutionOutputRegexString("taskWithArgs --my_args=test_args --quiet", "test_args"))
       }
@@ -304,11 +304,11 @@ class GradleRunAnythingProviderTest : GradleRunAnythingProviderTestCase() {
     // test with task argument and known build CLI option after tasks
     // (<task> <arg> <arg_value> <build_option>)
     executeAndWait("taskWithArgs --my_args test_args --quiet")
-      .assertExecutionTree("""
-        |-
-        | -successful
-        |  :taskWithArgs
-      """.trimMargin())
+      .assertExecutionTree {
+        assertNode("successful") {
+          assertNode(":taskWithArgs")
+        }
+      }
       .assertExecutionTreeNode("successful") {
         assertThat(it).matches(getExecutionOutputRegexString("taskWithArgs --my_args test_args --quiet", "test_args"))
       }

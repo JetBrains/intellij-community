@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.build
 
+import com.intellij.platform.testFramework.assertion.BuildViewAssertions.assertBuildViewTree
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
 import org.gradle.util.GradleVersion
@@ -31,6 +32,7 @@ class GradleSyncOutputTest(private val gradleVersion: GradleVersion) {
   private val project by projectFixture
 
   private val buildViewFixture by buildViewFixture(projectFixture)
+  private val syncView get() = buildViewFixture.syncView
 
   @Test
   fun `test sync with lazy task configuration`(): Unit = runBlocking {
@@ -38,7 +40,7 @@ class GradleSyncOutputTest(private val gradleVersion: GradleVersion) {
       withJavaPlugin()
     }
     gradle.syncProject(project, projectRoot)
-    buildViewFixture.assertSyncViewTree {
+    assertBuildViewTree(syncView) {
       assertNode("finished") {
         assertNodeWithDeprecatedGradleWarning(gradleVersion)
       }
@@ -53,7 +55,7 @@ class GradleSyncOutputTest(private val gradleVersion: GradleVersion) {
       }
     }
     gradle.syncProject(project, projectRoot)
-    buildViewFixture.assertSyncViewTree {
+    assertBuildViewTree(syncView) {
       assertNode("finished") {
         assertNodeWithDeprecatedGradleWarning(gradleVersion)
       }
@@ -71,7 +73,7 @@ class GradleSyncOutputTest(private val gradleVersion: GradleVersion) {
       }
     }
     gradle.syncProject(project, projectRoot)
-    buildViewFixture.assertSyncViewTree {
+    assertBuildViewTree(syncView) {
       assertNode("finished") {
         assertNodeWithDeprecatedGradleWarning(gradleVersion)
       }

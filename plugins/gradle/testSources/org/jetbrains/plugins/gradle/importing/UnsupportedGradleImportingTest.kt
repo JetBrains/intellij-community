@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.importing
 
+import com.intellij.platform.testFramework.assertion.BuildViewAssertions.assertBuildViewTree
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
 import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule
 import org.junit.Test
@@ -11,7 +12,7 @@ class UnsupportedGradleImportingTest : BuildViewMessagesImportingTestCase() {
   @Test
   fun testSyncMessages() {
     importProject("")
-    assertSyncViewTree {
+    assertBuildViewTree(syncView) {
       when {
         !GradleJvmSupportMatrix.isGradleSupportedByIdea(currentGradleVersion) ->
           assertNode("failed") {

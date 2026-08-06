@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.findOrCreateDirectory
+import com.intellij.platform.testFramework.assertion.BuildViewAssertions.assertBuildViewTree
 import kotlinx.coroutines.runBlocking
 import org.gradle.tooling.LongRunningOperation
 import org.gradle.tooling.events.ProgressListener
@@ -58,7 +59,7 @@ class GradleTestExecutionTest : GradleTestExecutionTestCase() {
           assertNode("test")
         }
       }
-      assertBuildViewTree {
+      assertBuildViewTree(buildView) {
         assertNode("failed") {
           assertNodeWithDeprecatedGradleWarning(gradleVersion)
           assertNode(":compileJava")
@@ -150,7 +151,7 @@ class GradleTestExecutionTest : GradleTestExecutionTestCase() {
           assertNode("test")
         }
       }
-      assertBuildViewTree {
+      assertBuildViewTree(buildView) {
         assertNode("successful") {
           assertNodeWithDeprecatedGradleWarning(gradleVersion)
           assertNode(":compileJava")
@@ -240,7 +241,7 @@ class GradleTestExecutionTest : GradleTestExecutionTestCase() {
           assertNode("test")
         }
       }
-      assertBuildViewTree {
+      assertBuildViewTree(buildView) {
         assertNode("successful") {
           assertNodeWithDeprecatedGradleWarning(gradleVersion)
           assertNode(":compileJava")
@@ -266,7 +267,7 @@ class GradleTestExecutionTest : GradleTestExecutionTestCase() {
           assertNode("test")
         }
       }
-      assertBuildViewTree {
+      assertBuildViewTree(buildView) {
         assertNode("successful") {
           assertNodeWithDeprecatedGradleWarning(gradleVersion)
           assertNode(":compileJava")
@@ -292,7 +293,7 @@ class GradleTestExecutionTest : GradleTestExecutionTestCase() {
           assertNode("test")
         }
       }
-      assertBuildViewTree {
+      assertBuildViewTree(buildView) {
         assertNode("successful") {
           assertNodeWithDeprecatedGradleWarning(gradleVersion)
           assertNode(":compileJava")
@@ -314,7 +315,7 @@ class GradleTestExecutionTest : GradleTestExecutionTestCase() {
 
       executeTasks(":test", isRunAsTest = false)
       assertTestViewTreeIsEmpty()
-      assertBuildViewTree {
+      assertBuildViewTree(buildView) {
         assertNode("successful") {
           assertNodeWithDeprecatedGradleWarning(gradleVersion)
           assertNode(":compileJava")
@@ -352,7 +353,7 @@ class GradleTestExecutionTest : GradleTestExecutionTestCase() {
           assertNode("test")
         }
       }
-      assertBuildViewTree {
+      assertBuildViewTree(buildView) {
         assertNode("successful") {
           assertNodeWithDeprecatedGradleWarning(gradleVersion)
           assertNode(":compileJava")
@@ -379,7 +380,7 @@ class GradleTestExecutionTest : GradleTestExecutionTestCase() {
           assertNode("test")
         }
       }
-      assertBuildViewTree {
+      assertBuildViewTree(buildView) {
         assertNode("successful") {
           assertNodeWithDeprecatedGradleWarning(gradleVersion)
           assertNode(":compileJava")
@@ -401,7 +402,7 @@ class GradleTestExecutionTest : GradleTestExecutionTestCase() {
       }
 
       executeTasks(":allTests --rerun-tasks", isRunAsTest = false)
-      assertRunViewTree {
+      assertBuildViewTree(runView) {
         assertNode("successful") {
           assertNodeWithDeprecatedGradleWarning(gradleVersion)
           assertNode(":compileJava")
@@ -416,7 +417,7 @@ class GradleTestExecutionTest : GradleTestExecutionTestCase() {
       }
 
       executeTasks(":allTests", isRunAsTest = false)
-      assertRunViewTree {
+      assertBuildViewTree(runView) {
         assertNode("successful") {
           assertNodeWithDeprecatedGradleWarning(gradleVersion)
           assertNode(":compileJava")
@@ -457,7 +458,7 @@ class GradleTestExecutionTest : GradleTestExecutionTestCase() {
 
       executeTasks(":allTests --tests *", isRunAsTest = true)
       assertTestViewTreeIsEmpty()
-      assertBuildViewTree {
+      assertBuildViewTree(buildView) {
         assertNode("failed") {
           assertNodeWithDeprecatedGradleWarning(gradleVersion)
           assertNode("Unknown command-line option '--tests'")
@@ -465,7 +466,7 @@ class GradleTestExecutionTest : GradleTestExecutionTestCase() {
       }
 
       executeTasks(":allTests --tests *", isRunAsTest = false)
-      assertRunViewTree {
+      assertBuildViewTree(runView) {
         assertNode("failed") {
           assertNode("Unknown command-line option '--tests'")
         }
@@ -491,7 +492,7 @@ class GradleTestExecutionTest : GradleTestExecutionTestCase() {
       """.trimMargin())
 
       executeTasks(":beforeTest :test --tests org.example.TestCase.test", isRunAsTest = true)
-      assertBuildViewTree {
+      assertBuildViewTree(buildView) {
         assertNode("successful") {
           assertNodeWithDeprecatedGradleWarning(gradleVersion)
           assertNode(":beforeTest")
@@ -511,7 +512,7 @@ class GradleTestExecutionTest : GradleTestExecutionTestCase() {
         }
       }
       executeTasks(":test --tests org.example.TestCase.test :afterTest", isRunAsTest = true)
-      assertBuildViewTree {
+      assertBuildViewTree(buildView) {
         assertNode("successful") {
           assertNodeWithDeprecatedGradleWarning(gradleVersion)
           assertNode(":compileJava")
@@ -531,7 +532,7 @@ class GradleTestExecutionTest : GradleTestExecutionTestCase() {
         }
       }
       executeTasks(":beforeTest :test --tests org.example.TestCase.test :afterTest", isRunAsTest = true)
-      assertBuildViewTree {
+      assertBuildViewTree(buildView) {
         assertNode("successful") {
           assertNodeWithDeprecatedGradleWarning(gradleVersion)
           assertNode(":beforeTest")
@@ -649,7 +650,7 @@ class GradleTestExecutionTest : GradleTestExecutionTestCase() {
           assertNode("test1")
         }
       }
-      assertBuildViewTree {
+      assertBuildViewTree(buildView) {
         assertNode("successful") {
           assertNodeWithDeprecatedGradleWarning(gradleVersion)
           assertNode(":compileJava")

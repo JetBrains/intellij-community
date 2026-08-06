@@ -32,8 +32,8 @@ class BuildViewTestFixture(
   private lateinit var syncViewManager: TestSyncViewManager
   private lateinit var buildViewManager: TestBuildViewManager
 
-  private val syncView: BuildView get() = syncViewManager.getBuildView()
-  private val buildView: BuildView get() = buildViewManager.getBuildView()
+  val syncView: BuildView get() = syncViewManager.getBuildView()
+  val buildView: BuildView get() = buildViewManager.getBuildView()
 
   @Throws(Exception::class)
   override fun setUp() {

@@ -2,6 +2,9 @@
 package org.jetbrains.plugins.gradle.execution.build
 
 import com.intellij.execution.RunManager
+import com.intellij.platform.testFramework.assertion.BuildViewAssertions.assertBuildViewNode
+import com.intellij.platform.testFramework.assertion.BuildViewAssertions.assertBuildViewTree
+import com.intellij.platform.testFramework.assertion.consoleText
 import com.intellij.util.LocalTimeCounter
 import org.assertj.core.api.Assertions
 import org.gradle.util.GradleVersion
@@ -42,7 +45,7 @@ class GroovyGradleApplicationEnvironmentProviderTest : GradleExecutionTestCase()
 
       executionFixture.execute(environment)
 
-      assertRunViewTree {
+      assertBuildViewTree(runView) {
         assertNode("successful") {
           assertNode(":compileJava")
           assertNode(":compileGroovy")
@@ -51,8 +54,8 @@ class GroovyGradleApplicationEnvironmentProviderTest : GradleExecutionTestCase()
           assertNode(":$runConfigurationName.main()")
         }
       }
-      assertRunViewConsoleText("successful") { consoleText ->
-        Assertions.assertThat(consoleText)
+      assertBuildViewNode(runView, "successful") {
+        Assertions.assertThat(it.consoleText)
           .contains("Hello from Groovy!")
       }
     }

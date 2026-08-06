@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
+import com.intellij.platform.testFramework.assertion.BuildViewAssertions.assertBuildViewTree
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Test
@@ -72,7 +73,7 @@ class GradleActionWithImportTest : GradleActionWithImportTestCase() {
         .exists()
         .hasContent(randomKey)
 
-      assertSyncViewTree {
+      assertBuildViewTree(syncView) {
         assertNode("finished") {
           assertNodeWithDeprecatedGradleWarning()
           assertNode(":importTestTask")
@@ -121,7 +122,7 @@ class GradleActionWithImportTest : GradleActionWithImportTestCase() {
         apply plugin: TestPlugin
       """.trimIndent())
 
-      assertSyncViewTree {
+      assertBuildViewTree(syncView) {
         assertNode("finished") {
           assertNodeWithDeprecatedGradleWarning()
         }

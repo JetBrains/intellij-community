@@ -1,6 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.build
 
+import com.intellij.platform.testFramework.assertion.BuildViewAssertions.assertBuildViewNode
+import com.intellij.platform.testFramework.assertion.BuildViewAssertions.assertBuildViewTree
+import com.intellij.platform.testFramework.assertion.consoleText
 import org.assertj.core.api.Assertions
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
@@ -25,19 +28,19 @@ class GradleExecutionOutputTest : GradleExecutionTestCase() {
       })
 
       executeTasks(":task")
-      assertRunViewTree {
+      assertBuildViewTree(runView) {
         assertNode("successful") {
           assertNodeWithDeprecatedGradleWarning(gradleVersion)
           assertNode(":task")
         }
       }
-      assertRunViewConsoleText("successful") { consoleText ->
-        Assertions.assertThat(consoleText)
+      assertBuildViewNode(runView, "successful") {
+        Assertions.assertThat(it.consoleText)
           .contains("Task doLast")
       }
-      assertRunViewConsoleText(":task") { consoleText ->
+      assertBuildViewNode(runView, ":task") {
         if (isPerTaskOutputSupported()) {
-          Assertions.assertThat(consoleText)
+          Assertions.assertThat(it.consoleText)
             .contains("Task doLast")
         }
       }
@@ -58,7 +61,7 @@ class GradleExecutionOutputTest : GradleExecutionTestCase() {
       })
 
       executeTasks(":failingTask")
-      assertRunViewTree {
+      assertBuildViewTree(runView) {
         assertNode("failed") {
           assertNodeWithDeprecatedGradleWarning(gradleVersion)
           assertNode(":failingTask") {
@@ -68,21 +71,21 @@ class GradleExecutionOutputTest : GradleExecutionTestCase() {
           }
         }
       }
-      assertRunViewConsoleText("failed") { consoleText ->
-        Assertions.assertThat(consoleText)
+      assertBuildViewNode(runView, "failed") {
+        Assertions.assertThat(it.consoleText)
           .contains("Task doLast")
           .contains("Task failure")
       }
-      assertRunViewConsoleText(":failingTask") { consoleText ->
+      assertBuildViewNode(runView, ":failingTask") {
         if (isPerTaskOutputSupported()) {
-          Assertions.assertThat(consoleText)
+          Assertions.assertThat(it.consoleText)
             .contains("Task doLast")
           //.contains("Task failure")
         }
       }
-      assertRunViewConsoleText("java.lang.Exception: Task failure") { consoleText ->
+      assertBuildViewNode(runView, "java.lang.Exception: Task failure") {
         if (isPerTaskOutputSupported()) {
-          Assertions.assertThat(consoleText)
+          Assertions.assertThat(it.consoleText)
             .contains("Task failure")
         }
       }
@@ -112,31 +115,31 @@ class GradleExecutionOutputTest : GradleExecutionTestCase() {
       })
 
       executeTasks(":failingTasksGroup --continue")
-      assertRunViewTree {
+      assertBuildViewTree(runView) {
         assertNode("failed") {
           assertNodeWithDeprecatedGradleWarning(gradleVersion)
           assertNode(":failingTask1")
           assertNode(":failingTask2")
         }
       }
-      assertRunViewConsoleText("failed") { consoleText ->
-        Assertions.assertThat(consoleText)
+      assertBuildViewNode(runView, "failed") {
+        Assertions.assertThat(it.consoleText)
           .contains("Task 1 doLast")
           .contains("Task 1 failure")
           .contains("Task 2 doLast")
           .contains("Task 2 failure")
       }
-      assertRunViewConsoleText(":failingTask1") { consoleText ->
+      assertBuildViewNode(runView, ":failingTask1") {
         if (isPerTaskOutputSupported()) {
-          Assertions.assertThat(consoleText)
+          Assertions.assertThat(it.consoleText)
             .contains("Task 1 doLast")
             //.contains("Task 1 failure")
             .doesNotContain("Task 2 failure")
         }
       }
-      assertRunViewConsoleText(":failingTask2") { consoleText ->
+      assertBuildViewNode(runView, ":failingTask2") {
         if (isPerTaskOutputSupported()) {
-          Assertions.assertThat(consoleText)
+          Assertions.assertThat(it.consoleText)
             .contains("Task 2 doLast")
             //.contains("Task 2 failure")
             .doesNotContain("Task 1 failure")
