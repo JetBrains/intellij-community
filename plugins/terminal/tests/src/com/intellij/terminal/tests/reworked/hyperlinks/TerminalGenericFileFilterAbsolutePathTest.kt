@@ -20,6 +20,9 @@ import com.intellij.execution.filters.OpenFileHyperlinkInfo
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.terminal.backend.hyperlinks.TerminalHyperlinkFilterContextImpl
 import org.apache.commons.lang3.RandomStringUtils
 import org.assertj.core.api.Assertions
 import org.jetbrains.plugins.terminal.hyperlinks.filter.FILENAME_MAX
@@ -395,9 +398,143 @@ internal class TerminalGenericFileFilterAbsolutePathTest {
       .checkFileLinks(*allGeneratedPaths.toTypedArray())
   }
 
-  private fun getFilterResultAndCheckHighlightPositions(content: String,
-                                                        validPaths: Collection<String>,
-                                                        checkHighlights: Boolean = true): List<Filter.Result> {
+  // Home-relative path tests
+
+  @Test
+  fun `recognize home-relative path`() {
+    val filter = filterWithHomeDirectory("/Users/testuser")
+    getFilterResultAndCheckHighlightPositions("""
+      | ~/IdeaProjects/file
+        ^^^^^^^^^^^^^^^^^^^
+    """.trimIndent(), listOf("/Users/testuser/IdeaProjects/file"), filter = filter)
+      .checkFileLinks("/Users/testuser/IdeaProjects/file")
+  }
+
+  @Test
+  fun `recognize home-relative path with line and column`() {
+    val filter = filterWithHomeDirectory("/Users/testuser")
+    getFilterResultAndCheckHighlightPositions("""
+      | ~/IdeaProjects/file.kt:3:7
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    """.trimIndent(), listOf("/Users/testuser/IdeaProjects/file.kt"), filter = filter)
+      .checkFileLinks("/Users/testuser/IdeaProjects/file.kt")
+  }
+
+  @Test
+  fun `recognize home-relative path with backslash separator`() {
+    val filter = filterWithHomeDirectory("""C:\Users\testuser""")
+    getFilterResultAndCheckHighlightPositions("""
+      | ~\IdeaProjects\file
+        ^^^^^^^^^^^^^^^^^^^
+    """.trimIndent(), listOf("""C:\Users\testuser\IdeaProjects\file"""), filter = filter)
+      .checkFileLinks("""C:\Users\testuser\IdeaProjects\file""")
+  }
+
+  @Test
+  fun `recognize multiple home-relative paths in a line`() {
+    val filter = filterWithHomeDirectory("/Users/testuser")
+    getFilterResultAndCheckHighlightPositions(
+      "Compare ~/foo with ~/bar",
+      listOf("/Users/testuser/foo", "/Users/testuser/bar"),
+      checkHighlights = false,
+      filter = filter,
+    ).checkFileLinks("/Users/testuser/foo", "/Users/testuser/bar")
+  }
+
+  @Test
+  fun `home-relative path is not resolved without a filter context`() =
+    getFilterResultAndCheckHighlightPositions("~/IdeaProjects/file", emptyList(), checkHighlights = false)
+      .checkFileLinks()
+
+  @Test
+  fun `tilde not followed by a separator is not treated as a home path`() {
+    val filter = filterWithHomeDirectory("/Users/testuser")
+    getFilterResultAndCheckHighlightPositions("~notahome and a lonely ~", emptyList(), checkHighlights = false, filter = filter)
+      .checkFileLinks()
+  }
+
+  @Test
+  fun `recognize bare home directory`() {
+    val filter = filterWithHomeDirectory("/Users/testuser")
+    getFilterResultAndCheckHighlightPositions("""
+      | ~/
+        ^^
+    """.trimIndent(), listOf("/Users/testuser/"), filter = filter)
+      .checkFileLinks("/Users/testuser/")
+  }
+
+  @Test
+  fun `recognize bare home directory in the middle of a sentence`() {
+    val filter = filterWithHomeDirectory("/Users/testuser")
+    getFilterResultAndCheckHighlightPositions("cd ~/ to go home", listOf("/Users/testuser/"), checkHighlights = false, filter = filter)
+      .checkFileLinks("/Users/testuser/")
+  }
+
+  @Test
+  fun `recognize home-relative path with line number and column in parenthesis`() {
+    val filter = filterWithHomeDirectory("/Users/testuser")
+    getFilterResultAndCheckHighlightPositions(
+      "~/IdeaProjects/file.kt: (3, 7): No value passed for parameter 'silent'",
+      listOf("/Users/testuser/IdeaProjects/file.kt"),
+      checkHighlights = false,
+      filter = filter,
+    ).checkFileLinks("/Users/testuser/IdeaProjects/file.kt")
+  }
+
+  @Test
+  fun `recognize home-relative path with space`() {
+    val filter = filterWithHomeDirectory("/Users/testuser")
+    getFilterResultAndCheckHighlightPositions(
+      "blah blah ~/IdeaProjects/with space blah blah",
+      listOf("/Users/testuser/IdeaProjects/with space"),
+      checkHighlights = false,
+      filter = filter,
+    ).checkFileLinks("/Users/testuser/IdeaProjects/with space")
+  }
+
+  @Test
+  fun `recognize home-relative path with line range`() {
+    val filter = filterWithHomeDirectory("/Users/testuser")
+    getFilterResultAndCheckHighlightPositions(
+      "~/IdeaProjects/file.c:10-20",
+      listOf("/Users/testuser/IdeaProjects/file.c"),
+      checkHighlights = false,
+      filter = filter,
+    ).checkFileLinks("/Users/testuser/IdeaProjects/file.c")
+  }
+
+  @Test
+  fun `real world case with mixed absolute and home-relative paths`() {
+    val filter = filterWithHomeDirectory("/Users/testuser")
+    val content = "Downloading dependency to ~/.m2/repository/com/example/lib-1.0.jar\n" +
+                  "Build failed, see /var/log/build.log for details"
+
+    getFilterResultAndCheckHighlightPositions(
+      content,
+      listOf("/Users/testuser/.m2/repository/com/example/lib-1.0.jar", "/var/log/build.log"),
+      checkHighlights = false,
+      filter = filter,
+    ).checkFileLinks("/Users/testuser/.m2/repository/com/example/lib-1.0.jar", "/var/log/build.log")
+  }
+
+  private fun filterWithHomeDirectory(homeDirectory: String): TerminalGenericFileFilter {
+    val homeEelPath = mockEelPath(homeDirectory)
+    val context = TerminalHyperlinkFilterContextImpl(LocalEelDescriptor, homeEelPath)
+    return TerminalGenericFileFilter(project, context, localFileSystem)
+  }
+
+  private fun mockEelPath(path: String): EelPath {
+    val eelPath = mock(EelPath::class.java)
+    whenever(eelPath.toString()).thenReturn(path)
+    return eelPath
+  }
+
+  private fun getFilterResultAndCheckHighlightPositions(
+    content: String,
+    validPaths: Collection<String>,
+    checkHighlights: Boolean = true,
+    filter: TerminalGenericFileFilter = this.filter,
+  ): List<Filter.Result> {
     var totalLength = 0
     var previousInputLine = ""
     var previousInputStartIndex = 0

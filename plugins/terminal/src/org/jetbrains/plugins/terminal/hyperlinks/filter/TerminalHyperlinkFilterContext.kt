@@ -3,6 +3,7 @@ package org.jetbrains.plugins.terminal.hyperlinks.filter
 
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.path.EelPath
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -25,4 +26,9 @@ interface TerminalHyperlinkFilterContext {
    * 2. No OS-specific process API is available to retrieve the working directory of the current shell (e.g., PowerShell, Git Bash).
    */
   val currentWorkingDirectory: VirtualFile?
+
+  /**
+   * The user's home directory in the environment of [eelDescriptor].
+   */
+  val userHomeDirectory: EelPath
 }

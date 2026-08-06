@@ -35,7 +35,7 @@ class TerminalGenericFileFilter(
   override fun applyFilter(line: String, entireLength: Int): Filter.Result? {
     val indexOffset = entireLength - line.length
     val items = mutableListOf<Filter.ResultItem>()
-    TerminalAbsolutePathLinkFinder(project, line, indexOffset, localFileSystem, context?.eelDescriptor, items::add).find()
+    TerminalAbsolutePathLinkFinder(project, line, indexOffset, localFileSystem, context?.eelDescriptor, context?.userHomeDirectory, items::add).find()
     context?.currentWorkingDirectory?.let { workingDir ->
       TerminalRelativePathLinkFinder(project, line, indexOffset, context.eelDescriptor, workingDir, items::add).find()
     }
