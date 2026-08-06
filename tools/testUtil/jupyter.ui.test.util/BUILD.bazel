@@ -15,7 +15,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
-        "@lib//:kotlin-test-assertions-core-jvm",
+        "//libraries/kotlin/test-assertions-core-jvm:libraries-kotlinTestAssertionsCoreJvm",
         "//libraries/junit5",
         "//platform/remote-driver/client",
         "//platform/remote-driver/test-sdk:driver-sdk",
@@ -36,6 +36,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":jupyter.ui.test.util",
+        "//libraries/kotlin/test-assertions-core-jvm:libraries-kotlinTestAssertionsCoreJvm_test_lib",
         "//libraries/junit5:junit5_test_lib",
         "//platform/remote-driver/client:client_test_lib",
         "//platform/remote-driver/test-sdk:driver-sdk_test_lib",

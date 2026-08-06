@@ -7860,75 +7860,6 @@ jvm_import(
 )
 
 copy_file(
-    name = "io.kotest/kotest-assertions-core-jvm-5.5.4.jar_copy",
-    src = "@io_kotest-kotest-assertions-core-jvm-5_5_4_http//file",
-    out = "io.kotest/kotest-assertions-core-jvm-5.5.4.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "io.kotest/kotest-assertions-shared-jvm-5.5.4.jar_copy",
-    src = "@io_kotest-kotest-assertions-shared-jvm-5_5_4_http//file",
-    out = "io.kotest/kotest-assertions-shared-jvm-5.5.4.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "io.kotest/kotest-common-jvm-5.5.4.jar_copy",
-    src = "@io_kotest-kotest-common-jvm-5_5_4_http//file",
-    out = "io.kotest/kotest-common-jvm-5.5.4.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "io.kotest/kotest-assertions-api-jvm-5.5.4.jar_copy",
-    src = "@io_kotest-kotest-assertions-api-jvm-5_5_4_http//file",
-    out = "io.kotest/kotest-assertions-api-jvm-5.5.4.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-java_library(
-    name = "kotlin-test-assertions-core-jvm",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        ":io_kotest-kotest-assertions-core-jvm-5_5_4_http_import",
-        ":io_kotest-kotest-assertions-shared-jvm-5_5_4_http_import",
-        ":org_opentest4j-opentest4j-1_2_0_http_import",
-        ":io_kotest-kotest-common-jvm-5_5_4_http_import",
-        ":io_kotest-kotest-assertions-api-jvm-5_5_4_http_import",
-    ],
-)
-
-jvm_import(
-    name = "io_kotest-kotest-assertions-core-jvm-5_5_4_http_import",
-    jar = "@io_kotest-kotest-assertions-core-jvm-5_5_4_http//file",
-    source_jar = "@io_kotest-kotest-assertions-core-jvm-5_5_4-sources_http//file",
-)
-
-jvm_import(
-    name = "io_kotest-kotest-assertions-shared-jvm-5_5_4_http_import",
-    jar = "@io_kotest-kotest-assertions-shared-jvm-5_5_4_http//file",
-    source_jar = "@io_kotest-kotest-assertions-shared-jvm-5_5_4-sources_http//file",
-)
-
-jvm_import(
-    name = "io_kotest-kotest-common-jvm-5_5_4_http_import",
-    jar = "@io_kotest-kotest-common-jvm-5_5_4_http//file",
-    source_jar = "@io_kotest-kotest-common-jvm-5_5_4-sources_http//file",
-)
-
-jvm_import(
-    name = "io_kotest-kotest-assertions-api-jvm-5_5_4_http_import",
-    jar = "@io_kotest-kotest-assertions-api-jvm-5_5_4_http//file",
-    source_jar = "@io_kotest-kotest-assertions-api-jvm-5_5_4-sources_http//file",
-)
-
-copy_file(
     name = "org.jetbrains.kotlin/kotlin-test-junit-2.4.10-RC2.jar_copy",
     src = "@org_jetbrains_kotlin-kotlin-test-junit-2_4_10-RC2_http//file",
     out = "org.jetbrains.kotlin/kotlin-test-junit-2.4.10-RC2.jar",
@@ -12503,6 +12434,75 @@ jvm_import(
     jar = "@org_jetbrains_kotlin-kotlin-tooling-core-1_9_20-dev-8162_http//file",
     source_jar = "@org_jetbrains_kotlin-kotlin-tooling-core-1_9_20-dev-8162-sources_http//file",
     visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "io.kotest/kotest-assertions-core-jvm-5.5.4.jar_copy",
+    src = "@io_kotest-kotest-assertions-core-jvm-5_5_4_http//file",
+    out = "io.kotest/kotest-assertions-core-jvm-5.5.4.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "io.kotest/kotest-assertions-shared-jvm-5.5.4.jar_copy",
+    src = "@io_kotest-kotest-assertions-shared-jvm-5_5_4_http//file",
+    out = "io.kotest/kotest-assertions-shared-jvm-5.5.4.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "io.kotest/kotest-common-jvm-5.5.4.jar_copy",
+    src = "@io_kotest-kotest-common-jvm-5_5_4_http//file",
+    out = "io.kotest/kotest-common-jvm-5.5.4.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "io.kotest/kotest-assertions-api-jvm-5.5.4.jar_copy",
+    src = "@io_kotest-kotest-assertions-api-jvm-5_5_4_http//file",
+    out = "io.kotest/kotest-assertions-api-jvm-5.5.4.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+java_library(
+    name = "libraries-kotlin_test_assertions_core_jvm-kotlin-test-assertions-core-jvm",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        ":io_kotest-kotest-assertions-core-jvm-5_5_4_http_import",
+        ":io_kotest-kotest-assertions-shared-jvm-5_5_4_http_import",
+        ":org_opentest4j-opentest4j-1_2_0_http_import",
+        ":io_kotest-kotest-common-jvm-5_5_4_http_import",
+        ":io_kotest-kotest-assertions-api-jvm-5_5_4_http_import",
+    ],
+)
+
+jvm_import(
+    name = "io_kotest-kotest-assertions-core-jvm-5_5_4_http_import",
+    jar = "@io_kotest-kotest-assertions-core-jvm-5_5_4_http//file",
+    source_jar = "@io_kotest-kotest-assertions-core-jvm-5_5_4-sources_http//file",
+)
+
+jvm_import(
+    name = "io_kotest-kotest-assertions-shared-jvm-5_5_4_http_import",
+    jar = "@io_kotest-kotest-assertions-shared-jvm-5_5_4_http//file",
+    source_jar = "@io_kotest-kotest-assertions-shared-jvm-5_5_4-sources_http//file",
+)
+
+jvm_import(
+    name = "io_kotest-kotest-common-jvm-5_5_4_http_import",
+    jar = "@io_kotest-kotest-common-jvm-5_5_4_http//file",
+    source_jar = "@io_kotest-kotest-common-jvm-5_5_4-sources_http//file",
+)
+
+jvm_import(
+    name = "io_kotest-kotest-assertions-api-jvm-5_5_4_http_import",
+    jar = "@io_kotest-kotest-assertions-api-jvm-5_5_4_http//file",
+    source_jar = "@io_kotest-kotest-assertions-api-jvm-5_5_4-sources_http//file",
 )
 
 copy_file(
