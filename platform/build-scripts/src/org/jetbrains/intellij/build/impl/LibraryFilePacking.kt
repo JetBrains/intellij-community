@@ -20,7 +20,6 @@ fun removeVersionFromJar(fileName: String): String {
 fun nameToJarFileName(name: String): String = sanitizeFileName(name.lowercase(), replacement = "-") { it == ' ' } + ".jar"
 
 private val agentLibrariesNotForcedInSeparateJars = listOf(
-  "ideformer",
   "code-agents",
   "code-prompt-agents"
 )
