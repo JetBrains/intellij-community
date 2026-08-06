@@ -52,7 +52,9 @@ public final class ConvertToBasicLatinInspection extends AbstractBaseJavaLocalIn
       @Override
       public void visitComment(@NotNull PsiComment comment) {
         super.visitComment(comment);
-        handle(comment);
+        if (!(comment instanceof PsiDocComment)) {
+          handle(comment);
+        }
       }
 
       @Override
@@ -167,6 +169,7 @@ public final class ConvertToBasicLatinInspection extends AbstractBaseJavaLocalIn
         VirtualFile vFile = VfsUtil.findFileByURL(new URL(url));
         if (vFile == null) {
           Logger.getInstance(ConvertToBasicLatinInspection.class).error("Resource not found: " + url);
+          ourEntities = new Int2ObjectOpenHashMap<>();
           return;
         }
         PsiFile psiFile = PsiManager.getInstance(project).findFile(vFile);
