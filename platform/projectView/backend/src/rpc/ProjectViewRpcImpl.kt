@@ -49,8 +49,13 @@ internal class ProjectViewRpcImpl : ProjectViewRpc {
     }
   }
 
-  override suspend fun findNodeForOpenedFile(projectId: ProjectId, paneId: ProjectViewPaneId, editorChoice: EditorChoice): ProjectViewNodePathImpl? {
-    return BackendProjectViewPaneService.getInstance(projectId.findProject()).findNodeForOpenedFile(paneId, editorChoice) as ProjectViewNodePathImpl?
+  override suspend fun findNodeForOpenedFile(
+    projectId: ProjectId,
+    paneId: ProjectViewPaneId,
+    editorChoice: EditorChoice,
+    isInvokedManually: Boolean,
+  ): ProjectViewNodePathImpl? {
+    return BackendProjectViewPaneService.getInstance(projectId.findProject()).findNodeForOpenedFile(paneId, editorChoice, isInvokedManually) as ProjectViewNodePathImpl?
   }
 
   override suspend fun findNodeForSelectIn(

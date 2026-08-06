@@ -183,6 +183,7 @@
 *:com.intellij.platform.projectView.pane.SelectByEditor
 - com.intellij.platform.projectView.pane.SelectInRequest
 - a:getConsiderOnlyLastFocusedEditor():Z
+- a:isInvokedManually():Z
 *:com.intellij.platform.projectView.pane.SelectInRequest
 *:com.intellij.platform.projectView.pane.SuspendingBackendProjectViewPaneStateAccessor
 - a:getChildren(com.intellij.platform.projectView.pane.BackendProjectViewNodeModel,kotlin.coroutines.Continuation):java.lang.Object

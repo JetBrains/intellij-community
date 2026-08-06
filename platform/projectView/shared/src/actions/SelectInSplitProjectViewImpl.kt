@@ -128,7 +128,7 @@ private data class SelectOpenedFileTask(
         }
         val nodePath = withTimeoutOrNull(15.seconds) {
           LOG.debug { "Looking for the node to select for $fileEditor" }
-          aggregator.findNodeForOpenedFile(paneId, editorChoice)
+          aggregator.findNodeForOpenedFile(paneId, editorChoice, invokedManually)
         }
         LOG.debug { "Found the node to select: $nodePath" }
         if (nodePath != null) {

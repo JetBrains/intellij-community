@@ -95,10 +95,10 @@ open class ProjectViewPaneService(
     return managers.load()?.get(paneId)?.pane
   }
 
-  suspend fun findNodeForOpenedFile(paneId: ProjectViewPaneId, editorChoice: EditorChoice): ProjectViewNodePath? {
+  suspend fun findNodeForOpenedFile(paneId: ProjectViewPaneId, editorChoice: EditorChoice, isInvokedManually: Boolean): ProjectViewNodePath? {
     val managers = managers.load() ?: return null
     val pane = managers[paneId]?.pane ?: return null
-    return pane.findNodeForSelectIn(SelectByEditorImpl(editorChoice))
+    return pane.findNodeForSelectIn(SelectByEditorImpl(editorChoice, isInvokedManually))
   }
 
   suspend fun findNodeForSelectIn(selectInRequestDTO: SelectInRequestDTO): ProjectViewNodePath? {

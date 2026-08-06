@@ -70,12 +70,12 @@ internal class FrontendProjectViewPaneAggregatorImpl(
     }
   }
 
-  override suspend fun findNodeForOpenedFile(paneId: ProjectViewPaneId, editorChoice: EditorChoice): ProjectViewNodePath? {
+  override suspend fun findNodeForOpenedFile(paneId: ProjectViewPaneId, editorChoice: EditorChoice, isInvokedManually: Boolean): ProjectViewNodePath? {
     return if (isFrontendPane(paneId)) {
-      frontendService().findNodeForOpenedFile(paneId, editorChoice)
+      frontendService().findNodeForOpenedFile(paneId, editorChoice, isInvokedManually)
     }
     else {
-      backendService().findNodeForOpenedFile(project.projectId(), paneId, editorChoice)
+      backendService().findNodeForOpenedFile(project.projectId(), paneId, editorChoice, isInvokedManually)
     }
   }
 

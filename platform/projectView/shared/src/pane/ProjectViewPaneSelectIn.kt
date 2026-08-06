@@ -17,4 +17,5 @@ sealed interface SelectByContext : SelectInRequest {
 @ApiStatus.Experimental
 sealed interface SelectByEditor : SelectInRequest {
   val considerOnlyLastFocusedEditor: Boolean
+  val isInvokedManually: Boolean
 }

@@ -36,9 +36,11 @@ import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
@@ -573,6 +575,16 @@ abstract class TreeBasedProjectViewPaneModel<T : Any>(protected val project: Pro
         }
       }
       for (fileEditor in editors) {
+        if (
+          !request.isInvokedManually &&
+          AdvancedSettings.getBoolean("project.view.do.not.autoscroll.to.libraries") &&
+          readAction { fileEditor.file?.let { file -> ProjectFileIndex.getInstance(project).isInLibrary(file) } == true }
+        ) {
+          if (LOG.isDebugEnabled) {
+            LOG.debug("Skipping $fileEditor because the file is in a library and autoscroll to libraries is off")
+          }
+          continue
+        }
         val target = computeEditorTargetFor(fileEditor)
         if (target != null) return target // stop at the first editor with a PSI file, like the classic code
       }

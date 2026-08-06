@@ -39,6 +39,7 @@ private data class SelectByContextImpl(
 
 internal data class SelectByEditorImpl(
   val editorChoice: EditorChoice,
+  override val isInvokedManually: Boolean,
 ) : SelectByEditor {
   override val considerOnlyLastFocusedEditor: Boolean
     get() = when (editorChoice) {

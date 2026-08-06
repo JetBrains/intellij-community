@@ -24,7 +24,7 @@ interface FrontendProjectViewPaneAggregator {
 
   suspend fun getPaneRequestChannel(paneId: ProjectViewPaneId): SendChannel<ProjectViewPaneRequest>
 
-  suspend fun findNodeForOpenedFile(paneId: ProjectViewPaneId, editorChoice: EditorChoice): ProjectViewNodePath?
+  suspend fun findNodeForOpenedFile(paneId: ProjectViewPaneId, editorChoice: EditorChoice, isInvokedManually: Boolean): ProjectViewNodePath?
 
   suspend fun findNodeForSelectIn(selectInRequest: SelectInRequestDTO): ProjectViewNodePath?
 
