@@ -1,11 +1,17 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.util.paths
 
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.actions.VcsContextFactory
 import com.intellij.openapi.vcs.changes.HierarchicalFilePathComparator.NATURAL
+import com.intellij.peer.impl.VcsContextFactoryImpl
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.rethrowLoggedErrorsIn
+import com.intellij.testFramework.registerOrReplaceServiceInstance
 import com.intellij.util.ReflectionUtil
 import com.intellij.vcsUtil.VcsUtil
 import it.unimi.dsi.fastutil.ints.Int2IntMap
@@ -15,10 +21,18 @@ import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assumptions
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
 @TestApplication
 class RootDirtySetTest {
+  @BeforeEach
+  fun registerVcsContextFactory(@TestDisposable disposable: Disposable) {
+    // The lightweight @TestApplication environment does not load VcsExtensions.xml here.
+    ApplicationManager.getApplication()
+      .registerOrReplaceServiceInstance(VcsContextFactory::class.java, VcsContextFactoryImpl(), disposable)
+  }
+
   @Test
   fun testEmpty() {
     val dirty = RootDirtySet("/root".filePath, true)
@@ -604,4 +618,3 @@ class RootDirtySetTest {
 }
 
 private val String.filePath: FilePath get() = VcsUtil.getFilePath(this, true)
-
