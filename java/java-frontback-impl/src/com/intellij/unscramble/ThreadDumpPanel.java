@@ -189,8 +189,8 @@ public final class ThreadDumpPanel extends JPanel implements NoStackTraceFolding
     });
     TreeSpeedSearch
       .installOn(threadTree, true, path -> {
-      var node = (DefaultMutableTreeNode)path.getLastPathComponent();
-      return node.getUserObject() instanceof DumpItem item ? item.getName() : "";
+        var node = (DefaultMutableTreeNode)path.getLastPathComponent();
+        return node.getUserObject() instanceof DumpItem item ? item.getName() : "";
       })
       .setComparator(new SpeedSearchComparator(false, true));
     return threadTree;

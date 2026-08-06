@@ -93,6 +93,58 @@ internal class JcmdJsonThreadDumpParserTest {
   }
 
   @Test
+  fun `selected platform thread metadata is merged into full dump`() {
+    val parsed = parseMergedThreadDump()
+
+    val worker = parsed.threadStates.first { it.name == "multi-lock-thread" }
+
+    assertThat(worker.stackTrace).startsWith(
+      "\"multi-lock-thread\" #35 [48643] daemon prio=5 os_prio=31 cpu=0.04ms elapsed=63.52s " +
+      "tid=0x000000092d3f2000 nid=48643 RUNNABLE [0x1000]\n"
+    )
+    assertThat(worker.stackTrace).contains(
+      "\tat example.JsonFrame.run(JsonFrame.java:1)",
+      "\t  - locked java.lang.Object@jsonOnly",
+    )
+    assertThat(worker.stackTrace).doesNotContain(
+      "in Object.wait()",
+      "example.PlatformFrame.run",
+      "0x000000070001",
+      "0x000000070002",
+    )
+    assertTrue(worker.isDaemon)
+    assertThat(worker.ownedMonitors).contains("java.lang.Object@jsonOnly")
+
+    val container = parsed.threadContainerDescriptors.single { it.name == "java.util.concurrent.ForkJoinPool@abc" }
+    assertEquals(container.containerId, worker.threadContainerUniqueId)
+  }
+
+  @Test
+  fun `platform threads missing from full dump are added`() {
+    val parsed = parseMergedThreadDump()
+
+    val vmThread = parsed.threadStates.first { it.name == "VM Thread" }
+    assertThat(vmThread.stackTrace).startsWith(
+      "\"VM Thread\" os_prio=31 cpu=3.13ms elapsed=29.05s tid=0x0000000101848800 nid=0x5303 runnable"
+    )
+  }
+
+  @Test
+  fun `virtual threads are kept from full dump when merging platform dump`() {
+    val parsed = parseMergedThreadDump()
+
+    val virtualThread = parsed.threadStates.first { it.name == "virtual-worker" }
+
+    assertTrue(virtualThread.isVirtual)
+    assertEquals(
+      "\"virtual-worker\" tid=40 virtual unmounted RUNNABLE\n" +
+      "\tat example.Virtual.run(Virtual.java:1)\n" +
+      "\tat java.base/java.lang.VirtualThread.run(VirtualThread.java:456)",
+      virtualThread.stackTrace,
+    )
+  }
+
+  @Test
   fun `parser returns null for non-json input`() {
     assertNull(parseJcmdJsonThreadDump("\"main\" #1 prio=5 tid=0x1 nid=0x1 runnable"))
   }
@@ -352,6 +404,11 @@ internal class JcmdJsonThreadDumpParserTest {
     return toDumpItems(parsed)
   }
 
+  private fun parseMergedThreadDump(): ThreadDumpState {
+    val platformThreadStates = parseJcmdPlatformThreadDump(MERGE_PLATFORM_DUMP)
+    return requireNotNull(parseJcmdJsonThreadDump(MERGE_FULL_DUMP, platformThreadStates))
+  }
+
   private fun loadThreadDump(path: String): String {
     return Files.readString(Path(PathManagerEx.getCommunityHomePath()).resolve("java/java-tests/testData/threadDump").resolve(path)).trim()
   }
@@ -385,4 +442,73 @@ internal class JcmdJsonThreadDumpParserTest {
       ?: error("Dump item not found: $name, available: ${dumpItems.map { it.name }}")
 
   private fun DumpItem.isVirtual() = stackTrace.contains("virtual")
+
+  private companion object {
+    private val MERGE_FULL_DUMP = """
+      {
+        "threadDump": {
+          "threadContainers": [
+            {
+              "container": "<root>",
+              "parent": null,
+              "owner": null,
+              "threads": [
+                {
+                  "tid": "40",
+                  "name": "virtual-worker",
+                  "virtual": true,
+                  "state": "RUNNABLE",
+                  "stack": [
+                    "example.Virtual.run(Virtual.java:1)",
+                    "java.base/java.lang.VirtualThread.run(VirtualThread.java:456)"
+                  ]
+                }
+              ]
+            },
+            {
+              "container": "java.util.concurrent.ForkJoinPool@abc",
+              "parent": null,
+              "owner": null,
+              "threads": [
+                {
+                  "tid": "35",
+                  "name": "multi-lock-thread",
+                  "state": "RUNNABLE",
+                  "stack": [
+                    "example.JsonFrame.run(JsonFrame.java:1)"
+                  ],
+                  "monitorsOwned": [
+                    {
+                      "depth": 0,
+                      "locks": [
+                        "java.lang.Object@jsonOnly"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
+    """.trimIndent()
+
+    private const val MERGE_PLATFORM_THREAD_HEADER =
+      "\"multi-lock-thread\" #35 [48643] daemon prio=5 os_prio=31 cpu=0.04ms elapsed=63.52s " +
+      "tid=0x000000092d3f2000 nid=48643 in Object.wait()  [0x1000]"
+
+    private val MERGE_PLATFORM_DUMP = """
+      Full thread dump OpenJDK 64-Bit Server VM (25+10 mixed mode):
+
+      $MERGE_PLATFORM_THREAD_HEADER
+         java.lang.Thread.State: WAITING (on object monitor)
+            at example.PlatformFrame.run(PlatformFrame.java:10)
+            - locked <0x000000070001> (a java.lang.Object)
+
+         Locked ownable synchronizers:
+            - <0x000000070002> (a java.util.concurrent.locks.ReentrantLock)
+
+      "VM Thread" os_prio=31 cpu=3.13ms elapsed=29.05s tid=0x0000000101848800 nid=0x5303 runnable
+    """.trimIndent()
+  }
 }

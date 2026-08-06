@@ -10,6 +10,7 @@
     <module name="intellij.java.debugger.impl"/>
     <module name="intellij.java.debugger.impl.shared"/>
     <module name="intellij.java.execution"/>
+    <module name="intellij.java.frontback.impl"/>
     <module name="intellij.java.impl"/>
     <module name="intellij.java.indexing"/>
     <module name="intellij.java.psi"/>
@@ -39,6 +40,7 @@
     <module name="intellij.platform.ide.core.impl"/>
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.ide.util.io.impl"/>
+    <module name="intellij.platform.ide.progress"/>
     <module name="intellij.platform.indexing"/>
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.lang.core"/>
@@ -48,6 +50,7 @@
     <module name="intellij.platform.testRunner"/>
     <module name="intellij.platform.threadDumpParser"/>
     <module name="intellij.platform.usageView"/>
+    <module name="intellij.platform.util.coroutines"/>
     <module name="intellij.platform.util.ex"/>
     <module name="intellij.platform.util.ui"/>
   </dependencies>
@@ -72,6 +75,10 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <notificationGroup id="Thread dump capture" displayType="BALLOON" bundle="messages.ExecutionBundle"
+                       key="notification.group.thread.dump.capture"/>
+    <notificationGroup id="Thread dump capture sticky" displayType="STICKY_BALLOON" bundle="messages.ExecutionBundle"
+                       key="notification.group.thread.dump.capture.saved"/>
     <applicationService serviceInterface="com.intellij.execution.filters.ExceptionLineParserFactory"
                         serviceImplementation="com.intellij.execution.filters.ExceptionLineParserFactoryImpl"/>
     <applicationService serviceImplementation="com.intellij.execution.filters.StackTraceFoldingSettings"/>
@@ -119,6 +126,7 @@
     <jreProvider implementation="com.intellij.execution.ui.BundledJreProvider"/>
     <importTestOutput implementation="com.intellij.execution.AntTestContentHandler$AntTestOutputExtension"/>
     <compiler.task execute="AFTER" implementation="com.intellij.execution.scratch.JavaScratchCompilationSupport"/>
+    <threadDumpProvider implementation="com.intellij.execution.impl.JcmdThreadDumpProvider" order="first"/>
     <threadDumpProvider implementation="com.intellij.execution.impl.JstackThreadDumpProvider"/>
     <threadDumpProvider implementation="com.intellij.execution.impl.AttachAPIThreadDumpProvider" order="last"/>
     <applicationSettings service="com.intellij.execution.filters.StackTraceFoldingSettings"/>
