@@ -54,8 +54,8 @@ open class UselessCallOnCollectionInspection : AbstractUselessCallInspection() {
         UselessFilterConversion(topLevelCallableId("kotlin.collections", "filterIsInstance")),
         UselessFilterConversion(topLevelCallableId("kotlin.sequences", "filterIsInstance")),
 
-        UselessFilterTrueConversion(topLevelCallableId("kotlin.collections", "filter")),
-        UselessFilterTrueConversion(topLevelCallableId("kotlin.sequences", "filter")),
+        UselessFilterOfBooleanConstantConversion(topLevelCallableId("kotlin.collections", "filter")),
+        UselessFilterOfBooleanConstantConversion(topLevelCallableId("kotlin.sequences", "filter")),
 
         UselessMapNotNullConversion(topLevelCallableId("kotlin.collections", "mapNotNull"), replacementName = "map"),
         UselessMapNotNullConversion(topLevelCallableId("kotlin.sequences", "mapNotNull"), replacementName = "map"),
@@ -112,9 +112,15 @@ open class UselessCallOnCollectionInspection : AbstractUselessCallInspection() {
         }
     }
 
-    protected inner class UselessFilterTrueConversion(
+    protected inner class UselessFilterOfBooleanConstantConversion(
         override val targetCallableId: CallableId,
     ) : QualifiedFunctionCallConversion {
+        private fun KtExpression.constantBoolean(): Boolean? = when {
+            KtPsiUtil.isTrueConstant(this) -> true
+            KtPsiUtil.isFalseConstant(this) -> false
+            else -> null
+        }
+
         context(_: KaSession)
         override fun createProblemDescriptor(
             manager: InspectionManager,
@@ -126,35 +132,45 @@ open class UselessCallOnCollectionInspection : AbstractUselessCallInspection() {
 
             val statement = lambda.singleStatementOrNull() ?: return null
 
-            when (statement) {
+            val constantValue = when (statement) {
                 is KtReturnExpression -> {
-                    val returnExpression = statement.returnedExpression ?: return null
-                    val dep = KtPsiUtil.deparenthesize(returnExpression)
-                    if (!KtPsiUtil.isTrueConstant(dep)) return null
+                    val returnExpression = statement.returnedExpression?.let(KtPsiUtil::safeDeparenthesize) ?: return null
+                    val constantValue = returnExpression.constantBoolean() ?: return null
 
                     val label = statement.getTargetLabel() ?: return null
                     val resolved = label.mainReference.resolveToSymbol()?.psi ?: return null
                     if (!resolved.isEquivalentTo(lambda.functionLiteral))
                         return null
+
+                    constantValue
                 }
 
-                else -> {
-                    val dep = KtPsiUtil.deparenthesize(statement)
-                    if (!KtPsiUtil.isTrueConstant(dep)) return null
-                }
+                else -> KtPsiUtil.safeDeparenthesize(statement).constantBoolean() ?: return null
             }
 
-            return manager.createProblemDescriptor(
-                expression,
-                TextRange(
-                    expression.operationTokenNode.startOffset - expression.startOffset,
-                    expression.endOffset - expression.startOffset,
-                ),
-                KotlinBundle.message("redundant.call.on.collection.type"),
-                ProblemHighlightType.LIKE_UNUSED_SYMBOL,
-                isOnTheFly,
-                RemoveUselessCallFix()
+            val range = TextRange(
+                expression.operationTokenNode.startOffset - expression.startOffset,
+                expression.endOffset - expression.startOffset,
             )
+
+            return when (constantValue) {
+                true -> manager.createProblemDescriptor(
+                    expression,
+                    range,
+                    KotlinBundle.message("redundant.call.on.collection.type"),
+                    ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+                    isOnTheFly,
+                    RemoveUselessCallFix()
+                )
+
+                false -> manager.createProblemDescriptor(
+                    expression,
+                    range,
+                    KotlinBundle.message("filter.of.false.will.return.an.empty.collection"),
+                    ProblemHighlightType.WARNING,
+                    isOnTheFly,
+                )
+            }
         }
     }
 

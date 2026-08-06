@@ -23773,6 +23773,26 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("FilterFalse.kt")
+            public void testFilterFalse() throws Exception {
+                runTest("testData/inspectionsLocal/uselessCallOnCollection/FilterFalse.kt");
+            }
+
+            @TestMetadata("FilterFalseOnSequence.kt")
+            public void testFilterFalseOnSequence() throws Exception {
+                runTest("testData/inspectionsLocal/uselessCallOnCollection/FilterFalseOnSequence.kt");
+            }
+
+            @TestMetadata("FilterFalseTail.kt")
+            public void testFilterFalseTail() throws Exception {
+                runTest("testData/inspectionsLocal/uselessCallOnCollection/FilterFalseTail.kt");
+            }
+
+            @TestMetadata("FilterFalseTailOnSequence.kt")
+            public void testFilterFalseTailOnSequence() throws Exception {
+                runTest("testData/inspectionsLocal/uselessCallOnCollection/FilterFalseTailOnSequence.kt");
+            }
+
             @TestMetadata("FilterIsExactInstance.kt")
             public void testFilterIsExactInstance() throws Exception {
                 runTest("testData/inspectionsLocal/uselessCallOnCollection/FilterIsExactInstance.kt");
