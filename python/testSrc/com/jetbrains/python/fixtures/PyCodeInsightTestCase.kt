@@ -16,6 +16,7 @@ import com.intellij.openapi.roots.impl.FilePropertyPusher
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -49,6 +50,7 @@ import com.jetbrains.python.codeInsight.completion.PyTestAssertionParserUtils.sc
 import com.jetbrains.python.codeInsight.completion.PyTestAssertionParserUtils.skipWhitespace
 import com.jetbrains.python.codeInsight.completion.PyTestAssertionParserUtils.skipWhitespaceAndGuides
 import com.jetbrains.python.codeInsight.completion.PyTestAssertionType
+import com.jetbrains.python.codeInsight.completion.PyTestAssertionType.Companion.TOOLTIP_KEYWORD
 import com.jetbrains.python.documentation.PythonDocumentationProvider
 import com.jetbrains.python.fixtures.PyTestAssertionInliner.findCounterparts
 import com.jetbrains.python.fixtures.PyTestAssertionParser.parseAssertions
@@ -226,6 +228,7 @@ abstract class PyCodeInsightTestCase {
   )
 
   companion object {
+
     @JvmStatic
     protected lateinit var myFixture: CodeInsightTestFixture // only one active fixture per JVM is possible
 
@@ -514,17 +517,24 @@ abstract class PyCodeInsightTestCase {
       val codeColumnStart = highlight.startOffset - document.getLineStartOffset(codeLineStart)
       val codeLineEnd = document.getLineNumber(highlight.endOffset)
       val codeColumnEnd = highlight.endOffset - document.getLineStartOffset(codeLineEnd)
-      val actualAssertion = PyTestAssertion(codeOffsetStart = highlight.startOffset,
+      val actualAssertionNoContent = PyTestAssertion(codeOffsetStart = highlight.startOffset,
                                             codeLineStart = codeLineStart,
                                             codeColumnStart = codeColumnStart,
                                             codeColumnEnd = codeColumnEnd,
                                             type = typeName.name.replace(" ", "-"),
-                                            content = highlight.description ?: "")
+                                            content = "")
 
+      val counterparts = findCounterparts(expectedAssertions, listOf(actualAssertionNoContent))
+      val expectedAssertion = counterparts[actualAssertionNoContent]
+      val newContent = when {
+        expectedAssertion == null
+          -> highlight.description
+        expectedAssertion.content.split(" ").firstOrNull() == TOOLTIP_KEYWORD
+          -> toolTipAssertionContent(expectedAssertion, highlight)
+        else -> highlight.description
+      }
+      val actualAssertion = actualAssertionNoContent.copy(content = newContent ?: "")
       actualAssertions.add(actualAssertion)
-
-      val counterparts = findCounterparts(expectedAssertions, listOf(actualAssertion))
-      val expectedAssertion = counterparts[actualAssertion]
       allExpectedAssertions.remove(expectedAssertion)
     }
 
@@ -543,6 +553,22 @@ abstract class PyCodeInsightTestCase {
     }
 
     return actualAssertions
+  }
+
+  private fun toolTipAssertionContent(expectedAssertion: PyTestAssertion, highlight: HighlightInfo): String {
+    val toolTip = highlight.toolTip ?: return "$TOOLTIP_KEYWORD No tooltip on the matched highlight"
+    val payload = expectedAssertion.content.removePrefix("$TOOLTIP_KEYWORD ")
+    val expectsHtml = "</" in payload || "/>" in payload
+    val plainDescription = normalizeExplanationText(highlight.description)
+    val toolTipText = if (expectsHtml) toolTip else toolTipToPlainText(toolTip)
+    val plainToolTipText = normalizeExplanationText(toolTipText)
+    val onlyToolTip = plainToolTipText.removePrefix(plainDescription)
+    val fragments = payload.split("\\n").map { normalizeExplanationText(it) }
+
+    for (fragment in fragments) {
+      if (!onlyToolTip.contains(fragment)) return "$TOOLTIP_KEYWORD $onlyToolTip"
+    }
+    return expectedAssertion.content
   }
 
   private fun createActualAssertionsForNonInspections(expectedAssertion: PyTestAssertion): PyTestAssertion {
@@ -659,6 +685,16 @@ abstract class PyCodeInsightTestCase {
     }
     val actualVariance = getDeclaredOrInferredVariance(element, context)
     return actualVariance?.name ?: "Unknown"
+  }
+
+  /** Strips HTML tags, unescapes entities, and collapses whitespace to render a tooltip as one line of plain text. */
+  private fun toolTipToPlainText(toolTip: String): String {
+    return StringUtil.collapseWhiteSpace(StringUtil.removeHtmlTags(toolTip))
+  }
+
+  /** Removes quote-like characters that differ between the description-style test fragments and the tooltip's markup. */
+  private fun normalizeExplanationText(text: String): String {
+    return text.replace("'", "").replace("`", "").trim()
   }
 }
 
