@@ -520,6 +520,7 @@ libraries/ktor/client
 libraries/ktor/client-cio
 libraries/ktor/io
 libraries/ktor/network-tls
+libraries/ktor/serialization-gson
 libraries/ktor/server-cio
 libraries/ktor/utils
 libraries/lsp4j

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_8" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library" exported="">
+      <library name="ktor-serialization-gson" type="repository">
+        <properties include-transitive-deps="false" maven-id="io.ktor:ktor-serialization-gson-jvm:3.4.1">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-serialization-gson-jvm/3.4.1/ktor-serialization-gson-jvm-3.4.1.jar">
+              <sha256sum>95a6cbfd2e390c0419012efa245779b2ab19fd45f52ea44824b7ef50d0575a7d</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-serialization-gson-jvm/3.4.1/ktor-serialization-gson-jvm-3.4.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-serialization-gson-jvm/3.4.1/ktor-serialization-gson-jvm-3.4.1-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+  </component>
+</module>

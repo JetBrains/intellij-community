@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.ktor.serialization.gson.jar
+  modules:
+  - name: intellij.libraries.ktor.serialization.gson
+    libraries:
+      ktor-serialization-gson:
+      - name: $MAVEN_REPOSITORY$/io/ktor/ktor-serialization-gson-jvm/3/ktor-serialization-gson-jvm-3.jar

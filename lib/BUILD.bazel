@@ -12789,6 +12789,21 @@ jvm_import(
     visibility = ["//visibility:public"],
 )
 
+copy_file(
+    name = "io.ktor/ktor-serialization-gson-jvm-3.4.1.jar_copy",
+    src = "@io_ktor-ktor-serialization-gson-jvm-3_4_1_http//file",
+    out = "io.ktor/ktor-serialization-gson-jvm-3.4.1.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-ktor-serialization-gson-ktor-serialization-gson",
+    jar = "@io_ktor-ktor-serialization-gson-jvm-3_4_1_http//file",
+    source_jar = "@io_ktor-ktor-serialization-gson-jvm-3_4_1-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
 java_library(
     name = "libraries-ktor-server-cio-ktor-server-cio-internal",
     visibility = ["//visibility:public"],
