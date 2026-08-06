@@ -8185,6 +8185,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/methodToProperty.kt");
             }
 
+            @TestMetadata("nestedClassInExpression.kt")
+            public void testNestedClassInExpression() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/nestedClassInExpression.kt");
+            }
+
             @TestMetadata("noReplacement.kt")
             public void testNoReplacement() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/noReplacement.kt");

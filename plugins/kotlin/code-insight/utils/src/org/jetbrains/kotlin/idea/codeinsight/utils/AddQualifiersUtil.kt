@@ -6,7 +6,6 @@ import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.descendantsOfType
 import com.intellij.psi.util.elementType
 import com.intellij.psi.util.prevLeaf
-import org.jetbrains.kotlin.analysis.api.KaContextParameterApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbols
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
@@ -146,7 +145,7 @@ object AddQualifiersUtil {
     private fun addQualifierToType(psiFactory: KtPsiFactory, userType: KtUserType, qualifier: String): KtElement {
         val type = userType.parent as? KtNullableType ?: userType
         val typeWithQualifier = psiFactory.createType("$qualifier.${type.text}")
-        return type.parent.replace(typeWithQualifier) as KtElement
+        return type.replace(typeWithQualifier) as KtElement
     }
 
     private fun replaceExpressionWithQualifier(

@@ -1,0 +1,28 @@
+// "Replace with 'this.contextSensitiveResolutionStatus is KaContextSensitiveResolutionStatus.Used'" "true"
+
+package repro
+
+sealed interface KaContextSensitiveResolutionStatus {
+    data object Used : KaContextSensitiveResolutionStatus
+    data object Unused : KaContextSensitiveResolutionStatus
+}
+
+class Expression(
+    val contextSensitiveResolutionStatus: KaContextSensitiveResolutionStatus,
+)
+
+@Deprecated(
+    message = "Use contextSensitiveResolutionStatus instead",
+    replaceWith = ReplaceWith(
+        "this.contextSensitiveResolutionStatus is KaContextSensitiveResolutionStatus.Used",
+        "repro.KaContextSensitiveResolutionStatus",
+    ),
+)
+val Expression.usesContextSensitiveResolution: Boolean
+    get() = contextSensitiveResolutionStatus is KaContextSensitiveResolutionStatus.Used
+
+fun addQualifierIfNeeded(replaced: Expression) {
+    if (!replaced.usesContextSensitiveResolution<caret>) return
+}
+
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.replaceWith.DeprecatedSymbolUsageFix
