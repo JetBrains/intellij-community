@@ -3,9 +3,11 @@ package org.intellij.plugins.markdown.editor.tables
 
 import com.intellij.application.options.CodeStyle
 import com.intellij.application.options.codeStyle.excludedFiles.GlobPatternDescriptor
+import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
 import org.intellij.plugins.markdown.settings.MarkdownCodeInsightSettings
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -13,6 +15,14 @@ import org.junit.runners.JUnit4
 @RunWith(JUnit4::class)
 @Suppress("MarkdownIncorrectTableFormatting")
 class MarkdownTableTypingTest: LightPlatformCodeInsightTestCase() {
+  @Before
+  fun enableTableReformatting() {
+    val settings = MarkdownCodeInsightSettings.getInstance()
+    val old = settings.state.reformatTablesOnType
+    settings.state.reformatTablesOnType = true
+    Disposer.register(testRootDisposable) { settings.state.reformatTablesOnType = old }
+  }
+
   @Test
   fun `test typing in non-last column reformats the table`() {
     // language=Markdown

@@ -38,12 +38,25 @@
 
       <longLineInspectionPolicy implementation="org.intellij.plugins.markdown.editor.MarkdownLongLineInspectionPolicy"/>
 
+      <intentionAction>
+        <language>Markdown</language>
+        <className>com.intellij.markdown.backend.intentions.ReformatTableIntention</className>
+        <bundleName>messages.MarkdownBundle</bundleName>
+        <categoryKey>markdown.intention.category</categoryKey>
+      </intentionAction>
+      <intentionAction>
+        <language>Markdown</language>
+        <className>com.intellij.markdown.backend.intentions.FixCellAlignmentIntention</className>
+        <bundleName>messages.MarkdownBundle</bundleName>
+        <categoryKey>markdown.intention.category</categoryKey>
+      </intentionAction>
+
       <localInspection language="Markdown"
                        shortName="MarkdownIncorrectTableFormatting"
                        bundle="messages.MarkdownBundle"
                        key="markdown.incorrect.table.formatting.inspection.name"
                        groupKey="markdown.inspection.group.ruby.name"
-                       enabledByDefault="true"
+                       enabledByDefault="false"
                        level="WEAK WARNING"
                        implementationClass="com.intellij.markdown.backend.inspections.MarkdownIncorrectTableFormattingInspection"/>
 
