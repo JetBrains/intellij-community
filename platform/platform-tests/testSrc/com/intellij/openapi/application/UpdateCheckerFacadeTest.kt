@@ -3,8 +3,6 @@
 
 package com.intellij.openapi.application
 
-import com.intellij.ide.plugins.IdeaPluginDescriptor
-import com.intellij.ide.plugins.PluginManagementPolicy
 import com.intellij.ide.plugins.marketplace.utils.MarketplaceCustomizationService
 import com.intellij.ide.plugins.updateBrokenPlugins
 import com.intellij.internal.statistic.eventLog.fus.MachineIdManager
@@ -487,7 +485,6 @@ internal class UpdateCheckerFacadeTest : UpdateCheckerTestBase() {
 
   @Test
   fun `don't suggest downgrade for non-broken plugins from Marketplace even when downgrade is allowed (IJPL-251144)`() {
-    application.replaceService(PluginManagementPolicy::class.java, TestPluginManagementPolicy(), testDisposable.get())
     val pluginId = "test.custom.source.downgrade"
 
     installedPluginsFacade.setPlugins(listOf(
@@ -518,7 +515,6 @@ internal class UpdateCheckerFacadeTest : UpdateCheckerTestBase() {
 
   @Test
   fun `don't suggest downgrade for non-broken plugins from custom repository even when downgrade is allowed (IJPL-251144)`() {
-    application.replaceService(PluginManagementPolicy::class.java, TestPluginManagementPolicy(), testDisposable.get())
     val pluginId = "test.custom.source.downgrade"
     val customServer = createTestServer(testDisposable.get())
     val customRepositoryUrl = customServer.url + "/custom-repository"
@@ -541,19 +537,5 @@ internal class UpdateCheckerFacadeTest : UpdateCheckerTestBase() {
 
     val internalResult = UpdateCheckerFacade.getInstance().getPluginUpdates(listOf(PluginId.getId(pluginId)))
     assertIsEmpty(internalResult)
-  }
-
-  private class TestPluginManagementPolicy : PluginManagementPolicy {
-    override fun isUpgradeAllowed(localDescriptor: IdeaPluginDescriptor?, remoteDescriptor: IdeaPluginDescriptor?): Boolean = true
-
-    override fun isDowngradeAllowed(localDescriptor: IdeaPluginDescriptor?, remoteDescriptor: IdeaPluginDescriptor?): Boolean = true
-
-    override fun canEnablePlugin(descriptor: IdeaPluginDescriptor?): Boolean = false
-
-    override fun canInstallPlugin(descriptor: IdeaPluginDescriptor?): Boolean = false
-
-    override fun isInstallFromDiskAllowed(): Boolean = false
-
-    override fun isPluginAutoUpdateAllowed(): Boolean = false
   }
 }
