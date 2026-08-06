@@ -140,6 +140,7 @@ object UniversalFileChooser {
     parent: Component? = null,
     private val descriptor: FileChooserDescriptor,
     private val contributors: Collection<UniversalFileChooserContributor> = UniversalFileChooserContributor.EP_NAME.extensionList,
+    private val persistLocation: Boolean = true,
   ) : DialogWrapper(project, parent, true, IdeModalityType.IDE), FileChooserDialog, PathChooserDialog {
     private lateinit var mainPanel: Panel
 
@@ -148,7 +149,7 @@ object UniversalFileChooser {
       title = descriptor.title ?: UIBundle.message("file.chooser.default.title")
     }
 
-    override fun getDimensionServiceKey(): String = "UniversalFileChooserDialog"
+    override fun getDimensionServiceKey(): String? = if (persistLocation) "UniversalFileChooserDialog" else null
 
     override fun choose(project: Project?, vararg toSelect: VirtualFile?): Array<out VirtualFile?> {
       val explicit = toSelect.firstOrNull()?.let { runCatching { it.toNioPath() }.getOrNull() }
