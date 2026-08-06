@@ -4,6 +4,7 @@ package com.intellij.ide.util.treeView
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
+import com.intellij.ui.treeStructure.BgtAwareTreeModel
 import com.intellij.ui.treeStructure.CachingTreePath
 import com.intellij.util.containers.nullize
 import it.unimi.dsi.fastutil.objects.Object2IntLinkedOpenHashMap
@@ -19,7 +20,7 @@ import javax.swing.tree.TreeModel
 import javax.swing.tree.TreePath
 
 @ApiStatus.Experimental
-class DefaultTreeModelWithCachedPresentation : TreeModel, CachedTreePresentationSupport {
+class DefaultTreeModelWithCachedPresentation : TreeModel, CachedTreePresentationSupport, BgtAwareTreeModel {
 
   private val delegate = DefaultTreeModel(null)
   private var cachedPresentationApplier: CachedPresentationApplier? = null

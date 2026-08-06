@@ -57,6 +57,7 @@ a:com.intellij.ide.ui.LafManager
 *:com.intellij.ide.ui.PopupLocator
 - a:getPositionFor(com.intellij.openapi.ui.popup.JBPopup):java.awt.Point
 *f:com.intellij.ide.util.treeView.DefaultTreeModelWithCachedPresentation
+- com.intellij.ui.treeStructure.BgtAwareTreeModel
 - javax.swing.tree.TreeModel
 - <init>():V
 - addTreeModelListener(javax.swing.event.TreeModelListener):V
