@@ -301,14 +301,12 @@ class NioFileTreeModel(
         updateValid(true)
         updateHidden(NioFileChooserUtil.isHidden(path, attrs))
         updateSymlink(isSymlink)
-        updateWritable(Files.isWritable(p))
       }
       else if (p.parent ==null) {
         updateIcon(PlatformIcons.FOLDER_ICON)
         updateValid(true)
         updateHidden(false)
         updateSymlink(false)
-        updateWritable(false)
       }
       else {
         var icon: Icon? = NioFileChooserUtil.getIcon(p)
@@ -320,7 +318,6 @@ class NioFileTreeModel(
         updateValid(Files.exists(p))
         updateHidden(NioFileChooserUtil.isHidden(p))
         updateSymlink(isSymlink)
-        updateWritable(Files.isWritable(p))
       }
     }
 

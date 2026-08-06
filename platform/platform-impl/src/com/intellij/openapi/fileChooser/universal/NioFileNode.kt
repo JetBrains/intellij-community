@@ -22,7 +22,6 @@ open class NioFileNode internal constructor(val path: Path?) {
   private val hiddenRef = AtomicBoolean()
   private val specialRef = AtomicBoolean()
   private val symlinkRef = AtomicBoolean()
-  private val writableRef = AtomicBoolean()
 
   val icon: Icon? get() = iconRef.get()
 
@@ -51,10 +50,6 @@ open class NioFileNode internal constructor(val path: Path?) {
   val isSymlink: Boolean get() = symlinkRef.get()
 
   internal fun updateSymlink(symlink: Boolean): Boolean = symlink != symlinkRef.getAndSet(symlink)
-
-  val isWritable: Boolean get() = writableRef.get()
-
-  internal fun updateWritable(writable: Boolean): Boolean = writable != writableRef.getAndSet(writable)
 
   internal class Visitor(path: Path) : TreeVisitor.ByComponent<Path, Path>(path, { (it as? NioFileNode)?.path }) {
     override fun visit(path: Path?): Action = if (path == null) Action.CONTINUE else super.visit(path)
