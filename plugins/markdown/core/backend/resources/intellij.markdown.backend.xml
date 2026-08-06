@@ -28,6 +28,8 @@
     </dependencies>
     <!-- endregion -->
     <extensions defaultExtensionNs="com.intellij">
+      <completion.contributor
+        language="Markdown" implementationClass="com.intellij.markdown.backend.completion.MarkdownAtPathCompletionContributor"/>
       <platform.rpc.backend.remoteApiProvider
         implementation="com.intellij.markdown.backend.providers.MarkdownLinkOpenerApiProvider"/>
       <platform.rpc.backend.remoteApiProvider
