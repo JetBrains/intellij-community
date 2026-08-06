@@ -725,6 +725,9 @@ class UnindexedFilesScanner(
     if (startCondition != null) { // wait until indexes for dirty files are cleared
       ProgressIndicatorUtils.awaitWithCheckCanceled(startCondition)
     }
+    // Not sure that ensureUpToDate is really needed, but it wouldn't hurt to clear up queue not from EDT
+    // It was added in this commit: 'Process vfs events asynchronously (IDEA-109525), first cut Maxim.Mossienko 13.11.16, 14:15'
+    fileBasedIndex.changedFilesCollector.ensureUpToDate()
   }
 
   override fun toString(): String {
