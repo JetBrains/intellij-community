@@ -115,6 +115,8 @@ internal class TreeWelcomeScreenLeftPanel : WelcomeScreenLeftPanel {
   }
 
   override fun init() {
+    treeModel.reload()
+
     //select and install focused component
     if (root.childCount > 0) {
       val firstTabNode = root.firstChild as DefaultMutableTreeNode
@@ -129,7 +131,9 @@ internal class TreeWelcomeScreenLeftPanel : WelcomeScreenLeftPanel {
       }
     }
     wasLoaded = true
-    queue.forEach { it() }
+    val queuedActions = queue.toList()
+    queue.clear()
+    queuedActions.forEach { it() }
   }
 
   override fun getComponent(): JComponent {
