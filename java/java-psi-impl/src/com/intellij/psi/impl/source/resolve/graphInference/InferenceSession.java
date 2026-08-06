@@ -103,6 +103,13 @@ public class InferenceSession {
   static final Key<PsiCapturedWildcardType> ORIGINAL_CAPTURE = Key.create("ORIGINAL_CAPTURE");
 
   protected final Set<InferenceVariable> myInferenceVariables = new LinkedHashSet<>();
+  /**
+   * Subset of {@link #myInferenceVariables} that belongs to the calls inside a lambda body which is not pertinent to
+   * the applicability of this call. Such variables are merged here only to be able to store and later replay the nested
+   * sessions ({@link InferenceSessionContainer}); the constraints which actually determine them are never added here,
+   * so this session must not choose fresh variables (JLS 18.4) for them, see {@link #resolveBounds}.
+   */
+  private final Set<InferenceVariable> myNestedSessionVariables = new LinkedHashSet<>();
   private final List<ConstraintFormula> myConstraints = new ArrayList<>();
   private final Set<ConstraintFormula> myConstraintsCopy = new HashSet<>();
   private final InferenceSessionContainer myInferenceSessionContainer;
@@ -1131,6 +1138,17 @@ public class InferenceSession {
         }
       }
 
+      if (!myNestedSessionVariables.isEmpty()) {
+        //a variable of a nested session is resolved (and thus checked) here, but a fresh variable must not be chosen
+        //for it: the constraints which determine it are only collected when that nested session is replayed, and the
+        //fresh variable would be copied along with the other bounds and prevent the replayed session from resolving it
+        List<InferenceVariable> resolvable = new ArrayList<>(unresolved);
+        if (resolvable.removeAll(myNestedSessionVariables)) {
+          allVars.removeAll(myNestedSessionVariables);
+          unresolved = resolvable;
+        }
+      }
+
       if (!initFreshVariables(substitutor, unresolved, uniqueNameGenerator)) {
         return;
       }
@@ -2007,6 +2025,21 @@ public class InferenceSession {
   public final void propagateVariables(@NotNull InferenceSession from) {
     myInferenceVariables.addAll(from.getInferenceVariables());
     myRestoreNameSubstitution = myRestoreNameSubstitution.putAll(from.getRestoreNameSubstitution());
+  }
+
+  /**
+   * Marks the inference variables of the calls inside {@code returnExpression} as belonging to a nested session only,
+   * see {@link #myNestedSessionVariables}. Called for a return expression of a lambda whose body does not contribute
+   * constraints to this session: the variables may still have been merged here while reducing the expression itself,
+   * but the constraints from the lambda body are never added, so this session has an incomplete picture of them.
+   */
+  final void excludeNestedSessionVariables(@NotNull PsiExpression returnExpression) {
+    for (InferenceVariable variable : myInferenceVariables) {
+      PsiElement callContext = variable.getCallContext();
+      if (callContext != null && PsiTreeUtil.isAncestor(returnExpression, callContext, false)) {
+        myNestedSessionVariables.add(variable);
+      }
+    }
   }
 
   public PsiType substituteWithInferenceVariables(@Nullable PsiType type) {

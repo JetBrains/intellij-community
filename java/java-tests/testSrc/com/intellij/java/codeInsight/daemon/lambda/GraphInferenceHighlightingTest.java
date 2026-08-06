@@ -198,6 +198,7 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
   public void testIntersectionWithCapturedSuperWildcard() { doTest(); }
   @TestFor(issues = "IDEA-153641")
   public void testCapturedWildcardAsStandaloneArgument() { doTest(); }
+  public void testComparatorInsideDiamondInsideLambda() { doTest(); }
 
   private void doTest() {
     doTest(false);
