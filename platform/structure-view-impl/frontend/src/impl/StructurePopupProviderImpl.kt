@@ -5,7 +5,7 @@ import com.intellij.ide.util.FileStructureUtil
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.Project
 import com.intellij.platform.structureView.frontend.FileStructurePopup
-import com.intellij.platform.structureView.frontend.uiModel.StructureUiModelImpl
+import com.intellij.platform.structureView.frontend.uiModel.StructureUiModelSession
 import com.intellij.platform.structureView.impl.StructurePopup
 import com.intellij.platform.structureView.impl.StructurePopupProvider
 
@@ -13,6 +13,6 @@ class StructurePopupProviderImpl: StructurePopupProvider {
   override fun createPopup(project: Project, fileEditor: FileEditor): StructurePopup? {
     if (!FileStructureUtil.isSplitPopupEnabled()) return null
     val file = fileEditor.file
-    return FileStructurePopup(project, fileEditor, StructureUiModelImpl(fileEditor, file, project))
+    return FileStructurePopup(project, fileEditor, StructureUiModelSession(fileEditor, file, project))
   }
 }

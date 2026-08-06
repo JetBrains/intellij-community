@@ -4,6 +4,7 @@ package com.intellij.platform.structureView.frontend.uiModel
 import com.intellij.ide.rpc.ShortcutId
 import com.intellij.ide.util.treeView.smartTree.ActionPresentation
 import com.intellij.platform.structureView.impl.uiModel.StructureUiTreeElement
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.Nls
 
 class NodeProviderTreeAction(
@@ -19,14 +20,17 @@ class NodeProviderTreeAction(
 
   private var myNodesByParentId: Map<Int, List<StructureViewNode>> = emptyMap()
 
+  @all:RequiresEdt
   var nodesLoaded: Boolean = false
     private set
 
+  @RequiresEdt
   internal fun setNodesByParentId(nodesByParentId: Map<Int, List<StructureViewNode>>) {
     myNodesByParentId = nodesByParentId
     nodesLoaded = true
   }
 
+  @RequiresEdt
   internal fun getNodes(parent: StructureUiTreeElement): List<StructureViewNode> {
     return myNodesByParentId[parent.id] ?: emptyList()
   }

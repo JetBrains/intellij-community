@@ -1,231 +1,86 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.structureView.frontend.uiModel
 
-import com.intellij.ide.rpc.rpcId
-import com.intellij.ide.vfs.rpcId
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.UI
-import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.diagnostic.trace
-import com.intellij.openapi.fileEditor.FileEditor
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.project.projectId
-import com.intellij.platform.structureView.impl.StructureTreeApi
-import com.intellij.platform.structureView.impl.StructureViewScopeHolder
 import com.intellij.platform.structureView.impl.dto.NodeProviderNodesDto
 import com.intellij.platform.structureView.impl.dto.StructureViewDtoId
 import com.intellij.platform.structureView.impl.dto.StructureViewModelDto
 import com.intellij.platform.structureView.impl.dto.StructureViewTreeElementDto
-import com.intellij.platform.structureView.impl.dto.TreeNodesDto
 import com.intellij.platform.structureView.impl.uiModel.StructureUiTreeElement
-import com.intellij.platform.util.coroutines.childScope
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil
-import fleet.rpc.client.durable
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.job
-import kotlinx.coroutines.launch
-import org.jetbrains.annotations.TestOnly
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicInteger
 
+internal class StructureUiModelImpl(private val dtoId: StructureViewDtoId) {
+  @all:RequiresEdt
+  var dto: StructureViewModelDto? = null
+    private set
 
-internal class StructureUiModelImpl : StructureUiModel {
-  override var dto: StructureViewModelDto? = null
-  internal val myUpdatePendingFlow: MutableStateFlow<Boolean> = MutableStateFlow(true)
+  internal val mutableUpdatePendingFlow: MutableStateFlow<Boolean> = MutableStateFlow(true)
 
   private val myModelListeners = ContainerUtil.createLockFreeCopyOnWriteList<StructureUiModelListener>()
 
-  private val dtoId: StructureViewDtoId
-
-  override val rootElement: StructureViewNode = StructureViewNode()
+  @get:RequiresEdt
+  val rootElement: StructureViewNode = StructureViewNode()
 
   private val nodeById = HashMap<Int, StructureViewNode>().also {
     it[0] = rootElement
   }
 
-  private val cs: kotlinx.coroutines.CoroutineScope
-
-  private val myEnabledActionNames = CopyOnWriteArrayList<String>()
+  private val myEnabledActionNames = HashSet<String>()
 
   private var myActions: List<StructureTreeAction> = emptyList()
 
-  private val selection = MutableStateFlow<StructureUiTreeElement?>(null)
+  internal val editorSelection = MutableStateFlow<StructureUiTreeElement?>(null)
 
-  private var rebuildTreeOnDeferredNodes: Boolean = false
+  @all:RequiresEdt
+  internal var rebuildTreeOnDeferredNodes = false
 
-  /**
-   * Constructor that fetches DTO via RPC (for monolith mode or when called from frontend).
-   */
-  constructor(fileEditor: FileEditor, file: VirtualFile, project: Project) {
-    dtoId = StructureViewDtoId(nextId.getAndIncrement())
-    cs = StructureViewScopeHolder.getInstance(project).cs.childScope("scope for ${file.name} structure view",
-                                                                      Dispatchers.UI + ModalityState.any().asContextElement())
-    initializeWithRpcModel(fileEditor, file, project)
-  }
+  val updatePendingFlow: StateFlow<Boolean>
+    get() = mutableUpdatePendingFlow
 
-  /**
-   * Constructor for popup flow with model pre-created in backend.
-   */
-  constructor(file: VirtualFile?, project: Project, modelId: StructureViewDtoId, model: StructureViewModelDto) {
-    dtoId = modelId
-    cs = StructureViewScopeHolder.getInstance(project).cs.childScope("scope for ${file?.name} structure view",
-                                                                     Dispatchers.UI + ModalityState.any().asContextElement())
-    initializeWithProvidedModel(project, model)
-  }
+  @get:RequiresEdt
+  val smartExpand: Boolean
+    get() = dto?.smartExpand ?: false
 
-  private fun initializeWithRpcModel(fileEditor: FileEditor, file: VirtualFile, project: Project) {
-    // the service scope is used to make sure the disposal request to the backend is sent after the dto is received
-    StructureViewScopeHolder.getInstance(project).cs.launch {
-      val dto = durable {
-        StructureTreeApi.getInstance().createStructureViewModel(dtoId, fileEditor.rpcId(), file.rpcId(), project.projectId())
-      }
+  @get:RequiresEdt
+  val minimumAutoExpandDepth: Int
+    get() = dto?.minimumAutoExpandDepth ?: 2
 
-      if (dto == null) {
-        logger.warn("No structure view model for $file")
-        cs.launch {
-          myModelListeners.forEach { it.onTreeChanged() }
-          myUpdatePendingFlow.value = false
-        }
-        return@launch
-      }
-
-      registerModelDisposal(project)
-      cs.launch {
-        initializeWithModel(dto)
-      }
-    }
-  }
-
-  private fun initializeWithProvidedModel(project: Project, model: StructureViewModelDto) {
-    registerModelDisposal(project)
-    cs.launch {
-      initializeWithModel(model)
-    }
-  }
-
-  private fun registerModelDisposal(project: Project) {
-    // capture the service scope eagerly: the completion handler may run during project disposal,
-    // when the service is no longer accessible (see ContainerDisposedException)
-    val serviceScope = StructureViewScopeHolder.getInstance(project).cs
-    cs.coroutineContext.job.invokeOnCompletion {
-      serviceScope.launch {
-        StructureTreeApi.callDisposeModel(dtoId)
-      }
-    }
-  }
-
-  private suspend fun initializeWithModel(model: StructureViewModelDto) {
-    dto = model
+  @RequiresEdt
+  fun initActions(modelDto: StructureViewModelDto) {
+    dto = modelDto
 
     // Convert DTOs to impl classes
-    myActions = model.actions.map { it.toImpl() }
+    myActions = modelDto.actions.map { it.toImpl() }
 
     myEnabledActionNames.addAll(myActions.filter {
       it.isReverted != it.isEnabledByDefault
     }.map { it.name })
     logger.trace { "StructureUiModelImpl[$dtoId]: initialized actions; enabledActions=${myEnabledActionNames}" }
-
-    model.nodes.toFlow().collect { nodesUpdate ->
-      if (nodesUpdate == null) {
-        return@collect
-      }
-
-      val updateStartTime = System.nanoTime()
-      logger.trace { "StructureUiModelImpl[$dtoId]: nodes update received" }
-
-      applyNodesModel(model.rootNode,
-                      nodesUpdate.nodeProviders,
-                      nodesUpdate.nodes,
-                      nodesUpdate.editorSelectionId)
-      logger.trace {
-        "StructureUiModelImpl[$dtoId]: applied nodes update in ${(System.nanoTime() - updateStartTime).asTraceDuration()}"
-      }
-
-      val uiNotifyStartTime = System.nanoTime()
-      myModelListeners.forEach { it.onActionsChanged() }
-      myModelListeners.forEach { it.onTreeChanged() }
-      myUpdatePendingFlow.value = false
-      logger.trace {
-        "StructureUiModelImpl[$dtoId]: notified listeners for nodes update in ${(System.nanoTime() - uiNotifyStartTime).asTraceDuration()}"
-      }
-
-      handleDeferredNodeProviders(model, nodesUpdate, updateStartTime)
-    }
   }
 
-  private suspend fun handleDeferredNodeProviders(
-    model: StructureViewModelDto,
-    nodesUpdate: TreeNodesDto,
-    updateStartTime: Long,
-  ) {
-    val deferredAwaitStartTime = System.nanoTime()
-    val deferredNodes = try {
-      nodesUpdate.deferredProviderNodes.await()
-    }
-    catch (e: Throwable) {
-      rethrowControlFlowException(e)
-      rebuildTreeOnDeferredNodes = false
-      myUpdatePendingFlow.value = false
-      logger.error("Error computing provider nodes", e)
-      return
-    }
-    logger.trace {
-      "StructureUiModelImpl[$dtoId]: deferred provider await for nodes update completed in " +
-      "${(System.nanoTime() - deferredAwaitStartTime).asTraceDuration()}; " +
-      "deferredProviders=${deferredNodes?.nodeProviders?.size ?: 0}, "
-    }
+  @RequiresEdt
+  fun getActions(): Collection<StructureTreeAction> = myActions
 
-    if (deferredNodes != null) {
-      val deferredApplyStartTime = System.nanoTime()
-      applyNodesModel(model.rootNode,
-                      deferredNodes.nodeProviders,
-                      deferredNodes.nodes,
-                      nodesUpdate.editorSelectionId)
-      logger.trace {
-        "StructureUiModelImpl[$dtoId]: applied deferred provider nodes for update in " +
-        (System.nanoTime() - deferredApplyStartTime).asTraceDuration()
-      }
-    }
-
-    // If an incomplete node provider was enabled while waiting for deferred nodes, rebuild tree now.
-    if (rebuildTreeOnDeferredNodes) {
-      if (deferredNodes == null || deferredNodes.nodeProviders.isEmpty()) {
-        logger.error("Deferred provider nodes list is empty, but rebuildTreeOnDeferredNodes is true")
-      }
-      rebuildTreeOnDeferredNodes = false
-      myModelListeners.forEach { it.onTreeChanged() }
-      myUpdatePendingFlow.value = false
-    }
-    logger.trace {
-      "StructureUiModelImpl[$dtoId]: nodes update completed in ${(System.nanoTime() - updateStartTime).asTraceDuration()}"
-    }
-  }
-
-  override val smartExpand: Boolean
-    get() = dto?.smartExpand ?: false
-
-  override val minimumAutoExpandDepth: Int
-    get() = dto?.minimumAutoExpandDepth ?: 2
-
-  override val editorSelection: StateFlow<StructureUiTreeElement?>
-    get() = selection
-
-  override fun isActionEnabled(action: StructureTreeAction): Boolean {
+  @RequiresEdt
+  fun isActionEnabled(action: StructureTreeAction): Boolean {
     return action.name in myEnabledActionNames
   }
 
-  override fun setActionEnabled(action: StructureTreeAction, isEnabled: Boolean, isAutoClicked: Boolean) {
+  /**
+   * Applies the new enabled state of [action] to this model.
+   *
+   * Returns `false` if the action already had that state, in which case the caller must not notify the backend.
+   */
+  @RequiresEdt
+  fun setActionEnabled(action: StructureTreeAction, isEnabled: Boolean): Boolean {
     val affectiveIsEnabled = isEnabled != action.isReverted
 
-    if (affectiveIsEnabled == isActionEnabled(action)) return
+    if (affectiveIsEnabled == isActionEnabled(action)) return false
 
     if (affectiveIsEnabled) {
       myEnabledActionNames.add(action.name)
@@ -237,21 +92,19 @@ internal class StructureUiModelImpl : StructureUiModel {
     if (action is NodeProviderTreeAction) {
       // If enabling an incomplete node provider, mark as pending and request tree rebuild when nodes arrive
       if (affectiveIsEnabled && !action.nodesLoaded) {
-        myUpdatePendingFlow.value = true
+        mutableUpdatePendingFlow.value = true
         rebuildTreeOnDeferredNodes = true
       }
     }
     else if (action !is FilterTreeAction) {
-      myUpdatePendingFlow.value = true
+      mutableUpdatePendingFlow.value = true
     }
 
-    cs.launch {
-      val id = dtoId
-      StructureTreeApi.getInstance().setTreeActionState(id, action.name, isEnabled, isAutoClicked)
-    }
+    return true
   }
 
-  private fun applyNodesModel(
+  @RequiresEdt
+  fun applyNodesModel(
     rootDto: StructureViewTreeElementDto,
     nodeProviders: List<NodeProviderNodesDto>,
     nodes: List<StructureViewTreeElementDto>,
@@ -303,57 +156,29 @@ internal class StructureUiModelImpl : StructureUiModel {
       id !in reachableNodeIds
     }
 
-    selection.value = selectionElement
+    editorSelection.value = selectionElement
     logger.trace {
       "StructureUiModelImpl[$dtoId]: applyNodesModel completed in ${(System.nanoTime() - applyStartTime).asTraceDuration()}; " +
       "nodes=${nodes.size}, providers=${nodeProviders.size}, providerNodes=${nodeProviders.sumOf { it.nodes.size }}, selection=${selectionElement?.id}"
     }
   }
 
-  override fun getActions(): Collection<StructureTreeAction> = myActions
-
-  override fun navigateTo(element: StructureUiTreeElement?): CompletableFuture<Boolean> {
-    val deferred = CompletableFuture<Boolean>()
-
-    if (element == null) {
-      deferred.complete(false)
-      return deferred
-    }
-
-    val elementId = element.id
-    val modelId = dtoId
-
-    cs.launch {
-      val succeeded = StructureTreeApi.getInstance().navigateToElement(modelId, elementId)
-      if (succeeded) {
-        deferred.complete(true)
-      }
-      else {
-        deferred.complete(false)
-      }
-    }.invokeOnCompletion {
-      if (it != null) {
-        deferred.completeExceptionally(it)
-      }
-    }
-
-    return deferred
-  }
-
-  @TestOnly
-  override suspend fun getNewSelection(): Int? {
-    return StructureTreeApi.getInstance().getNewSelection(dtoId)
-  }
-
-  override fun getUpdatePendingFlow(): StateFlow<Boolean> = myUpdatePendingFlow
-
-  override fun addListener(listener: StructureUiModelListener) {
+  fun addListener(listener: StructureUiModelListener) {
     myModelListeners.add(listener)
   }
 
-  override fun dispose() {
-    cs.cancel()
+  fun clearListeners() {
     myModelListeners.clear()
+  }
+
+  @RequiresEdt
+  fun fireTreeChanged() {
+    myModelListeners.forEach { it.onTreeChanged() }
+  }
+
+  @RequiresEdt
+  fun fireActionsChanged() {
+    myModelListeners.forEach { it.onActionsChanged() }
   }
 
   private fun getOrCreateNode(nodeDto: StructureViewTreeElementDto, reachableNodeIds: MutableSet<Int>): StructureViewNode {
@@ -391,11 +216,10 @@ internal class StructureUiModelImpl : StructureUiModel {
   }
 
   companion object {
-    private var nextId = AtomicInteger(1)
     private val logger = logger<StructureUiModelImpl>()
   }
 }
 
-private fun Long.asTraceDuration(): String {
+internal fun Long.asTraceDuration(): String {
   return "${TimeUnit.NANOSECONDS.toMillis(this)} ms"
 }

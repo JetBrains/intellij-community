@@ -10,12 +10,17 @@ import com.intellij.platform.structureView.impl.dto.StructureViewTreeElementDto
 import com.intellij.platform.structureView.impl.dto.toPresentation
 import com.intellij.platform.structureView.impl.uiModel.StructureUiTreeElement
 import com.intellij.ui.icons.RowIcon
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.TestOnly
 import java.util.Collections
 import java.util.Enumeration
 import javax.swing.Icon
 import javax.swing.tree.TreeNode
 
+/**
+ * confined to the EDT together with the rest of the UI state
+ * see [StructureUiModelImpl].
+ */
 internal class StructureViewNode : StructureUiTreeElement, TreeNode, PathElementIdProvider, Queryable {
   private var dto: StructureViewTreeElementDto? = null
   private var myPresentation: ItemPresentation = EMPTY_PRESENTATION
@@ -61,6 +66,7 @@ internal class StructureViewNode : StructureUiTreeElement, TreeNode, PathElement
   override val children: List<StructureUiTreeElement>
     get() = sourceChildren
 
+  @RequiresEdt
   internal fun update(dto: StructureViewTreeElementDto) {
     this.dto = dto
     myPresentation = dto.presentation.toPresentation()

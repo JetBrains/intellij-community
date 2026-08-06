@@ -9,7 +9,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.platform.project.findProjectOrNull
-import com.intellij.platform.structureView.frontend.uiModel.StructureUiModelImpl
+import com.intellij.platform.structureView.frontend.uiModel.StructureUiModelSession
 import com.intellij.platform.structureView.impl.StructureTreeApi
 import fleet.rpc.client.durable
 import kotlinx.coroutines.CoroutineScope
@@ -43,7 +43,7 @@ internal class ShowStructurePopupFlowService(cs: CoroutineScope) {
             }
 
             try {
-              val model = StructureUiModelImpl(file, project, request.modelId, request.model)
+              val model = StructureUiModelSession(file, project, request.modelId, request.model)
               val popup = FileStructurePopup(project, null, model)
               request.title?.let { popup.setTitle(it) }
               popup.show()
