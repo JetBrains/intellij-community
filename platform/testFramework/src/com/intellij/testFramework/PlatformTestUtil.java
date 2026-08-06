@@ -42,12 +42,11 @@ import com.intellij.openapi.actionSystem.PerformWithDocumentsCommitted;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ThreadingSupport;
-import com.intellij.openapi.application.ThreadingSupportKt;
-import com.intellij.openapi.application.impl.AppImplKt;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.application.impl.TestOnlyThreading;
@@ -600,11 +599,8 @@ public final class PlatformTestUtil {
     var eventQueue = IdeEventQueue.getInstance();
     ThreadContext.resetThreadContext(() -> {
       TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(() -> {
-        // due to non-blocking acquisition of write-intent, `NonBlockingFlushQueue` can appear in the state
-        // where it has stuck WI runnables. This method is called to ensure that _all_ runnables are dispatched,
-        // so we also want to wait for WI runnables here
-        var canary = new AtomicBoolean(false);
-        ApplicationManager.getApplication().invokeLater(() -> canary.set(true), ModalityState.any());
+        var canary = new Ref<>(false);
+        launchCanary(canary);
         // The drain finishes once the queue is empty AND the `ModalityState.any()` canary has run. Under the
         // non-blocking write-intent lock model that `canary` is a write-intent runnable that `NonBlockingFlushQueue` can starve
         // indefinitely while it stays in UI_ONLY mode and keeps re-posting FLUSH_NOW invocation events. To fail fast and
@@ -642,6 +638,29 @@ public final class PlatformTestUtil {
       });
       return null;
     });
+  }
+
+  // due to non-blocking acquisition of write-intent, `NonBlockingFlushQueue` can appear in the state
+  // where it has stuck WI runnables. This method is called to ensure that _all_ runnables are dispatched,
+  // so we also want to wait for WI runnables here
+  // In addition, there can be a suspended EDT write action.
+  // It is likely that the awaited activity depends on currently pending write actions, so we include them into the waiting procedure
+  private static void launchCanary(Ref<Boolean> canary) {
+    Application application = ApplicationManager.getApplication();
+    if (application == null) {
+      canary.set(true);
+      return;
+    }
+    Runnable launcher = () -> application.invokeLater(() -> canary.set(true), ModalityState.any());
+    ThreadingSupport lock = application.getThreadingSupport();
+    if (lock != null) {
+      lock.runWhenWriteActionIsCompleted(() -> {
+        launcher.run();
+        return Unit.INSTANCE;
+      });
+    } else {
+      launcher.run();
+    }
   }
 
   private static String getLockDump() {
@@ -683,7 +702,11 @@ public final class PlatformTestUtil {
    */
   @RequiresEdt
   public static void dispatchAllEventsInIdeEventQueue() {
-    EdtTestUtilKt.dispatchAllEventsInIdeEventQueue();
+    var canary = new Ref<>(false);
+    launchCanary(canary);
+    while (!canary.get()) {
+      EdtTestUtilKt.dispatchAllEventsInIdeEventQueue();
+    }
   }
 
   /**
