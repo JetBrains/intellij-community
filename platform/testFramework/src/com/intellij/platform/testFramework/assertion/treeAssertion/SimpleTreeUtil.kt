@@ -89,7 +89,7 @@ fun <T, R> SimpleTree<T>.mapTreeValues(transform: (SimpleTree.Node<T>) -> R): Si
   return mapTree { SimpleTreeImpl.Node(it.name, transform(it)) }
 }
 
-private fun <T, R> SimpleTree<T>.mapTree(transform: (SimpleTree.Node<T>) -> SimpleMutableTree.Node<R>): SimpleMutableTree<R> {
+fun <T, R> SimpleTree<T>.mapTree(transform: (SimpleTree.Node<T>) -> SimpleMutableTree.Node<R>): SimpleMutableTree<R> {
   val tree = SimpleTreeImpl<R>()
   val queue = ArrayDeque<Pair<SimpleTree.Node<T>, SimpleMutableTree.Node<R>>>()
   for (oldRootNode in roots) {
