@@ -26,6 +26,7 @@ One row per skill in this directory. `SKILL.md` holds the full instructions.
 | [jna](jna/SKILL.md) | Implement or debug JNA bindings and ABI layouts in Kotlin or Java. |
 | [kotlin-ui-dsl](kotlin-ui-dsl/SKILL.md) | Write IntelliJ dialogs and settings with Kotlin UI DSL v2 panels. |
 | [kotlin-ui-swing-component-architecture](kotlin-ui-swing-component-architecture/SKILL.md) | Design IntelliJ Swing UI components, state flow, and EDT work. |
+| [modcommand-migration](modcommand-migration/SKILL.md) | Convert LocalQuickFix or IntentionAction to ModCommand API; ModCommandQuickFix, ModPsiUpdater. |
 | [module-dependencies](module-dependencies/SKILL.md) | Add or modify IntelliJ module dependencies in `.iml` files. |
 | [module-set-pluginization](module-set-pluginization/SKILL.md) | Convert Product DSL module sets into bundled wrapper plugins. |
 | [notebook-for-experiment](notebook-for-experiment/SKILL.md) | Create reproducible Jupyter notebooks for performance experiments. |
