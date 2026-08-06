@@ -492,9 +492,16 @@ public class TemplateImpl extends TemplateBase implements SchemeElement {
     }
     document.deleteString(endMarker.getStartOffset(), endMarker.getEndOffset());
     manager.commitDocument(document);
+    int endOffset = endMarker.getStartOffset();
     if (isToReformat()) {
-      adjustEndLineIndent(document, endMarker, project, updater);
+      // Indent adjustment may replace the leading whitespace; its return value preserves the logical caret position.
+      endOffset = adjustEndLineIndent(document, endOffset, project, updater);
     }
+    // Anchor at the post-adjustment offset. Registering fields below can make additional document changes,
+    // so the marker must track the final position until the template is built.
+    endMarker.dispose();
+    endMarker = document.createRangeMarker(endOffset, endOffset);
+
     // Done after formatting so that field ranges match the final document state.
     ModTemplateBuilder builder = updater.templateBuilder();
     boolean fieldsCreated = registerEditableFields(builder, markers, indicesByName, manager, updater);
@@ -773,13 +780,13 @@ public class TemplateImpl extends TemplateBase implements SchemeElement {
     }
   }
 
-  private static void adjustEndLineIndent(@NotNull Document document, @NotNull RangeMarker endMarker,
-                                           @NotNull Project project, @NotNull ModPsiUpdater updater) {
-    int offset = endMarker.getStartOffset();
+  private static int adjustEndLineIndent(@NotNull Document document, int offset,
+                                         @NotNull Project project, @NotNull ModPsiUpdater updater) {
     int lineStart = document.getLineStartOffset(document.getLineNumber(offset));
     if (document.getCharsSequence().subSequence(lineStart, offset).toString().trim().isEmpty()) {
-      CodeStyleManager.getInstance(project).adjustLineIndent(updater.getPsiFile(), offset);
+      return CodeStyleManager.getInstance(project).adjustLineIndent(updater.getPsiFile(), offset);
     }
+    return offset;
   }
 
   @Override
