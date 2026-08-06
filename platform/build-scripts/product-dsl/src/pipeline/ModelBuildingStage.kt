@@ -23,7 +23,6 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
-import org.jetbrains.intellij.build.findFileInModuleDependenciesRecursive
 import org.jetbrains.intellij.build.findFileInModuleLibraryDependencies
 import org.jetbrains.intellij.build.findFileInModuleSources
 import org.jetbrains.intellij.build.productLayout.ContentModule
@@ -54,6 +53,7 @@ import org.jetbrains.intellij.build.productLayout.traversal.collectProductModule
 import org.jetbrains.intellij.build.productLayout.util.AsyncCache
 import org.jetbrains.intellij.build.productLayout.util.DeferredFileUpdater
 import org.jetbrains.intellij.build.productLayout.util.GeneratedArtifactWritePolicy
+import org.jetbrains.intellij.build.productLayout.util.resolveXIncludeBytes
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModule
@@ -1241,31 +1241,5 @@ internal object ModelBuildingStage {
     }
 
     return allAliases
-  }
-
-  private suspend fun resolveXIncludeBytes(
-    path: String,
-    module: JpsModule,
-    outputProvider: ModuleOutputProvider,
-    prefix: String?,
-  ): ByteArray? {
-    findFileInModuleSources(module, path)?.let { return Files.readAllBytes(it) }
-    findFileInModuleLibraryDependencies(module, path, outputProvider)?.let { return it }
-    outputProvider.readFileContentFromModuleOutput(module, path)?.let { return it }
-
-    val processedModules = HashSet<String>()
-    processedModules.add(module.name)
-
-    findFileInModuleDependenciesRecursive(
-      module = module,
-      relativePath = path,
-      provider = outputProvider,
-      processedModules = processedModules,
-      moduleNamePrefix = prefix,
-    )?.let { return it }
-
-    outputProvider.findFileInAnyModuleOutput(path, prefix, processedModules)?.let { return it }
-
-    return null
   }
 }

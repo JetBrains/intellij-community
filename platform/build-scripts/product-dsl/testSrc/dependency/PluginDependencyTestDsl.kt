@@ -297,6 +297,10 @@ class PluginTestSetupBuilder(private val tempDir: Path) {
       // Write descriptor XML
       Files.writeString(resourcesDir.resolve("${spec.name}.xml"), spec.descriptor)
 
+      spec.resourceFiles.forEach { (fileName, fileContent) ->
+        Files.writeString(resourcesDir.resolve(fileName), fileContent)
+      }
+
       // Track JPS dependencies for this content module (just module names for plugin-level tracking)
       contentModuleJpsDeps.put(spec.name, spec.jpsDependencies.map { it.moduleName })
 
@@ -457,12 +461,18 @@ class TestContentModuleBuilder(private val name: String) {
   var descriptorInTestResources: Boolean = false
 
   private val jpsDependencies = mutableListOf<TestJpsDependency>()
+  private val resourceFiles = LinkedHashMap<String, String>()
 
   fun jpsDependency(moduleName: String, scope: JpsJavaDependencyScope = JpsJavaDependencyScope.COMPILE) {
     jpsDependencies.add(TestJpsDependency(moduleName, scope))
   }
 
-  internal fun build() = TestContentModuleSpec(name, descriptor, jpsDependencies.toList(), descriptorInTestResources)
+  /** Writes an additional file next to the descriptor in the resource root (e.g. an xi:included actions XML). */
+  fun resourceFile(fileName: String, content: String) {
+    resourceFiles.put(fileName, content)
+  }
+
+  internal fun build() = TestContentModuleSpec(name, descriptor, jpsDependencies.toList(), descriptorInTestResources, resourceFiles.toMap())
 }
 
 internal data class TestJpsDependency(
@@ -519,6 +529,7 @@ internal data class TestContentModuleSpec(
   @JvmField val descriptor: String,
   @JvmField val jpsDependencies: List<TestJpsDependency>,
   @JvmField val descriptorInTestResources: Boolean = false,
+  @JvmField val resourceFiles: Map<String, String> = emptyMap(),
 )
 internal data class TestProductSpec(
   @JvmField val name: String,

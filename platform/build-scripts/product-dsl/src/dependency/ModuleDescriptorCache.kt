@@ -13,9 +13,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.findFileInModuleSources
+import org.jetbrains.intellij.build.productLayout.debug
 import org.jetbrains.intellij.build.productLayout.model.error.ErrorCategory
 import org.jetbrains.intellij.build.productLayout.model.error.UnsuppressedPipelineError
 import org.jetbrains.intellij.build.productLayout.util.AsyncCache
+import org.jetbrains.intellij.build.productLayout.util.resolveXIncludeBytes
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -53,9 +55,9 @@ internal class ModuleDescriptorCache(
     @JvmField val registeredServiceKeys: Set<String> = emptySet(),
     /** Service keys registered with `overrides="true"`. */
     @JvmField val overridingServiceKeys: Set<String> = emptySet(),
-    /** Action group IDs declared by this descriptor. */
+    /** Action group IDs declared by this descriptor, including its xi:included files. */
     @JvmField val declaredActionGroupIds: Set<String> = emptySet(),
-    /** Action group IDs referenced by this descriptor. */
+    /** Action group IDs referenced by this descriptor, including its xi:included files. */
     @JvmField val referencedActionGroupIds: Set<String> = emptySet(),
     /**
      * Suppressible error if the descriptor has issues (e.g., non-standard XML root element).
@@ -111,12 +113,41 @@ internal class ModuleDescriptorCache(
 
     val skipDependencyGeneration = content.contains("@skip-dependency-generation")
 
-    // Use platform parser to extract existing dependencies (xi:include aware)
+    // Use platform parser to extract existing dependencies (top-level file; xi:includes resolved below)
     val parseResult = try {
       parseContentAndXIncludes(input = content.toByteArray(), locationSource = null)
     }
     catch (e: WFCException) {
       throw IllegalStateException("Failed to parse descriptor for module $moduleName", e)
+    }
+
+    // action groups may be declared behind xi:include (e.g. *.actions.xml);
+    // resolve includes so group declarations keep producing explicit module dependencies
+    val declaredActionGroupIds = LinkedHashSet(parseResult.declaredActionGroupIds)
+    val referencedActionGroupIds = LinkedHashSet(parseResult.referencedActionGroupIds)
+    val processedIncludePaths = HashSet<String>()
+    var pendingIncludePaths = parseResult.xIncludePaths.filter { processedIncludePaths.add(it) }
+    while (pendingIncludePaths.isNotEmpty()) {
+      val nextIncludePaths = ArrayList<String>()
+      pendingIncludePaths.forEach { includePath ->
+        // includes from other modules' library jars are not reachable here (same limitation as plugin.xml extraction);
+        // they cannot contribute action groups anyway, so skip instead of failing
+        val includeData = resolveXIncludeBytes(path = includePath, module = jpsModule, outputProvider = outputProvider, prefix = null)
+        if (includeData == null) {
+          debug("descriptorXIncludes") { "xi:include '$includePath' not resolved for module $moduleName ($descriptorPath)" }
+          return@forEach
+        }
+        val includeResult = try {
+          parseContentAndXIncludes(input = includeData, locationSource = null)
+        }
+        catch (e: WFCException) {
+          throw IllegalStateException("Failed to parse xi:include '$includePath' of descriptor for module $moduleName", e)
+        }
+        declaredActionGroupIds.addAll(includeResult.declaredActionGroupIds)
+        referencedActionGroupIds.addAll(includeResult.referencedActionGroupIds)
+        includeResult.xIncludePaths.filterTo(nextIncludePaths) { processedIncludePaths.add(it) }
+      }
+      pendingIncludePaths = nextIncludePaths
     }
 
     // Detect non-standard XML root: parser returns empty but file has dependency elements.
@@ -150,8 +181,8 @@ internal class ModuleDescriptorCache(
       existingModuleDependencies = parseResult.moduleDependencies,
       registeredServiceKeys = parseResult.registeredServiceKeys,
       overridingServiceKeys = parseResult.overridingServiceKeys,
-      declaredActionGroupIds = parseResult.declaredActionGroupIds,
-      referencedActionGroupIds = parseResult.referencedActionGroupIds,
+      declaredActionGroupIds = declaredActionGroupIds,
+      referencedActionGroupIds = referencedActionGroupIds,
       suppressibleError = suppressibleError,
     )
   }
