@@ -43,7 +43,6 @@ import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.LambdaUtil;
 import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiAnnotationOwner;
 import com.intellij.psi.PsiAssertStatement;
 import com.intellij.psi.PsiAssignmentExpression;
 import com.intellij.psi.PsiCall;
@@ -212,13 +211,10 @@ public final class DfaPsiUtil {
       if (resultType != null && fromAnnotation.getNullability() != Nullability.NOT_NULL) {
         PsiType type = PsiUtil.getTypeByPsiElement(owner);
         if (type != null) {
-          PsiAnnotationOwner annotationOwner = fromAnnotation.getAnnotation().getOwner();
-          // The bound may come from a stub-built copy of the extends list, which lives in a DummyHolder and therefore
-          // reports no owner at all; isExtendedBounds() states the same thing without depending on the annotation's PSI.
-          boolean fromTypeHierarchy = fromAnnotation.isExtendedBounds() ||
-                                      annotationOwner instanceof PsiType && annotationOwner != type;
+          // The nullability comes from the type parameter bound or from the type parameter declaration itself,
+          // not from this use site.
           if (PsiUtil.resolveClassInClassTypeOnly(type) instanceof PsiTypeParameter tp &&
-              fromTypeHierarchy &&
+              fromAnnotation.isExtendedBounds() &&
               !tp.equals(PsiUtil.resolveClassInClassTypeOnly(resultType))) {
             // Nullable/Unknown from type hierarchy: should check the instantiation, as it could be more concrete
             return getTypeNullability(resultType, forRead);
