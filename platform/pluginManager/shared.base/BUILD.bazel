@@ -1,8 +1,8 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
-### auto-generated section `build intellij.platform.pluginManager.shared` start
+### auto-generated section `build intellij.platform.pluginManager.shared.base` start
 jvm_library(
-    name = "shared",
+    name = "shared.base",
     srcs = glob(
         [
             "src/**/*.kt",
@@ -11,7 +11,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    module_name = "intellij.platform.pluginManager.shared",
+    module_name = "intellij.platform.pluginManager.shared.base",
     resource_strip_prefix = "resources",
     resources = glob(
         ["resources/**/*"],
@@ -20,8 +20,7 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "//platform/pluginManager/shared.base",
-        "//platform/kernel/rpc",
+        "//platform/kernel/rpc.lite",
         "//platform/core-api:core",
         "//platform/kernel/shared:kernel",
         "//platform/platform-impl/rpc",
@@ -37,19 +36,18 @@ jvm_library(
 )
 
 jvm_library(
-    name = "shared_test_lib",
+    name = "shared.base_test_lib",
     testonly = True,
     srcs = glob(
         [],
         allow_empty = True,
     ),
-    module_name = "intellij.platform.pluginManager.shared",
+    module_name = "intellij.platform.pluginManager.shared.base",
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
-        ":shared",
-        "//platform/pluginManager/shared.base:shared.base_test_lib",
-        "//platform/kernel/rpc:rpc_test_lib",
+        ":shared.base",
+        "//platform/kernel/rpc.lite:rpc.lite_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/kernel/shared:kernel_test_lib",
         "//platform/platform-impl/rpc:rpc_test_lib",
@@ -63,13 +61,13 @@ jvm_library(
         "//fleet/rhizomedb:rhizomedb_test_lib",
     ],
 )
-### auto-generated section `build intellij.platform.pluginManager.shared` end
+### auto-generated section `build intellij.platform.pluginManager.shared.base` end
 
-### auto-generated section `iml intellij.platform.pluginManager.shared` start
+### auto-generated section `iml intellij.platform.pluginManager.shared.base` start
 exports_files(
     [
-        "intellij.platform.pluginManager.shared.iml",
+        "intellij.platform.pluginManager.shared.base.iml",
     ],
     visibility = ["//visibility:public"],
 )
-### auto-generated section `iml intellij.platform.pluginManager.shared` end
+### auto-generated section `iml intellij.platform.pluginManager.shared.base` end

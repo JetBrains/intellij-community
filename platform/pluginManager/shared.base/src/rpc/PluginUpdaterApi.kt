@@ -1,9 +1,9 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.pluginManager.shared.rpc
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.pluginManager.shared.base.rpc
 
 import com.intellij.ide.plugins.api.PluginDto
 import com.intellij.openapi.updateSettings.impl.PluginUpdatesModel
-import com.intellij.platform.rpc.RemoteApiProviderService
+import com.intellij.platform.rpc.lite.LiteRemoteApiProviderService
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.remoteApiDescriptor
@@ -20,8 +20,8 @@ interface PluginUpdaterApi : RemoteApi<Unit> {
   suspend fun ignorePluginUpdates()
 
   companion object {
-    suspend fun getInstance(): PluginUpdaterApi {
-      return RemoteApiProviderService.resolve(remoteApiDescriptor<PluginUpdaterApi>())
+    fun tryGetInstance(): PluginUpdaterApi? {
+      return LiteRemoteApiProviderService.tryResolve(remoteApiDescriptor<PluginUpdaterApi>())
     }
   }
 }

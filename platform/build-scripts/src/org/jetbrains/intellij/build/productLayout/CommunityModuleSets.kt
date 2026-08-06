@@ -135,6 +135,7 @@ object CommunityModuleSets {
     module("intellij.platform.ide.internal.backend")
     embeddedModule("intellij.platform.feedback")
 
+    module("intellij.platform.pluginManager.shared.base")
     module("intellij.platform.pluginManager.shared")
     module("intellij.platform.pluginManager.backend")
     module("intellij.platform.pluginManager.frontend")

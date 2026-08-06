@@ -849,6 +849,7 @@ platform/platform-util-netty
 platform/pluginManager/backend
 platform/pluginManager/frontend
 platform/pluginManager/shared
+platform/pluginManager/shared.base
 platform/pluginSystem/parser/impl
 platform/pluginSystem/testFramework
 platform/polySymbols

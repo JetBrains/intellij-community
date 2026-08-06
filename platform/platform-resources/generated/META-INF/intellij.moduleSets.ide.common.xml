@@ -306,6 +306,7 @@
     <module name="intellij.platform.ide.internal"/>
     <module name="intellij.platform.ide.internal.backend"/>
     <module name="intellij.platform.feedback" loading="embedded"/>
+    <module name="intellij.platform.pluginManager.shared.base"/>
     <module name="intellij.platform.pluginManager.shared"/>
     <module name="intellij.platform.pluginManager.backend"/>
     <module name="intellij.platform.pluginManager.frontend"/>

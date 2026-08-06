@@ -8,7 +8,7 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.updateSettings.impl.PluginAutoUpdateService
 import com.intellij.openapi.updateSettings.impl.PluginUpdateHandler
 import com.intellij.openapi.updateSettings.impl.PluginUpdatesModel
-import com.intellij.platform.pluginManager.shared.rpc.PluginUpdaterApi
+import com.intellij.platform.pluginManager.shared.base.rpc.PluginUpdaterApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
