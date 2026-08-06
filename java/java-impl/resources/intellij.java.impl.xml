@@ -24,6 +24,7 @@
     <module name="intellij.jsp"/>
     <module name="intellij.jsp.spi"/>
     <module name="intellij.libraries.caffeine"/>
+    <module name="intellij.libraries.completion.ranking.java"/>
     <module name="intellij.libraries.fastutil"/>
     <module name="intellij.libraries.gson"/>
     <module name="intellij.libraries.guava"/>

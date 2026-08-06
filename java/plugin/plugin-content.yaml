@@ -179,9 +179,6 @@
 - name: lib/modules/intellij.java.impl.jar
   contentModules:
   - name: intellij.java.impl
-    libraries:
-      completion-ranking-java:
-      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-java/0/completion-ranking-java-0.jar
 - name: lib/modules/intellij.java.impl.refactorings.jar
   contentModules:
   - name: intellij.java.impl.refactorings
@@ -281,6 +278,12 @@
 - name: lib/modules/intellij.jvm.analysis.refactoring.jar
   contentModules:
   - name: intellij.jvm.analysis.refactoring
+- name: lib/modules/intellij.libraries.completion.ranking.java.jar
+  contentModules:
+  - name: intellij.libraries.completion.ranking.java
+    libraries:
+      completion-ranking-java:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-java/0/completion-ranking-java-0.jar
 - name: lib/modules/intellij.platform.jps.build.dependencyGraph.jar
   contentModules:
   - name: intellij.platform.jps.build.dependencyGraph

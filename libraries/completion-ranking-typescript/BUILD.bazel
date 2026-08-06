@@ -1,0 +1,41 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.libraries.completion.ranking.typescript` start
+jvm_library(
+    name = "completion-ranking-typescript",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.completion.ranking.typescript",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-completion-ranking-typescript-completion-ranking-typescript"],
+    runtime_deps = ["@lib//:libraries-completion-ranking-typescript-completion-ranking-typescript"],
+)
+
+jvm_library(
+    name = "completion-ranking-typescript_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.completion.ranking.typescript",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-completion-ranking-typescript-completion-ranking-typescript"],
+    runtime_deps = [":completion-ranking-typescript"],
+)
+### auto-generated section `build intellij.libraries.completion.ranking.typescript` end
+
+### auto-generated section `iml intellij.libraries.completion.ranking.typescript` start
+exports_files(
+    [
+        "intellij.libraries.completion.ranking.typescript.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.completion.ranking.typescript` end

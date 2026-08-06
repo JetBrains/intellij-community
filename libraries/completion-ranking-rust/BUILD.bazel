@@ -1,0 +1,41 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.libraries.completion.ranking.rust` start
+jvm_library(
+    name = "completion-ranking-rust",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.completion.ranking.rust",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-completion-ranking-rust-completion-ranking-rust"],
+    runtime_deps = ["@lib//:libraries-completion-ranking-rust-completion-ranking-rust"],
+)
+
+jvm_library(
+    name = "completion-ranking-rust_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.completion.ranking.rust",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-completion-ranking-rust-completion-ranking-rust"],
+    runtime_deps = [":completion-ranking-rust"],
+)
+### auto-generated section `build intellij.libraries.completion.ranking.rust` end
+
+### auto-generated section `iml intellij.libraries.completion.ranking.rust` start
+exports_files(
+    [
+        "intellij.libraries.completion.ranking.rust.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.completion.ranking.rust` end

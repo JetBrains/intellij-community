@@ -115,6 +115,7 @@
     <module name="intellij.java.promo"/>
   </content>
   <content>
+    <module name="intellij.libraries.completion.ranking.java" loading="required"/>
     <module name="intellij.libraries.test.discovery" loading="embedded"/>
   </content>
 </idea-plugin>

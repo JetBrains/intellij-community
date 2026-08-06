@@ -6,7 +6,7 @@ import com.intellij.internal.ml.completion.DecoratingItemsPolicy
 import com.intellij.lang.Language
 
 class ExperimentPhpMLRankingProvider : CatBoostJarCompletionModelProvider(
-  CompletionRankingModelsBundle.message("ml.completion.experiment.model.php"), "php_features_exp", "php_model_exp"), ExperimentModelProvider {
+  CompletionRankingModelsBundle.message("ml.completion.experiment.model.php"), "php_features", "php_model"), ExperimentModelProvider {
 
   override fun isLanguageSupported(language: Language): Boolean = language.id.compareTo("PHP", ignoreCase = true) == 0
 

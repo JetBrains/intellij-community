@@ -210,6 +210,7 @@
   </content>
   <!-- kotlin.jsr223 is included in kotlin plugin as well. To avoid conflicts, it's private and is not included in the common namespace -->
   <content>
+    <module name="intellij.libraries.completion.ranking.kotlin" loading="required"/>
     <module name="intellij.kotlin.jsr223" loading="embedded"/>
   </content>
 </idea-plugin>

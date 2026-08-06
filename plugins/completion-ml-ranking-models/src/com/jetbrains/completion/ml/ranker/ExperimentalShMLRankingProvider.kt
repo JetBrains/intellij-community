@@ -6,7 +6,7 @@ import com.intellij.internal.ml.catboost.CatBoostJarCompletionModelProvider
 import com.intellij.lang.Language
 
 class ExperimentalShMLRankingProvider : CatBoostJarCompletionModelProvider(
-  CompletionRankingModelsBundle.message("ml.completion.experiment.model.sh"), "sh_features_exp", "sh_model_exp"), ExperimentModelProvider {
+  CompletionRankingModelsBundle.message("ml.completion.experiment.model.sh"), "sh_features", "sh_model"), ExperimentModelProvider {
 
   override fun isLanguageSupported(language: Language): Boolean = language.id.compareTo("shell script", ignoreCase = true) == 0
 

@@ -421,9 +421,6 @@
 - name: lib/modules/intellij.kotlin.completion.ml.jar
   contentModules:
   - name: intellij.kotlin.completion.ml
-    libraries:
-      completion-ranking-kotlin:
-      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-kotlin/0/completion-ranking-kotlin-0.jar
 - name: lib/modules/intellij.kotlin.copyright.jar
   contentModules:
   - name: intellij.kotlin.copyright
@@ -574,6 +571,12 @@
 - name: lib/modules/intellij.kotlin.uast.jar
   contentModules:
   - name: intellij.kotlin.uast
+- name: lib/modules/intellij.libraries.completion.ranking.kotlin.jar
+  contentModules:
+  - name: intellij.libraries.completion.ranking.kotlin
+    libraries:
+      completion-ranking-kotlin:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-kotlin/0/completion-ranking-kotlin-0.jar
 - name: lib/modules/intellij.libraries.kotlin.gradle.plugin.idea.jar
   contentModules:
   - name: intellij.libraries.kotlin.gradle.plugin.idea

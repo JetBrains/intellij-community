@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.completion.ranking.java.jar
+  modules:
+  - name: intellij.libraries.completion.ranking.java
+    libraries:
+      completion-ranking-java:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-java/0/completion-ranking-java-0.jar

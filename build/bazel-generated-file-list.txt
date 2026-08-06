@@ -408,6 +408,17 @@ libraries/commons/io
 libraries/commons/lang3
 libraries/commons/logging
 libraries/commons/text
+libraries/completion-ranking-cpp
+libraries/completion-ranking-go
+libraries/completion-ranking-java
+libraries/completion-ranking-js
+libraries/completion-ranking-kotlin
+libraries/completion-ranking-php
+libraries/completion-ranking-ruby
+libraries/completion-ranking-rust
+libraries/completion-ranking-sh
+libraries/completion-ranking-swift
+libraries/completion-ranking-typescript
 libraries/compose-foundation-desktop
 libraries/compose-foundation-desktop-junit
 libraries/compose-runtime-desktop
@@ -1039,6 +1050,7 @@ plugins/compilation-charts
 plugins/compilation-charts/jps-plugin
 plugins/completion-ml-ranking
 plugins/completion-ml-ranking-models
+plugins/completion-ml-ranking-models/libraries
 plugins/compose
 plugins/compose/intellij.compose.ide.plugin.gradleTooling
 plugins/compose/intellij.compose.ide.plugin.k2

@@ -442,20 +442,6 @@ http_file(
 )
 
 http_file(
-    name = "org_jetbrains_intellij_deps_completion-completion-ranking-cpp-0_1_5_http",
-    downloaded_file_path = "completion-ranking-cpp-0.1.5.jar",
-    sha256 = "2c09237e1e0e76d571b77c4f43371d8cd828903ffa442f0e3593894bce3021c3",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/completion/completion-ranking-cpp/0.1.5/completion-ranking-cpp-0.1.5.jar",
-)
-
-http_file(
-    name = "org_jetbrains_intellij_deps_completion-completion-ranking-cpp-0_1_5-sources_http",
-    downloaded_file_path = "completion-ranking-cpp-0.1.5-sources.jar",
-    sha256 = "27872dccd303f78a254959d04b1d854234e02d638209cf1fdbc8b92f4ffa35f8",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/completion/completion-ranking-cpp/0.1.5/completion-ranking-cpp-0.1.5-sources.jar",
-)
-
-http_file(
     name = "org_jetbrains_intellij_deps_completion-completion-ranking-css-0_2_1_http",
     downloaded_file_path = "completion-ranking-css-0.2.1.jar",
     sha256 = "82245f691b5db3a47a6bc0ad260b0b04ba5c929c28293edb8bbbc70d1aeb7d7a",
@@ -484,20 +470,6 @@ http_file(
 )
 
 http_file(
-    name = "org_jetbrains_intellij_deps_completion-completion-ranking-go-0_2_4_http",
-    downloaded_file_path = "completion-ranking-go-0.2.4.jar",
-    sha256 = "a5b09d91c7633fa4dede7c640f189dce258c69aa65874f4eaca0a799a5fc35f9",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/completion/completion-ranking-go/0.2.4/completion-ranking-go-0.2.4.jar",
-)
-
-http_file(
-    name = "org_jetbrains_intellij_deps_completion-completion-ranking-go-0_2_4-sources_http",
-    downloaded_file_path = "completion-ranking-go-0.2.4-sources.jar",
-    sha256 = "19cb500243057e4a7d0c17c57304ad81d2b6a9b25b4e93926b386f20d9da7b96",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/completion/completion-ranking-go/0.2.4/completion-ranking-go-0.2.4-sources.jar",
-)
-
-http_file(
     name = "org_jetbrains_intellij_deps_completion-completion-ranking-html-0_0_1_http",
     downloaded_file_path = "completion-ranking-html-0.0.1.jar",
     sha256 = "c0cd887da7112e3f079e2a5ae28856869f7f1a6919473a4c95d85db5cf85c4aa",
@@ -509,76 +481,6 @@ http_file(
     downloaded_file_path = "completion-ranking-html-0.0.1-sources.jar",
     sha256 = "6cff6cc3b5f3f10fa77204905f8db6bcbd7fa37c5e0ced8661913f4f33e893de",
     url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/completion/completion-ranking-html/0.0.1/completion-ranking-html-0.0.1-sources.jar",
-)
-
-http_file(
-    name = "org_jetbrains_intellij_deps_completion-completion-ranking-java-0_8_2_http",
-    downloaded_file_path = "completion-ranking-java-0.8.2.jar",
-    sha256 = "c1686a3bfa4f29059b39ec51c6d6774fe11933d11aebd95bdb0d94e3ad9d3905",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/completion/completion-ranking-java/0.8.2/completion-ranking-java-0.8.2.jar",
-)
-
-http_file(
-    name = "org_jetbrains_intellij_deps_completion-completion-ranking-java-0_8_2-sources_http",
-    downloaded_file_path = "completion-ranking-java-0.8.2-sources.jar",
-    sha256 = "a04bdbe492cf8008cefb16f9d20eeb22782d3f55375ccce2ff060cd85991a4a8",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/completion/completion-ranking-java/0.8.2/completion-ranking-java-0.8.2-sources.jar",
-)
-
-http_file(
-    name = "org_jetbrains_intellij_deps_completion-completion-ranking-java-0_9_2_http",
-    downloaded_file_path = "completion-ranking-java-0.9.2.jar",
-    sha256 = "2492dead3c2800e114634681b25b6e718df17005107ed4f1d30403e3aedffeb9",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/completion/completion-ranking-java/0.9.2/completion-ranking-java-0.9.2.jar",
-)
-
-http_file(
-    name = "org_jetbrains_intellij_deps_completion-completion-ranking-java-0_9_2-sources_http",
-    downloaded_file_path = "completion-ranking-java-0.9.2-sources.jar",
-    sha256 = "2ba8ba3d429dde5056ed8815c66f76b5b5383256245d04e61023cdd0ffb00d11",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/completion/completion-ranking-java/0.9.2/completion-ranking-java-0.9.2-sources.jar",
-)
-
-http_file(
-    name = "org_jetbrains_intellij_deps_completion-completion-ranking-js-0_3_0_http",
-    downloaded_file_path = "completion-ranking-js-0.3.0.jar",
-    sha256 = "e73816d0b63fa701e916b89f44559f6b8f104501f8b4f2feb300ac513e7a3850",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/completion/completion-ranking-js/0.3.0/completion-ranking-js-0.3.0.jar",
-)
-
-http_file(
-    name = "org_jetbrains_intellij_deps_completion-completion-ranking-js-0_3_0-sources_http",
-    downloaded_file_path = "completion-ranking-js-0.3.0-sources.jar",
-    sha256 = "9c19236dc3975eeccdb1d8278e04f0a3e750140930ace9095d7bdb6c035f3da3",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/completion/completion-ranking-js/0.3.0/completion-ranking-js-0.3.0-sources.jar",
-)
-
-http_file(
-    name = "org_jetbrains_intellij_deps_completion-completion-ranking-kotlin-0_4_1_http",
-    downloaded_file_path = "completion-ranking-kotlin-0.4.1.jar",
-    sha256 = "0be44fc263b4f59517a6dc0c4102d5743dc309ac049ac894f2bea7cd83e570d2",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/completion/completion-ranking-kotlin/0.4.1/completion-ranking-kotlin-0.4.1.jar",
-)
-
-http_file(
-    name = "org_jetbrains_intellij_deps_completion-completion-ranking-kotlin-0_4_1-sources_http",
-    downloaded_file_path = "completion-ranking-kotlin-0.4.1-sources.jar",
-    sha256 = "8836eaec14997a053e0e33f33e89d208755083aea3336f7b2dc77c30a7f701c5",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/completion/completion-ranking-kotlin/0.4.1/completion-ranking-kotlin-0.4.1-sources.jar",
-)
-
-http_file(
-    name = "org_jetbrains_intellij_deps_completion-completion-ranking-php-0_2_4_http",
-    downloaded_file_path = "completion-ranking-php-0.2.4.jar",
-    sha256 = "b73ea2290e95b8f8350a3bcf1c1ab260aed8a249049501f4b175c8dda0f04a78",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/completion/completion-ranking-php/0.2.4/completion-ranking-php-0.2.4.jar",
-)
-
-http_file(
-    name = "org_jetbrains_intellij_deps_completion-completion-ranking-php-0_2_4-sources_http",
-    downloaded_file_path = "completion-ranking-php-0.2.4-sources.jar",
-    sha256 = "593d68e272bfa8645105eb1db775aa71096f943f83d3b0e3a6ec00821482abd2",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/completion/completion-ranking-php/0.2.4/completion-ranking-php-0.2.4-sources.jar",
 )
 
 http_file(
@@ -596,34 +498,6 @@ http_file(
 )
 
 http_file(
-    name = "org_jetbrains_intellij_deps_completion-completion-ranking-ruby-0_2_4_http",
-    downloaded_file_path = "completion-ranking-ruby-0.2.4.jar",
-    sha256 = "10392061789cf7c0101931dbfe851355b3fd33c9249947586d855a9180c439a7",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/completion/completion-ranking-ruby/0.2.4/completion-ranking-ruby-0.2.4.jar",
-)
-
-http_file(
-    name = "org_jetbrains_intellij_deps_completion-completion-ranking-ruby-0_2_4-sources_http",
-    downloaded_file_path = "completion-ranking-ruby-0.2.4-sources.jar",
-    sha256 = "c4f364203176a98f958e4798168ea6a7057f9a3245d0e6d3b7fd392c60a8e1ee",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/completion/completion-ranking-ruby/0.2.4/completion-ranking-ruby-0.2.4-sources.jar",
-)
-
-http_file(
-    name = "org_jetbrains_intellij_deps_completion-completion-ranking-rust-0_4_0_http",
-    downloaded_file_path = "completion-ranking-rust-0.4.0.jar",
-    sha256 = "1a220f42926fc3ac2bfce50c521aced95821ef8e8e7478a00e884acbbdc98248",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/completion/completion-ranking-rust/0.4.0/completion-ranking-rust-0.4.0.jar",
-)
-
-http_file(
-    name = "org_jetbrains_intellij_deps_completion-completion-ranking-rust-0_4_0-sources_http",
-    downloaded_file_path = "completion-ranking-rust-0.4.0-sources.jar",
-    sha256 = "bba254ca4f09897493ab2404ccf57abc242bfd7da39a2b8aba24b9393611eb67",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/completion/completion-ranking-rust/0.4.0/completion-ranking-rust-0.4.0-sources.jar",
-)
-
-http_file(
     name = "org_jetbrains_intellij_deps_completion-completion-ranking-scala-0_4_1_http",
     downloaded_file_path = "completion-ranking-scala-0.4.1.jar",
     sha256 = "2bbdd2aeaa31dc35180490ba20ee3096097e8ca4bcecdd1b80a1c162487d3c15",
@@ -635,48 +509,6 @@ http_file(
     downloaded_file_path = "completion-ranking-scala-0.4.1-sources.jar",
     sha256 = "363c273491f3014bdf16a1fa6d947c59af3f52b544af4ec46148bbf7c512b024",
     url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/completion/completion-ranking-scala/0.4.1/completion-ranking-scala-0.4.1-sources.jar",
-)
-
-http_file(
-    name = "org_jetbrains_intellij_deps_completion-completion-ranking-sh-0_0_1_http",
-    downloaded_file_path = "completion-ranking-sh-0.0.1.jar",
-    sha256 = "2ab8007555b8fdedb7efce607cc77c03da85fcf4ea2e8376b9a352bed5f04f4a",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/completion/completion-ranking-sh/0.0.1/completion-ranking-sh-0.0.1.jar",
-)
-
-http_file(
-    name = "org_jetbrains_intellij_deps_completion-completion-ranking-sh-0_0_1-sources_http",
-    downloaded_file_path = "completion-ranking-sh-0.0.1-sources.jar",
-    sha256 = "3671e7c98b0cd19439802137f883a04b87e263c371274b7c074c7ee209ee937e",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/completion/completion-ranking-sh/0.0.1/completion-ranking-sh-0.0.1-sources.jar",
-)
-
-http_file(
-    name = "org_jetbrains_intellij_deps_completion-completion-ranking-swift-0_1_3_http",
-    downloaded_file_path = "completion-ranking-swift-0.1.3.jar",
-    sha256 = "c1d511070b2900ced87e03443091640ff7758f5064ff14d3503d6c8f50d28c1b",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/completion/completion-ranking-swift/0.1.3/completion-ranking-swift-0.1.3.jar",
-)
-
-http_file(
-    name = "org_jetbrains_intellij_deps_completion-completion-ranking-swift-0_1_3-sources_http",
-    downloaded_file_path = "completion-ranking-swift-0.1.3-sources.jar",
-    sha256 = "cebd3f63bc8b4cfa4441b8beb181308f45cf1758fb72c5377241467b1cc176e6",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/completion/completion-ranking-swift/0.1.3/completion-ranking-swift-0.1.3-sources.jar",
-)
-
-http_file(
-    name = "org_jetbrains_intellij_deps_completion-completion-ranking-typescript-0_4_0_http",
-    downloaded_file_path = "completion-ranking-typescript-0.4.0.jar",
-    sha256 = "1ad40bce28263d3e4ff3e140949211d8812b05a6a0f121e92cb23980832838fc",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/completion/completion-ranking-typescript/0.4.0/completion-ranking-typescript-0.4.0.jar",
-)
-
-http_file(
-    name = "org_jetbrains_intellij_deps_completion-completion-ranking-typescript-0_4_0-sources_http",
-    downloaded_file_path = "completion-ranking-typescript-0.4.0-sources.jar",
-    sha256 = "b9a637422489f031d8494b1dfc37699e7cc88c861579fc2627a4c0c90558935e",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/completion/completion-ranking-typescript/0.4.0/completion-ranking-typescript-0.4.0-sources.jar",
 )
 
 http_file(
@@ -5335,20 +5167,6 @@ http_file(
 )
 
 http_file(
-    name = "org_jetbrains_intellij_deps_completion-completion-ranking-java-0_9_3_http",
-    downloaded_file_path = "completion-ranking-java-0.9.3.jar",
-    sha256 = "e3dcfee71eb13467139a1385152bd28554c79c677738cb617a91a772ea6e9f87",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/completion/completion-ranking-java/0.9.3/completion-ranking-java-0.9.3.jar",
-)
-
-http_file(
-    name = "org_jetbrains_intellij_deps_completion-completion-ranking-java-0_9_3-sources_http",
-    downloaded_file_path = "completion-ranking-java-0.9.3-sources.jar",
-    sha256 = "1b70dfcaf9feb4027ece78a2613c347549917a2bd204245fe0f607307fc792ab",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/completion/completion-ranking-java/0.9.3/completion-ranking-java-0.9.3-sources.jar",
-)
-
-http_file(
     name = "org_apache_ant-ant-1_7_1_http",
     downloaded_file_path = "ant-1.7.1.jar",
     sha256 = "ebe592c9af9fdb6c55f0e6c6fabc76f6e0eec8efdec535398e86c3a883687ebf",
@@ -6151,20 +5969,6 @@ http_file(
     downloaded_file_path = "kotlin-compiler-embeddable-2.4.10-RC2-sources.jar",
     sha256 = "9188676910ac6d9e95a943bc5c2add48e20b8df05b07e2cb22a3c63502cfdf39",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-compiler-embeddable/2.4.10-RC2/kotlin-compiler-embeddable-2.4.10-RC2-sources.jar",
-)
-
-http_file(
-    name = "org_jetbrains_intellij_deps_completion-completion-ranking-kotlin-0_4_0_http",
-    downloaded_file_path = "completion-ranking-kotlin-0.4.0.jar",
-    sha256 = "1849979a0cd2a997e1071ac79741b1a77781357e254138f30eabffebccddfec8",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/completion/completion-ranking-kotlin/0.4.0/completion-ranking-kotlin-0.4.0.jar",
-)
-
-http_file(
-    name = "org_jetbrains_intellij_deps_completion-completion-ranking-kotlin-0_4_0-sources_http",
-    downloaded_file_path = "completion-ranking-kotlin-0.4.0-sources.jar",
-    sha256 = "a2606dc207459370518b5e6ea2a356c1f9552a9eb53613cb9a57ce762ce8d6e9",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/completion/completion-ranking-kotlin/0.4.0/completion-ranking-kotlin-0.4.0-sources.jar",
 )
 
 http_file(
@@ -7964,6 +7768,160 @@ http_file(
     downloaded_file_path = "commons-text-1.15.0-sources.jar",
     sha256 = "6fa2f1db12dc4147094be928a5b54d567cea287df54e4c76b7dfb6096c05439d",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/commons/commons-text/1.15.0/commons-text-1.15.0-sources.jar",
+)
+
+http_file(
+    name = "org_jetbrains_intellij_deps_completion-completion-ranking-cpp-0_1_5_http",
+    downloaded_file_path = "completion-ranking-cpp-0.1.5.jar",
+    sha256 = "2c09237e1e0e76d571b77c4f43371d8cd828903ffa442f0e3593894bce3021c3",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/completion/completion-ranking-cpp/0.1.5/completion-ranking-cpp-0.1.5.jar",
+)
+
+http_file(
+    name = "org_jetbrains_intellij_deps_completion-completion-ranking-cpp-0_1_5-sources_http",
+    downloaded_file_path = "completion-ranking-cpp-0.1.5-sources.jar",
+    sha256 = "27872dccd303f78a254959d04b1d854234e02d638209cf1fdbc8b92f4ffa35f8",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/completion/completion-ranking-cpp/0.1.5/completion-ranking-cpp-0.1.5-sources.jar",
+)
+
+http_file(
+    name = "org_jetbrains_intellij_deps_completion-completion-ranking-go-0_2_4_http",
+    downloaded_file_path = "completion-ranking-go-0.2.4.jar",
+    sha256 = "a5b09d91c7633fa4dede7c640f189dce258c69aa65874f4eaca0a799a5fc35f9",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/completion/completion-ranking-go/0.2.4/completion-ranking-go-0.2.4.jar",
+)
+
+http_file(
+    name = "org_jetbrains_intellij_deps_completion-completion-ranking-go-0_2_4-sources_http",
+    downloaded_file_path = "completion-ranking-go-0.2.4-sources.jar",
+    sha256 = "19cb500243057e4a7d0c17c57304ad81d2b6a9b25b4e93926b386f20d9da7b96",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/completion/completion-ranking-go/0.2.4/completion-ranking-go-0.2.4-sources.jar",
+)
+
+http_file(
+    name = "org_jetbrains_intellij_deps_completion-completion-ranking-java-0_9_3_http",
+    downloaded_file_path = "completion-ranking-java-0.9.3.jar",
+    sha256 = "e3dcfee71eb13467139a1385152bd28554c79c677738cb617a91a772ea6e9f87",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/completion/completion-ranking-java/0.9.3/completion-ranking-java-0.9.3.jar",
+)
+
+http_file(
+    name = "org_jetbrains_intellij_deps_completion-completion-ranking-java-0_9_3-sources_http",
+    downloaded_file_path = "completion-ranking-java-0.9.3-sources.jar",
+    sha256 = "1b70dfcaf9feb4027ece78a2613c347549917a2bd204245fe0f607307fc792ab",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/completion/completion-ranking-java/0.9.3/completion-ranking-java-0.9.3-sources.jar",
+)
+
+http_file(
+    name = "org_jetbrains_intellij_deps_completion-completion-ranking-js-0_3_1_http",
+    downloaded_file_path = "completion-ranking-js-0.3.1.jar",
+    sha256 = "6d85614357a91e1b9b7826076437f8779e5d0c0397756e276be85c880943be7a",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/completion/completion-ranking-js/0.3.1/completion-ranking-js-0.3.1.jar",
+)
+
+http_file(
+    name = "org_jetbrains_intellij_deps_completion-completion-ranking-js-0_3_1-sources_http",
+    downloaded_file_path = "completion-ranking-js-0.3.1-sources.jar",
+    sha256 = "60839f6c48f9b115208bc6b763617725d8912656d84e1666d8cba9417aba5aca",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/completion/completion-ranking-js/0.3.1/completion-ranking-js-0.3.1-sources.jar",
+)
+
+http_file(
+    name = "org_jetbrains_intellij_deps_completion-completion-ranking-kotlin-0_4_1_http",
+    downloaded_file_path = "completion-ranking-kotlin-0.4.1.jar",
+    sha256 = "0be44fc263b4f59517a6dc0c4102d5743dc309ac049ac894f2bea7cd83e570d2",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/completion/completion-ranking-kotlin/0.4.1/completion-ranking-kotlin-0.4.1.jar",
+)
+
+http_file(
+    name = "org_jetbrains_intellij_deps_completion-completion-ranking-kotlin-0_4_1-sources_http",
+    downloaded_file_path = "completion-ranking-kotlin-0.4.1-sources.jar",
+    sha256 = "8836eaec14997a053e0e33f33e89d208755083aea3336f7b2dc77c30a7f701c5",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/completion/completion-ranking-kotlin/0.4.1/completion-ranking-kotlin-0.4.1-sources.jar",
+)
+
+http_file(
+    name = "org_jetbrains_intellij_deps_completion-completion-ranking-php-0_2_5_http",
+    downloaded_file_path = "completion-ranking-php-0.2.5.jar",
+    sha256 = "72c71485e780ef015e2d0f77d011b6efaf8a7fab9612000590fc369e70dc322d",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/completion/completion-ranking-php/0.2.5/completion-ranking-php-0.2.5.jar",
+)
+
+http_file(
+    name = "org_jetbrains_intellij_deps_completion-completion-ranking-php-0_2_5-sources_http",
+    downloaded_file_path = "completion-ranking-php-0.2.5-sources.jar",
+    sha256 = "43f9b8e241e17b82202e5071c0a3e0bd55709b5de7a2265cb8c5e0a2fed2e052",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/completion/completion-ranking-php/0.2.5/completion-ranking-php-0.2.5-sources.jar",
+)
+
+http_file(
+    name = "org_jetbrains_intellij_deps_completion-completion-ranking-ruby-0_2_4_http",
+    downloaded_file_path = "completion-ranking-ruby-0.2.4.jar",
+    sha256 = "10392061789cf7c0101931dbfe851355b3fd33c9249947586d855a9180c439a7",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/completion/completion-ranking-ruby/0.2.4/completion-ranking-ruby-0.2.4.jar",
+)
+
+http_file(
+    name = "org_jetbrains_intellij_deps_completion-completion-ranking-ruby-0_2_4-sources_http",
+    downloaded_file_path = "completion-ranking-ruby-0.2.4-sources.jar",
+    sha256 = "c4f364203176a98f958e4798168ea6a7057f9a3245d0e6d3b7fd392c60a8e1ee",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/completion/completion-ranking-ruby/0.2.4/completion-ranking-ruby-0.2.4-sources.jar",
+)
+
+http_file(
+    name = "org_jetbrains_intellij_deps_completion-completion-ranking-rust-0_4_1_http",
+    downloaded_file_path = "completion-ranking-rust-0.4.1.jar",
+    sha256 = "79cb68d6bd4a11fd52b42fe05028971adfa557909ed3cf490222f8a62d409073",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/completion/completion-ranking-rust/0.4.1/completion-ranking-rust-0.4.1.jar",
+)
+
+http_file(
+    name = "org_jetbrains_intellij_deps_completion-completion-ranking-rust-0_4_1-sources_http",
+    downloaded_file_path = "completion-ranking-rust-0.4.1-sources.jar",
+    sha256 = "8c20df8f286d90832edf8fdb4d04875df8eb3a80c80910f1d467a57c6102dbe3",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/completion/completion-ranking-rust/0.4.1/completion-ranking-rust-0.4.1-sources.jar",
+)
+
+http_file(
+    name = "org_jetbrains_intellij_deps_completion-completion-ranking-sh-0_0_2_http",
+    downloaded_file_path = "completion-ranking-sh-0.0.2.jar",
+    sha256 = "5fd26c04cdbab4538e6ececc33e373094d151de42d5032fb6027de01bc4692b1",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/completion/completion-ranking-sh/0.0.2/completion-ranking-sh-0.0.2.jar",
+)
+
+http_file(
+    name = "org_jetbrains_intellij_deps_completion-completion-ranking-sh-0_0_2-sources_http",
+    downloaded_file_path = "completion-ranking-sh-0.0.2-sources.jar",
+    sha256 = "f9b5317aa9627348739008dfa9d0e82c9e6a8183bba39a89f0854819f1eeefe8",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/completion/completion-ranking-sh/0.0.2/completion-ranking-sh-0.0.2-sources.jar",
+)
+
+http_file(
+    name = "org_jetbrains_intellij_deps_completion-completion-ranking-swift-0_1_3_http",
+    downloaded_file_path = "completion-ranking-swift-0.1.3.jar",
+    sha256 = "c1d511070b2900ced87e03443091640ff7758f5064ff14d3503d6c8f50d28c1b",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/completion/completion-ranking-swift/0.1.3/completion-ranking-swift-0.1.3.jar",
+)
+
+http_file(
+    name = "org_jetbrains_intellij_deps_completion-completion-ranking-swift-0_1_3-sources_http",
+    downloaded_file_path = "completion-ranking-swift-0.1.3-sources.jar",
+    sha256 = "cebd3f63bc8b4cfa4441b8beb181308f45cf1758fb72c5377241467b1cc176e6",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/completion/completion-ranking-swift/0.1.3/completion-ranking-swift-0.1.3-sources.jar",
+)
+
+http_file(
+    name = "org_jetbrains_intellij_deps_completion-completion-ranking-typescript-0_4_1_http",
+    downloaded_file_path = "completion-ranking-typescript-0.4.1.jar",
+    sha256 = "0661303a81a2dbf11431f964880bed115e3f11234a846a9671fb297361f0af24",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/completion/completion-ranking-typescript/0.4.1/completion-ranking-typescript-0.4.1.jar",
+)
+
+http_file(
+    name = "org_jetbrains_intellij_deps_completion-completion-ranking-typescript-0_4_1-sources_http",
+    downloaded_file_path = "completion-ranking-typescript-0.4.1-sources.jar",
+    sha256 = "ae62e52de2d53e0681415dc37613ccb693c9aa75aa8da2cf4e76500a49543092",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/completion/completion-ranking-typescript/0.4.1/completion-ranking-typescript-0.4.1-sources.jar",
 )
 
 http_file(
@@ -15916,20 +15874,6 @@ http_file(
     downloaded_file_path = "commons-discovery-0.4-sources.jar",
     sha256 = "124a762b5bf84ff8a2e779bd9ada27e964103976242d9f72d93d5c6c0705e4ff",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/commons-discovery/commons-discovery/0.4/commons-discovery-0.4-sources.jar",
-)
-
-http_file(
-    name = "org_jetbrains_intellij_deps_completion-completion-ranking-sh-0_0_2_http",
-    downloaded_file_path = "completion-ranking-sh-0.0.2.jar",
-    sha256 = "5fd26c04cdbab4538e6ececc33e373094d151de42d5032fb6027de01bc4692b1",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/completion/completion-ranking-sh/0.0.2/completion-ranking-sh-0.0.2.jar",
-)
-
-http_file(
-    name = "org_jetbrains_intellij_deps_completion-completion-ranking-sh-0_0_2-sources_http",
-    downloaded_file_path = "completion-ranking-sh-0.0.2-sources.jar",
-    sha256 = "f9b5317aa9627348739008dfa9d0e82c9e6a8183bba39a89f0854819f1eeefe8",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/completion/completion-ranking-sh/0.0.2/completion-ranking-sh-0.0.2-sources.jar",
 )
 
 http_file(

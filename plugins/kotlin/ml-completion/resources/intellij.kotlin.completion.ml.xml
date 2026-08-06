@@ -6,6 +6,7 @@
     <module name="intellij.kotlin.base.plugin"/>
     <module name="intellij.kotlin.base.util"/>
     <module name="intellij.kotlin.preferences"/>
+    <module name="intellij.libraries.completion.ranking.kotlin"/>
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.ide.impl"/>

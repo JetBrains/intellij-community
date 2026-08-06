@@ -97,6 +97,9 @@
     <module name="intellij.terminal.sh"/>
     <module name="intellij.terminal.agentsProvider"/>
   </content>
+  <content>
+    <module name="intellij.libraries.completion.ranking.sh" loading="embedded"/>
+  </content>
 
   <resource-bundle>messages.TerminalBundle</resource-bundle>
   <xi:include href="/META-INF/terminal.xml"/>
