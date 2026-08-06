@@ -16,7 +16,6 @@
     <module name="intellij.platform.feedback"/>
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.impl"/>
-    <module name="intellij.platform.ide.progress"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.statistics"/>
     <module name="intellij.platform.util.ex"/>
