@@ -37,7 +37,6 @@ val DEFAULT_BUNDLED_PLUGINS: PersistentList<String> = persistentListOf(
   "intellij.platform.execution.serviceView.plugin",
   "intellij.platform.todo.plugin",
   "intellij.platform.vcs.plugin",
-  "intellij.platform.acp.plugin",
   "intellij.platform.images",
 )
 

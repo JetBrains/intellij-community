@@ -1,3 +1,0 @@
-- name: dist.all/lib/intellij.platform.acp.jar
-  modules:
-  - name: intellij.platform.acp
