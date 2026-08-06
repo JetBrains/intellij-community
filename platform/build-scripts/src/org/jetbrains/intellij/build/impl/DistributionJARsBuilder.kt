@@ -350,9 +350,9 @@ fun collectCoScrambleEntries(descriptors: List<PluginBuildDescriptor>): List<Scr
     if (!layout.scrambleWithPlatform) continue
     for (jarRelative in layout.pathsToScramble) {
       result.add(ScrambleTool.CoScrambleEntry(
-        jarFile = descriptor.dir.resolve(jarRelative),
+        jarFile = descriptor.buildResult.dir.resolve(jarRelative),
         pluginLayout = layout,
-        pluginDir = descriptor.dir,
+        pluginDir = descriptor.buildResult.dir,
       ))
     }
   }
@@ -414,7 +414,7 @@ fun collectAllPluginClasspathDirs(descriptors: List<PluginBuildDescriptor>): Lis
   if (descriptors.isEmpty()) return emptyList()
   val result = LinkedHashSet<Path>()
   for (descriptor in descriptors) {
-    val libDir = descriptor.dir.resolve("lib")
+    val libDir = descriptor.buildResult.dir.resolve("lib")
     if (!Files.isDirectory(libDir)) continue
     Files.walk(libDir).use { stream ->
       stream
@@ -434,7 +434,7 @@ private fun orderBundledPluginDescriptors(descriptors: List<PluginBuildDescripto
     distributionOrder.put(Pair(distribution.os, distribution.arch), index + 1)
   }
   return descriptors.sortedWith(
-    compareBy<PluginBuildDescriptor> { distributionOrder.get(Pair(it.os, it.arch)) ?: Int.MAX_VALUE }
+    compareBy<PluginBuildDescriptor> { distributionOrder.get(Pair(it.buildResult.os, it.buildResult.arch)) ?: Int.MAX_VALUE }
       .thenBy { it.layout.mainModule }
   )
 }

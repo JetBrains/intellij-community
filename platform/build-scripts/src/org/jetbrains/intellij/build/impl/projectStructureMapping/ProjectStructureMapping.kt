@@ -82,10 +82,11 @@ private fun buildPluginContentReport(pluginToEntries: List<PluginBuildDescriptor
     }
 
     val fileToPresentablePath = HashMap<Path, String>()
+    val buildResult = plugin.buildResult
 
     val fileToEntry = TreeMap<String, MutableList<DistributionFileEntry>>()
-    for (entry in plugin.distribution) {
-      if (entry is CustomAssetEntry && entry.relativeOutputFile != null && !entry.path.startsWith(plugin.dir)) {
+    for (entry in buildResult.distribution) {
+      if (entry is CustomAssetEntry && entry.relativeOutputFile != null && !entry.path.startsWith(buildResult.dir)) {
         continue
       }
       val presentablePath = if (entry is CustomAssetEntry && entry.relativeOutputFile != null) {
@@ -93,8 +94,8 @@ private fun buildPluginContentReport(pluginToEntries: List<PluginBuildDescriptor
       }
       else {
         fileToPresentablePath.computeIfAbsent(entry.path) {
-          if (entry.path.startsWith(plugin.dir)) {
-            plugin.dir.relativize(entry.path).toString().replace(File.separatorChar, '/')
+          if (entry.path.startsWith(buildResult.dir)) {
+            buildResult.dir.relativize(entry.path).toString().replace(File.separatorChar, '/')
           }
           else {
             shortenAndNormalizePath(it, buildPaths)
@@ -261,11 +262,12 @@ private fun writePlugin(writer: JsonGenerator, plugin: PluginBuildDescriptor) {
 private fun writePluginStart(writer: JsonGenerator, plugin: PluginBuildDescriptor) {
   writer.writeStartObject()
   writer.writeStringProperty("mainModule", plugin.layout.mainModule)
-  if (plugin.os != null) {
-    writer.writeStringProperty("os", plugin.os.osId)
+  val buildResult = plugin.buildResult
+  if (buildResult.os != null) {
+    writer.writeStringProperty("os", buildResult.os.osId)
   }
-  if (plugin.arch != null) {
-    writer.writeStringProperty("arch", plugin.arch.name)
+  if (buildResult.arch != null) {
+    writer.writeStringProperty("arch", buildResult.arch.name)
   }
 }
 
@@ -524,7 +526,10 @@ private fun writeModuleDependents(writer: JsonGenerator, data: ProjectLibraryDat
 }
 
 private fun createPluginKey(plugin: PluginBuildDescriptor): String {
-  return plugin.layout.mainModule + (if (plugin.os == null) "" else " (os=${plugin.os})") + (if (plugin.arch == null) "" else " (arch=${plugin.arch.name})")
+  val buildResult = plugin.buildResult
+  val osSuffix = if (buildResult.os == null) "" else " (os=${buildResult.os})"
+  val archSuffix = if (buildResult.arch == null) "" else " (arch=${buildResult.arch.name})"
+  return plugin.layout.mainModule + osSuffix + archSuffix
 }
 
 private inline fun <reified T : LibraryFileEntry> groupLibraryEntries(

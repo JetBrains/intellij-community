@@ -14,6 +14,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.classPath.PluginBuildDescriptor
+import org.jetbrains.intellij.build.classPath.PluginBuildResult
 import org.jetbrains.intellij.build.classPath.getEmbeddedProductTempPluginDir
 import org.jetbrains.intellij.build.classPath.resolveAndCacheDescriptorForEmbeddedProduct
 import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
@@ -55,7 +56,7 @@ internal suspend fun generateRuntimeModuleRepositoryForDistribution(
 
   val hasOsSpecificPlatformEntries = contentReport.platform.any { entry -> osSpecificDistPaths.values.any { entry.path.startsWith(it) } }
   val commonTargetDirectory = context.paths.distAllDir
-  if (!hasOsSpecificPlatformEntries && contentReport.bundledPlugins.all { it.os == null && it.arch == null }) {
+  if (!hasOsSpecificPlatformEntries && contentReport.bundledPlugins.all { it.buildResult.os == null && it.buildResult.arch == null }) {
     generateRepositoryForDistribution(
       targetDirectory = commonTargetDirectory,
       platformEntries = contentReport.platform,
@@ -72,7 +73,10 @@ internal suspend fun generateRuntimeModuleRepositoryForDistribution(
       .forEach { distribution ->
         val targetDirectory = osSpecificDistPaths.getValue(distribution)
         val actualPlatformEntries = contentReport.platform.filter { it.path.startsWith(commonTargetDirectory) || it.path.startsWith(targetDirectory) }
-        val actualPlugins = contentReport.bundledPlugins.filter { (it.os == null || it.os == distribution.os) && (it.arch == null || it.arch == distribution.arch) }
+        val actualPlugins = contentReport.bundledPlugins.filter {
+          (it.buildResult.os == null || it.buildResult.os == distribution.os) &&
+          (it.buildResult.arch == null || it.buildResult.arch == distribution.arch)
+        }
         generateRepositoryForDistribution(
           targetDirectory = targetDirectory,
           platformEntries = actualPlatformEntries,
@@ -193,7 +197,7 @@ private suspend fun generateRepositoryForDistribution(
   )
   val pluginDescriptorsData = removeDataForSuppressedPlugins(originalPluginDescriptorsData, context)
   val pluginConfigurationModuleToDistributionEntries =
-    (bundledPlugins + additionalFrontendOnlyPlugins).associateByTo(HashMap(), { it.layout.mainModule }, { it.distribution })
+    (bundledPlugins + additionalFrontendOnlyPlugins).associateByTo(HashMap(), { it.layout.mainModule }, { it.buildResult.distribution })
   pluginConfigurationModuleToDistributionEntries[corePluginDescriptorModuleName] = platformEntries
   val pluginHeadersData = try {
     generateRuntimePluginHeaders(pluginDescriptorsData, pluginConfigurationModuleToDistributionEntries, entryPathRelativizer, context.project)
@@ -288,11 +292,13 @@ private suspend fun computeDescriptorsForAdditionalFrontendPlugins(
 
     val additionalFrontendPlugins = mutableListOf(
       PluginBuildDescriptor(
-        dir = embeddedFrontendTargetDir,
-        os = null,
-        arch = null,
         layout = PluginLayout.plugin(embeddedFrontendDescriptorModuleName),
-        distribution = embeddedFrontendPlatformEntries,
+        buildResult = PluginBuildResult(
+          dir = embeddedFrontendTargetDir,
+          os = null,
+          arch = null,
+          distribution = embeddedFrontendPlatformEntries,
+        ),
       )
     )
 

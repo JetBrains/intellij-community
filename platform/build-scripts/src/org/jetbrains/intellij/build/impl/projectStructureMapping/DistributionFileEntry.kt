@@ -13,13 +13,13 @@ internal data class ContentReport(
 ) {
   fun all(): Sequence<DistributionFileEntry> = sequence {
     yieldAll(platform)
-    yieldAll(bundledPlugins.flatMap { it.distribution })
-    yieldAll(nonBundledPlugins.flatMap { it.distribution })
+    yieldAll(bundledPlugins.flatMap { it.buildResult.distribution })
+    yieldAll(nonBundledPlugins.flatMap { it.buildResult.distribution })
   }
 
   fun bundled(): Sequence<DistributionFileEntry> = sequence {
     yieldAll(platform)
-    yieldAll(bundledPlugins.flatMap { it.distribution })
+    yieldAll(bundledPlugins.flatMap { it.buildResult.distribution })
   }
 }
 

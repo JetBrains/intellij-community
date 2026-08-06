@@ -107,9 +107,10 @@ internal suspend fun generateCoreClasspathFromPlugins(
   val classPathResult = LinkedHashSet<Path>()
   for (pluginEntity in pluginEntities) {
     val pluginLayout = pluginEntity.layout
-    val cacheContainer = platformLayout.descriptorCacheContainer.forPlugin(pluginEntity.dir)
+    val buildResult = pluginEntity.buildResult
+    val cacheContainer = platformLayout.descriptorCacheContainer.forPlugin(buildResult.dir)
     val classPathModules = getEmbeddedContentModulesOfPluginsWithUseIdeaClassloader(pluginLayout.mainModule, cacheContainer, context)
-    for (distributionEntry in pluginEntity.distribution) {
+    for (distributionEntry in buildResult.distribution) {
       if (distributionEntry is ModuleOwnedFileEntry && distributionEntry.owner?.moduleName in classPathModules) {
         classPathResult.add(distributionEntry.path)
       }
@@ -147,12 +148,18 @@ internal suspend fun getEmbeddedContentModulesOfPluginsWithUseIdeaClassloader(
 
 /** Build-scripts internal; not part of the public build API. */
 @org.jetbrains.annotations.ApiStatus.Internal
-data class PluginBuildDescriptor(
+data class PluginBuildResult(
   @JvmField val dir: Path,
   @JvmField val os: OsFamily?,
   @JvmField val arch: JvmArchitecture?,
-  @JvmField val layout: PluginLayout,
   @JvmField val distribution: Collection<DistributionFileEntry>,
+)
+
+/** Build-scripts internal; not part of the public build API. */
+@org.jetbrains.annotations.ApiStatus.Internal
+data class PluginBuildDescriptor(
+  @JvmField val layout: PluginLayout,
+  @JvmField val buildResult: PluginBuildResult,
 )
 
 @Suppress("BlockingMethodInNonBlockingContext")
@@ -224,11 +231,12 @@ internal suspend fun generatePluginClassPath(
 
   val uniqueGuard = HashSet<Path>()
   for (pluginAsset in pluginEntries) {
-    val pluginDir = pluginAsset.dir
+    val buildResult = pluginAsset.buildResult
+    val pluginDir = buildResult.dir
 
-    val files = ArrayList<Path>(pluginAsset.distribution.size)
+    val files = ArrayList<Path>(buildResult.distribution.size)
     uniqueGuard.clear()
-    for (entry in pluginAsset.distribution) {
+    for (entry in buildResult.distribution) {
       val relativeOutputFile = entry.relativeOutputFile
       if (relativeOutputFile != null && relativeOutputFile.contains('/')) {
         continue

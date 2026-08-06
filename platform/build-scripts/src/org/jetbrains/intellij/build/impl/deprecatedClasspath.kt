@@ -10,6 +10,7 @@ import org.jetbrains.intellij.build.MAVEN_REPO
 import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
 import org.jetbrains.intellij.build.classPath.DescriptorSearchScope
 import org.jetbrains.intellij.build.classPath.PluginBuildDescriptor
+import org.jetbrains.intellij.build.classPath.PluginBuildResult
 import org.jetbrains.intellij.build.classPath.XIncludeElementResolverImpl
 import org.jetbrains.intellij.build.classPath.resolveIncludes
 import org.jetbrains.intellij.build.getUnprocessedPluginXmlContent
@@ -51,7 +52,7 @@ suspend fun createIdeClassPath(platformLayout: PlatformLayout, context: BuildCon
   }
 
   val pluginDir = context.paths.distAllDir.resolve(PLUGINS_DIRECTORY)
-  for (entry in contentReport.second.flatMap { it.distribution }) {
+  for (entry in contentReport.second.flatMap { it.buildResult.distribution }) {
     val relativePath = pluginDir.relativize(entry.path)
     // for plugins, our classloaders load JARs only from the "lib/" and "lib/modules/" directories
     if (!(relativePath.nameCount in 3..4 && relativePath.getName(1).toString() == LIB_DIRECTORY &&
@@ -157,7 +158,10 @@ private suspend fun generateProjectStructureMapping(
       descriptorCache = pluginDescriptorCache,
       context = context,
     )
-    entries.add(PluginBuildDescriptor(dir = targetDir, os = null, arch = null, layout = pluginLayout, distribution = pluginEntries))
+    entries.add(PluginBuildDescriptor(
+      layout = pluginLayout,
+      buildResult = PluginBuildResult(dir = targetDir, os = null, arch = null, distribution = pluginEntries),
+    ))
   }
   libDirLayout.await() to entries
 }

@@ -505,10 +505,10 @@ private suspend fun computeIdeFingerprint(
   val pluginDistributionEntries = pluginDistributionEntriesDeferred.await().pluginEntries
   hasher.putInt(pluginDistributionEntries.size)
   for (plugin in pluginDistributionEntries) {
-    hasher.putInt(plugin.distribution.size)
+    hasher.putInt(plugin.buildResult.distribution.size)
 
     debug?.append('\n')?.append(plugin.layout.mainModule)?.append('\n')
-    for (entry in plugin.distribution) {
+    for (entry in plugin.buildResult.distribution) {
       hasher.putLong(entry.hash)
       debug?.append("  ")?.append(Long.toUnsignedString(entry.hash, Character.MAX_RADIX))?.append(" ")?.append(relativePath(entry.path))?.append('\n')
     }

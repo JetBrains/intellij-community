@@ -162,10 +162,11 @@ internal suspend fun writeBundledPluginInfoAfterScramble(
   context: BuildContext,
 ) {
   val pluginDirs = getPluginDirs(context, isUpdateFromSources)
-  val (commonDescriptors, specificDescriptorsList) = descriptors.partition { it.os == null && it.arch == null }
+  val (commonDescriptors, specificDescriptorsList) = descriptors.partition { it.buildResult.os == null && it.buildResult.arch == null }
   val specific = LinkedHashMap<SupportedDistribution, MutableList<PluginBuildDescriptor>>()
   for (descriptor in specificDescriptorsList) {
-    val dist = SupportedDistribution(os = descriptor.os!!, arch = descriptor.arch!!, libcImpl = LibcImpl.current(descriptor.os))
+    val buildResult = descriptor.buildResult
+    val dist = SupportedDistribution(os = buildResult.os!!, arch = buildResult.arch!!, libcImpl = LibcImpl.current(buildResult.os))
     specific.getOrPut(dist) { mutableListOf() }.add(descriptor)
   }
   writePluginInfo(

@@ -67,13 +67,15 @@ internal fun fetchPluginDescriptorsData(
       val pluginWithEmbeddedFrontend = bundledPlugins.find { plugin ->
         plugin.layout.includedModules.any { it.moduleName == embeddedFrontendDescriptorModuleName } && plugin.layout.includedModules.size > 1
       } ?: error("Cannot find plugin with embedded frontend $embeddedFrontendDescriptorModuleName")
-      listOf(platformContainer, platformLayout.descriptorCacheContainer.forPlugin(pluginWithEmbeddedFrontend.dir))
+      listOf(platformContainer, platformLayout.descriptorCacheContainer.forPlugin(pluginWithEmbeddedFrontend.buildResult.dir))
     }
     else emptyList()
 
   fun fetchPluginDescriptorDataForHeader(plugin: PluginBuildDescriptor, additionalFrontendOnlyPlugin: Boolean): PluginDescriptorDataForHeader {
-    val descriptorContainer = platformLayout.descriptorCacheContainer.forPlugin(plugin.dir)
-    val fileContent = descriptorContainer.getCachedFileData(PLUGIN_XML_RELATIVE_PATH) ?: error("Cannot find plugin.xml for ${plugin.dir} in the cache")
+    val descriptorContainer = platformLayout.descriptorCacheContainer.forPlugin(plugin.buildResult.dir)
+    val fileContent = descriptorContainer.getCachedFileData(PLUGIN_XML_RELATIVE_PATH) ?: error(
+      "Cannot find plugin.xml for ${plugin.buildResult.dir} in the cache"
+    )
     return fetchPluginDescriptorDataForHeader(
       fileContent,
       pluginDescriptorJpsModuleName = plugin.layout.mainModule,
