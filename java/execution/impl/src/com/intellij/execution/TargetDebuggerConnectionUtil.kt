@@ -1,117 +1,102 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.execution;
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.execution
 
-import com.intellij.debugger.impl.RemoteConnectionBuilder;
-import com.intellij.debugger.settings.DebuggerSettings;
-import com.intellij.execution.configurations.JavaCommandLineState;
-import com.intellij.execution.configurations.JavaParameters;
-import com.intellij.execution.configurations.RemoteConnection;
-import com.intellij.execution.executors.DefaultDebugExecutor;
-import com.intellij.execution.target.TargetEnvironment;
-import com.intellij.execution.target.TargetEnvironmentConfiguration;
-import com.intellij.execution.target.TargetEnvironmentRequest;
-import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration;
-import com.intellij.execution.target.local.LocalTargetEnvironmentRequest;
-import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.openapi.util.text.StringUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.debugger.impl.RemoteConnectionBuilder
+import com.intellij.debugger.settings.DebuggerSettings
+import com.intellij.execution.configurations.JavaCommandLineState
+import com.intellij.execution.configurations.JavaParameters
+import com.intellij.execution.executors.DefaultDebugExecutor
+import com.intellij.execution.target.TargetEnvironment.TargetPortBinding
+import com.intellij.execution.target.TargetEnvironmentRequest
+import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration
+import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
+import com.intellij.openapi.projectRoots.JavaSdkVersion
 
-import java.util.Optional;
+internal object TargetDebuggerConnectionUtil {
 
-@ApiStatus.Internal
-public final class TargetDebuggerConnectionUtil {
-  private TargetDebuggerConnectionUtil() { }
-
-  private static @Nullable Integer requiredDebuggerTargetPort(@NotNull JavaCommandLineState javaCommandLineState,
-                                                              @NotNull TargetEnvironmentRequest request) {
+  private fun requiredDebuggerTargetPort(javaCommandLineState: JavaCommandLineState, request: TargetEnvironmentRequest): Int? {
     // TODO Checking for a specific target is a gap in the idea of API. This check was introduced because the Java debugger
     //  runs in the server mode for local targets and in the client mode for other targets. But why?
     //  Anyway, the server mode requires a remote TCP forwarding that can't always be acquired for the Docker target.
     //  Maybe replace this method with something like `if (!request.isLocalPortForwardingSupported())`?
-    if (DefaultDebugExecutor.EXECUTOR_ID.equalsIgnoreCase(javaCommandLineState.getEnvironment().getExecutor().getId()) &&
-        !(request instanceof LocalTargetEnvironmentRequest)) {
-      return 12345;
+    return if (
+      DefaultDebugExecutor.EXECUTOR_ID.equals(javaCommandLineState.environment.executor.getId(), ignoreCase = true)
+      && request !is LocalTargetEnvironmentRequest
+    ) {
+      12345
     }
     else {
-      return null;
+      null
     }
   }
 
   /**
    * Performs preliminary work to configure debugger connection parameters to
    * start the Java process with. The method adds the debugger connection
-   * parameters to the provided {@link JavaCommandLineState}. Then it returns
-   * {@link TargetDebuggerConnection} object that could be used later to
+   * parameters to the provided [JavaCommandLineState]. Then it returns
+   * [TargetDebuggerConnection] object that could be used later to
    * resolve the connection parameters from IDE side against created
-   * {@link TargetEnvironment}.
-   * <p>
-   * Does nothing and returns {@code null} for
-   * {@link LocalTargetEnvironmentRequest} or an executor other than
-   * {@link DefaultDebugExecutor}.
+   * [TargetEnvironment].
+   *
+   *
+   * Does nothing and returns `null` for
+   * [LocalTargetEnvironmentRequest] or an executor other than
+   * [DefaultDebugExecutor].
    *
    * @param javaCommandLineState the command line state that is going to be
-   *                             modified
+   * modified
    * @param request              the target environment request
-   * @return the constructed {@link TargetDebuggerConnection} object for
-   * further resolution of connection parameters from IDE side or {@code null}
-   * in the case of inappropriate {@link Executor} or the local type of the
-   * {@code request}.
+   * @return the constructed [TargetDebuggerConnection] object for
+   * further resolution of connection parameters from IDE side or `null`
+   * in the case of inappropriate [Executor] or the local type of the
+   * `request`.
    */
-  public static @Nullable TargetDebuggerConnection prepareDebuggerConnection(@NotNull JavaCommandLineState javaCommandLineState,
-                                                                   @NotNull TargetEnvironmentRequest request) {
-    final int remotePort;
-    JavaParameters javaParameters;
-    try {
-      javaParameters = javaCommandLineState.getJavaParameters();
-    }
-    catch (ExecutionException e) {
-      return null;
-    }
+  @JvmStatic
+  fun prepareDebuggerConnection(
+    javaCommandLineState: JavaCommandLineState,
+    request: TargetEnvironmentRequest,
+  ): TargetDebuggerConnection? {
+    val javaParameters: JavaParameters = runCatching {
+      javaCommandLineState.javaParameters
+    }.getOrNull() ?: return null
 
-    {
-      Integer remotePort2 = requiredDebuggerTargetPort(javaCommandLineState, request);
-      if (remotePort2 == null) {
-        return null;
-      }
-      remotePort = remotePort2;
-    }
+    val remotePort = requiredDebuggerTargetPort(javaCommandLineState, request) ?: return null
 
     try {
-      final String remoteAddressForVmParams;
+      val java9plus: Boolean = request.isJava9Plus()
 
-      final boolean java9plus = Optional.ofNullable(request.getConfiguration())
-        .map(TargetEnvironmentConfiguration::getRuntimes)
-        .map(list -> list.findByType(JavaLanguageRuntimeConfiguration.class))
-        .map(JavaLanguageRuntimeConfiguration::getJavaVersionString)
-        .filter(StringUtil::isNotEmpty)
-        .map(JavaSdkVersion::fromVersionString)
-        .map(v -> v.isAtLeast(JavaSdkVersion.JDK_1_9))
-        .orElse(false);
-
-      if (java9plus) {
+      val remoteAddressForVmParams: String = if (java9plus) {
         // IDEA-225182 - hack: pass "host:port" to construct correct VM params, then adjust the connection
         // IDEA-265364 - enforce ipv4 here with explicit 0.0.0.0 address
-        remoteAddressForVmParams = "0.0.0.0:" + remotePort;
+        "0.0.0.0:$remotePort"
       }
       else {
-        remoteAddressForVmParams = String.valueOf(remotePort);
+        remotePort.toString()
       }
 
-      RemoteConnection remoteConnection = new RemoteConnectionBuilder(false, DebuggerSettings.SOCKET_TRANSPORT, remoteAddressForVmParams)
+      val remoteConnection = RemoteConnectionBuilder(false, DebuggerSettings.SOCKET_TRANSPORT, remoteAddressForVmParams)
         .suspend(true)
-        .create(javaParameters);
+        .create(javaParameters)
 
-      remoteConnection.setApplicationAddress(String.valueOf(remotePort));
+      remoteConnection.applicationAddress = remotePort.toString()
       if (java9plus) {
-        remoteConnection.setApplicationHostName("*");
+        remoteConnection.applicationHostName = "*"
       }
 
-      return new TargetDebuggerConnection(remoteConnection, new TargetEnvironment.TargetPortBinding(null, remotePort));
+      return TargetDebuggerConnection(remoteConnection, TargetPortBinding(null, remotePort))
     }
-    catch (ExecutionException e) {
-      return null;
+    catch (_: ExecutionException) {
+      return null
     }
+  }
+
+  private fun TargetEnvironmentRequest.isJava9Plus(): Boolean {
+    val javaVersion = configuration?.runtimes
+                        ?.findByType(JavaLanguageRuntimeConfiguration::class.java)
+                        ?.javaVersionString ?: return false
+    if (javaVersion.isEmpty()) {
+      return false
+    }
+    return JavaSdkVersion.fromVersionString(javaVersion)?.isAtLeast(JavaSdkVersion.JDK_1_9) ?: false
   }
 }
