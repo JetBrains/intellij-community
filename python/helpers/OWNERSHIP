@@ -1,10 +1,1 @@
 owner 'PyCharm Runtime'
-
-/jupyter_debug/**
-/pycharm_jupyter/**
-owner 'Jupyter Runtime and Debugger'
-
-/pycharm_matplotlib_backend/**
-/pycharm_plotly_backend/**
-/pycharm_tables/**
-owner 'Jupyter Data and Visualization'
