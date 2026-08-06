@@ -17,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 public class BreakpointState {
   private String myTypeId;
   private boolean myEnabled;
+  private boolean myTemporary;
   private Element myPropertiesElement;
   private SuspendPolicy mySuspendPolicy = SuspendPolicy.ALL;
   private boolean myLogMessage;
@@ -49,6 +50,15 @@ public class BreakpointState {
 
   public void setEnabled(final boolean enabled) {
     myEnabled = enabled;
+  }
+
+  @Tag("temporary")
+  public boolean isTemporary() {
+    return myTemporary;
+  }
+
+  public void setTemporary(boolean temporary) {
+    myTemporary = temporary;
   }
 
   @Attribute("type")

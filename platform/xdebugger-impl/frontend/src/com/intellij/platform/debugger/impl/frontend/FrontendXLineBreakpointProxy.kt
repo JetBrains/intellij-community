@@ -152,18 +152,6 @@ internal class FrontendXLineBreakpointProxy(
     }
   }
 
-  override fun isTemporary(): Boolean {
-    return lineBreakpointInfo.isTemporary
-  }
-
-  override fun setTemporary(isTemporary: Boolean) {
-    updateLineBreakpointStateIfNeeded(newValue = isTemporary,
-                                      getter = { it.isTemporary },
-                                      copy = { it.copy(isTemporary = isTemporary) }) { requestId ->
-      XBreakpointApi.getInstance().setTemporary(id, requestId, isTemporary)
-    }
-  }
-
   override fun getSourcePosition(): XSourcePosition? {
     if (lineSourcePosition != null) {
       return lineSourcePosition

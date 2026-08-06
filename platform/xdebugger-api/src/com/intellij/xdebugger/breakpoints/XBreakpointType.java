@@ -71,6 +71,13 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
     return mySuspendThreadSupported;
   }
 
+  /**
+   * @return {@code true} if this type supports removing a breakpoint after its first suspending hit
+   */
+  public boolean isTemporaryBreakpointSupported() {
+    return false;
+  }
+
   public SuspendPolicy getDefaultSuspendPolicy() {
     return SuspendPolicy.ALL;
   }

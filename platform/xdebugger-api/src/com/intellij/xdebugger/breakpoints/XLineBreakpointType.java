@@ -45,6 +45,11 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
     super(id, title);
   }
 
+  @Override
+  public boolean isTemporaryBreakpointSupported() {
+    return true;
+  }
+
   /**
    * Return {@code true} if breakpoint can be put on {@code line} in {@code file}.
    */

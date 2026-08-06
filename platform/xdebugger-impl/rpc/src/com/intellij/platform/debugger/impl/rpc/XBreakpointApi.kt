@@ -103,6 +103,7 @@ data class XBreakpointDtoState(
   val isConditionEnabled: Boolean,
   val conditionExpression: XExpressionDto?,
   val enabled: Boolean,
+  val isTemporary: Boolean,
   val suspendPolicy: SuspendPolicy,
   val userDescription: String?,
   val group: String?,

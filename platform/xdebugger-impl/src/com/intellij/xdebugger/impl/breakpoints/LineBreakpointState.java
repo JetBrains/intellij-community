@@ -12,7 +12,6 @@ import org.jetbrains.annotations.NotNull;
 public class LineBreakpointState extends BreakpointState {
   private String myFileUrl;
   private int myLine;
-  private boolean myTemporary;
   private @NotNull XLineBreakpointVerticalPlacement myPlacement = XLineBreakpointVerticalPlacement.ON_LINE;
 
   public LineBreakpointState() {
@@ -28,7 +27,7 @@ public class LineBreakpointState extends BreakpointState {
     super(enabled, typeId, timeStamp, suspendPolicy);
     myFileUrl = fileUrl;
     myLine = line;
-    myTemporary = temporary;
+    setTemporary(temporary);
     myPlacement = placement;
   }
 
@@ -48,14 +47,6 @@ public class LineBreakpointState extends BreakpointState {
 
   public void setLine(final int line) {
     myLine = line;
-  }
-
-  public boolean isTemporary() {
-    return myTemporary;
-  }
-
-  public void setTemporary(boolean temporary) {
-    myTemporary = temporary;
   }
 
   @Tag("placement")
