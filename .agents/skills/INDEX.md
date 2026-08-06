@@ -7,6 +7,7 @@ One row per skill in this directory. `SKILL.md` holds the full instructions.
 | skill | description |
 | --- | --- |
 | [actions](actions/SKILL.md) | Implement or change IntelliJ `AnAction` actions and registrations. |
+| [bazel-test-migration](bazel-test-migration/SKILL.md) | Migrate IntelliJ JPS module tests to Bazel and debug Bazel-only test/runtime/plugin dependency failures. |
 | [code-style](code-style/SKILL.md) | Apply IntelliJ Kotlin and Java code style when writing or reviewing. |
 | [commits](commits/SKILL.md) | Create, amend, or rename IntelliJ commits and write commit messages. |
 | [compare-python-typecheckers](compare-python-typecheckers/SKILL.md) | Compare Python type inference with ty, pyrefly, basedpyright, and mypy. |
