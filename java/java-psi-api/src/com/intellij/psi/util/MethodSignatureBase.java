@@ -4,7 +4,6 @@ package com.intellij.psi.util;
 import com.intellij.psi.PsiEllipsisType;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiParameterList;
-import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeParameter;
@@ -86,30 +85,9 @@ public abstract class MethodSignatureBase implements MethodSignature {
   public int hashCode() {
     int hash = myHash;
     if (hash == 0) {
-      // Erased parameter types must not contribute to the hash code when the erasure of the signature depends on the order in
-      // which the bounds of its type parameters are declared: the erasure of a type variable is the erasure of its leftmost
-      // bound (JLS 4.6), while that order does not affect signature equality (JLS 8.4.4).
-      // Primitive parameter types are always safe to use: equal signatures have identical primitive parameters,
-      // see MethodSignatureUtil.areSignaturesEqualLightweight.
-      final boolean unstableErasure = hasIntersectionBound();
-      hash = getName().hashCode();
-      final PsiType[] parameterTypes = unstableErasure ? getParameterTypes() : getErasedParameterTypes();
-      hash = 31 * hash + parameterTypes.length;
-      for (int i = 0, length = Math.min(3, parameterTypes.length); i < length; i++) {
-        PsiType type = parameterTypes[i];
-        if (type == null || unstableErasure && !(type instanceof PsiPrimitiveType)) continue;
-        hash = 31 * hash + type.hashCode();
-      }
-      myHash = hash;
+      myHash = hash = MethodSignatureUtil.calcErasedSignatureHashCode(this);
     }
     return hash;
-  }
-
-  private boolean hasIntersectionBound() {
-    for (PsiTypeParameter typeParameter : myTypeParameters) {
-      if (typeParameter.getExtendsListTypes().length > 1) return true;
-    }
-    return false;
   }
 
   @Override
