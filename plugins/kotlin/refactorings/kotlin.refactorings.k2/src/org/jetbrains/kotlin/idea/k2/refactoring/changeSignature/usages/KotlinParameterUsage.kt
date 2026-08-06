@@ -122,7 +122,7 @@ internal class KotlinImplicitThisUsage(
     }
 }
 
-fun PsiElement.qualifyNestedThisExpressions() {
+internal fun PsiElement.qualifyNestedThisExpressions() {
     forEachDescendantOfType<KtThisExpression> { thisExpression ->
         val labelQualifier = thisExpression.labelQualifier
         if (labelQualifier != null) {

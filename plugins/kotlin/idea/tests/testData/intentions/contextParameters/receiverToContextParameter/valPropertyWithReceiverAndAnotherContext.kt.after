@@ -1,0 +1,6 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+
+context(i: Int, string: String)
+var foo: Int
+    get() = i + string.length
+    set(value) { println(string) }

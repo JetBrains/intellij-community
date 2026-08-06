@@ -49,6 +49,7 @@ import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtPrimaryConstructor
+import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.KtThisExpression
@@ -104,7 +105,7 @@ internal object KotlinChangeSignatureUsageSearcher {
                 }
             }
         }
-        if (ktCallableDeclaration is KtFunction &&
+        if ((ktCallableDeclaration is KtFunction || ktCallableDeclaration is KtProperty) &&
             changeInfo is KotlinChangeInfo &&
             (changeInfo.oldReceiverInfo == null || changeInfo.newParameters.any { it.oldIndex == changeInfo.oldReceiverInfo.oldIndex && !it.wasContextParameter }) &&
             !(changeInfo.receiverParameterInfo?.oldIndex == changeInfo.oldReceiverInfo?.oldIndex && changeInfo.receiverParameterInfo?.wasContextParameter == changeInfo.oldReceiverInfo?.isContextParameter)

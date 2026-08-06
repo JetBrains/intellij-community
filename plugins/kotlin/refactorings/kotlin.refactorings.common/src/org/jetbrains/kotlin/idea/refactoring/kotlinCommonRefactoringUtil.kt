@@ -75,6 +75,7 @@ import org.jetbrains.kotlin.psi.KtQualifiedExpression
 import org.jetbrains.kotlin.psi.KtSafeQualifiedExpression
 import org.jetbrains.kotlin.psi.KtScript
 import org.jetbrains.kotlin.psi.KtSecondaryConstructor
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
@@ -166,6 +167,11 @@ fun KtCallExpression.isComplexCallWithLambdaArgument(): Boolean = when {
     valueArguments.count { it.getArgumentExpression()?.unpackFunctionLiteral() != null } > 1 -> true
     else -> false
 }
+
+fun KtSimpleNameExpression.updateSimpleName(changeInfo: ChangeInfo): PsiElement? =
+    if (changeInfo.isNameChanged) {
+        getReferencedNameElement().replace(KtPsiFactory(project).createExpression(changeInfo.newName))
+    } else null
 
 fun KtCallExpression.moveFunctionLiteralOutsideParentheses(moveCaretTo: ((Int) -> Unit)? = null) {
     assert(lambdaArguments.isEmpty())

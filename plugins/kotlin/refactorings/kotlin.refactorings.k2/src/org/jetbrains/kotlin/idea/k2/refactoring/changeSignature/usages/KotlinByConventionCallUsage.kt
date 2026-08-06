@@ -68,7 +68,6 @@ internal class KotlinByConventionCallUsage(
             changeInfo = changeInfo,
             element = callExpression,
             allUsages = allUsages,
-            skipRedundantArgumentList = true,
         ) as? KtExpression
 
         val qualifiedCall = newExpression?.getQualifiedExpressionForSelectorOrThis() as? KtDotQualifiedExpression

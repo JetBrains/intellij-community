@@ -116,7 +116,7 @@ class KotlinChangeInfo(
             if (value != null && value !in newParameters) {
                 newParameters.add(value)
             }
-            if (value == null && method is KtValVarKeywordOwner && field in newParameters) {
+            if (value == null && method is KtValVarKeywordOwner && field in newParameters && field?.isContextParameter != true) {
                 newParameters.remove(field)
             }
             field = value
