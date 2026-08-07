@@ -899,9 +899,6 @@ class NestedLocksThreadingSupport : ThreadingSupport {
     val clazz = getComputationClassForListener(computation)
     fireBeforeReadActionStart(frozenListeners, clazz)
 
-    val currentReadState = myTopmostReadAction.get()
-    myTopmostReadAction.set(true)
-
     try {
       val computationState = getComputationState()
       val currentPermit = computationState.getThisThreadPermit()
@@ -917,12 +914,17 @@ class NestedLocksThreadingSupport : ThreadingSupport {
       // For diagnostic purposes register that we in read action, even if we use stronger lock
       myReadActionsInThread.set(myReadActionsInThread.get() + 1)
 
+      val currentReadState = myTopmostReadAction.get()
+      myTopmostReadAction.set(true)
       try {
+
         fireReadActionStarted(frozenListeners, clazz)
         val rv = computation()
         return rv
       }
       finally {
+        myTopmostReadAction.set(currentReadState)
+
         fireReadActionFinished(frozenListeners, clazz)
 
         myReadActionsInThread.set(myReadActionsInThread.get() - 1)
@@ -932,7 +934,6 @@ class NestedLocksThreadingSupport : ThreadingSupport {
       }
     }
     finally {
-      myTopmostReadAction.set(currentReadState)
       fireAfterReadActionFinished(frozenListeners, clazz)
     }
 
@@ -944,8 +945,7 @@ class NestedLocksThreadingSupport : ThreadingSupport {
     val frozenListeners = readActionListeners.doClone()
     fireBeforeReadActionStart(frozenListeners, action.javaClass)
 
-    val currentReadState = myTopmostReadAction.get()
-    myTopmostReadAction.set(true)
+
     val computationState = getComputationState()
     val currentPermit = computationState.getThisThreadPermit()
     var readPermitToRelease: ReadPermit? = null
@@ -963,12 +963,15 @@ class NestedLocksThreadingSupport : ThreadingSupport {
       // For diagnostic purposes register that we in read action, even if we use stronger lock
       myReadActionsInThread.set(myReadActionsInThread.get() + 1)
 
+      val currentReadState = myTopmostReadAction.get()
+      myTopmostReadAction.set(true)
       try {
         fireReadActionStarted(frozenListeners, action.javaClass)
         action()
         return true
       }
       finally {
+        myTopmostReadAction.set(currentReadState)
         fireReadActionFinished(frozenListeners, action.javaClass)
 
         myReadActionsInThread.set(myReadActionsInThread.get() - 1)
@@ -978,7 +981,6 @@ class NestedLocksThreadingSupport : ThreadingSupport {
       }
     }
     finally {
-      myTopmostReadAction.set(currentReadState)
       fireAfterReadActionFinished(frozenListeners, action.javaClass)
     }
 
@@ -1813,8 +1815,10 @@ class NestedLocksThreadingSupport : ThreadingSupport {
     // for now, we release only the top-level WI lock.
     // There is no evidence that this method is called in deep parallelization stacks
     state.releaseWriteIntentPermit(permit.writeIntentPermit)
+    val currentTopmostReadAction = myTopmostReadAction.get()
     try {
       drainWriteActionFollowups()
+      myTopmostReadAction.set(false)
       myWriteIntentAcquired.set(false)
       return action()
     }
@@ -1825,6 +1829,8 @@ class NestedLocksThreadingSupport : ThreadingSupport {
       installThreadContext(currentThreadContext().minusKey(Job), true) {
         state.acquireWriteIntentPermit()
       }
+      myTopmostReadAction.set(currentTopmostReadAction)
+
       try {
         myWriteIntentActionListeners.forEachGuaranteed { it.beforeWriteLockParallelizationEnds(false) }
       } catch (e: Throwable) {
