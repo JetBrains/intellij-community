@@ -315,6 +315,12 @@ open class EditorsSplitters internal constructor(
     emptyStateComponentController.requestFocusWhenPresented(onFocusUnclaimed)
   }
 
+  /** The awaitable form used when a startup owner must not give another component focus before this claim settles. */
+  @RequiresEdt
+  internal fun requestEmptyStateFocusWhenPresentedAsync(onFocusUnclaimed: (() -> Unit)? = null): Deferred<Unit> {
+    return emptyStateComponentController.requestFocusWhenPresented(onFocusUnclaimed)
+  }
+
   /**
    * Whether this area's empty state has been asked to take focus and has not settled that claim yet, so that whoever else would focus
    * something on an empty editor area can leave it to the empty state — see [requestEmptyStateFocusWhenPresented].

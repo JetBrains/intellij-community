@@ -888,16 +888,18 @@ internal class EditorEmptyTextPainterTest {
     splitters.beginStartupEmptyStatePresentationHold()
 
     // the request is made where project open makes it: before anything is built, and honoured only once the empty state is presented
-    splitters.requestEmptyStateFocusWhenPresented()
+    val focusSettled = splitters.requestEmptyStateFocusWhenPresentedAsync()
     splitters.finishStartupEditorRestore()
     dispatchEventsFor(100.milliseconds)
 
     assertThat(focusRequests).isEmpty()
+    assertThat(focusSettled.isCompleted).isFalse()
 
     releaseStartupHoldFromProjectOpensHop(splitters)
     waitForEmptyStateComponent(splitters, "The claimed empty state was not presented")
 
     assertThat(focusRequests).containsExactly(findFocusTargetComponent(splitters))
+    assertThat(focusSettled.isCompleted).isTrue()
   }
 
   @Test

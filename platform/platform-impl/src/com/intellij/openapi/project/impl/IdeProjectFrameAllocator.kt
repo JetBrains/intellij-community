@@ -94,6 +94,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.async
@@ -643,6 +644,7 @@ private suspend fun postOpenEditors(
       // the empty state is presented — the hold released below. An editor opened after this point (the README) drops it again.
       // Not on a remote dev host, which does not focus anything of its own on project open either — see `openProjectViewIfNeeded`.
       val emptyStateClaimKept = AtomicBoolean(true)
+      var emptyStateFocusSettled: Deferred<Unit>? = null
       val emptyStateTakesFocus = !AppMode.isRemoteDevHost() &&
                                  withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
                                    val splitters = fileEditorManager.mainSplitters
@@ -652,7 +654,7 @@ private suspend fun postOpenEditors(
                                        // there is a component to keep it with. Where it cannot be kept — a provider that builds nothing,
                                        // an empty state that is never presented — the Project view is focused after all, either here or
                                        // at the point it is opened, whichever comes second.
-                                       splitters.requestEmptyStateFocusWhenPresented(onFocusUnclaimed = {
+                                       emptyStateFocusSettled = splitters.requestEmptyStateFocusWhenPresentedAsync(onFocusUnclaimed = {
                                          emptyStateClaimKept.set(false)
                                          focusProjectViewIfOpened(project)
                                        })
@@ -662,7 +664,15 @@ private suspend fun postOpenEditors(
       if (!isNotificationSilentMode(project)) {
         finishEmptyEditorStartupBeforeProjectView(
           finishOpeningStartupEditors = { findAndOpenReadmeIfNeeded(project) },
-          presentEmptyEditor = { releaseStartupEmptyStatePresentationHold() },
+          presentEmptyEditor = {
+            releaseStartupEmptyStatePresentationHold()
+            val settled = emptyStateFocusSettled
+            if (settled != null && withTimeoutOrNull(EMPTY_STATE_FOCUS_SETTLEMENT_TIMEOUT) { settled.await() } == null) {
+              // A broken or unexpectedly slow provider must not hold project open forever. Let Project view own focus; if the empty
+              // state eventually mounts, its existing focus-owner guard prevents it from stealing that focus back.
+              emptyStateClaimKept.set(false)
+            }
+          },
           openProjectView = {
             openProjectViewIfNeeded(project, toolWindowInitJob, focusProjectView = {
               !emptyStateTakesFocus || !emptyStateClaimKept.get()
@@ -692,6 +702,8 @@ internal suspend fun finishEmptyEditorStartupBeforeProjectView(
   presentEmptyEditor()
   openProjectView()
 }
+
+private val EMPTY_STATE_FOCUS_SETTLEMENT_TIMEOUT = 5.seconds
 
 /**
  * Ends the startup presentation hold when [postOpenEditors] never got to release the hold [restoreEditors] took.

@@ -17,8 +17,10 @@ import com.intellij.ui.ComponentUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
@@ -168,14 +170,16 @@ internal class EditorEmptyStateComponentController(
    * is still empty, or what was built named no component to focus. Whoever stood down for the claim focuses its own target from here;
    * it is not run when someone else holds the focus instead, an editor that took the area over or a tool window the user is working in.
    */
-  fun requestFocusWhenPresented(onFocusUnclaimed: (() -> Unit)?) {
+  fun requestFocusWhenPresented(onFocusUnclaimed: (() -> Unit)?): Deferred<Unit> {
     val request = EmptyStateFocusRequest(onFocusUnclaimed)
     if (componentHost != null) {
       focusRequest = null
       honourFocusRequest(request)
-      return
+      return request.settled
     }
+    focusRequest?.settled?.complete(Unit)
     focusRequest = request
+    return request.settled
   }
 
   fun suppressRichComponents() {
@@ -236,8 +240,13 @@ internal class EditorEmptyStateComponentController(
 
   /** Settles a request: the empty state takes the focus it claimed, or hands the claim back to whoever stood down for it. */
   private fun honourFocusRequest(request: EmptyStateFocusRequest) {
-    if (focusClaimedComponent() == FocusOutcome.UNCLAIMED) {
-      request.onFocusUnclaimed?.invoke()
+    try {
+      if (focusClaimedComponent() == FocusOutcome.UNCLAIMED) {
+        request.onFocusUnclaimed?.invoke()
+      }
+    }
+    finally {
+      request.settled.complete(Unit)
     }
   }
 
@@ -249,7 +258,12 @@ internal class EditorEmptyStateComponentController(
     val request = focusRequest ?: return
     focusRequest = null
     LOG.debug { "Editor empty state claimed focus but nothing was presented to take it" }
-    request.onFocusUnclaimed?.invoke()
+    try {
+      request.onFocusUnclaimed?.invoke()
+    }
+    finally {
+      request.settled.complete(Unit)
+    }
   }
 
   /**
@@ -317,6 +331,7 @@ internal class EditorEmptyStateComponentController(
     cancelCreation()
     // The empty state a pending request was made for is gone; a later one comes with its own request. Dropped silently: this area stops
     // being empty when an editor takes it over, and that editor is focused by whoever opened it.
+    focusRequest?.settled?.complete(Unit)
     focusRequest = null
     val host = componentHost ?: return
     // uninstalling fires `removeNotify` on a provider's component, which may release an editor — see [mount]
@@ -639,7 +654,10 @@ internal class EditorEmptyStateUiBuildTime : AbstractCoroutineContextElement(Key
 }
 
 /** A request to focus the empty state once it is presented, and what to do when the focus it claimed ends up unclaimed. */
-private class EmptyStateFocusRequest(@JvmField val onFocusUnclaimed: (() -> Unit)?)
+private class EmptyStateFocusRequest(@JvmField val onFocusUnclaimed: (() -> Unit)?) {
+  @JvmField
+  val settled: CompletableDeferred<Unit> = CompletableDeferred()
+}
 
 /**
  * What became of the focus an empty state claimed.
