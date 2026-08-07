@@ -5,7 +5,6 @@ import com.intellij.codeHighlighting.BackgroundEditorHighlighter
 import com.intellij.codeInsight.daemon.impl.TextEditorBackgroundHighlighter
 import com.intellij.codeInsight.folding.CodeFoldingManager
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.readActionBlocking
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.serviceAsync
@@ -169,24 +168,27 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
     val foldingElement = element.getChild(FOLDING_ELEMENT)
     if (foldingElement == null) return state
 
-    val document = file.value?.let { file ->
-      ReadAction.computeBlocking<Document, RuntimeException> {
-        if (BinaryFileTypeDecompilers.getInstance().hasDecompiler(file)) {
-          //otherwise we will decompile files and cause performance issues
-          FileDocumentManager.getInstance().getCachedDocument(file)
-        }
-        else {
-          FileDocumentManager.getInstance().getDocument(file)
-        }
-      }
-    }
+    // This code is called from loadState() of EditorHistoryManager init
+    // never use read action here, it leads to deadlocks
+    // delay folding state computation till they are needed
 
-    return if (document != null) {
-      val foldingState = CodeFoldingManager.getInstance(project).readFoldingState(foldingElement, document)
-      state.withFoldingState(foldingState)
-    }
-    else {
-      state
+    return state.withLazyFoldingState {
+      val vFile = file.value ?: return@withLazyFoldingState null
+
+      val document = if (BinaryFileTypeDecompilers.getInstance().hasDecompiler(vFile)) {
+        // otherwise we will decompile files and cause performance issues
+        FileDocumentManager.getInstance().getCachedDocument(vFile)
+      }
+      else {
+        FileDocumentManager.getInstance().getDocument(vFile)
+      }
+
+      if (document != null) {
+        CodeFoldingManager.getInstance(project).readFoldingState(foldingElement, document)
+      }
+      else {
+        null
+      }
     }
   }
 
