@@ -670,6 +670,7 @@ private suspend fun postOpenEditors(
             if (settled != null && withTimeoutOrNull(EMPTY_STATE_FOCUS_SETTLEMENT_TIMEOUT) { settled.await() } == null) {
               // A broken or unexpectedly slow provider must not hold project open forever. Let Project view own focus; if the empty
               // state eventually mounts, its existing focus-owner guard prevents it from stealing that focus back.
+              settled.cancel()
               emptyStateClaimKept.set(false)
             }
           },

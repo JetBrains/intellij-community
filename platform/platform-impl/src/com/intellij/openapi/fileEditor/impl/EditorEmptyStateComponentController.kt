@@ -41,11 +41,13 @@ import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
 import java.awt.KeyboardFocusManager
 import java.awt.LayoutManager2
+import java.beans.PropertyChangeListener
 import java.util.concurrent.atomic.AtomicLong
 import javax.swing.Box
 import javax.swing.BoxLayout
 import javax.swing.JComponent
 import javax.swing.JPanel
+import javax.swing.SwingUtilities
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
 import kotlin.time.Duration
@@ -118,7 +120,7 @@ internal class EditorEmptyStateComponentController(
    * later, so the request is remembered until there is something to focus, and dropped as soon as the area stops being empty.
    */
   private var focusRequest: EmptyStateFocusRequest? = null
-  private var focusRequesterForTests: ((JComponent) -> Unit)? = null
+  private var focusRequesterForTests: ((JComponent, () -> Unit) -> Unit)? = null
 
   init {
     coroutineScope.coroutineContext.job.invokeOnCompletion {
@@ -157,7 +159,7 @@ internal class EditorEmptyStateComponentController(
    * Whether a request made through [requestFocusWhenPresented] has not settled yet, so that whoever else would focus something on an
    * empty editor area can stand down for it — the tool window manager focusing a tool window by default when the last editor closes.
    */
-  fun isFocusRequestPending(): Boolean = focusRequest != null
+  fun isFocusRequestPending(): Boolean = focusRequest?.settled?.isCompleted == false
 
   /**
    * Focuses the empty state where an editor would have been focused, once there is something to focus.
@@ -169,11 +171,13 @@ internal class EditorEmptyStateComponentController(
    * @param onFocusUnclaimed run on the EDT when this claim leaves the focus it asked for unclaimed — nothing was built for an area that
    * is still empty, or what was built named no component to focus. Whoever stood down for the claim focuses its own target from here;
    * it is not run when someone else holds the focus instead, an editor that took the area over or a tool window the user is working in.
+   * @return completes after the focus transfer finishes, or immediately when the claim is not taken.
    */
   fun requestFocusWhenPresented(onFocusUnclaimed: (() -> Unit)?): Deferred<Unit> {
     val request = EmptyStateFocusRequest(onFocusUnclaimed)
     if (componentHost != null) {
-      focusRequest = null
+      focusRequest?.settled?.complete(Unit)
+      focusRequest = request
       honourFocusRequest(request)
       return request.settled
     }
@@ -240,13 +244,18 @@ internal class EditorEmptyStateComponentController(
 
   /** Settles a request: the empty state takes the focus it claimed, or hands the claim back to whoever stood down for it. */
   private fun honourFocusRequest(request: EmptyStateFocusRequest) {
+    var focusTransferPending = false
     try {
-      if (focusClaimedComponent() == FocusOutcome.UNCLAIMED) {
+      val outcome = focusClaimedComponent(request)
+      focusTransferPending = outcome == FocusOutcome.TRANSFER_PENDING
+      if (outcome == FocusOutcome.UNCLAIMED) {
         request.onFocusUnclaimed?.invoke()
       }
     }
     finally {
-      request.settled.complete(Unit)
+      if (!focusTransferPending) {
+        request.settled.complete(Unit)
+      }
     }
   }
 
@@ -272,7 +281,7 @@ internal class EditorEmptyStateComponentController(
    * Requested through [IdeFocusManager] rather than by [JComponent.requestFocus], for the same reason [focusEditorOnComposite] does:
    * this runs while the frame may still be settling its own focus.
    */
-  private fun focusClaimedComponent(): FocusOutcome {
+  private fun focusClaimedComponent(request: EmptyStateFocusRequest): FocusOutcome {
     val target = preferredFocusedComponent()
     if (target == null) {
       // a claim was made for this area before anything was built, and what was built claims nothing or names nothing — see [claimsFocus]
@@ -284,12 +293,31 @@ internal class EditorEmptyStateComponentController(
     }
     val requester = focusRequesterForTests
     if (requester != null) {
-      requester(target)
-      return FocusOutcome.TAKEN
+      requester(target) { request.settled.complete(Unit) }
+      return FocusOutcome.TRANSFER_PENDING
+    }
+    val focusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager()
+    val focusOwnerListener = PropertyChangeListener { event ->
+      if (isFocusInside(target, event.newValue as? Component)) {
+        request.settled.complete(Unit)
+      }
+    }
+    focusManager.addPropertyChangeListener("focusOwner", focusOwnerListener)
+    request.settled.invokeOnCompletion {
+      focusManager.removePropertyChangeListener("focusOwner", focusOwnerListener)
     }
     val project = splitters.manager.project
-    IdeFocusManager.getInstance(project).requestFocusInProject(target, project)
-    return FocusOutcome.TAKEN
+    IdeFocusManager.getInstance(project).requestFocusInProject(target, project).doWhenRejected(Runnable {
+      request.settled.complete(Unit)
+    })
+    if (isFocusInside(target, focusManager.focusOwner)) {
+      request.settled.complete(Unit)
+    }
+    return FocusOutcome.TRANSFER_PENDING
+  }
+
+  private fun isFocusInside(target: JComponent, focusOwner: Component?): Boolean {
+    return focusOwner != null && (focusOwner === target || SwingUtilities.isDescendingFrom(focusOwner, target))
   }
 
   /**
@@ -372,8 +400,11 @@ internal class EditorEmptyStateComponentController(
     creationGate = gate
   }
 
-  /** @param requester `null` restores the real [IdeFocusManager] request, which a headless test cannot observe. */
-  fun setFocusRequesterForTests(requester: ((JComponent) -> Unit)?) {
+  /**
+   * @param requester `null` restores the real [IdeFocusManager] request, which a headless test cannot observe; a test requester invokes
+   * its callback when the simulated focus transfer finishes.
+   */
+  fun setFocusRequesterForTests(requester: ((JComponent, () -> Unit) -> Unit)?) {
     focusRequesterForTests = requester
   }
 
@@ -666,7 +697,7 @@ private class EmptyStateFocusRequest(@JvmField val onFocusUnclaimed: (() -> Unit
  * refused because the user is working somewhere else needs no one to step in, while a claim that found nothing to focus does.
  */
 private enum class FocusOutcome {
-  TAKEN,
+  TRANSFER_PENDING,
   HELD_ELSEWHERE,
   UNCLAIMED,
 }

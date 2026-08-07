@@ -883,7 +883,12 @@ internal class EditorEmptyTextPainterTest {
     val splitters = manager.mainSplitters
     registerFocusClaimingComponentProvider(disposable)
     manager.closeAllFiles()
-    val focusRequests = recordFocusRequests(splitters)
+    val focusRequests = CopyOnWriteArrayList<JComponent>()
+    var reportFocusTransferred: (() -> Unit)? = null
+    splitters.setEmptyStateComponentFocusRequesterForTests { component, transferred ->
+      focusRequests.add(component)
+      reportFocusTransferred = transferred
+    }
     splitters.setEmptyStateComponentCreationDelayForTests(NEVER_ELAPSING_CREATION_DELAY)
     splitters.beginStartupEmptyStatePresentationHold()
 
@@ -899,6 +904,9 @@ internal class EditorEmptyTextPainterTest {
     waitForEmptyStateComponent(splitters, "The claimed empty state was not presented")
 
     assertThat(focusRequests).containsExactly(findFocusTargetComponent(splitters))
+    assertThat(focusSettled.isCompleted).isFalse()
+
+    checkNotNull(reportFocusTransferred).invoke()
     assertThat(focusSettled.isCompleted).isTrue()
   }
 
@@ -1208,7 +1216,10 @@ internal class EditorEmptyTextPainterTest {
   /** Records what the empty state asks to focus, which is all a headless test can observe of a focus request. */
   private fun recordFocusRequests(splitters: EditorsSplitters): List<JComponent> {
     val requests = CopyOnWriteArrayList<JComponent>()
-    splitters.setEmptyStateComponentFocusRequesterForTests { requests.add(it) }
+    splitters.setEmptyStateComponentFocusRequesterForTests { component, transferred ->
+      requests.add(component)
+      transferred()
+    }
     return requests
   }
 
