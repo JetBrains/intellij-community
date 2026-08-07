@@ -8,12 +8,9 @@ import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.session.analyze
-import org.jetbrains.kotlin.analysis.api.session.useSiteSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaSubstitutor
-import org.jetbrains.kotlin.analysis.api.types.KaSubstitutor.Empty
-import org.jetbrains.kotlin.analysis.api.types.createInheritanceTypeSubstitutor
+import org.jetbrains.kotlin.analysis.api.types.emptySubstitutor
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.allowAnalysisFromWriteActionInEdt
 import org.jetbrains.kotlin.idea.k2.refactoring.pullUp.applyMarking
 import org.jetbrains.kotlin.idea.k2.refactoring.pullUp.clearMarking
@@ -105,14 +102,14 @@ internal class K2PushDownProcessor(
                 // the user-facing warning dialog.
                 // See: K2PushDownTestGenerated.K2K.testNoInheritors
                 context.membersToMove.forEach { memberInfo ->
-                    registerRemovalAction(memberInfo, Empty(useSiteSession.token), actionsContext)
+                    registerRemovalAction(memberInfo, emptySubstitutor, actionsContext)
                 }
             } else {
                 targetClasses.forEach { targetClass ->
                     val substitutor = createInheritanceTypeSubstitutor(
                         subClass = targetClass.symbol as KaClassSymbol,
                         superClass = sourceClass.symbol as KaClassSymbol,
-                    ) ?: Empty(useSiteSession.token)
+                    ) ?: emptySubstitutor
                     processTargetClass(targetClass, substitutor, actionsContext)
                 }
             }

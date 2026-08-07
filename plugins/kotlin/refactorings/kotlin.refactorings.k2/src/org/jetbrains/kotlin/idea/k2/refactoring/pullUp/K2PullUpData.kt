@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.analysis.api.types.buildSubstitutor
 import org.jetbrains.kotlin.analysis.api.types.builtinTypes
 import org.jetbrains.kotlin.analysis.api.types.commonSupertype
 import org.jetbrains.kotlin.analysis.api.types.createInheritanceTypeSubstitutor
+import org.jetbrains.kotlin.analysis.api.types.emptySubstitutor
 import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
 import org.jetbrains.kotlin.analysis.api.types.typeCreation.typeCreator
 import org.jetbrains.kotlin.idea.k2.refactoring.pushDown.getSuperTypeEntryBySymbol
@@ -63,7 +64,7 @@ internal class K2PullUpData(
             val inheritanceSubstitutor = createInheritanceTypeSubstitutor(
                 subClass = sourceClass.symbol as KaClassSymbol,
                 superClass = targetClassSymbol
-            ) ?: KaSubstitutor.Empty(token)
+            ) ?: emptySubstitutor
 
             targetClassSymbol.typeParameters.forEach { targetTypeParam ->
                 val targetTypeParamType = typeCreator.typeParameterType(targetTypeParam)
