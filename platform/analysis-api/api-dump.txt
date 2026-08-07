@@ -1704,7 +1704,7 @@ com.intellij.openapi.fileEditor.FileEditorProvider
 - a:getEditorTypeId():java.lang.String
 - a:getPolicy():com.intellij.openapi.fileEditor.FileEditorPolicy
 - readState(org.jdom.Element,com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.fileEditor.FileEditorState
-- readStateByUrl(org.jdom.Element,com.intellij.openapi.project.Project,java.lang.String):com.intellij.openapi.fileEditor.FileEditorState
+- readState(org.jdom.Element,com.intellij.openapi.project.Project,kotlin.Lazy):com.intellij.openapi.fileEditor.FileEditorState
 - writeState(com.intellij.openapi.fileEditor.FileEditorState,com.intellij.openapi.project.Project,org.jdom.Element):V
 com.intellij.openapi.fileEditor.FileNavigator
 - sf:Companion:com.intellij.openapi.fileEditor.FileNavigator$Companion

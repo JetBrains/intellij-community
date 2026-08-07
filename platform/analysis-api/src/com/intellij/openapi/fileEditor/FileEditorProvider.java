@@ -8,11 +8,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.ReflectionUtil;
+import kotlin.Lazy;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Should be registered via {@link #EP_FILE_EDITOR_PROVIDER}.
@@ -69,13 +70,16 @@ public interface FileEditorProvider extends PossiblyDumbAware {
   }
 
   /**
-   * Deserializes state from the specified {@code sourceElement} and file URL.
+   * Deserializes state from the specified {@code sourceElement} and file.
    *
    * @param sourceElement serialized state
    * @param project Project context
-   * @param urlString {@link VirtualFile} URL
+   * @param file lazily located {@link VirtualFile}, can be null
    */
-  default @NotNull FileEditorState readStateByUrl(@NotNull Element sourceElement, @NotNull Project project, @NotNull String urlString) {
+  @SuppressWarnings("BoundedWildcard")
+  default @NotNull FileEditorState readState(@NotNull Element sourceElement,
+                                             @NotNull Project project,
+                                             @NotNull Lazy<@Nullable VirtualFile> file) {
     // If the provider does not override the deprecated readState, the findFileByUrl fallback below would only feed the
     // default readState, which returns FileEditorState.INSTANCE anyway. Skip the potentially blocking file lookup then.
     if (!ReflectionUtil.hasOverriddenMethod(getClass(), FileEditorProvider.class, "readState",
@@ -83,16 +87,16 @@ public interface FileEditorProvider extends PossiblyDumbAware {
       return FileEditorState.INSTANCE;
     }
 
-    var file = VirtualFileManager.getInstance().findFileByUrl(urlString);
-    if (file == null) return FileEditorState.INSTANCE;
+    var vFile = file.getValue();
+    if (vFile == null) return FileEditorState.INSTANCE;
 
-    return readState(sourceElement, project, file);
+    return readState(sourceElement, project, vFile);
   }
 
   /**
    * Deserializes state from the specified {@code sourceElement}.
    *
-   * @deprecated implement {@link #readStateByUrl(Element, Project, String)} instead
+   * @deprecated implement {@link #readState(Element, Project, Lazy)} instead
    */
   @Deprecated
   default @NotNull FileEditorState readState(@NotNull Element sourceElement, @NotNull Project project, @NotNull VirtualFile file) {

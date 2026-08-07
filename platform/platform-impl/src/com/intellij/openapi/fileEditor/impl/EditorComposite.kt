@@ -381,7 +381,7 @@ open class EditorComposite internal constructor(
         EditorHistoryManager.getInstance(project).getState(file, provider)
       }
       else {
-        state.providers.get(provider.editorTypeId)?.let { provider.readStateByUrl(it, project, file.url) }
+        state.providers.get(provider.editorTypeId)?.let { provider.readState(it, project, lazyOf(file)) }
       }
     }
     return states
@@ -560,7 +560,7 @@ open class EditorComposite internal constructor(
     return if (state != null) {
       state.providers.get(provider.editorTypeId)?.let {
         computeOrLogException(
-          lambda = { provider.readStateByUrl(it, project, file.url) },
+          lambda = { provider.readState(it, project, lazyOf(file)) },
           errorMessage = { "failed to read editor state" },
         )
       }

@@ -5889,7 +5889,6 @@ f:com.intellij.largeFilesEditor.editor.LargeFileEditorProvider
 - createEditor(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.fileEditor.FileEditor
 - getEditorTypeId():java.lang.String
 - getPolicy():com.intellij.openapi.fileEditor.FileEditorPolicy
-- readState(org.jdom.Element,com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.fileEditor.FileEditorState
 - writeState(com.intellij.openapi.fileEditor.FileEditorState,com.intellij.openapi.project.Project,org.jdom.Element):V
 f:com.intellij.lexer.LexerUtil
 - s:getRootLexer(com.intellij.lexer.Lexer):com.intellij.lexer.Lexer

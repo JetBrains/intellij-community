@@ -11,6 +11,7 @@ import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import kotlinx.collections.immutable.persistentListOf
@@ -152,7 +153,8 @@ private fun parseEntry(
     }
 
     val stateElement = providerElement.getChild(STATE_ELEMENT)
-    val state = provider.readStateByUrl(stateElement ?: EMPTY_ELEMENT, project, urlString)
+    val state = provider.readState(stateElement ?: EMPTY_ELEMENT, project,
+                                   lazy { VirtualFileManager.getInstance().findFileByUrl(urlString) })
     providerStates = providerStates.adding(provider to state)
   }
 

@@ -153,7 +153,7 @@ open class TextEditorProvider : DefaultPlatformFileEditorProvider, TextBasedFile
     return TextEditorState(readCarets(element), readRelativeCaretPosition(element))
   }
 
-  override fun readStateByUrl(element: Element, project: Project, urlString: String): FileEditorState {
+  override fun readState(element: Element, project: Project, file: Lazy<VirtualFile?>): FileEditorState {
     if (element.isEmpty) {
       return TextEditorState()
     }

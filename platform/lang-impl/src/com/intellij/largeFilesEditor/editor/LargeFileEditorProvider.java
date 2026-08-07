@@ -13,9 +13,11 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.SingleRootFileViewProvider;
+import kotlin.Lazy;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public final class LargeFileEditorProvider implements DefaultPlatformFileEditorProvider, DumbAware {
   public static final String PROVIDER_ID = "LargeFileEditorProvider";
@@ -63,7 +65,7 @@ public final class LargeFileEditorProvider implements DefaultPlatformFileEditorP
   }
 
   @Override
-  public @NotNull FileEditorState readState(@NotNull Element sourceElement, @NotNull Project project, @NotNull VirtualFile file) {
+  public @NotNull FileEditorState readState(@NotNull Element sourceElement, @NotNull Project project, @NotNull Lazy<@Nullable VirtualFile> file) {
     LargeFileEditorState state = new LargeFileEditorState();
     if (JDOMUtil.isEmpty(sourceElement)) {
       return state;

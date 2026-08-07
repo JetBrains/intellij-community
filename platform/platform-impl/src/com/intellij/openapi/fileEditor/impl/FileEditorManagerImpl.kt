@@ -1470,7 +1470,7 @@ open class FileEditorManagerImpl(
     else if (fileEntry != null) {
       for (editorWithProvider in composite.allEditorsWithProviders) {
         val state = fileEntry.providers.get(editorWithProvider.provider.editorTypeId)
-          ?.let { editorWithProvider.provider.readStateByUrl(it, project, file.url) }
+          ?.let { editorWithProvider.provider.readState(it, project, lazyOf(file)) }
         if (state != null && state != FileEditorState.INSTANCE) {
           restoreEditorState(
             fileEditorWithProvider = editorWithProvider,
