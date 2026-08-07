@@ -1,5 +1,6 @@
 package com.intellij.terminal.frontend.view.impl
 
+import com.intellij.execution.impl.EditorTextDecorationApplier
 import com.intellij.codeInsight.inline.completion.InlineCompletion
 import com.intellij.execution.impl.createEditorTextDecorationApplier
 import com.intellij.openapi.Disposable
@@ -150,6 +151,9 @@ class TerminalViewImpl(
   @VisibleForTesting
   val outputEditor: EditorEx
   private val alternateBufferEditor: EditorEx
+
+  @VisibleForTesting
+  val outputEditorDecorationApplier: EditorTextDecorationApplier
 
   private val scrollingModel: TerminalOutputScrollingModel
   private var isAlternateScreenBuffer = false
@@ -311,7 +315,7 @@ class TerminalViewImpl(
 
     // Should be created before "configureOutputEditor" is called where mouse reporting is configured (TerminalMouseEventsHandlerImpl).
     // To make mouse events first handled by hyperlinks logic and only then reported to the process.
-    val outputDecorationApplier = createEditorTextDecorationApplier(
+    outputEditorDecorationApplier = createEditorTextDecorationApplier(
       outputEditor, coroutineScope.asDisposable(), consumeOnlyOnCtrlClick = true,
     )
     configureOutputEditor(
@@ -391,7 +395,7 @@ class TerminalViewImpl(
       outputBufferHyperlinksFacade = installHyperlinksProcessing(
         project = project,
         outputModel = outputModel,
-        decorationApplier = outputDecorationApplier,
+        decorationApplier = outputEditorDecorationApplier,
         sessionModel = sessionModel,
         eelDescriptor = eelDescriptor,
         coroutineScope = coroutineScope.childScope("Output Buffer Hyperlinks"),
@@ -411,7 +415,7 @@ class TerminalViewImpl(
       project = project,
       outputModel = outputModel,
       editor = outputEditor,
-      applier = outputDecorationApplier,
+      applier = outputEditorDecorationApplier,
       coroutineScope = coroutineScope.childScope("Output Buffer OSC8 Hyperlinks"),
     )
     installOsc8HyperlinksProcessing(
