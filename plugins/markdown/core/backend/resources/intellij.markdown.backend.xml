@@ -111,6 +111,15 @@
                        enabledByDefault="true"
                        implementationClass="com.intellij.markdown.backend.inspections.MarkdownLinkDestinationWithSpacesInspection"/>
 
+      <localInspection language="Markdown"
+                       shortName="MarkdownSkillFrontMatter"
+                       bundle="messages.MarkdownBundle"
+                       key="markdown.skill.front.matter.inspection.name"
+                       groupKey="markdown.inspection.group.ruby.name"
+                       enabledByDefault="true"
+                       level="WARNING"
+                       implementationClass="com.intellij.markdown.backend.inspections.MarkdownSkillFrontMatterInspection"/>
+
       <psi.referenceContributor language="Markdown" implementation="com.intellij.markdown.backend.reference.link.CommonLinkDestinationReferenceContributor"/>
       <psi.referenceContributor language="Markdown" implementation="com.intellij.markdown.backend.reference.link.AutoLinkWebReferenceContributor"/>
       <psi.referenceContributor language="Markdown" implementation="com.intellij.markdown.backend.reference.backtick.BacktickReferenceContributor"/>
