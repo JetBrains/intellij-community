@@ -208,8 +208,8 @@ def wasmjs_link_action(ctx, ir_output_name, module_klib, link_klibs):
     """Registers the KotlinLinkWasmJs action linking `module_klib` against `link_klibs`.
 
     `link_klibs` is expected to already contain `module_klib` (as `KtWasmJsInfo.link_klibs` does).
-    Requires on ctx: kotlinc_opts, _wasm_source_maps, _wasmjs_builder, _wasmjs_builder_jvm_flags,
-    _wasmjs_builder_launcher, _tool_java_runtime.
+    Requires on ctx: kotlinc_opts, source_maps, source_map_base_dirs, source_map_prefix, _wasmjs_builder,
+    _wasmjs_builder_jvm_flags, _wasmjs_builder_launcher, _tool_java_runtime.
 
     Returns the declared linked output directory (`<ir_output_name>-js`).
     """
@@ -219,8 +219,22 @@ def wasmjs_link_action(ctx, ir_output_name, module_klib, link_klibs):
     link_args.add("-Xir-produce-js")
     link_args.add("-Xinclude=%s" % module_klib.path)  # TODO: what is the `-Xinclude`, is that what will be linked?
     link_args.add("-Xir-dce")
-    if ctx.attr._wasm_source_maps[BuildSettingInfo].value:
+    if ctx.attr.source_maps:
         link_args.add("-source-map")
+        if ctx.attr.source_map_prefix:
+            # A prefix switches the compiler off link-output-relative paths onto paths relative to the
+            # source roots, and without explicit roots it derives them itself (the common ancestor of the
+            # sources), which is what put `..` in the emitted paths. Every path the compiler sees is
+            # exec-root-relative, hence the `.` default of `source_map_base_dirs`; the builder resolves the
+            # roots against the exec root (see `PATH_LIST_ARGS` in WasmJsBuildWorker.kt, which also explains
+            # why they must end up absolute).
+            link_args.add_joined(
+                "-source-map-base-dirs",
+                ctx.attr.source_map_base_dirs,
+                join_with = ctx.configuration.host_path_separator,
+                omit_if_empty = True,
+            )
+            link_args.add("-source-map-prefix", ctx.attr.source_map_prefix)
     link_args.add_joined("-libraries", [klib.path for klib in link_klibs.to_list()], join_with = ctx.configuration.host_path_separator, omit_if_empty = True)
 
     java_runtime = ctx.attr._tool_java_runtime[java_common.JavaRuntimeInfo]

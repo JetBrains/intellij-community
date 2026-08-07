@@ -71,6 +71,13 @@ private fun String.removePrefixStrict(prefix: String): String {
   return result
 }
 
+// Arguments whose value is a `File.pathSeparator`-separated list of paths to resolve against the exec root.
+//
+// `-source-map-base-dirs` has to be absolute because `SourceFilePathResolver` compares its roots by path
+// equality after `absoluteFile` alone, while normalizing the source files it resolves — so a relative `.`
+// root becomes `<exec root>/.`, never matches any ancestor, and every source collapses to its bare file name.
+private val PATH_LIST_ARGS = setOf("-libraries", "-source-map-base-dirs")
+
 private fun List<String>.normalizeCompilerArgs(baseDir: Path): List<String> {
 
   // Windows hosts cannot locate the klib modules:
@@ -88,7 +95,7 @@ private fun List<String>.normalizeCompilerArgs(baseDir: Path): List<String> {
   return mapIndexed { index, arg ->
     when {
       arg.startsWith("-Xinclude=") -> "-Xinclude=${realBaseDir.resolveRelative(arg.removePrefix("-Xinclude="))}"
-      getOrNull(index - 1) == "-libraries" -> arg.split(File.pathSeparatorChar).filter { path ->
+      getOrNull(index - 1) in PATH_LIST_ARGS -> arg.split(File.pathSeparatorChar).filter { path ->
         path.isNotBlank()
       }.joinToString(File.pathSeparator) {
         realBaseDir.resolveRelative(it)

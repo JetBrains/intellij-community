@@ -73,7 +73,21 @@ _fleet_wasmjs_service_accessors = rule(
 )
 
 # TODO: make it a symbolic macro if we manage to work around the usage of globs
-def fleet_wasmjs_module(name, visibility, module_name, kotlinc_opts, deps = [], test_deps = [], exports = [], test_exported_deps = [], runtime_deps = [], plugins = []):
+def fleet_wasmjs_module(
+        name,
+        visibility,
+        module_name,
+        kotlinc_opts,
+        deps = [],
+        test_deps = [],
+        exports = [],
+        test_exported_deps = [],
+        runtime_deps = [],
+        plugins = [],
+        binary = False,
+        binary_source_maps = None,
+        binary_source_map_prefix = None,
+        binary_source_map_base_dirs = None):
     common_main_sourceset_target_name = "%s_commonMain" % name
     native.filegroup(
         name = common_main_sourceset_target_name,
@@ -110,12 +124,17 @@ def fleet_wasmjs_module(name, visibility, module_name, kotlinc_opts, deps = [], 
 
     # TODO: wire `wasmjs_test` using `test_deps` once that rule is introduced in the monorepo
 
+    # The Gradle KMP build emits modules as `fleet.build-<jpsModuleName>.*` (root project name prefix);
+    # fleet.dock.bootstrapWasm's dynamicImport and the webpack config key on that naming. A linked binary
+    # must use the same name, so both take it from here.
+    ir_output_name = "fleet.build-%s" % module_name
+
     wasmjs_library(
+        # `<name>_lib`: keep the suffix in sync with the target name the BUILD generator emits as a dependency
+        # label (fleet/build/generator .../wasm/DependenciesGeneratorExtensions.kt, bazelWasmJsTarget).
         name = "%s_lib" % name,
         module_name = module_name,
-        # The Gradle KMP build emits modules as `fleet.build-<jpsModuleName>.*` (root project name prefix);
-        # fleet.dock.bootstrapWasm's dynamicImport and the webpack config key on that naming.
-        ir_output_name = "fleet.build-%s" % module_name,
+        ir_output_name = ir_output_name,
         fragment_refines = {"commonMain": [], "wasmJsMain": ["commonMain"]},
         visibility = visibility,
         fragment_sources = {"commonMain": common_main_sourceset_target_name, "wasmJsMain": wasmjs_main_sourceset_target_name},
@@ -126,20 +145,14 @@ def fleet_wasmjs_module(name, visibility, module_name, kotlinc_opts, deps = [], 
         kotlinc_opts = kotlinc_opts,
     )
 
-def fleet_wasmjs_binary(name, visibility, module_name, kotlinc_opts, module = None, optimize = "auto"):
-    """Links a fleet_wasmjs_module into a WasmJS application directory (with the default
-    `optimize = "auto"`, wasm-opt-optimized in `--compilation_mode=opt` builds only).
-
-    By default links the `:wasmjs_module_lib` target the fleet_wasmjs_module macro of the same
-    package creates (keep the `_lib` suffix in sync with fleet_wasmjs_module and
-    fleet/build/generator DependenciesGeneratorExtensions.kt).
-    """
-    wasmjs_binary(
-        name = name,
-        module = module or ":wasmjs_module_lib",
-        module_name = module_name,
-        ir_output_name = module_name,
-        kotlinc_opts = kotlinc_opts,
-        optimize = optimize,
-        visibility = visibility,
-    )
+    if binary:
+        wasmjs_binary(
+            name = "%s_binary" % name,
+            module = ":%s_lib" % name,
+            module_name = ir_output_name,
+            kotlinc_opts = kotlinc_opts,
+            source_maps = binary_source_maps,
+            source_map_prefix = binary_source_map_prefix,
+            source_map_base_dirs = binary_source_map_base_dirs,
+            visibility = visibility,
+        )

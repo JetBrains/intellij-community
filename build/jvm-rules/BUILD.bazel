@@ -78,15 +78,6 @@ bool_flag(
     build_setting_default = False,
 )
 
-# --@rules_jvm//:wasm-source-maps
-# Emit source maps from the Kotlin WasmJS link action. CI disables this,
-# matching the Gradle web build which passes -source-map=false on TeamCity.
-bool_flag(
-    name = "wasm-source-maps",
-    build_setting_default = True,
-    visibility = ["//visibility:public"],
-)
-
 # used by _jvm_builder_launcher attribute in jvm_library rule
 exports_files(
     ["rules/impl/MemoryLauncher.java"],

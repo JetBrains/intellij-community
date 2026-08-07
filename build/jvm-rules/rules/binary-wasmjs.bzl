@@ -82,8 +82,24 @@ wasmjs_binary = rule(
               linked one ("off"). "auto" follows the build configuration: optimized in
               `--compilation_mode=opt` builds only.""",
         ),
-        "_wasm_source_maps": attr.label(
-            default = "//:wasm-source-maps",
+        "source_maps": attr.bool(
+            default = True,
+            doc = "Whether the link emits source maps (`-source-map`).",
+        ),
+        "source_map_prefix": attr.string(
+            doc = """Value for the compiler's `-source-map-prefix`, prepended to every `sources` entry of
+              the emitted source maps; empty leaves them relative to the link output directory. Setting it
+              also makes those paths relative to `source_map_base_dirs` rather than to the link output
+              directory (see `wasmjs_link_action`), which is what keeps `..` out of them.""",
+        ),
+        "source_map_base_dirs": attr.string_list(
+            default = ["."],
+            doc = """Value for the compiler's `-source-map-base-dirs`: the roots the emitted `sources`
+              entries are relativized against (first match wins; a source under no root collapses to its
+              bare file name). Exec-root-relative — the default `.` is the exec root, the only root that
+              matches every source path the compiler sees; narrow it to shorten the emitted paths. Only
+              passed alongside `source_map_prefix`, which is what makes the compiler use source roots in
+              the first place.""",
         ),
         "_wasmjs_builder": attr.label(
             default = "//kotlin-builder-wasmjs:kotlin-builder-wasmjs_deploy.jar",
