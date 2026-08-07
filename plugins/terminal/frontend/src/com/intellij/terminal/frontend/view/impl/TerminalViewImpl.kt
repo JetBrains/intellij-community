@@ -383,20 +383,18 @@ class TerminalViewImpl(
       outputBufferHyperlinksFacade = installHyperlinksProcessing(
         project = project,
         outputModel = outputModel,
-        editor = outputEditor,
+        decorationApplier = outputDecorationApplier,
         sessionModel = sessionModel,
         eelDescriptor = eelDescriptor,
         coroutineScope = coroutineScope.childScope("Output Buffer Hyperlinks"),
-        applier = outputDecorationApplier,
       )
       alternateBufferHyperlinksFacade = installHyperlinksProcessing(
         project = project,
         outputModel = alternateBufferModel,
-        editor = alternateBufferEditor,
+        decorationApplier = alternateBufferDecorationApplier,
         sessionModel = sessionModel,
         eelDescriptor = eelDescriptor,
         coroutineScope = coroutineScope.childScope("Alternate Buffer Hyperlinks"),
-        applier = alternateBufferDecorationApplier,
       )
     }
 

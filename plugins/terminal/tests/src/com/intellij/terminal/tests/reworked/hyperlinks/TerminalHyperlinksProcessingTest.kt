@@ -5,6 +5,7 @@ import com.intellij.execution.filters.ConsoleFilterProvider
 import com.intellij.execution.filters.Filter
 import com.intellij.execution.filters.HyperlinkInfo
 import com.intellij.execution.impl.InlayProvider
+import com.intellij.execution.impl.createEditorTextDecorationApplier
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
@@ -29,6 +30,7 @@ import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.AwaitCancellationAndInvoke
+import com.intellij.util.asDisposable
 import com.intellij.util.awaitCancellationAndInvoke
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -683,7 +685,7 @@ internal class TerminalHyperlinksProcessingTest : BasePlatformTestCase() {
     private val hyperlinkFacade = installHyperlinksProcessing(
       project = project,
       outputModel = outputModel,
-      editor = editor,
+      decorationApplier = createEditorTextDecorationApplier(editor, coroutineScope.asDisposable(), consumeOnlyOnCtrlClick = true),
       sessionModel = createSessionModel(),
       eelDescriptor = LocalEelDescriptor,
       coroutineScope = coroutineScope.childScope("HyperlinksProcessing")
