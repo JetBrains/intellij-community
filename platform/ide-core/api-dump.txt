@@ -663,6 +663,7 @@ com.intellij.openapi.application.ApplicationStarter
 - sf:NOT_IN_EDT:I
 - canProcessExternalCommandLine():Z
 - getRequiredModality():I
+- getShouldReportStatistics():Z
 - isHeadless():Z
 - main(java.util.List):V
 - premain(java.util.List):V
