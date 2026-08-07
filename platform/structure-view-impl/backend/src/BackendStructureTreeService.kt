@@ -23,9 +23,10 @@ import com.intellij.ide.util.treeView.smartTree.TreeStructureUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeIntentReadAction
-import com.intellij.openapi.client.ClientAppSession
 import com.intellij.openapi.client.ClientKind
+import com.intellij.openapi.client.ClientProjectSession
 import com.intellij.openapi.client.ClientSessionsManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.diagnostic.trace
@@ -38,8 +39,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IntRef
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.platform.structureView.impl.DelegatingNodeProvider
-import com.intellij.platform.structureView.impl.ShowStructurePopupRequest
-import com.intellij.platform.structureView.impl.StructureViewScopeHolder
 import com.intellij.platform.structureView.impl.dto.DeferredNodesDto
 import com.intellij.platform.structureView.impl.dto.NodeProviderNodesDto
 import com.intellij.platform.structureView.impl.dto.StructureViewDtoId
@@ -56,12 +55,12 @@ import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure
 import com.intellij.util.ui.tree.TreeUtil
 import fleet.rpc.core.toRpc
 import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -82,20 +81,17 @@ import javax.swing.tree.TreePath
 object BackendStructureTreeServiceTestApi {
   @TestOnly
   fun getStructureViewCountForTests(): Int {
-    return ClientSessionsManager.getAppSessions(ClientKind.REMOTE).sumOf { session ->
-      session.getServiceIfCreated(BackendStructureTreeService::class.java)?.getStructureViewCountForTests() ?: 0
+    return ClientSessionsManager.getAppSessions(ClientKind.REMOTE).sumOf { appSession ->
+      appSession.projectSessions.sumOf { session ->
+        session.getServiceIfCreated(BackendStructureTreeService::class.java)
+          ?.getStructureViewCountForTests() ?: 0
+      }
     }
   }
 }
 
-internal class BackendStructureTreeService(private val session: ClientAppSession) {
+internal class BackendStructureTreeService(private val session: ClientProjectSession, internal val cs: CoroutineScope) {
   private val structureViews = ConcurrentHashMap<Int, StructureViewEntry>()
-  private val showPopupRequestFlow by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
-    MutableSharedFlow<ShowStructurePopupRequest>(
-      extraBufferCapacity = 1,
-      onBufferOverflow = BufferOverflow.DROP_OLDEST
-    )
-  }
 
   fun getStructureViewEntry(id: StructureViewDtoId): StructureViewEntry? {
     return structureViews[id.id]
@@ -106,20 +102,12 @@ internal class BackendStructureTreeService(private val session: ClientAppSession
     return structureViews.size
   }
 
-  fun getShowPopupRequestFlow(): Flow<ShowStructurePopupRequest> {
-    return showPopupRequestFlow
-  }
-
-  suspend fun emitShowPopupRequest(request: ShowStructurePopupRequest) {
-    showPopupRequestFlow.emit(request)
-  }
-
   internal suspend fun createStructureViewModel(
     id: StructureViewDtoId,
-    project: Project,
     fileEditor: FileEditor,
     navigationCallback: ((AbstractTreeNode<*>) -> Unit)?,
   ): StructureViewModelDto? {
+    val project = session.project
     // the model with this id has been created but hasn't been received by the frontend
     structureViews[id.id]?.disposable?.let {
       withContext(Dispatchers.EDT + NonCancellable) {
@@ -212,7 +200,6 @@ internal class BackendStructureTreeService(private val session: ClientAppSession
                                        treeModelContext.backendActionOwner,
                                        fileEditor,
                                        disposable,
-                                       project,
                                        navigationCallback)
 
         Disposer.register(disposable, Disposable {
@@ -221,8 +208,7 @@ internal class BackendStructureTreeService(private val session: ClientAppSession
 
         structureViews[id.id] = entry
 
-        val job = StructureViewScopeHolder.getInstance(project).cs.launch(CoroutineName("StructureView event processor for id: $id"),
-                                                                          start = CoroutineStart.UNDISPATCHED) {
+        val job = cs.launch(CoroutineName("StructureView event processor for id: $id"), start = CoroutineStart.UNDISPATCHED) {
           entry.requestFlow
             .onCompletion {
               nodesFlow.emit(null)
@@ -539,13 +525,14 @@ internal class BackendStructureTreeService(private val session: ClientAppSession
     val backendActionOwner: BackendTreeActionOwner, // should only be accessed at StructureTreeModel.invoker
     val fileEditor: FileEditor,
     val disposable: Disposable,
-    val project: Project,
     val navigationCallback: ((AbstractTreeNode<*>) -> Unit)?,
     val idRef: IntRef = IntRef(1), // should only be accessed at StructureTreeModel.invoker
     val nodeToId: MutableMap<StructureViewNodeKey, Int> = hashMapOf(), // should only be accessed at StructureTreeModel.invoker
   )
 
   companion object {
+    fun getInstance(project: Project): BackendStructureTreeService = project.service()
+
     private val logger = logger<BackendStructureTreeService>()
 
     internal fun visit(element: TreeNode, model: StructureTreeModel<*>, path: TreePath, action: (TreePath) -> Boolean): Boolean {

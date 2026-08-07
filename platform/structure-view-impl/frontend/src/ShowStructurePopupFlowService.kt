@@ -18,7 +18,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 @Service(Service.Level.APP)
 internal class ShowStructurePopupFlowService(cs: CoroutineScope) {
   init {
@@ -30,7 +29,7 @@ internal class ShowStructurePopupFlowService(cs: CoroutineScope) {
             request.received.send(Unit)
           }
           catch (_: Throwable) {
-            StructureTreeApi.callDisposeModel(request.modelId)
+            StructureTreeApi.callDisposeModel(request.projectId, request.modelId)
             return@collect
           }
           withContext(Dispatchers.EDT) {
@@ -38,7 +37,7 @@ internal class ShowStructurePopupFlowService(cs: CoroutineScope) {
             val file = request.fileId?.virtualFile()
 
             if (project == null || project.isDisposed) {
-              StructureTreeApi.callDisposeModel(request.modelId)
+              StructureTreeApi.callDisposeModel(request.projectId, request.modelId)
               return@withContext
             }
 
@@ -49,7 +48,7 @@ internal class ShowStructurePopupFlowService(cs: CoroutineScope) {
               popup.show()
             }
             catch (t: Throwable) {
-              StructureTreeApi.callDisposeModel(request.modelId)
+              StructureTreeApi.callDisposeModel(request.projectId, request.modelId)
               throw t
             }
           }
@@ -63,7 +62,6 @@ internal class ShowStructurePopupFlowService(cs: CoroutineScope) {
   }
 }
 
-@ApiStatus.Internal
 internal class ShowStructurePopupFlowStartupActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
     ShowStructurePopupFlowService.getInstance()

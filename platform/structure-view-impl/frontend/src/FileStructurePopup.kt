@@ -66,7 +66,7 @@ import com.intellij.platform.structureView.frontend.uiModel.NodeProviderTreeActi
 import com.intellij.platform.structureView.frontend.uiModel.StructureTreeAction
 import com.intellij.platform.structureView.frontend.uiModel.StructureUiModel
 import com.intellij.platform.structureView.frontend.uiModel.StructureUiModelListener
-import com.intellij.platform.structureView.impl.StructureViewScopeHolder
+import com.intellij.platform.structureView.frontend.impl.StructureViewScopeHolder
 import com.intellij.platform.structureView.impl.uiModel.StructureUiTreeElement
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.ClickListener

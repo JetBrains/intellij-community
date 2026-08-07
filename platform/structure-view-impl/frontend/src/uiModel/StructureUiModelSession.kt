@@ -12,9 +12,10 @@ import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.projectId
 import com.intellij.platform.structureView.impl.StructureTreeApi
-import com.intellij.platform.structureView.impl.StructureViewScopeHolder
+import com.intellij.platform.structureView.frontend.impl.StructureViewScopeHolder
 import com.intellij.platform.structureView.impl.dto.StructureViewDtoId
 import com.intellij.platform.structureView.impl.dto.StructureViewModelDto
 import com.intellij.platform.structureView.impl.dto.TreeNodesDto
@@ -38,6 +39,8 @@ import java.util.concurrent.atomic.AtomicInteger
 internal class StructureUiModelSession : StructureUiModel {
   private val dtoId: StructureViewDtoId
 
+  private val projectId: ProjectId
+
   private val cs: CoroutineScope
 
   private val model: StructureUiModelImpl
@@ -47,6 +50,7 @@ internal class StructureUiModelSession : StructureUiModel {
    */
   constructor(fileEditor: FileEditor, file: VirtualFile, project: Project) {
     dtoId = StructureViewDtoId(nextId.getAndIncrement())
+    projectId = project.projectId()
     cs = StructureViewScopeHolder.getInstance(project).cs.childScope("scope for ${file.name} structure view",
                                                                     Dispatchers.UI + ModalityState.any().asContextElement())
     model = StructureUiModelImpl(dtoId)
@@ -58,6 +62,7 @@ internal class StructureUiModelSession : StructureUiModel {
    */
   constructor(file: VirtualFile?, project: Project, modelId: StructureViewDtoId, modelDto: StructureViewModelDto) {
     dtoId = modelId
+    projectId = project.projectId()
     cs = StructureViewScopeHolder.getInstance(project).cs.childScope("scope for ${file?.name} structure view",
                                                                     Dispatchers.UI + ModalityState.any().asContextElement())
     model = StructureUiModelImpl(dtoId)
@@ -65,10 +70,9 @@ internal class StructureUiModelSession : StructureUiModel {
   }
 
   private fun initializeWithRpcModel(fileEditor: FileEditor, file: VirtualFile, project: Project) {
-    // the service scope is used to make sure the disposal request to the backend is sent after the dto is received
     StructureViewScopeHolder.getInstance(project).cs.launch {
       val dto = durable {
-        StructureTreeApi.getInstance().createStructureViewModel(dtoId, fileEditor.rpcId(), file.rpcId(), project.projectId())
+        StructureTreeApi.getInstance().createStructureViewModel(projectId, dtoId, fileEditor.rpcId(), file.rpcId())
       }
 
       if (dto == null) {
@@ -95,12 +99,11 @@ internal class StructureUiModelSession : StructureUiModel {
   }
 
   private fun registerModelDisposal(project: Project) {
-    // capture the service scope eagerly: the completion handler may run during project disposal,
-    // when the service is no longer accessible (see ContainerDisposedException)
-    val serviceScope = StructureViewScopeHolder.getInstance(project).cs
     cs.coroutineContext.job.invokeOnCompletion {
-      serviceScope.launch {
-        StructureTreeApi.callDisposeModel(dtoId)
+      if (project.isDisposed) return@invokeOnCompletion
+
+      StructureViewScopeHolder.getInstance(project).cs.launch {
+        StructureTreeApi.callDisposeModel(projectId, dtoId)
       }
     }
   }
@@ -208,7 +211,7 @@ internal class StructureUiModelSession : StructureUiModel {
 
     cs.launch {
       val id = dtoId
-      StructureTreeApi.getInstance().setTreeActionState(id, action.name, isEnabled, isAutoClicked)
+      StructureTreeApi.getInstance().setTreeActionState(projectId, id, action.name, isEnabled, isAutoClicked)
     }
   }
 
@@ -224,7 +227,7 @@ internal class StructureUiModelSession : StructureUiModel {
     val modelId = dtoId
 
     cs.launch {
-      val succeeded = StructureTreeApi.getInstance().navigateToElement(modelId, elementId)
+      val succeeded = StructureTreeApi.getInstance().navigateToElement(projectId, modelId, elementId)
       if (succeeded) {
         deferred.complete(true)
       }
@@ -242,7 +245,7 @@ internal class StructureUiModelSession : StructureUiModel {
 
   @TestOnly
   override suspend fun getNewSelection(): Int? {
-    return StructureTreeApi.getInstance().getNewSelection(dtoId)
+    return StructureTreeApi.getInstance().getNewSelection(projectId, dtoId)
   }
 
   override fun getUpdatePendingFlow(): StateFlow<Boolean> = model.updatePendingFlow
