@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.KeyboardShortcut
-import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.editor.Editor
@@ -59,7 +58,7 @@ private class TerminalEventDispatcher(
   private val settings: JBTerminalSystemSettingsProviderBase,
   private val eventsHandler: TerminalKeyEventsHandler,
   private val parentDisposable: Disposable,
-) : IdeEventQueue.EventDispatcher {
+) : IdeEventQueue.NonLockedEventDispatcher {
   private val sendShortcutAction = SendShortcutToTerminalAction(eventsHandler)
   private var myRegistered = false
   private var allowedActions: List<AnAction> = emptyList()
@@ -283,10 +282,8 @@ private class TerminalKeyListener(
 
   private fun handleEvent(e: KeyEvent) {
     if (settings.overrideIdeShortcuts()) return // handled by the dispatcher
-    WriteIntentReadAction.run {
-      eventsHandler.handleKeyEvent(TimedKeyEvent(e))
-      e.consume()
-    }
+    eventsHandler.handleKeyEvent(TimedKeyEvent(e))
+    e.consume()
   }
 }
 
