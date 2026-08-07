@@ -977,6 +977,7 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
     }
   }
 
+  @IJIgnore(issue = "IJPL-252062")
   public void testDoNotLeakForgottenUncommittedDocument() throws Exception {
     ApplicationManager.getApplication().executeOnPooledThread(() -> ReadAction.compute(() -> {
       Document document = createFreeThreadedDocument();
