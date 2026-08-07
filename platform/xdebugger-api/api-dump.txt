@@ -315,7 +315,6 @@ a:com.intellij.xdebugger.breakpoints.XBreakpointType
 - getVisibleStandardPanels():java.util.EnumSet
 - hasCustomCondition(com.intellij.xdebugger.breakpoints.XBreakpoint):Z
 - isAddBreakpointButtonVisible():Z
-- isNewBadgeVisible():Z
 - isSuspendThreadSupported():Z
 - shouldShowInBreakpointsDialog(com.intellij.openapi.project.Project):Z
 e:com.intellij.xdebugger.breakpoints.XBreakpointType$StandardPanels
@@ -393,7 +392,6 @@ a:com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel
 - <init>():V
 - dispose():V
 - a:getComponent():javax.swing.JComponent
-- hidesBreakpointNameLabel():Z
 - isVisibleOnPopup(com.intellij.xdebugger.breakpoints.XBreakpoint):Z
 - a:loadFrom(com.intellij.xdebugger.breakpoints.XBreakpoint):V
 - a:saveTo(com.intellij.xdebugger.breakpoints.XBreakpoint):V
