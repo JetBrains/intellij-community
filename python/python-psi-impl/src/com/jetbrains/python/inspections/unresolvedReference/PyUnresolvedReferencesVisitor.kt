@@ -471,7 +471,6 @@ class PyUnresolvedReferencesVisitor(
   }
 
   private fun computeHighlightType(severity: HighlightSeverity): ProblemHighlightType {
-    if (myTypeEvalContext.usesExternalTypeEngine) return ProblemHighlightType.INFORMATION
     return when (severity) {
       HighlightSeverity.WARNING -> ProblemHighlightType.GENERIC_ERROR_OR_WARNING
       HighlightSeverity.WEAK_WARNING -> ProblemHighlightType.WEAK_WARNING

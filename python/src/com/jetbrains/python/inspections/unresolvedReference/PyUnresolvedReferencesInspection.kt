@@ -35,7 +35,17 @@ class PyUnresolvedReferencesInspection : PyInspection() {
   override fun getID(): String = "PyUnresolvedReferences"
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
-    val visitor = createVisitor(holder, session)
+    val context = PyInspectionVisitor.getContext(session)
+    if (context.usesExternalTypeEngine) {
+      return PsiElementVisitor.EMPTY_VISITOR
+    }
+    val visitor = PyUnresolvedReferencesVisitor(holder,
+                                                ignoredIdentifiers,
+                                                context,
+                                                getEffectiveLanguageLevel(session.file),
+                                                strictClassAttributes,
+                                                strictInstanceAttributes,
+                                                PyUnresolvedReferenceQuickFixesImpl)
     // buildVisitor() will be called on injected files in the same session - don't overwrite if we already have one
     val existingVisitor = session.getUserData(KEY)
     if (existingVisitor == null) {
@@ -51,15 +61,6 @@ class PyUnresolvedReferencesInspection : PyInspection() {
     }
     session.putUserData(KEY, null)
   }
-
-  private fun createVisitor(holder: ProblemsHolder, session: LocalInspectionToolSession): PyUnresolvedReferencesVisitor =
-    PyUnresolvedReferencesVisitor(holder,
-                                  ignoredIdentifiers,
-                                  PyInspectionVisitor.getContext(session),
-                                  getEffectiveLanguageLevel(session.file),
-                                  strictClassAttributes,
-                                  strictInstanceAttributes,
-                                  PyUnresolvedReferenceQuickFixesImpl)
 
   override fun getOptionsPane(): OptPane = OptPane.pane(
     OptPane.stringList("ignoredIdentifiers",

@@ -1,8 +1,11 @@
 package com.intellij.python.pyrefly.lsp
 
+import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.execution.process.BaseProcessHandler
+import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.lsp.api.Lsp4jServer
 import com.intellij.platform.lsp.api.customization.LspFoldingRangeCustomizer
@@ -18,6 +21,7 @@ import com.intellij.python.pytools.lsp.PyLspToolSettings
 import com.jetbrains.python.codeInsight.typing.PyTypeShed
 import com.jetbrains.python.sdk.pythonSdk
 import org.eclipse.lsp4j.ConfigurationItem
+import org.eclipse.lsp4j.Diagnostic
 import org.eclipse.lsp4j.InitializeResult
 
 @Suppress("UsagesOfObsoleteApi")
@@ -30,6 +34,18 @@ class PyreflyLspClientDescriptor(module: Module) : PyLspToolDescriptor(module, P
 
   override val lspCustomization: PyLspToolCustomization = object : PyLspToolCustomization(toolConfig, pyTool, project) {
     override val foldingRangeCustomizer: LspFoldingRangeCustomizer = LspFoldingRangeDisabled
+
+    override val diagnosticsSupport: PyLspToolDiagnosticsSupport = object : PyLspToolDiagnosticsSupport() {
+      override fun createAnnotation(
+        holder: AnnotationHolder,
+        diagnostic: Diagnostic,
+        textRange: TextRange,
+        quickFixes: List<IntentionAction>,
+      ) {
+        val customizedQuickFixes = customizePyreflyQuickFixes(holder, diagnostic, textRange, quickFixes)
+        super.createAnnotation(holder, diagnostic, textRange, customizedQuickFixes)
+      }
+    }
   }
 
   override val lspServerListener: PyLspToolDescriptorLspServerListener = object : PyLspToolDescriptorLspServerListener() {
