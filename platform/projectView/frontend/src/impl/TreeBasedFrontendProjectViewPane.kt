@@ -4,12 +4,9 @@ package com.intellij.platform.projectView.frontend.impl
 import com.intellij.ide.DefaultTreeExpander
 import com.intellij.ide.SelectInTarget
 import com.intellij.ide.ui.UISettings
-import com.intellij.ide.ui.customization.CustomizationUtil
 import com.intellij.ide.util.treeView.TreeState
-import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataSink
-import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.application.UI
@@ -36,8 +33,6 @@ import com.intellij.platform.projectView.settings.ProjectViewPaneOptionDTO
 import com.intellij.ui.AutoScrollToSourceHandler
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.ScrollPaneFactory
-import com.intellij.ui.TreeUIHelper
-import com.intellij.ui.popup.HintUpdateSupply
 import com.intellij.ui.stripe.ErrorStripe
 import com.intellij.ui.stripe.ErrorStripePainter
 import com.intellij.ui.stripe.TreeUpdater
@@ -85,12 +80,7 @@ internal class TreeBasedFrontendProjectViewPane(
   descriptor: ProjectViewPaneDescriptorImpl,
 ) : FrontendProjectViewPane, UiDataProvider {
   private val paneTreeModel = FrontendProjectViewPaneTreeModel(project, descriptor)
-  private val tree = Tree(paneTreeModel.treeModel).also {
-    it.isRootVisible = false
-    CustomizationUtil.installPopupHandler(it, IdeActions.GROUP_PROJECT_VIEW_POPUP, ActionPlaces.PROJECT_VIEW_POPUP)
-    TreeUIHelper.getInstance().installTreeSpeedSearch(it)
-    HintUpdateSupply.installDataContextHintUpdateSupply(it)
-  }
+  private val tree = FrontendProjectViewTree(paneTreeModel.treeModel)
   private val scrollPane = ScrollPaneFactory.createScrollPane(tree, true)
   private val expandRequests = Channel<ExpandRequest>(capacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
   private val treeExpander = ProjectViewTreeExpander(tree, expandRequests)
