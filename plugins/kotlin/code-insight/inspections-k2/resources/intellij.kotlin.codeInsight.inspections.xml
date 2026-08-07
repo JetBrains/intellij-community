@@ -56,6 +56,10 @@
   </dependencies>
   <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
+
+    <inspection.basicVisitor class="org.jetbrains.kotlin.psi.KtVisitorVoid"/>
+    <inspection.basicVisitor class="org.jetbrains.kotlin.psi.KtVisitor"/>
+
     <projectService
             serviceInterface="org.jetbrains.kotlin.idea.core.NotPropertiesService"
             serviceImplementation="org.jetbrains.kotlin.idea.codeInsight.inspections.NotPropertiesServiceImpl"/>

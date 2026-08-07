@@ -31,7 +31,6 @@
   <!-- comes from the Kotlin compiler -->
   <xi:include href="/META-INF/analysis-api/analysis-api-fir.xml"/>
 
-  <xi:include href="/META-INF/language.xml"/>
   <xi:include href="/META-INF/caches.xml"/>
   <xi:include href="/META-INF/scripting-v1.xml"/>
 
