@@ -26,7 +26,7 @@ class ProjectFrameCapabilitiesServiceTest {
     val uiPolicyRef = AtomicReference(
       ProjectFrameUiPolicy(
         projectPaneToActivateId = "pane-1",
-        startupToolWindowIdToActivate = "toolwindow-1",
+        toolWindowLayoutProfileId = "layout-profile-1",
       )
     )
     val capabilitiesComputationCount = AtomicInteger()
@@ -59,16 +59,16 @@ class ProjectFrameCapabilitiesServiceTest {
 
     val service = ProjectFrameCapabilitiesService()
     assertThat(service.getUiPolicy(project)?.projectPaneToActivateId).isEqualTo("pane-1")
-    assertThat(service.getUiPolicy(project)?.startupToolWindowIdToActivate).isEqualTo("toolwindow-1")
+    assertThat(service.getUiPolicy(project)?.toolWindowLayoutProfileId).isEqualTo("layout-profile-1")
 
     uiPolicyRef.set(
       ProjectFrameUiPolicy(
         projectPaneToActivateId = "pane-2",
-        startupToolWindowIdToActivate = "toolwindow-2",
+        toolWindowLayoutProfileId = "layout-profile-2",
       )
     )
     assertThat(service.getUiPolicy(project)?.projectPaneToActivateId).isEqualTo("pane-2")
-    assertThat(service.getUiPolicy(project)?.startupToolWindowIdToActivate).isEqualTo("toolwindow-2")
+    assertThat(service.getUiPolicy(project)?.toolWindowLayoutProfileId).isEqualTo("layout-profile-2")
 
     assertThat(service.getAll(project)).isEqualTo(setOf(ProjectFrameCapability.WELCOME_EXPERIENCE))
     assertThat(service.has(project, ProjectFrameCapability.WELCOME_EXPERIENCE)).isTrue()

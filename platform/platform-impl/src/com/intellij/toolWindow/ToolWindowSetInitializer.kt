@@ -12,6 +12,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionPointListener
@@ -25,7 +26,7 @@ import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowEP
 import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
-import com.intellij.openapi.wm.ex.ProjectFrameTypeService
+import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.impl.DesktopLayout
 import com.intellij.openapi.wm.impl.ToolWindowManagerAppLevelHelper
@@ -377,8 +378,11 @@ private fun beanToTask(
 
 @OptIn(ExperimentalCoroutinesApi::class)
 internal suspend fun computeToolWindowBeans(project: Project, projectFrameTypeId: String? = null): List<RegisterToolWindowTaskData> {
-  val profileId = serviceAsync<ProjectFrameTypeService>().getToolWindowLayoutProfileId(projectFrameTypeId)
-  val suppressedToolWindowIds = serviceAsync<ProjectFrameToolWindowLayoutService>().getSuppressedToolWindowIds(profileId)
+  val projectFrameToolWindowLayoutProfileId = service<ProjectFrameCapabilitiesService>().getUiPolicy(project)?.toolWindowLayoutProfileId
+  val suppressedToolWindowIds = service<ProjectFrameToolWindowLayoutService>().getSuppressedToolWindowIds(
+    frameType = projectFrameTypeId,
+    profileId = projectFrameToolWindowLayoutProfileId,
+  )
   return coroutineScope {
     ToolWindowEP.EP_NAME.filterableLazySequence().map { item ->
       async {

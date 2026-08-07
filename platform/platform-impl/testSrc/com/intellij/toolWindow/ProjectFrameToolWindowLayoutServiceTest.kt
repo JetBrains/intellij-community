@@ -11,8 +11,10 @@ import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowEP
 import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.ToolWindowId
-import com.intellij.openapi.wm.ex.ProjectFrameTypeBean
-import com.intellij.openapi.wm.ex.ProjectFrameTypeService
+import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesProvider
+import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService
+import com.intellij.openapi.wm.ex.ProjectFrameCapability
+import com.intellij.openapi.wm.ex.ProjectFrameUiPolicy
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
@@ -33,7 +35,7 @@ class ProjectFrameToolWindowLayoutServiceTest {
   fun descriptorLayoutDeserializesPluginXmlNotation() {
     val bean = XmlSerializer.deserialize(
       JDOMUtil.load("""
-        <projectFrameToolWindowLayout id="dedicated" applyMode="forceOnce" migrationVersion="4">
+        <projectFrameToolWindowLayout id="dedicated" frameType="DEDICATED" applyMode="forceOnce" migrationVersion="4">
           <toolWindow id="Project" register="false"/>
           <toolWindow id="Custom" anchor="right" visible="true" showStripeButton="true"
                       weight="0.25" contentUiType="combo" split="true" sideWeight="0.4"/>
@@ -43,6 +45,7 @@ class ProjectFrameToolWindowLayoutServiceTest {
     )
 
     assertThat(bean.id).isEqualTo("dedicated")
+    assertThat(bean.frameType).isEqualTo("DEDICATED")
     assertThat(bean.applyMode).isEqualTo(ToolWindowLayoutApplyMode.FORCE_ONCE)
     assertThat(bean.migrationVersion).isEqualTo(4)
     assertThat(bean.toolWindows).hasSize(2)
@@ -67,6 +70,7 @@ class ProjectFrameToolWindowLayoutServiceTest {
     registerLayoutBean(
       ProjectFrameToolWindowLayoutBean().apply {
         id = "dedicated"
+        frameType = "DEDICATED"
         applyMode = ToolWindowLayoutApplyMode.FORCE_ONCE
         migrationVersion = 4
         toolWindows = listOf(
@@ -111,6 +115,7 @@ class ProjectFrameToolWindowLayoutServiceTest {
     registerLayoutBean(
       ProjectFrameToolWindowLayoutBean().apply {
         id = "dedicated"
+        frameType = "DEDICATED"
         applyMode = ToolWindowLayoutApplyMode.FORCE_ONCE
         migrationVersion = 4
         toolWindows = listOf(
@@ -137,10 +142,11 @@ class ProjectFrameToolWindowLayoutServiceTest {
   }
 
   @Test
-  fun descriptorLayoutExposesSuppressedToolWindowsByProfileId() {
+  fun descriptorLayoutExposesSuppressedToolWindowsByFrameType() {
     registerLayoutBean(
       ProjectFrameToolWindowLayoutBean().apply {
         id = "dedicated"
+        frameType = "DEDICATED"
         toolWindows = listOf(
           suppressedToolWindow(ToolWindowId.PROJECT_VIEW),
           suppressedToolWindow(ToolWindowId.STRUCTURE_VIEW),
@@ -150,10 +156,34 @@ class ProjectFrameToolWindowLayoutServiceTest {
 
     val service = service<ProjectFrameToolWindowLayoutService>()
 
-    assertThat(service.getSuppressedToolWindowIds("dedicated")).containsExactly(ToolWindowId.PROJECT_VIEW, ToolWindowId.STRUCTURE_VIEW)
-    assertThat(service.isToolWindowRegistrationSuppressed("dedicated", ToolWindowId.PROJECT_VIEW)).isTrue()
-    assertThat(service.isToolWindowRegistrationSuppressed("other", ToolWindowId.PROJECT_VIEW)).isFalse()
-    assertThat(service.isToolWindowRegistrationSuppressed(null, ToolWindowId.PROJECT_VIEW)).isFalse()
+    assertThat(service.getSuppressedToolWindowIds("DEDICATED")).containsExactly(ToolWindowId.PROJECT_VIEW, ToolWindowId.STRUCTURE_VIEW)
+    assertThat(service.isToolWindowRegistrationSuppressed("DEDICATED", ToolWindowId.PROJECT_VIEW)).isTrue()
+    assertThat(service.isToolWindowRegistrationSuppressed("OTHER", ToolWindowId.PROJECT_VIEW)).isFalse()
+  }
+
+  @Test
+  fun descriptorLayoutExposesSuppressedToolWindowsByProfileId() {
+    registerLayoutBean(
+      ProjectFrameToolWindowLayoutBean().apply {
+        id = "dedicated"
+        frameType = "DEDICATED"
+        toolWindows = listOf(
+          suppressedToolWindow(ToolWindowId.PROJECT_VIEW),
+          suppressedToolWindow(ToolWindowId.STRUCTURE_VIEW),
+        )
+      }
+    )
+
+    val service = service<ProjectFrameToolWindowLayoutService>()
+
+    assertThat(service.getSuppressedToolWindowIds(frameType = null, profileId = "dedicated"))
+      .containsExactly(ToolWindowId.PROJECT_VIEW, ToolWindowId.STRUCTURE_VIEW)
+    assertThat(service.isToolWindowRegistrationSuppressed(frameType = null,
+                                                          profileId = "dedicated",
+                                                          toolWindowId = ToolWindowId.PROJECT_VIEW))
+      .isTrue()
+    assertThat(service.isToolWindowRegistrationSuppressed(frameType = null, profileId = "other", toolWindowId = ToolWindowId.PROJECT_VIEW))
+      .isFalse()
   }
 
   @Test
@@ -169,21 +199,21 @@ class ProjectFrameToolWindowLayoutServiceTest {
   }
 
   @Test
-  fun frameTypeWithoutDescriptorKeepsToolWindowEpRegistration() {
-    // the layout profile exists, but nothing maps this frame type onto it
-    registerLayoutBean(
-      ProjectFrameToolWindowLayoutBean().apply {
-        id = "dedicated"
-        toolWindows = listOf(suppressedToolWindow("Suppressed"))
-      }
-    )
+  fun uiPolicyLayoutProfileSuppressesToolWindowEpWhenFrameTypeIsMissing() {
+    registerSuppressedToolWindowLayout()
     CountingToolWindowFactory.createdCount = 0
     ExtensionTestUtil.maskExtensions(ToolWindowEP.EP_NAME, listOf(suppressedToolWindowEp()), disposable, fireEvents = false)
+    ExtensionTestUtil.maskExtensions(
+      ProjectFrameCapabilitiesService.EP_NAME,
+      listOf(testUiPolicyProvider { "dedicated" }),
+      disposable,
+      fireEvents = false,
+    )
 
-    val tasks = runBlocking { computeToolWindowBeans(project, projectFrameTypeId = "DEDICATED") }
+    val tasks = runBlocking { computeToolWindowBeans(project, projectFrameTypeId = null) }
 
-    assertThat(tasks.map { it.id }).containsExactly("Suppressed")
-    assertThat(CountingToolWindowFactory.createdCount).isEqualTo(1)
+    assertThat(tasks).isEmpty()
+    assertThat(CountingToolWindowFactory.createdCount).isEqualTo(0)
   }
 
   @Test
@@ -202,17 +232,9 @@ class ProjectFrameToolWindowLayoutServiceTest {
     registerLayoutBean(
       ProjectFrameToolWindowLayoutBean().apply {
         id = "dedicated"
+        frameType = "DEDICATED"
         toolWindows = listOf(suppressedToolWindow("Suppressed"))
       }
-    )
-    ExtensionTestUtil.maskExtensions(
-      ProjectFrameTypeService.EP_NAME,
-      listOf(ProjectFrameTypeBean().apply {
-        id = "DEDICATED"
-        toolWindowLayoutProfile = "dedicated"
-      }),
-      disposable,
-      fireEvents = false,
     )
   }
 
@@ -234,6 +256,18 @@ private fun suppressedToolWindowEp(): ToolWindowEP {
     id = "Suppressed"
     anchor = ToolWindowAnchor.LEFT.toString()
     factoryClass = CountingToolWindowFactory::class.java.name
+  }
+}
+
+private fun testUiPolicyProvider(profileIdProvider: () -> String?): ProjectFrameCapabilitiesProvider {
+  return object : ProjectFrameCapabilitiesProvider {
+    override fun getCapabilities(project: Project): Set<ProjectFrameCapability> {
+      return emptySet()
+    }
+
+    override fun getUiPolicy(project: Project, capabilities: Set<ProjectFrameCapability>): ProjectFrameUiPolicy? {
+      return profileIdProvider()?.let { ProjectFrameUiPolicy(toolWindowLayoutProfileId = it) }
+    }
   }
 }
 

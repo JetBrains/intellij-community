@@ -50,7 +50,7 @@ import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.openapi.wm.ex.ProjectFrameTypeService
+import com.intellij.openapi.wm.ex.ProjectFrameActionExclusionService
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil
 import com.intellij.openapi.wm.impl.ToolbarComboButton
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil
@@ -563,7 +563,7 @@ private suspend fun computeMainActionGroups(
   customActionSchema: CustomActionsSchema,
   projectFrameTypeId: String? = null,
 ): List<Pair<ActionGroup, HorizontalLayout.Group>> {
-  val excludedActionIds = serviceAsync<ProjectFrameTypeService>().getExcludedActionIds(projectFrameTypeId, ActionPlaces.MAIN_TOOLBAR)
+  val excludedActionIds = serviceAsync<ProjectFrameActionExclusionService>().getExcludedActionIds(projectFrameTypeId, ActionPlaces.MAIN_TOOLBAR)
   val result = ArrayList<Pair<ActionGroup, HorizontalLayout.Group>>(3)
   for (info in getMainToolbarGroups()) {
     customActionSchema.getCorrectedActionAsync(info.id, info.name)?.let { actionGroup ->
@@ -581,7 +581,7 @@ internal fun blockingComputeMainActionGroups(
   customActionSchema: CustomActionsSchema,
   projectFrameTypeId: String? = null,
 ): List<Pair<ActionGroup, HorizontalLayout.Group>> {
-  val excludedActionIds = service<ProjectFrameTypeService>().getExcludedActionIds(projectFrameTypeId, ActionPlaces.MAIN_TOOLBAR)
+  val excludedActionIds = service<ProjectFrameActionExclusionService>().getExcludedActionIds(projectFrameTypeId, ActionPlaces.MAIN_TOOLBAR)
   return getMainToolbarGroups()
     .mapNotNull { info ->
       customActionSchema.getCorrectedAction(info.id, info.name)?.let { actionGroup ->

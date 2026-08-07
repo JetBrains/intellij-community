@@ -58,9 +58,7 @@ import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService
-import com.intellij.openapi.wm.ex.ProjectFrameTypeService
 import com.intellij.openapi.wm.ex.ProjectFrameUiPolicy
-import com.intellij.openapi.wm.ex.normalizeProjectFrameKey
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.ex.WelcomeScreenTabService
 import com.intellij.openapi.wm.impl.FrameBoundsConverter
@@ -375,14 +373,6 @@ internal class IdeProjectFrameAllocator(
       if (projectFrameTypeId == null) {
         projectFrameTypeId = recentProjectMetaInfo?.projectFrameTypeId
       }
-    }
-
-    // this is the one choke point that sees every effective frame type id, so an id nothing declares
-    // (a typo, or a plugin that is gone) is reported here instead of silently degrading to "no policy"
-    val normalizedFrameTypeId = projectFrameTypeId.normalizeProjectFrameKey()
-    if (normalizedFrameTypeId != null && serviceAsync<ProjectFrameTypeService>().findDescriptor(normalizedFrameTypeId) == null) {
-      logger<ProjectFrameAllocator>()
-        .warn("No <projectFrameType id=\"$normalizedFrameTypeId\"> is declared - frame-type policy is ignored for $projectStoreBaseDir")
     }
 
     return ResolvedFrameSettings(frameInfo = frameInfo ?: FrameInfo(), projectFrameTypeId = projectFrameTypeId)

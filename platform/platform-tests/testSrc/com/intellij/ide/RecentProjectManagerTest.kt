@@ -4,12 +4,8 @@ package com.intellij.ide
 import com.intellij.configurationStore.deserializeInto
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.openapi.wm.ex.ProjectFrameTypeBean
-import com.intellij.openapi.wm.ex.ProjectFrameTypeService
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.testFramework.ApplicationRule
-import com.intellij.testFramework.DisposableRule
-import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import junit.framework.TestCase.assertFalse
 import kotlinx.coroutines.Dispatchers
@@ -17,7 +13,6 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.runBlocking
 import org.intellij.lang.annotations.Language
 import org.junit.ClassRule
-import org.junit.Rule
 import org.junit.Test
 import java.awt.Color
 import kotlin.test.assertTrue
@@ -27,106 +22,6 @@ class RecentProjectManagerTest {
     @ClassRule
     @JvmField
     val appRule = ApplicationRule()
-  }
-
-  @Rule
-  @JvmField
-  val disposableRule = DisposableRule()
-
-  @Test
-  fun `hidden project startup eligibility follows project frame policy`() {
-    val policyFrameType = "TEST_HIDDEN_REOPEN"
-    ExtensionTestUtil.maskExtensions(
-      ProjectFrameTypeService.EP_NAME,
-      listOf(ProjectFrameTypeBean().also {
-        it.id = policyFrameType
-        it.reopenWhenHidden = true
-      }),
-      disposableRule.disposable,
-    )
-
-    val settings = GeneralSettings.getInstance()
-    val originalState = settings.state.copy()
-    try {
-      settings.loadState(originalState.copy(reopenLastProject = true))
-      test { manager ->
-        val policyEnabled = RecentProjectMetaInfo().also {
-          it.opened = true
-          it.hidden = true
-          it.projectFrameTypeId = policyFrameType
-        }
-        val ordinaryHidden = RecentProjectMetaInfo().also {
-          it.opened = true
-          it.hidden = true
-          it.projectFrameTypeId = "ORDINARY_HIDDEN"
-        }
-        val closedPolicyEnabled = RecentProjectMetaInfo().also {
-          it.opened = false
-          it.hidden = true
-          it.projectFrameTypeId = policyFrameType
-        }
-
-        val policyState = RecentProjectManagerState()
-        policyState.additionalInfo["/hidden/policy-enabled"] = policyEnabled
-        manager.loadState(policyState)
-        assertThat(manager.willReopenProjectOnStart()).isTrue()
-
-        val ordinaryState = RecentProjectManagerState()
-        ordinaryState.additionalInfo["/hidden/ordinary"] = ordinaryHidden
-        manager.loadState(ordinaryState)
-        assertThat(manager.willReopenProjectOnStart()).isFalse()
-
-        val closedState = RecentProjectManagerState()
-        closedState.additionalInfo["/hidden/closed"] = closedPolicyEnabled
-        manager.loadState(closedState)
-        assertThat(manager.willReopenProjectOnStart()).isFalse()
-
-        val recentState = RecentProjectManagerState()
-        recentState.additionalInfo["/hidden/policy-enabled"] = policyEnabled
-        recentState.additionalInfo["/hidden/ordinary"] = ordinaryHidden
-        manager.loadState(recentState)
-        assertThat(manager.getRecentPaths()).isEmpty()
-      }
-    }
-    finally {
-      settings.loadState(originalState)
-    }
-  }
-
-  @Test
-  fun `global reopen setting excludes policy-enabled hidden project`() {
-    val policyFrameType = "TEST_HIDDEN_REOPEN"
-    ExtensionTestUtil.maskExtensions(
-      ProjectFrameTypeService.EP_NAME,
-      listOf(ProjectFrameTypeBean().also {
-        it.id = policyFrameType
-        it.reopenWhenHidden = true
-      }),
-      disposableRule.disposable,
-    )
-
-    val settings = GeneralSettings.getInstance()
-    val originalState = settings.state.copy()
-    try {
-      test { manager ->
-        val state = RecentProjectManagerState()
-        state.additionalInfo["/hidden/policy-enabled"] = RecentProjectMetaInfo().also {
-          it.opened = true
-          it.hidden = true
-          it.projectFrameTypeId = policyFrameType
-        }
-        manager.loadState(state)
-
-        settings.loadState(originalState.copy(reopenLastProject = false))
-        assertThat(manager.willReopenProjectOnStart()).isFalse()
-
-        settings.loadState(originalState.copy(reopenLastProject = true))
-        assertThat(manager.willReopenProjectOnStart()).isTrue()
-      }
-    }
-    finally {
-      settings.loadState(originalState)
-    }
   }
 
   // IDEA-298050
@@ -872,7 +767,7 @@ class RecentProjectManagerTest {
   }
 }
 
-fun test(task: suspend (manager: RecentProjectsManagerBase) -> Unit) {
+fun test(task: (manager: RecentProjectsManagerBase) -> Unit) {
   runBlocking(Dispatchers.Default) {
     val coroutineScope = childScope()
     val manager = RecentProjectsManagerBase(coroutineScope)
