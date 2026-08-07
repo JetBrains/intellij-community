@@ -25,6 +25,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl.SIMPLIFIED_SPLASH_MARKER_FILE_NAME
 import com.intellij.openapi.application.impl.islands.IslandsFeedback
+import com.intellij.openapi.application.impl.islands.isIslandTheme
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.diagnostic.thisLogger
@@ -207,7 +208,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
   private val propertyGraph = PropertyGraph()
   private val lafProperty = propertyGraph.lazyProperty { lafManager.lookAndFeelReference }
   private val syncThemeProperty = propertyGraph.lazyProperty { lafManager.autodetect }
-  private val islandLafProperty = propertyGraph.lazyProperty { IslandsFeedback.isIslandTheme() }
+  private val islandLafProperty = propertyGraph.lazyProperty { isIslandTheme() }
   private val simplifiedSplashMarkerFile: Path by lazy { PathManager.getConfigDir().resolve(SIMPLIFIED_SPLASH_MARKER_FILE_NAME) }
 
   override fun createPanel(): DialogPanel {

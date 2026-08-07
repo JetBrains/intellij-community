@@ -83,6 +83,7 @@ import com.intellij.util.ui.JBSwingUtilities
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
 import java.awt.AWTEvent
 import java.awt.BorderLayout
 import java.awt.Color
@@ -122,6 +123,11 @@ private val DEFAULT_THEME_IDS = setOf(
   "JetBrainsHighContrastTheme",
   "Darcula",
 )
+
+@ApiStatus.Internal
+fun isIslandTheme(): Boolean {
+  return IslandsFeedback.isIslandTheme(LafManager.getInstance().currentUIThemeLookAndFeel?.id ?: return false)
+}
 
 private fun isDefaultTheme(): Boolean {
   val id = LafManager.getInstance().currentUIThemeLookAndFeel?.id ?: return false

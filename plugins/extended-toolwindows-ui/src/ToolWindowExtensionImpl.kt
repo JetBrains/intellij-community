@@ -2,16 +2,19 @@ package com.intellij.extendedToolWindowsUi
 
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.ActionButtonComponent
+import com.intellij.openapi.application.impl.islands.isIslandTheme
 import com.intellij.openapi.wm.impl.SquareStripeButton
 import com.intellij.openapi.wm.impl.SquareStripeButtonLook
 import com.intellij.openapi.wm.impl.SquareStripeButtonLookExtension
 import com.intellij.openapi.wm.impl.ToolWindowAnchorEnum
-import com.intellij.openapi.wm.impl.toEnum
 import com.intellij.openapi.wm.impl.isHorizontal
+import com.intellij.openapi.wm.impl.toEnum
 import com.intellij.toolWindow.StripeButtonUi
 import com.intellij.toolWindow.extendedToolWindowsUi.ToolWindowExtension
 import com.intellij.ui.icons.toStrokeIcon
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.ui.util.height
+import com.intellij.ui.util.width
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBFont
@@ -30,11 +33,6 @@ import javax.swing.UIManager
 
 internal class ToolWindowExtensionImpl : ToolWindowExtension {
 
-  private val TOP_INSETS = JBUI.insets(5, 5, 2, 5)
-  private val TOP_COMPACT_INSETS = JBUI.insets(5, 4, 3, 4)
-  private val BOTTOM_INSETS = JBUI.insets(2, 5, 5, 5)
-  private val BOTTOM_COMPACT_INSETS = JBUI.insets(3, 4, 5, 4)
-
   override fun isStripeResizable(): Boolean {
     return false
   }
@@ -52,25 +50,54 @@ internal class ToolWindowExtensionImpl : ToolWindowExtension {
   }
 
   override fun getIconPadding(toolbarAnchor: ToolWindowAnchorEnum): Insets {
+    // Assume the paddings are symmetrical, so use the left padding as the reference
+    // This allows customization and works well for both Islands and non-Islands themes
+    val paddings = JBUI.CurrentTheme.Toolbar.stripeToolbarButtonIconPadding(true, false)
+    val sidePadding = JBUIScale.scale(if (compactMode) 4 else 5)
+    val left = paddings.left
+    val right = paddings.right
+
     return when (toolbarAnchor) {
-      ToolWindowAnchorEnum.LEFT,
-      ToolWindowAnchorEnum.RIGHT,
-        -> JBUI.CurrentTheme.Toolbar.stripeToolbarButtonIconPadding(toolbarAnchor == ToolWindowAnchorEnum.LEFT, false)
-      ToolWindowAnchorEnum.TOP -> if (compactMode) TOP_COMPACT_INSETS else TOP_INSETS
-      ToolWindowAnchorEnum.BOTTOM -> if (compactMode) BOTTOM_COMPACT_INSETS else BOTTOM_INSETS
+      ToolWindowAnchorEnum.LEFT ->
+        @Suppress("UseDPIAwareInsets")
+        Insets(sidePadding, left, sidePadding, right)
+
+      ToolWindowAnchorEnum.RIGHT ->
+        @Suppress("UseDPIAwareInsets")
+        Insets(sidePadding, right, sidePadding, left) // Inverse
+
+      ToolWindowAnchorEnum.TOP ->
+        @Suppress("UseDPIAwareInsets")
+        Insets(left, sidePadding, right, sidePadding)
+
+      ToolWindowAnchorEnum.BOTTOM ->
+        @Suppress("UseDPIAwareInsets")
+        Insets(right, sidePadding, left, sidePadding)
     }
   }
 
-  override fun getButtonMinSize(): Dimension {
+  override fun getButtonMinSize(moreButton: Boolean): Dimension {
     val size = getStripeButtonUnscaledSize()
 
-    // The visible button should be square
-    val heightCorrection = if (compactMode) 0 else 3
+    val heightCorrection: Int
+    if (moreButton) {
+      // The visible part of More button should be square
+      val padding = getIconPadding(ToolWindowAnchorEnum.LEFT) // should be the same correction with ToolWindowAnchorEnum.RIGHT
+      heightCorrection = padding.height - padding.width
+    }
+    else {
+      heightCorrection = 0
+    }
+
     return JBDimension(size, size + heightCorrection)
   }
 
   private fun getStripeButtonUnscaledSize(): Int {
-    return if (compactMode) 28 else 32
+    var result = if (compactMode) 28 else 32
+    if (!isIslandTheme()) {
+      result += 3
+    }
+    return result
   }
 }
 

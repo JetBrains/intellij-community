@@ -41,7 +41,7 @@ interface ToolWindowExtension {
 
   fun getIconPadding(toolbarAnchor: ToolWindowAnchorEnum): Insets
 
-  fun getButtonMinSize(): Dimension
+  fun getButtonMinSize(moreButton: Boolean): Dimension
 
   fun createTopToolWindowToolbar(paneId: String, isPrimary: Boolean): ToolWindowToolbar? {
     return ToolWindowHorizontalToolbar(paneId, ToolWindowAnchor.TOP, isPrimary)

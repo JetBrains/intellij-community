@@ -63,7 +63,7 @@ abstract class AbstractSquareStripeButton(
   action: AnAction, presentation: Presentation,
   minimumSize: Supplier<Dimension>? = null
 ) :
-  ActionButton(action, presentation, ActionPlaces.TOOLWINDOW_TOOLBAR_BAR, minimumSize ?: Supplier { getStripeToolbarButtonSize() }) {
+  ActionButton(action, presentation, ActionPlaces.TOOLWINDOW_TOOLBAR_BAR, minimumSize ?: Supplier { getStripeToolbarButtonSize(false) }) {
 
   protected fun doInit(popupBuilder: () -> ActionGroup) {
     setLook(SquareStripeButtonLook(this))
@@ -348,9 +348,9 @@ internal fun getStripeToolbarButtonIconSize(): Int {
   return JBUIScale.scale(extension.getStripeIconUnscaledSize())
 }
 
-private fun getStripeToolbarButtonSize(): Dimension {
+internal fun getStripeToolbarButtonSize(moreButton: Boolean): Dimension {
   val extension = ToolWindowExtension.getInstance()
-  return if (extension == null) JBUI.CurrentTheme.Toolbar.stripeToolbarButtonSize() else extension.getButtonMinSize()
+  return if (extension == null) JBUI.CurrentTheme.Toolbar.stripeToolbarButtonSize() else extension.getButtonMinSize(moreButton)
 }
 
 private fun scaleIcon(icon: ScalableIcon): Icon {
