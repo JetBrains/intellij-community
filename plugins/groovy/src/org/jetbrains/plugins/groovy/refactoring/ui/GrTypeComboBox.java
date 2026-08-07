@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.ui;
 
 import com.intellij.ide.ui.UISettings;
@@ -8,24 +8,31 @@ import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiDisjunctionType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypes;
+import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
+import org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings;
 
 import javax.swing.JComponent;
 import javax.swing.KeyStroke;
@@ -44,16 +51,16 @@ public final class GrTypeComboBox extends ComboBox {
 
   private static final Logger LOG = Logger.getInstance(GrTypeComboBox.class);
 
-
   public static GrTypeComboBox createTypeComboBoxWithDefType(@Nullable PsiType type, @NotNull PsiElement context) {
-    return new GrTypeComboBox(type, null, true, context, false);
+    return new GrTypeComboBox(type, null, true, context, GroovyApplicationSettings.Type.TYPED);
   }
 
   public static GrTypeComboBox createTypeComboBoxFromExpression(@NotNull GrExpression expression) {
-    return createTypeComboBoxFromExpression(expression, false);
+    return createTypeComboBoxFromExpression(expression, GroovyApplicationSettings.Type.TYPED);
   }
 
-  public static GrTypeComboBox createTypeComboBoxFromExpression(@NotNull GrExpression expression, boolean selectDef) {
+  public static GrTypeComboBox createTypeComboBoxFromExpression(@NotNull GrExpression expression, 
+                                                                GroovyApplicationSettings.Type selectType) {
     PsiType type = expression.getType();
     if (expression instanceof GrReferenceExpression) {
       PsiElement resolved = ((GrReferenceExpression)expression).resolve();
@@ -64,25 +71,25 @@ public final class GrTypeComboBox extends ComboBox {
     if (GroovyRefactoringUtil.isDiamondNewOperator(expression)) {
       LOG.assertTrue(expression instanceof GrNewExpression);
       PsiType expected = PsiImplUtil.inferExpectedTypeForDiamond(expression);
-      return new GrTypeComboBox(type, expected, expected == null, expression, selectDef);
+      return new GrTypeComboBox(type, expected, expected == null, expression, selectType);
     }
     else {
       if (type == PsiTypes.nullType()) {
         type = PsiType.getJavaLangObject(expression.getManager(), expression.getResolveScope());
       }
-      return new GrTypeComboBox(type, null, true, expression, selectDef);
+      return new GrTypeComboBox(type, null, true, expression, selectType);
     }
   }
 
   public static GrTypeComboBox createEmptyTypeComboBox() {
-    return new GrTypeComboBox(null, null, false, null, false);
+    return new GrTypeComboBox(null, null, false, null, GroovyApplicationSettings.Type.TYPED);
   }
 
   private GrTypeComboBox(@Nullable PsiType type,
                          @Nullable PsiType min,
                          boolean createDef,
                          @Nullable PsiElement context,
-                         boolean selectDef) {
+                         GroovyApplicationSettings.Type selectType) {
     LOG.assertTrue(min == null || context != null);
     LOG.assertTrue(type == null || context != null);
 
@@ -93,8 +100,22 @@ public final class GrTypeComboBox extends ComboBox {
       types = getCompatibleTypeNames(type, min, context);
     }
 
+    int count = 0;
     if (createDef || types.isEmpty()) {
-      addItem(new PsiTypeItem(null));
+      assert context != null;
+      GroovyPsiManager manager = GroovyPsiManager.getInstance(context.getProject());
+      GlobalSearchScope scope = context.getResolveScope();
+      addItem(new PsiTypeItem(manager.createTypeByFQClassName(GrModifier.DEF, scope)));
+      addItem(new PsiTypeItem(manager.createTypeByFQClassName(PsiModifier.FINAL, scope)));
+      count += 2;
+      if (GroovyConfigUtils.isAtLeastGroovy30(context)) {
+        count++;
+        addItem(new PsiTypeItem(manager.createTypeByFQClassName(GrModifier.VAR, scope)));
+        if (GroovyConfigUtils.isAtLeastGroovy60(context)) {
+          count++;
+          addItem(new PsiTypeItem(manager.createTypeByFQClassName(GrModifier.VAL, scope)));
+        }
+      }
     }
 
     if (type != null && type.equalsToText(GroovyCommonClassNames.JAVA_MATH_BIG_DECIMAL)) {
@@ -108,8 +129,8 @@ public final class GrTypeComboBox extends ComboBox {
       addItem(new PsiTypeItem(types.get(typeName)));
     }
 
-    if (!selectDef && createDef && getItemCount() > 1) {
-      setSelectedIndex(1);
+    if (createDef && getItemCount() > selectType.ordinal() && count >= selectType.ordinal()) {
+      setSelectedIndex(selectType.ordinal());
     }
   }
 
@@ -125,7 +146,7 @@ public final class GrTypeComboBox extends ComboBox {
     addItem(new PsiTypeItem(cl, true));
   }
 
-  public @Nullable PsiType getSelectedType() {
+  public @NotNull PsiType getSelectedType() {
     final Object selected = getSelectedItem();
     assert selected instanceof PsiTypeItem;
     return ((PsiTypeItem)selected).getType();
@@ -214,20 +235,19 @@ public final class GrTypeComboBox extends ComboBox {
   }
 
   private static final class PsiTypeItem {
-    private final @Nullable PsiType myType;
-
+    private final @NotNull PsiType myType;
     private final boolean isClosure;
 
-    private PsiTypeItem(final PsiType type) {
+    private PsiTypeItem(@NotNull PsiType type) {
       this(type, false);
     }
 
-    private PsiTypeItem(final @Nullable PsiType type, boolean closure) {
+    private PsiTypeItem(@NotNull PsiType type, boolean closure) {
       myType = type;
       isClosure = closure;
     }
 
-    public @Nullable PsiType getType() {
+    public @NotNull PsiType getType() {
       return myType;
     }
 
@@ -237,25 +257,17 @@ public final class GrTypeComboBox extends ComboBox {
       if (o == null || getClass() != o.getClass()) return false;
 
       PsiTypeItem that = (PsiTypeItem)o;
-
-      if (myType == null) {
-        if (that.myType != null) return false;
-      }
-      else {
-        if (!myType.equals(that.myType)) return false;
-      }
-
-      return true;
+      return myType.equals(that.myType);
     }
 
     @Override
     public int hashCode() {
-      return myType == null ? 0 : myType.hashCode();
+      return myType.hashCode();
     }
 
     @Override
-    public String toString() {
-      return myType == null ? "def" : myType.getPresentableText();
+    public @NlsSafe String toString() {
+      return myType.getPresentableText();
     }
 
     public boolean isClosure() {

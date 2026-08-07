@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.introduce;
 
 import com.intellij.openapi.application.WriteAction;
@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
@@ -26,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -34,6 +36,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParent
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+import org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings;
 
 import java.util.List;
 
@@ -199,10 +202,26 @@ public abstract class GrAbstractInplaceIntroducer<Settings extends GrIntroduceSe
   protected abstract Settings getSettings();
 
   @Override
-  protected void restoreState(@NotNull GrVariable psiField) {
-    PsiType declaredType = psiField.getDeclaredType();
+  protected void restoreState(@NotNull GrVariable variable) {
+    PsiType declaredType;
+    if (variable.hasModifierProperty(GrModifier.DEF)) {
+      declaredType = GroovyPsiElementFactory.getInstance(variable.getProject()).createTypeByFQClassName("def");
+    }
+    else if (variable.hasModifierProperty(GrModifier.VAR)) {
+      declaredType = GroovyPsiElementFactory.getInstance(variable.getProject()).createTypeByFQClassName("var");
+    }
+    else if (variable.hasModifierProperty(GrModifier.VAL)) {
+      declaredType = GroovyPsiElementFactory.getInstance(variable.getProject()).createTypeByFQClassName("val");
+    }
+    else if (variable.hasModifierProperty(PsiModifier.FINAL) && variable.getTypeElementGroovy() == null) {
+      declaredType = GroovyPsiElementFactory.getInstance(variable.getProject()).createTypeByFQClassName("final");
+    }
+    else {
+      GroovyApplicationSettings.getInstance().INTRODUCE_TYPE = GroovyApplicationSettings.Type.TYPED;
+      declaredType = variable.getDeclaredType();
+    }
     myTypePointer = declaredType != null ? SmartTypePointerManager.getInstance(myProject).createSmartTypePointer(declaredType) : null;
-    super.restoreState(psiField);
+    super.restoreState(variable);
   }
 
   protected @Nullable PsiType getSelectedType() {
