@@ -27,4 +27,9 @@ public interface ResultViewWithColumns {
   default @Nullable ResultViewColumn getLayoutColumnForDataColumn(@NotNull ModelIndex<GridColumn> column) {
     return getLayoutColumn(column);
   }
+
+  /** Returns the column whose user-set width should be persisted. */
+  default ResultViewColumn getColumnForPersistence(@NotNull ModelIndex<?> column) {
+    return getLayoutColumn(column);
+  }
 }

@@ -16,6 +16,8 @@ public abstract class TableResultViewColumn extends TableColumn implements Resul
   private final UserDataHolder myDataHolderDelegate = new UserDataHolderBase();
   private int myWidthFromLayout;
   private boolean myWidthSetByUser;
+  private boolean myWidthLockedForLayout;
+  private boolean myFrozenHidden;
 
   public TableResultViewColumn(int modelIndex) {
     super(modelIndex);
@@ -42,12 +44,20 @@ public abstract class TableResultViewColumn extends TableColumn implements Resul
   public void setColumnWidth(int width) {
     myWidthFromLayout = width;
     myWidthSetByUser = false;
+    myWidthLockedForLayout = false;
     setPreferredWidth(width);
   }
 
   @Override
   public void setColumnWidthByUser(int width) {
     myWidthSetByUser = true;
+    myWidthLockedForLayout = true;
+    setPreferredWidth(width);
+  }
+
+  void setFrozenColumnWidth(int width, boolean widthSetByUser) {
+    myWidthSetByUser = widthSetByUser;
+    myWidthLockedForLayout = true;
     setPreferredWidth(width);
   }
 
@@ -57,8 +67,24 @@ public abstract class TableResultViewColumn extends TableColumn implements Resul
   }
 
   @Override
+  public boolean isWidthLockedForLayout() {
+    return myWidthLockedForLayout;
+  }
+
+  @Override
   public void clearWidthSetByUser() {
     myWidthSetByUser = false;
+    myWidthLockedForLayout = false;
+  }
+
+  @Override
+  public boolean isFrozenHidden() {
+    return myFrozenHidden;
+  }
+
+  @Override
+  public void setFrozenHidden(boolean hidden) {
+    myFrozenHidden = hidden;
   }
 
   public boolean isWidthSetByLayout() {

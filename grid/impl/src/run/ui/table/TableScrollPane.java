@@ -6,7 +6,9 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.JBAutoScroller;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBViewport;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,7 +16,6 @@ import javax.swing.BorderFactory;
 import javax.swing.JComponent;
 import javax.swing.JScrollBar;
 import javax.swing.JViewport;
-import javax.swing.ScrollPaneConstants;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
@@ -22,6 +23,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.ComponentOrientation;
 import java.awt.Dimension;
+import java.awt.Graphics;
 import java.awt.Insets;
 import java.awt.Rectangle;
 import java.awt.event.MouseAdapter;
@@ -39,7 +41,7 @@ public class TableScrollPane extends JBScrollPane {
     setBorder(BorderFactory.createEmptyBorder());
     setViewportView(myResultView);
     setColumnHeaderView(myResultView.getTableHeader());
-    setCorner(ScrollPaneConstants.UPPER_LEADING_CORNER, topLeftCornerComponent);
+    setCorner(UPPER_LEADING_CORNER, topLeftCornerComponent);
     setupColumnScroller(locker);
     addMouseListener(new MouseAdapter() {
       @Override
@@ -47,6 +49,20 @@ public class TableScrollPane extends JBScrollPane {
         ApplicationManager.getApplication().invokeLater(() -> IdeFocusManager.getInstance(grid.getProject()).requestFocus(table, true));
       }
     });
+  }
+
+  @Override
+  public void paint(Graphics g) {
+    super.paint(g);
+    // Single bright divider at the edge of the frozen columns, painted as an overlay so it never consumes header
+    // layout or column-resize hit areas.
+    if (!myResultView.hasFrozenColumns()) return;
+    int x = myResultView.getFrozenColumnsRightEdge();
+    if (x < 0) return;
+    int width = JBUIScale.scale(1);
+    g.setColor(JBUI.CurrentTheme.EditorTabs.underlineColor());
+    int lineX = getComponentOrientation().isLeftToRight() ? x - width : x;
+    g.fillRect(lineX, 0, width, getHeight());
   }
 
   @Override
@@ -143,8 +159,8 @@ public class TableScrollPane extends JBScrollPane {
   @Override
   public void setComponentOrientation(ComponentOrientation co) {
     super.setComponentOrientation(co);
-    flipCorners(ScrollPaneConstants.UPPER_LEFT_CORNER, ScrollPaneConstants.UPPER_RIGHT_CORNER);
-    flipCorners(ScrollPaneConstants.LOWER_LEFT_CORNER, ScrollPaneConstants.LOWER_RIGHT_CORNER);
+    flipCorners(UPPER_LEFT_CORNER, UPPER_RIGHT_CORNER);
+    flipCorners(LOWER_LEFT_CORNER, LOWER_RIGHT_CORNER);
   }
 
   private void flipCorners(String corner1, String corner2) {
