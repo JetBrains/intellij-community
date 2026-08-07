@@ -65,6 +65,10 @@ jvm_library(
         "//libraries/kotlinx/coroutines/test:test_test_lib",
         "//platform/jewel/ui",
         "//platform/jewel/ui:ui_test_lib",
+        "//libraries/compose-foundation-desktop",
+        "//libraries/compose-foundation-desktop:compose-foundation-desktop_test_lib",
+        "//libraries/jna",
+        "//libraries/jna:jna_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.jewel.intUi.standalone.tests` end
