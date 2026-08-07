@@ -2,6 +2,7 @@
 package com.intellij.internal.statistic.utils;
 
 import com.intellij.ide.ConsentOptionsProvider;
+import com.intellij.idea.AppMode;
 import com.intellij.internal.statistic.eventLog.EventLogInternalApplicationInfo;
 import com.intellij.internal.statistic.eventLog.EventLogInternalSendConfig;
 import com.intellij.internal.statistic.eventLog.ExternalEventLogSettings;
@@ -44,7 +45,12 @@ public final class StatisticsUploadAssistant {
     }
 
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      return isHeadlessStatisticsEnabled();
+      if (isHeadlessStatisticsEnabled()) {
+        return true;
+      }
+      if (!AppMode.isStatisticsAllowedByStarter()) {
+        return false;
+      }
     }
 
     // Prohibit sending statistics if the client is running on TC. TC can collect statistics but not send.
@@ -62,7 +68,12 @@ public final class StatisticsUploadAssistant {
 
   public static boolean isCollectAllowed(@NotNull BooleanSupplier isAllowedByUserConsent) {
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      return isHeadlessStatisticsEnabled();
+      if (isHeadlessStatisticsEnabled()) {
+        return true;
+      }
+      if (!AppMode.isStatisticsAllowedByStarter()) {
+        return false;
+      }
     }
 
     if (!isDisableCollectStatistics() && !isCollectionForceDisabled()) {

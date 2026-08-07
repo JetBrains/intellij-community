@@ -531,6 +531,7 @@ private suspend fun createAppStarter(args: List<String>, asyncScope: CoroutineSc
           StartupErrorReporter.showError(BootstrapBundle.message("bootstrap.error.title.start.failed"), message)
           exitProcess(AppExitCodes.NO_GRAPHICS)
         }
+        AppMode.setStatisticsAllowedByStarter(starter.shouldReportStatistics)
         // must be executed before container creation
         starter.premain(args)
         CompletableDeferred(starter)

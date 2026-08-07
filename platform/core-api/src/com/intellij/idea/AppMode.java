@@ -26,6 +26,7 @@ public final class AppMode {
   private static boolean disableNonBundledPlugins;
   private static boolean dontReopenProjects;
   private static boolean isRemoteDevHost;
+  private static boolean statisticsAllowedByStarter;
 
   public static boolean isDisableNonBundledPlugins() {
     return disableNonBundledPlugins;
@@ -51,6 +52,22 @@ public final class AppMode {
 
   public static boolean isHeadless() {
     return isHeadless;
+  }
+
+  /// Returns `true` if the running [com.intellij.openapi.application.ApplicationStarter] opted in to reporting
+  /// feature usage statistics, see `ApplicationStarter#getShouldReportStatistics`.
+  ///
+  /// Statistics are suppressed in a headless mode unless a starter opts in. This flag does not grant
+  /// permission to collect anything on its own – the user consent is checked separately,
+  /// see `StatisticsUploadAssistant#isCollectAllowed`.
+  public static boolean isStatisticsAllowedByStarter() {
+    return statisticsAllowedByStarter;
+  }
+
+  /// Must be called during startup, before the application container is created.
+  @ApiStatus.Internal
+  public static void setStatisticsAllowedByStarter(boolean value) {
+    statisticsAllowedByStarter = value;
   }
 
   /// Returns `true` if the IDE is running as a remote development host.
