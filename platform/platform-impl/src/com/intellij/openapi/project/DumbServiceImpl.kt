@@ -336,6 +336,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
   @RequiresEdt
   private fun incrementDumbCounterBlocking(trace: Throwable) {
     if (tryIncrementStateCounter()) {
+      dumbModeStartTrace = trace
       // If already dumb - just increment the counter. We don't need a write action (to not interrupt NBRA), neither we need EDT.
       // Otherwise, increment the counter under write action because this will change dumb state
       val enteredDumb = application.runWriteAction(Computable(::doIncrementStateCounter))
@@ -353,7 +354,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
       // The forced `invokeLater` will ensure that published requests for exit will be executed before new requests for enter.
       // This works given that `invokeLater` is fair, which is true.
       application.invokeLater {
-        proceedWithPublishingOfIncrementEvents(enteredDumb, trace)
+        proceedWithPublishingOfIncrementEvents(enteredDumb)
       }
     }
 
@@ -376,13 +377,14 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
         }
         enterDumbMode
       }) {
+        dumbModeStartTrace = trace
         // If already dumb - just increment the counter. We don't need a write action (to not interrupt NBRA), neither we need EDT.
         // Otherwise, increment the counter under write action because this will change dumb state
         val enteredDumb = doIncrementStateCounter()
         onCounterIncremented()
         if (enteredDumb) {
           application.invokeLater {
-            proceedWithPublishingOfIncrementEvents(true, trace)
+            proceedWithPublishingOfIncrementEvents(true)
           }
         }
       }
@@ -390,13 +392,12 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
     LOG.assertTrue(state.value.isDumb, "Should be dumb")
   }
 
-  private fun proceedWithPublishingOfIncrementEvents(enteredDumb: Boolean, trace: Throwable) {
+  private fun proceedWithPublishingOfIncrementEvents(enteredDumb: Boolean) {
     if (enteredDumb) {
       LOG.info("enter dumb mode [${project.name}]")
       if (LOG.isDebugEnabled) {
-        LOG.debug("dumb mode [${project.name}] trace", trace)
+        LOG.debug("dumb mode [${project.name}] trace", dumbModeStartTrace)
       }
-      dumbModeStartTrace = trace
       try {
         publishDumbModeChangedEvent(DumbModeEventListenerState.ENTERED)
       } catch (t: Throwable) {
