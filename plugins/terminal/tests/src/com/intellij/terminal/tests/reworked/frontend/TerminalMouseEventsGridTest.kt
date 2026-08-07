@@ -25,8 +25,12 @@ import java.awt.event.MouseEvent
 import java.awt.event.MouseWheelEvent
 import kotlin.math.ceil
 
+/**
+ * Checks that a grid-based coordinate system is used for mouse event submitted to [TerminalMouseEventsHandler]
+ * from [setupMouseEventsHandling]
+ */
 @RunWith(JUnit4::class)
-internal class TerminalMouseEventsHandlingTest : BasePlatformTestCase() {
+internal class TerminalMouseEventsGridTest : BasePlatformTestCase() {
   override fun runInDispatchThread(): Boolean = false
 
   @Test
