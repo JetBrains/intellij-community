@@ -9,4 +9,6 @@ fun IdeaFrameUI.addWslInterpreterDialog(func: AddWslInterpreterDialogUi.() -> Un
 
 class AddWslInterpreterDialogUi(data: ComponentData): UiComponent(data) {
   val nextButton = x { byAccessibleName("Next") }
+  val createButton = x { byAccessibleName("Create") }
+  val basePythonComboBox = x { byClass("PythonInterpreterComboBox") }
 }
