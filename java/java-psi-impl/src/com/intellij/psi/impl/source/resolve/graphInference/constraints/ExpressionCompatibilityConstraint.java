@@ -272,14 +272,12 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
 
     ExpressionCompatibilityConstraint that = (ExpressionCompatibilityConstraint)o;
 
-    if (!myExpression.equals(that.myExpression)) return false;
-
-    return true;
+    return myMethodArgument == that.myMethodArgument && myExpression.equals(that.myExpression);
   }
 
   @Override
   public int hashCode() {
-    return myExpression.hashCode();
+    return (myMethodArgument ? 1337 : 7331) + myExpression.hashCode();
   }
 
   @Override
