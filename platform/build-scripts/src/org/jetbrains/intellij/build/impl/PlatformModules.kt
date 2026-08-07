@@ -31,6 +31,27 @@ private val PLATFORM_CUSTOM_PACK_MODE: Map<String, LibraryPackMode> = java.util.
   "jetbrains-annotations", LibraryPackMode.STANDALONE_SEPARATE_WITHOUT_VERSION_NAME,
 )
 
+// These project libraries must be converted to content modules and removed from the allowlist.
+private val IMPLICIT_PROJECT_LIBRARY_ALLOWLIST: Set<String> = java.util.Set.of(
+  "Log4J",
+  "XMLUnit Core",
+  "java-diff-utils",
+  "jetbrains-annotations",
+  "jetCheck",
+  "kotlin-stdlib",
+  "opentest4j",
+  "studio-platform",
+)
+
+internal fun checkImplicitProjectLibraryViolations(violations: Map<String, Set<String>>) {
+  check(violations.isEmpty()) {
+    "Project libraries used by implicit platform modules must be converted to content modules:\n" +
+    violations.entries.sortedBy { it.key }.joinToString(separator = "\n") { (libraryName, moduleNames) ->
+      "  '$libraryName' used by " + moduleNames.sorted().joinToString { "'$it'" }
+    }
+  }
+}
+
 private fun addModule(relativeJarPath: String, moduleNames: Sequence<String>, productLayout: ProductModulesLayout, layout: PlatformLayout) {
   layout.withModules(
     moduleNames
@@ -252,8 +273,14 @@ internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedS
   }
 
   // as a separate step, not a part of computing implicitModules, as we should collect libraries from such implicitly included modules
+  val implicitProjectLibraryViolations = HashMap<String, MutableSet<String>>()
   layout.collectProjectLibrariesFromIncludedModules(outputProvider) { libName, module ->
     if (libAsProductModule.contains(libName)) {
+      return@collectProjectLibrariesFromIncludedModules
+    }
+
+    if (!IMPLICIT_PROJECT_LIBRARY_ALLOWLIST.contains(libName)) {
+      implicitProjectLibraryViolations.computeIfAbsent(libName) { HashSet() }.add(module.name)
       return@collectProjectLibrariesFromIncludedModules
     }
 
@@ -268,6 +295,7 @@ internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedS
       )
       .dependentModules.computeIfAbsent("core") { mutableListOf() }.add(module.name)
   }
+  checkImplicitProjectLibraryViolations(implicitProjectLibraryViolations)
 
   val platformMainModule = "intellij.platform.starter"
   if (context.isEmbeddedFrontendEnabled && layout.includedModules.none { it.moduleName == platformMainModule }) {
