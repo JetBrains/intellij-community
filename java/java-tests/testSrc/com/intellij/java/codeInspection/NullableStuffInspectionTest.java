@@ -694,6 +694,8 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
   }
 
   public void testJSpecifyTypeParameterBoundOverridesNullable() {
+    //without it, conflicts in the overridden return type (NOT_NULL_TO_NULL) are not reported at all
+    myInspection.REPORT_NOT_NULL_TO_NULLABLE_CONFLICTS_IN_ASSIGNMENTS = true;
     addJSpecifyNullMarked(myFixture);
     setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
     addNullnessUnspecified();

@@ -8,6 +8,8 @@ class JSpecifyTypeParameterBoundOverridesNullable {
 
   interface Filter<T extends @Nullable Object> {
     <U extends T> Sequence<U> filterMany(Sequence<U> in);
+
+    Sequence<T> filterAll();
   }
 
   interface SubImplicitBound extends Filter<@Nullable Object> {
@@ -26,5 +28,13 @@ class JSpecifyTypeParameterBoundOverridesNullable {
   interface SubNotNullTypeArgument extends Filter<Object> {
     // the supertype itself only allows not-null arguments, so narrowing is not a mismatch
     <U> Sequence<U> filterMany(Sequence<U> in);
+
+    // the inherited `Sequence<T>` is `Sequence<Object>` here, so a not-null argument is expected as well
+    Sequence<Object> filterAll();
+  }
+
+  interface SubNullableTypeArgument extends Filter<@Nullable Object> {
+    // the inherited `Sequence<T>` is `Sequence<@Nullable Object>` here, so the not-null argument is a real mismatch
+    <warning descr="Overriding a class with not-null type arguments when a class with nullable type arguments is expected">Sequence<Object></warning> filterAll();
   }
 }

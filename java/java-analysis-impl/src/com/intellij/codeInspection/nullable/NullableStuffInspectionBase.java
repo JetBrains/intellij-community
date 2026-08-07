@@ -1132,8 +1132,8 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
 
       PsiTypeElement returnTypeElement = method.getReturnTypeElement();
       if (returnTypeElement != null &&
-          checkNestedGenericClasses(holder, returnTypeElement, superMethod.getReturnType(), method.getReturnType(),
-                                    ConflictNestedTypeProblem.OVERRIDING_NESTED_TYPE_PROBLEM)) {
+          checkNestedGenericClasses(holder, returnTypeElement, substitutedSuperType(method, superMethod, superMethod.getReturnType()),
+                                    method.getReturnType(), ConflictNestedTypeProblem.OVERRIDING_NESTED_TYPE_PROBLEM)) {
         break;
       }
     }
@@ -1315,26 +1315,6 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
     }
   }
 
-  /**
-   * For a generic method the super parameter type refers to the type parameters of the <em>super</em> method, which are
-   * not the ones of the override:
-   * <pre>{@code
-   * interface Box<X extends @Nullable Object> {}
-   * interface Filter<T extends @Nullable Object> { <U extends T> void take(Box<U> in); }
-   *
-   * interface Ok extends Filter<Object> {
-   *   <U> void take(Box<U> in);          // fine: Filter's U is bounded by Object here as well
-   * }
-   *
-   * interface Narrowed extends Filter<@Nullable Object> {
-   *   <U> void take(Box<U> in);          // a mismatch: U drops the nullable bound
-   * }
-   * }</pre>
-   * In both the super parameter is {@code Box<U_super>}, where {@code U_super} is bounded by {@code T} and therefore reads
-   * as nullable. Unsubstituted, both look like "nullable type argument where a not-null one is expected" -- including
-   * {@code Ok}. The {@code Narrowed} case is reported by {@link #checkTypeParameterBounds}, which points at the type
-   * parameter itself.
-   */
   private static @NotNull PsiType substitutedSuperParameterType(@NotNull PsiParameter parameter,
                                                                 @NotNull PsiParameter superParameter) {
     PsiType superType = superParameter.getType();
@@ -1342,6 +1322,33 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
         !(superParameter.getDeclarationScope() instanceof PsiMethod superMethod)) {
       return superType;
     }
+    PsiType substituted = substitutedSuperType(method, superMethod, superType);
+    return substituted != null ? substituted : superType;
+  }
+
+  /**
+   * A type written in the super method refers to the type parameters of the <em>super</em> declaration: those of the base
+   * class, which the derived class instantiates, and those of the super method, which are not the ones of the override:
+   * <pre>{@code
+   * interface Box<X extends @Nullable Object> {}
+   * interface Filter<T extends @Nullable Object> { <U extends T> Box<U> take(Box<U> in); }
+   *
+   * interface Ok extends Filter<Object> {
+   *   <U> Box<U> take(Box<U> in);          // fine: Filter's U is bounded by Object here as well
+   * }
+   *
+   * interface Narrowed extends Filter<@Nullable Object> {
+   *   <U> Box<U> take(Box<U> in);          // a mismatch: U drops the nullable bound
+   * }
+   * }</pre>
+   * In both the super type is {@code Box<U_super>}, where {@code U_super} is bounded by {@code T} and therefore reads
+   * as nullable. Unsubstituted, both look like a nullability mismatch in the type argument -- including {@code Ok}.
+   * The {@code Narrowed} case is reported by {@link #checkTypeParameterBounds}, which points at the type parameter itself.
+   */
+  private static @Nullable PsiType substitutedSuperType(@NotNull PsiMethod method,
+                                                        @NotNull PsiMethod superMethod,
+                                                        @Nullable PsiType superType) {
+    if (superType == null) return null;
     PsiClass derived = method.getContainingClass();
     PsiClass base = superMethod.getContainingClass();
     if (derived == null || base == null) return superType;
