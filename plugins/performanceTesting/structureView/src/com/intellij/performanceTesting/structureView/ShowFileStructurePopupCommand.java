@@ -51,7 +51,7 @@ public final class ShowFileStructurePopupCommand extends AbstractCommand impleme
       if (fileEditor != null) {
         Span span = PerformanceTestSpan.TRACER.spanBuilder(SPAN_NAME).startSpan();
         try (Scope ignored = span.makeCurrent()) {
-          final FileStructurePopup popup = (FileStructurePopup)createPopup(project, fileEditor);
+          final FileStructurePopup popup = createPopup(project, fileEditor);
           if (popup != null) {
             Span spanShow = PerformanceTestSpan.TRACER.spanBuilder(SPAN_NAME + "#Show").startSpan();
             Span spanFill = PerformanceTestSpan.TRACER.spanBuilder(SPAN_NAME + "#Fill").startSpan();
