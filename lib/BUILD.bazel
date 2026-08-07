@@ -7388,13 +7388,6 @@ java_library(
     exports = [":jspecify"],
 )
 
-jvm_import(
-    name = "jsr305",
-    jar = "@com_google_code_findbugs-jsr305-3_0_2_http//file",
-    source_jar = "@com_google_code_findbugs-jsr305-3_0_2-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
 copy_file(
     name = "org.jetbrains.nativecerts/jvm-native-trusted-roots-1.1.7.jar_copy",
     src = "@org_jetbrains_nativecerts-jvm-native-trusted-roots-1_1_7_http//file",
@@ -12002,6 +11995,13 @@ jvm_import(
     name = "libraries-jsp-_j_s_p",
     jar = "@javax_servlet_jsp-javax_servlet_jsp-api-2_2_1_http//file",
     source_jar = "@javax_servlet_jsp-javax_servlet_jsp-api-2_2_1-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-jsr305-jsr305",
+    jar = "@com_google_code_findbugs-jsr305-3_0_2_http//file",
+    source_jar = "@com_google_code_findbugs-jsr305-3_0_2-sources_http//file",
     visibility = ["//visibility:public"],
 )
 

@@ -487,6 +487,7 @@ libraries/jsonpath
 libraries/jsoup
 libraries/jsp
 libraries/jspecify
+libraries/jsr305
 libraries/jsvg
 libraries/junit4
 libraries/junit5

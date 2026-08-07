@@ -117,7 +117,7 @@
     <orderEntry type="module" module-name="intellij.libraries.jna" scope="TEST" />
     <orderEntry type="module" module-name="intellij.toml" scope="TEST" />
     <orderEntry type="module" module-name="intellij.toml.core" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="jsr305" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jsr305" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="jetbrains-annotations" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.caffeine" scope="TEST" />

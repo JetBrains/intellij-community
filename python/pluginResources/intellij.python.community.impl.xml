@@ -18,6 +18,7 @@
     <module name="intellij.libraries.jcef"/>
     <module name="intellij.libraries.jna"/>
     <module name="intellij.libraries.jsoup"/>
+    <module name="intellij.libraries.jsr305"/>
     <module name="intellij.libraries.kotlin.reflect"/>
     <module name="intellij.libraries.kotlinx.collections.immutable"/>
     <module name="intellij.libraries.kotlinx.coroutines.core"/>

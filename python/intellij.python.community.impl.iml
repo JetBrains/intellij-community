@@ -123,7 +123,7 @@
     <orderEntry type="module" module-name="intellij.libraries.jna" />
     <orderEntry type="module" module-name="intellij.toml" />
     <orderEntry type="module" module-name="intellij.toml.core" />
-    <orderEntry type="library" name="jsr305" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jsr305" />
     <orderEntry type="library" name="jetbrains-annotations" level="project" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.caffeine" />

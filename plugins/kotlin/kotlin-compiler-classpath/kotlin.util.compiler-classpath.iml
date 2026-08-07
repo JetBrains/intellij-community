@@ -15,7 +15,7 @@
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
     <orderEntry type="module" module-name="intellij.libraries.jna" />
     <orderEntry type="module" module-name="intellij.libraries.lz4" />
-    <orderEntry type="library" name="jsr305" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jsr305" />
     <orderEntry type="module" module-name="intellij.java.psi.impl" />
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
