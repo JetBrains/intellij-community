@@ -311,10 +311,6 @@ public final class YamlJsonPsiWalker implements JsonLikePsiWalker {
 
   @Override
   public String getNodeTextForValidation(PsiElement element) {
-    if (element instanceof YAMLScalar) {
-      return ((YAMLScalar)element).getTextValue();
-    }
-
     String text = element.getText();
     if (!StringUtil.startsWith(text, "!!") && !StringUtil.startsWithChar(text, '&')) return text;
     // remove tags

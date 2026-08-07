@@ -13,6 +13,7 @@ import tools.jackson.databind.node.ArrayNode
 import tools.jackson.databind.node.BigIntegerNode
 import tools.jackson.databind.node.BooleanNode
 import tools.jackson.databind.node.DecimalNode
+import tools.jackson.databind.node.DoubleNode
 import tools.jackson.databind.node.IntNode
 import tools.jackson.databind.node.LongNode
 import tools.jackson.databind.node.NullNode
@@ -122,6 +123,90 @@ class PsiToJsonNodeConverterTest : BasePlatformTestCase() {
     val node = convertJson5("0x10")
     assertThat(node).isInstanceOf(IntNode::class.java)
     assertThat(node!!.intValue()).isEqualTo(16)
+  }
+
+  // https://spec.json5.org/#numbers
+  // Regression guard: hex digit 'E'/'e' was misdetected as a decimal exponent marker,
+  // sending the literal into BigDecimal(text) which cannot parse hex and threw NumberFormatException.
+  fun `test JSON5 hexadecimal integer parsing with hex digit e`() {
+    val node = convertJson5("0x1E")
+    assertThat(node).isInstanceOf(IntNode::class.java)
+    assertThat(node!!.intValue()).isEqualTo(30)
+  }
+
+  // https://spec.json5.org/#numbers
+  fun `test JSON5 hexadecimal integer parsing all hex letters`() {
+    val node = convertJson5("0xdead")
+    assertThat(node).isInstanceOf(IntNode::class.java)
+    assertThat(node!!.intValue()).isEqualTo(0xdead)
+  }
+
+  // https://spec.json5.org/#strings
+  fun `test JSON5 hexadecimal string escape is decoded`() {
+    val node = convertJson5("'\\x41'")
+    assertThat(node).isInstanceOf(StringNode::class.java)
+    assertThat(node!!.asText()).isEqualTo("A")
+  }
+
+  // https://spec.json5.org/#strings
+  fun `test JSON5 vertical tab string escape is decoded`() {
+    val node = convertJson5("'a\\vb'")
+    assertThat(node).isInstanceOf(StringNode::class.java)
+    assertThat(node!!.asText()).isEqualTo("a\u000Bb")
+  }
+
+  // https://spec.json5.org/#strings
+  fun `test JSON5 escaped apostrophe is decoded`() {
+    val node = convertJson5("'it\\'s'")
+    assertThat(node).isInstanceOf(StringNode::class.java)
+    assertThat(node!!.asText()).isEqualTo("it's")
+  }
+
+  // https://spec.json5.org/#strings
+  fun `test JSON5 identity string escape is decoded`() {
+    val node = convertJson5("'\\a'")
+    assertThat(node).isInstanceOf(StringNode::class.java)
+    assertThat(node!!.asText()).isEqualTo("a")
+  }
+
+  // https://spec.json5.org/#strings
+  fun `test JSON5 unicode line separator continuation is removed`() {
+    val node = convertJson5("'first\\" + "\u2028" + "second'")
+    assertThat(node).isInstanceOf(StringNode::class.java)
+    assertThat(node!!.asText()).isEqualTo("firstsecond")
+  }
+
+  // https://spec.json5.org/#strings
+  fun `test JSON5 paragraph separator continuation is removed`() {
+    val node = convertJson5("'first\\" + "\u2029" + "second'")
+    assertThat(node).isInstanceOf(StringNode::class.java)
+    assertThat(node!!.asText()).isEqualTo("firstsecond")
+  }
+
+  // https://spec.json5.org/#numbers
+  fun `test JSON5 Infinity becomes a positive infinite number`() {
+    val node = convertJson5("{value: Infinity}")
+    assertThat(node).isInstanceOf(ObjectNode::class.java)
+    assertThat(node!!.get("value")).isInstanceOf(DoubleNode::class.java)
+    assertThat(node.get("value").doubleValue()).isEqualTo(Double.POSITIVE_INFINITY)
+  }
+
+  // https://spec.json5.org/#numbers
+  fun `test JSON5 negative Infinity becomes a negative infinite number`() {
+    val node = convertJson5("-Infinity")
+    assertThat(node).isInstanceOf(DoubleNode::class.java)
+    assertThat(node!!.doubleValue()).isEqualTo(Double.NEGATIVE_INFINITY)
+  }
+
+  // https://spec.json5.org/#numbers
+  fun `test JSON5 NaN becomes NaN within array without aborting siblings`() {
+    val node = convertJson5("[1, NaN, 2]")
+    assertThat(node).isInstanceOf(ArrayNode::class.java)
+    assertThat(node!!.size()).isEqualTo(3)
+    assertThat(node.get(0).intValue()).isEqualTo(1)
+    assertThat(node.get(1)).isInstanceOf(DoubleNode::class.java)
+    assertThat(node.get(1).doubleValue()).isNaN()
+    assertThat(node.get(2).intValue()).isEqualTo(2)
   }
 
   // https://www.rfc-editor.org/rfc/rfc8259#section-3
