@@ -9,19 +9,19 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="json-schema-validator-jetbrains" type="repository">
-        <properties include-transitive-deps="false" jar-repository-id="intellij-dependencies" maven-id="com.networknt:json-schema-validator:3.0.0-jetbrains.10">
+        <properties include-transitive-deps="false" jar-repository-id="intellij-dependencies" maven-id="com.networknt:json-schema-validator:3.0.0-jetbrains.11">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/com/networknt/json-schema-validator/3.0.0-jetbrains.10/json-schema-validator-3.0.0-jetbrains.10.jar">
-              <sha256sum>6eec7dd36517e57918ddc112dbf6525044690d873eacfd3471be71396f20057f</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/networknt/json-schema-validator/3.0.0-jetbrains.11/json-schema-validator-3.0.0-jetbrains.11.jar">
+              <sha256sum>1aaffcc2d63045fd0586fc2072fe0c08d4cd0b83ff82efd49099af5f5f200811</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/networknt/json-schema-validator/3.0.0-jetbrains.10/json-schema-validator-3.0.0-jetbrains.10.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/networknt/json-schema-validator/3.0.0-jetbrains.11/json-schema-validator-3.0.0-jetbrains.11.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/networknt/json-schema-validator/3.0.0-jetbrains.10/json-schema-validator-3.0.0-jetbrains.10-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/networknt/json-schema-validator/3.0.0-jetbrains.11/json-schema-validator-3.0.0-jetbrains.11-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
