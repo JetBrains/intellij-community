@@ -12,6 +12,7 @@ import com.intellij.util.io.copyRecursively
 import com.intellij.util.system.OS
 import org.gradle.internal.hash.Hashing
 import java.nio.file.Files
+import java.nio.file.LinkOption
 import java.nio.file.Path
 import java.nio.file.attribute.PosixFilePermission
 import kotlin.io.path.absolutePathString
@@ -128,7 +129,7 @@ class AndroidFramework(testContext: IDETestContext) : Framework(testContext) {
 
     val androidPluginPath = communityProjectHome / "android"
     if (androidPluginPath.exists()) return // TODO find better solution
-    androidProject.repositoryRootDir.copyRecursively(androidPluginPath)
+    androidProject.repositoryRootDir.copyRecursively(androidPluginPath, arrayOf(LinkOption.NOFOLLOW_LINKS))
   }
 
   fun setupAndroidSdkToProject(androidSdkPath: Path) {
