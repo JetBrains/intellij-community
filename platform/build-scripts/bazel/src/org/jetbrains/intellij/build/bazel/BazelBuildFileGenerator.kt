@@ -841,7 +841,7 @@ internal class BazelBuildFileGenerator(
       val label = BazelLabel(moduleDescriptor.targetName + "_plugin", moduleDescriptor)
       PluginDistributionTarget(
         target = addPackagePrefix(label),
-        distributionDirectory = "$outputDirectory/${label.label}",
+        distributionDirectory = "$outputDirectory/${generateNameForPluginDirectory(moduleDescriptor.module.name)}",
       )
     }
 
@@ -1545,5 +1545,8 @@ internal fun computePackageRelativeExcludes(
     }
   }.sortedBy { compileExcludeSortKey(it) }
 }
+
+/** Uses the same logic as `ij_plugin` rule */
+private fun generateNameForPluginDirectory(moduleName: String): String = moduleName.removePrefix("intellij.").replace('.', '-')
 
 private fun compileExcludeSortKey(pattern: String): String = pattern.lowercase().replace('/', '{')

@@ -5,11 +5,11 @@ load("@rules_kotlin//kotlin/internal:defs.bzl", _KtJvmInfo = "KtJvmInfo")
 # * inline descriptors of content modules in plugin.xml
 # * provide an option to skip optional content modules if JARs aren't specified for them
 def _ij_plugin_impl(ctx):
-    dir_name = ctx.attr.name
+    plugin_descriptor_module_info = ctx.attr.descriptor_module[_KtJvmInfo]
+    dir_name = _module_name_to_directory_name(plugin_descriptor_module_info.module_name)
     output_dir = ctx.actions.declare_directory(dir_name)
     content_yaml_file = ctx.actions.declare_file("plugin-content.yaml")
 
-    plugin_descriptor_module_info = ctx.attr.descriptor_module[_KtJvmInfo]
     plugin_descriptor_jar = plugin_descriptor_module_info.all_output_jars[0]
     inputs = [plugin_descriptor_jar]
     args = ctx.actions.args()
@@ -35,6 +35,11 @@ def _ij_plugin_impl(ctx):
     return [
         DefaultInfo(files = depset([output_dir])),
     ]
+
+def _module_name_to_directory_name(module_name):
+    if module_name.startswith("intellij."):
+        module_name = module_name[len("intellij."):]
+    return module_name.replace(".", "-")
 
 ij_plugin = rule(
     doc = """\

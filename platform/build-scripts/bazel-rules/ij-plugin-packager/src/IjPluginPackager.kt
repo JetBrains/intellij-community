@@ -64,7 +64,7 @@ object IjPluginPackager {
       pluginContentYamlWriter = pluginContentYamlWriter,
     )
 
-    val descriptorOutputJar = libDirectory.resolve(descriptorJar.fileName)
+    val descriptorOutputJar = libDirectory.resolve(generateNameForPluginDescriptorJar(descriptorModuleArgument.name))
     PluginJarPackager(descriptorOutputJar).use {
       it.addEntriesFromJar(descriptorJar) { filePath, dataFetcher ->
         if (!isIncludedFromModuleOutput(filePath)) {
@@ -138,5 +138,8 @@ object IjPluginPackager {
     @JvmField val jar: Path,
   )
 }
+
+
+private fun generateNameForPluginDescriptorJar(moduleName: String): String = moduleName.removePrefix("intellij.").replace('.', '-') + ".jar"
 
 private const val PLUGIN_DESCRIPTOR_ENTRY_NAME = "META-INF/plugin.xml"
