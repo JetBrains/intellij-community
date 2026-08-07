@@ -24,7 +24,9 @@ public abstract class CodeStyleImportsPanelBase extends JPanel {
   protected final ImportLayoutPanel myImportLayoutPanel;
 
   public CodeStyleImportsPanelBase() {
-    myImportLayoutPanel = new ImportLayoutPanel(isShowLayoutOnDemandImportFromSamePackageFirstCheckbox(), isSupportModule()) {
+    myImportLayoutPanel = new ImportLayoutPanel(isShowLayoutOnDemandImportFromSamePackageFirstCheckbox(),
+                                                isShowKeepBlankLinesBetweenImportsCheckbox(),
+                                                isSupportModule()) {
       @Override
       public void refresh() {
         refreshTable(myPackageTable, myPackageList);
@@ -142,6 +144,10 @@ public abstract class CodeStyleImportsPanelBase extends JPanel {
   }
 
   protected boolean isShowLayoutOnDemandImportFromSamePackageFirstCheckbox() {
+    return false;
+  }
+
+  protected boolean isShowKeepBlankLinesBetweenImportsCheckbox() {
     return false;
   }
 

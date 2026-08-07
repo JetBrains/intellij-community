@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi.formatter.java
 
 import com.intellij.application.options.CodeStyle
@@ -13,6 +13,8 @@ import com.intellij.psi.JavaCodeFragmentFactory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
+import com.intellij.psi.codeStyle.PackageEntry
+import com.intellij.psi.codeStyle.PackageEntryTable
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.util.IncorrectOperationException
 
@@ -24,6 +26,7 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
   
   fun testPaymentManager() {
     settings.KEEP_LINE_BREAKS = false
+    javaSettings.KEEP_BLANK_LINES_BETWEEN_IMPORTS = true
     doTest("paymentManager.java", "paymentManager_after.java")
   }
 
@@ -1340,6 +1343,75 @@ class Test {
     doTextTest("class A {\n" + "    void foo()\n" + "    {\n" + "        if (a)\n" + "        {\n" + "        }\n" + "    }\n" + "}",
                "class A {\n" + "    void foo() {\n" + "        if (a) {\n" + "        }\n" + "    }\n" + "}")
 
+  }
+
+  private fun setUpImportLayoutWithJavaGroup() {
+    javaSettings.IMPORT_LAYOUT_TABLE = PackageEntryTable().apply {
+      addEntry(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY)
+      addEntry(PackageEntry.BLANK_LINE_ENTRY)
+      addEntry(PackageEntry(false, "java", true))
+      addEntry(PackageEntry(false, "javax", true))
+      addEntry(PackageEntry.BLANK_LINE_ENTRY)
+      addEntry(PackageEntry.BLANK_LINE_ENTRY)
+      addEntry(PackageEntry.ALL_OTHER_IMPORTS_ENTRY)
+    }
+  }
+
+  private val importsWithExtraBlankLines = """
+package com.example;
+
+import java.util.Optional;
+
+
+import java.util.Set;
+
+
+
+import com.custom.MyClass1;
+
+import com.custom.MyClass2;
+
+class Foo {
+}"""
+
+  fun testExtraBlankLinesBetweenImportsAreKeptByDefault() {
+    setUpImportLayoutWithJavaGroup()
+    javaSettings.KEEP_BLANK_LINES_BETWEEN_IMPORTS = true
+    doTextTest(importsWithExtraBlankLines,
+               """
+package com.example;
+
+import java.util.Optional;
+
+
+import java.util.Set;
+
+
+import com.custom.MyClass1;
+
+import com.custom.MyClass2;
+
+class Foo {
+}""")
+  }
+
+  fun testExtraBlankLinesBetweenImportsRemovedWhenLayoutIsAuthoritative() {
+    setUpImportLayoutWithJavaGroup()
+    javaSettings.KEEP_BLANK_LINES_BETWEEN_IMPORTS = false
+
+    doTextTest(importsWithExtraBlankLines,
+               """
+package com.example;
+
+import java.util.Optional;
+import java.util.Set;
+
+
+import com.custom.MyClass1;
+import com.custom.MyClass2;
+
+class Foo {
+}""")
   }
 
   fun testBlankLines() {

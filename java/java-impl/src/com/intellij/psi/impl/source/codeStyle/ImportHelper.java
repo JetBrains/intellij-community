@@ -21,6 +21,7 @@ import com.intellij.psi.JavaResolveResult;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.JspPsiUtil;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
@@ -199,7 +200,12 @@ public final class ImportHelper extends ImportHelperBase {
       PsiImportList newImportList = dummyFile.getImportList();
       keepCommentsAndAttachStatistics(oldList, newImportList);
       assert newImportList != null : dummyFile.getText();
-      if (oldList.isReplaceEquivalent(newImportList)) return null;
+      // comments should be preserved, so use reformatting
+      boolean layoutWins = !mySettings.KEEP_BLANK_LINES_BETWEEN_IMPORTS &&
+                                      PsiTreeUtil.getChildOfType(oldList, PsiComment.class) == null;
+      if (layoutWins ? oldList.textMatches(newImportList) : oldList.isReplaceEquivalent(newImportList)) {
+        return null;
+      }
       return newImportList;
     }
     catch (IncorrectOperationException e) {
