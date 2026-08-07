@@ -1,8 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.terminal.frontend.view.impl
 
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.asContextElement
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jediterm.terminal.TerminalKeyEncoder
@@ -27,7 +27,7 @@ class TerminalKeyEncodingManager(
   private val encoder: TerminalKeyEncoder = TerminalKeyEncoder()
 
   init {
-    coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+    coroutineScope.launch(Dispatchers.UI + ModalityState.any().asContextElement()) {
       var curEncodingState: EncodingState? = null
 
       sessionModel.terminalState.collect { terminalState ->
