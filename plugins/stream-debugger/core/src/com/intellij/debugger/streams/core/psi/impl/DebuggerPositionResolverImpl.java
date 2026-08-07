@@ -12,7 +12,6 @@ import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.VisibleForTesting;
 
 public final class DebuggerPositionResolverImpl implements DebuggerPositionResolver {
   private static final Logger logger = Logger.getInstance(DebuggerPositionResolverImpl.class);
@@ -27,7 +26,10 @@ public final class DebuggerPositionResolverImpl implements DebuggerPositionResol
     return getNearestElementToBreakpoint(session.getProject(), position);
   }
 
-  @VisibleForTesting
+  /**
+   * Returns the PSI element at {@code position}. Use this overload when the position is already known,
+   * ex. the position of the frame the program paused in, which does not follow the frame selected in the UI.
+   */
   public @Nullable PsiElement getNearestElementToBreakpoint(@NotNull Project project, @NotNull XSourcePosition position) {
     int offset = position.getOffset();
     final VirtualFile file = position.getFile();

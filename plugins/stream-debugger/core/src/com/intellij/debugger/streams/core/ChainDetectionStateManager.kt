@@ -21,16 +21,15 @@ import com.intellij.xdebugger.frame.XSuspendContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.channelFlow
-import kotlinx.coroutines.flow.conflate
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.transformLatest
 import org.jetbrains.annotations.ApiStatus
@@ -66,13 +65,10 @@ class ChainDetectionStateManager(private val cs: CoroutineScope) {
   fun chainStateFlow(session: XDebugSession): Flow<ChainDetectionState> = sessionState(session)?.status ?: SESSION_FINISHED
 
   fun inlayStateFlow(session: XDebugSession): Flow<StreamChainInlayState> =
-    chainStateFlow(session).mapNotNull { status ->
-      val ctx = status.suspendContext ?: return@mapNotNull StreamChainInlayState.Hidden
-      val topFrame = ctx.activeExecutionStack?.topFrame
-      // check that frame is not changed
-      if (topFrame != null && status.stackFrame != null && status.stackFrame !== topFrame) return@mapNotNull null
-      val position = status.stackFrame?.sourcePosition
-      if (status.status is ChainStatus.Found && position != null) {
+    chainStateFlow(session).map { state ->
+      val ctx = state.suspendContext
+      val position = state.suspendedStackTopFrame?.sourcePosition
+      if (ctx != null && position != null && state.status is ChainStatus.Found) {
         StreamChainInlayState.Visible(ctx, position)
       } else {
         StreamChainInlayState.Hidden
@@ -103,62 +99,83 @@ class ChainDetectionStateManager(private val cs: CoroutineScope) {
 
   @OptIn(ExperimentalCoroutinesApi::class)
   private class SessionState(private val session: XDebugSession, private val scope: CoroutineScope) {
-    private fun snapshot(): ChainDetectionState =
-      ChainDetectionState(session.suspendContext, session.currentStackFrame, ChainStatus.Computing)
+    /**
+     * Fires on every event that can change the pause point or the frame selected in the UI.
+     * `DROP_OLDEST` makes the producer non-blocking - `tryEmit` always succeeds.
+     */
+    private val sessionEvents = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
-    val status: StateFlow<ChainDetectionState> = channelFlow {
+    init {
       val listener = object : XDebugSessionListener {
-        override fun sessionPaused() {
-          trySend(snapshot())
-        }
-
-        override fun stackFrameChanged() {
-          trySend(snapshot())
-        }
-
-        override fun beforeSessionResume() {
-          trySend(snapshot())
-        }
-
-        override fun sessionResumed() {
-          trySend(snapshot())
-        }
+        override fun sessionPaused() { sessionEvents.tryEmit(Unit) }
+        override fun stackFrameChanged() { sessionEvents.tryEmit(Unit) }
+        override fun beforeSessionResume() { sessionEvents.tryEmit(Unit) }
+        override fun sessionResumed() { sessionEvents.tryEmit(Unit) }
       }
-      session.addSessionListener(listener, this.asDisposable())
-      trySend(snapshot())
-      awaitClose()
+      session.addSessionListener(listener, scope.asDisposable())
+      sessionEvents.tryEmit(Unit)
     }
-      // `trySend` can silently drop the *newest* snapshot once the buffer is full.
-      // With conflation `trySend` never fails, and a stale snapshot is dropped instead of the fresh one.
-      .conflate()
+
+    /**
+     * State of the pause point: the suspend context and the top frame of the suspended stack.
+     * Frame selection does not change them, so [computeStatus] runs once per pause.
+     */
+    private val pausePointState: Flow<ChainDetectionState> = sessionEvents
+      .map { session.suspendContext }
       .distinctUntilChanged()
-      .transformLatest { snap ->
-        emit(snap)
-        emit(snap.copy(status = computeStatus()))
+      .map { suspendContext ->
+        // `getTopFrame` is not a plain getter in every implementation (ex. Rider changes it when the frame filter settings change).
+        // So read it once per pause, like `XDebugSessionImpl.updateSuspendContext` does.
+        val topFrame = suspendContext?.activeExecutionStack?.topFrame
+        ChainDetectionState(suspendContext, topFrame, ChainStatus.Computing)
       }
-      .stateIn(scope, SharingStarted.WhileSubscribed(), ChainDetectionState(null, null, ChainStatus.Computing))
+      .transformLatest { state ->
+        val position = state.suspendedStackTopFrame?.sourcePosition
+        if (state.suspendContext == null || position == null) {
+          emit(state.copy(status = ChainStatus.NotFound))
+          return@transformLatest
+        }
+        emit(state)
+        emit(state.copy(status = computeStatus(position)))
+      }
+
+    // Current frame selected in the UI
+    private val selectedFrame: Flow<XStackFrame?> = sessionEvents.map { session.currentStackFrame }.distinctUntilChanged()
+
+    val status: StateFlow<ChainDetectionState> = combine(pausePointState, selectedFrame) { state, selectedFrame ->
+      when {
+        // The status belongs to the pause point. Report it only while the user has that frame selected.
+        selectedFrame != null && selectedFrame == state.suspendedStackTopFrame -> state
+        // Another frame or another thread: nothing to trace there.
+        // Keep `LanguageNotSupported` explicitly so that the action stays
+        // hidden where tracing never works, instead of showing it disabled.
+        state.status is ChainStatus.LanguageNotSupported -> state
+        else -> state.copy(status = ChainStatus.NotFound)
+      }
+    }.stateIn(scope, SharingStarted.WhileSubscribed(), ChainDetectionState(null, null, ChainStatus.Computing))
 
     fun cancel() {
       scope.cancel()
     }
 
-    private suspend fun computeStatus(): ChainStatus {
-      val element = smartReadAction(session.project) { positionResolver.getNearestElementToBreakpoint(session) }
+    private suspend fun computeStatus(position: XSourcePosition): ChainStatus {
+      val element = smartReadAction(session.project) { positionResolver.getNearestElementToBreakpoint(session.project, position) }
                     ?: return ChainStatus.NotFound
       val chains = smartReadAction(session.project) {
         if (providersFor(element.language).isEmpty()) null else getChains(element)
       } ?: return ChainStatus.LanguageNotSupported
       if (chains.isEmpty()) return ChainStatus.NotFound
-      val traceable = filterTraceable(chains, element)
+      val traceable = filterTraceable(chains, position, element)
       return if (traceable.isEmpty()) ChainStatus.NotFound else ChainStatus.Found(traceable)
     }
 
     private suspend fun filterTraceable(
       chains: List<StreamChainWithLibrary>,
+      position: XSourcePosition,
       contextElement: PsiElement,
     ): List<StreamChainWithLibrary> =
       chains.groupBy { it.provider }.flatMap { (provider, group) ->
-        val traceable = provider.filterTraceableStreams(session, group.map { it.chain }, contextElement)
+        val traceable = provider.filterTraceableStreams(session, group.map { it.chain }, position, contextElement)
         group.filter { it.chain in traceable }
       }
   }
@@ -171,7 +188,7 @@ class ChainDetectionStateManager(private val cs: CoroutineScope) {
 @ApiStatus.Internal
 data class ChainDetectionState(
   val suspendContext: XSuspendContext?,
-  val stackFrame: XStackFrame?,
+  val suspendedStackTopFrame: XStackFrame?,
   val status: ChainStatus,
 )
 

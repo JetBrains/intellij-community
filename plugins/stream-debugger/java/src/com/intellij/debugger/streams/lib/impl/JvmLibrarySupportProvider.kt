@@ -2,7 +2,7 @@
 package com.intellij.debugger.streams.lib.impl
 
 import com.intellij.debugger.engine.JavaDebugProcess
-import com.intellij.debugger.engine.evaluation.EvaluateException
+import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.withDebugContext
 import com.intellij.debugger.impl.ClassLoadingUtils
 import com.intellij.debugger.impl.DebuggerContextImpl
@@ -26,6 +26,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import com.intellij.xdebugger.XDebugSession
+import com.intellij.xdebugger.XSourcePosition
 
 abstract class JvmLibrarySupportProvider : LibrarySupportProvider {
   override fun getXValueInterpreter(project: Project): XValueInterpreter = interpreter
@@ -72,20 +73,14 @@ abstract class JvmLibrarySupportProvider : LibrarySupportProvider {
   override suspend fun filterTraceableStreams(
     session: XDebugSession,
     chains: List<StreamChain>,
+    position: XSourcePosition,
     contextElement: PsiElement,
   ): List<StreamChain> {
     if (chains.isEmpty()) return chains
-    val debugProcess = session.debugProcess as? JavaDebugProcess ?: return chains
-    val position = session.currentPosition ?: return chains
-    val context = debugProcess.debuggerSession.contextManager.context
-    return withDebugContext(context) {
-      val location = try {
-        context.frameProxy?.location()
-      }
-      catch (e: EvaluateException) {
-        LOG.debug("Cannot get the current execution location, keeping all the chains", e)
-        null
-      } ?: return@withDebugContext chains
+    val suspendContext = session.suspendContext as? SuspendContextImpl ?: return chains
+    return withDebugContext(suspendContext) {
+      // The location of the suspended thread always matches `position`.
+      val location = suspendContext.location ?: return@withDebugContext chains
       filterTraceableStreams(chains, position, contextElement, location.method(), location.codeIndex())
     }
   }

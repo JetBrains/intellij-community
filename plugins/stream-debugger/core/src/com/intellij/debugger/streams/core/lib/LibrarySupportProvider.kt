@@ -15,6 +15,7 @@ import com.intellij.openapi.extensions.ExtensionPointName.Companion.create
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.xdebugger.XDebugSession
+import com.intellij.xdebugger.XSourcePosition
 import org.jetbrains.annotations.NonNls
 
 /**
@@ -62,17 +63,22 @@ interface LibrarySupportProvider {
     )
   }
 
+
   /**
-   * Filters [chains] leaving only those that can still be correctly traced from the current execution position of
-   * [session], i.e. the chains whose first operator has not started executing yet. [contextElement] is the PSI element
-   * at the current execution position, already resolved for chain detection and passed in to avoid resolving it again.
+   * Filters [chains] leaving only those that can still be correctly traced,
+   * i.e. the chains whose first operator has not started executing yet.
    *
-   * The default keeps every chain; JVM-specific providers override to drop already-(partially-)executed chains using the
-   * current bytecode position.
+   * @param position is where the program paused.
+   * @param contextElement is the PSI element at that position,
+   * already resolved for chain detection and passed in to avoid resolving it again.
+   *
+   * The default keeps every chain. JVM-specific providers override to drop
+   * already-(partially-)executed chains using the bytecode position of the pause point.
    */
   suspend fun filterTraceableStreams(
     session: XDebugSession,
     chains: List<StreamChain>,
+    position: XSourcePosition,
     contextElement: PsiElement,
   ): List<StreamChain> = chains
 
