@@ -23,9 +23,13 @@ import com.intellij.platform.projectView.pane.ProjectViewNodeUpdated
 import com.intellij.platform.projectView.pane.ProjectViewPaneChangeFileNestingRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneChangeOptionValueRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneChangeSortKeyRequest
+import com.intellij.platform.projectView.pane.ProjectViewPaneCopyRequest
+import com.intellij.platform.projectView.pane.ProjectViewPaneCutRequest
+import com.intellij.platform.projectView.pane.ProjectViewPaneDeleteRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorImpl
 import com.intellij.platform.projectView.pane.ProjectViewPaneLoadChildrenRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneNavigateRequest
+import com.intellij.platform.projectView.pane.ProjectViewPanePasteRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneSelectionChanged
 import com.intellij.platform.projectView.pane.ProjectViewPaneStateEvent
@@ -108,6 +112,27 @@ internal class FrontendProjectViewPaneTreeModel(
    */
   internal fun requestLoadChildren(nodeId: Long) {
     sendRequest(ProjectViewPaneLoadChildrenRequest(nodeId))
+  }
+
+  /**
+   * Requests the backend to cut/copy/paste/delete the given nodes. Called by
+   * [FrontendProjectViewCutCopyPasteDeleteProvider], which only ever knows the node IDs: PSI, and therefore the
+   * actual work, lives on the backend.
+   */
+  internal fun requestCopy(nodeIds: List<Long>) {
+    sendRequest(ProjectViewPaneCopyRequest(nodeIds))
+  }
+
+  internal fun requestCut(nodeIds: List<Long>) {
+    sendRequest(ProjectViewPaneCutRequest(nodeIds))
+  }
+
+  internal fun requestPaste(nodeIds: List<Long>) {
+    sendRequest(ProjectViewPanePasteRequest(nodeIds))
+  }
+
+  internal fun requestDelete(nodeIds: List<Long>) {
+    sendRequest(ProjectViewPaneDeleteRequest(nodeIds))
   }
 
   internal fun getOptionSupport(): ProjectViewActionSupport = optionSupport

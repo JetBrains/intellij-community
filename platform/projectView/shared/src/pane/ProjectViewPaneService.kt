@@ -193,6 +193,10 @@ private class ProjectViewPaneManager(val pane: ProjectViewPaneModel, val descrip
               request.activeRules.map { it.toNestingRule() },
             )
           )
+          is ProjectViewPaneCopyRequest -> pane.cutCopyPasteDeleteHandler.performCopy(request.nodeIds)
+          is ProjectViewPaneCutRequest -> pane.cutCopyPasteDeleteHandler.performCut(request.nodeIds)
+          is ProjectViewPanePasteRequest -> pane.cutCopyPasteDeleteHandler.performPaste(request.nodeIds)
+          is ProjectViewPaneDeleteRequest -> pane.cutCopyPasteDeleteHandler.performDelete(request.nodeIds)
         }
       }
       catch (e: Exception) {

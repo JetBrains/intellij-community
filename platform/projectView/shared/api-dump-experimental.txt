@@ -1,3 +1,9 @@
+*f:com.intellij.platform.projectView.impl.DataContextCutCopyPasteDeleteHandler
+- sf:INSTANCE:com.intellij.platform.projectView.impl.DataContextCutCopyPasteDeleteHandler
+- f:copy(com.intellij.openapi.actionSystem.DataContext,kotlin.coroutines.Continuation):java.lang.Object
+- f:cut(com.intellij.openapi.actionSystem.DataContext,kotlin.coroutines.Continuation):java.lang.Object
+- f:delete(com.intellij.openapi.actionSystem.DataContext,kotlin.coroutines.Continuation):java.lang.Object
+- f:paste(com.intellij.openapi.actionSystem.DataContext,kotlin.coroutines.Continuation):java.lang.Object
 *f:com.intellij.platform.projectView.impl.DefaultTreeStructurePsiExtractor
 - com.intellij.platform.projectView.impl.ProjectViewPsiExtractor
 - <init>(com.intellij.openapi.project.Project):V
@@ -66,6 +72,7 @@
 - pa:createUpdater(kotlin.coroutines.Continuation):java.lang.Object
 - describe(com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorBuilder,kotlin.coroutines.Continuation):java.lang.Object
 - findNodeForSelectIn(com.intellij.platform.projectView.pane.SelectInRequest,kotlin.coroutines.Continuation):java.lang.Object
+- getCutCopyPasteDeleteHandler():com.intellij.platform.projectView.pane.ProjectViewPaneCutCopyPasteDeleteHandler
 - pf:getProject():com.intellij.openapi.project.Project
 - pa:getPsi():com.intellij.platform.projectView.impl.ProjectViewPsiExtractor
 - f:getState():com.intellij.platform.projectView.pane.BackendProjectViewPaneStateAccessor
@@ -135,6 +142,11 @@
 *:com.intellij.platform.projectView.pane.ProjectViewNodePath
 - a:getNodeIds():java.util.List
 - a:getPaneId():com.intellij.platform.projectView.pane.ProjectViewPaneId
+*:com.intellij.platform.projectView.pane.ProjectViewPaneCutCopyPasteDeleteHandler
+- a:performCopy(java.util.List,kotlin.coroutines.Continuation):java.lang.Object
+- a:performCut(java.util.List,kotlin.coroutines.Continuation):java.lang.Object
+- a:performDelete(java.util.List,kotlin.coroutines.Continuation):java.lang.Object
+- a:performPaste(java.util.List,kotlin.coroutines.Continuation):java.lang.Object
 *:com.intellij.platform.projectView.pane.ProjectViewPaneDescriptor
 *:com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorBuilder
 - a:addSelectInTarget(java.lang.String,java.lang.String,F):V
@@ -154,6 +166,7 @@
 *:com.intellij.platform.projectView.pane.ProjectViewPaneModel
 - a:describe(com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorBuilder,kotlin.coroutines.Continuation):java.lang.Object
 - a:findNodeForSelectIn(com.intellij.platform.projectView.pane.SelectInRequest,kotlin.coroutines.Continuation):java.lang.Object
+- a:getCutCopyPasteDeleteHandler():com.intellij.platform.projectView.pane.ProjectViewPaneCutCopyPasteDeleteHandler
 - a:loadChildren(J,com.intellij.platform.projectView.pane.ProjectViewPaneLoadChildrenOptions,kotlin.coroutines.Continuation):java.lang.Object
 - a:manageState(com.intellij.platform.projectView.pane.ProjectViewPaneStateBuilder,kotlin.coroutines.Continuation):java.lang.Object
 - a:navigate(J,com.intellij.platform.projectView.pane.ProjectViewPaneNavigateOptions,kotlin.coroutines.Continuation):java.lang.Object

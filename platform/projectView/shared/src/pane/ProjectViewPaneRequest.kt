@@ -49,3 +49,27 @@ data class ProjectViewPaneChangeFileNestingRequest(
     val isFileNestingOn: Boolean,
     val activeRules: List<NestingRuleDTO>,
 ) : ProjectViewPaneRequest()
+
+@ApiStatus.Internal
+@Serializable
+data class ProjectViewPaneCopyRequest(
+  val nodeIds: List<Long>,
+) : ProjectViewPaneRequest()
+
+@ApiStatus.Internal
+@Serializable
+data class ProjectViewPaneCutRequest(
+  val nodeIds: List<Long>,
+) : ProjectViewPaneRequest()
+
+@ApiStatus.Internal
+@Serializable
+data class ProjectViewPanePasteRequest(
+  val nodeIds: List<Long>,
+) : ProjectViewPaneRequest()
+
+@ApiStatus.Internal
+@Serializable
+data class ProjectViewPaneDeleteRequest(
+  val nodeIds: List<Long>,
+) : ProjectViewPaneRequest()

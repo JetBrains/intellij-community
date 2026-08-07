@@ -10,6 +10,8 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
 interface ProjectViewPaneModel {
+  val cutCopyPasteDeleteHandler: ProjectViewPaneCutCopyPasteDeleteHandler
+  
   suspend fun describe(builder: ProjectViewPaneDescriptorBuilder): ProjectViewPaneDescriptor
 
   suspend fun manageState(builder: ProjectViewPaneStateBuilder)

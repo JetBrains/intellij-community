@@ -4,6 +4,7 @@
 package com.intellij.platform.projectView.impl
 
 import com.intellij.ide.DataManager
+import com.intellij.ide.DeleteProvider
 import com.intellij.ide.IdeView
 import com.intellij.ide.SelectInContext
 import com.intellij.ide.bookmark.BookmarksListener
@@ -20,6 +21,8 @@ import com.intellij.ide.util.DirectoryChooserUtil
 import com.intellij.idea.AppMode
 import com.intellij.notebook.editor.BackedVirtualFile
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.CustomizedDataContext
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.DataSnapshot
 import com.intellij.openapi.actionSystem.LangDataKeys
@@ -36,11 +39,13 @@ import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
+import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
@@ -49,6 +54,7 @@ import com.intellij.platform.projectView.pane.BackendProjectViewPaneStateAccesso
 import com.intellij.platform.projectView.pane.PROJECT_VIEW_SELECTED_NODE_IDS_KEY
 import com.intellij.platform.projectView.pane.ProjectViewNodeModelImpl
 import com.intellij.platform.projectView.pane.ProjectViewNodePath
+import com.intellij.platform.projectView.pane.ProjectViewPaneCutCopyPasteDeleteHandler
 import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptor
 import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorBuilder
 import com.intellij.platform.projectView.pane.ProjectViewPaneId
@@ -64,6 +70,7 @@ import com.intellij.platform.projectView.pane.SuspendingBackendProjectViewPaneSt
 import com.intellij.platform.projectView.pane.buildProjectViewNodeModel
 import com.intellij.platform.projectView.settings.ProjectViewPaneFileNestingValue
 import com.intellij.platform.projectView.settings.ProjectViewPaneOption
+import com.intellij.platform.projectView.settings.ProjectViewPaneOptionImpl
 import com.intellij.platform.projectView.settings.ProjectViewPaneSettingsAccessor
 import com.intellij.platform.projectView.settings.ProjectViewPaneSettingsService
 import com.intellij.platform.projectView.settings.ProjectViewPaneSettingsStateBuilder
@@ -115,6 +122,8 @@ interface ProjectViewTreeNodeProvider<T> {
 @ApiStatus.Experimental
 abstract class TreeBasedProjectViewPaneModel<T : Any>(protected val project: Project) : ProjectViewPaneModel {
   private val currentTreeState = AtomicReference<ProjectViewPaneTreeState?>(null)
+
+  override val cutCopyPasteDeleteHandler: ProjectViewPaneCutCopyPasteDeleteHandler = MyCutCopyPasteDeleteHandler()
 
   val suspendingState: SuspendingBackendProjectViewPaneStateAccessor<T>?
     get() = currentTreeState.load()?.suspendingState
@@ -241,6 +250,8 @@ abstract class TreeBasedProjectViewPaneModel<T : Any>(protected val project: Pro
   }
 
   override fun uiDataSnapshot(sink: DataSink, snapshot: DataSnapshot) {
+    // Note: no CUT/COPY/PASTE_PROVIDER here. Those are published by the frontend pane, which delegates the
+    // work back to performCopy/performCut/performPaste; see FrontendProjectViewCopyPasteProvider.
     val selectedIds = snapshot[PROJECT_VIEW_SELECTED_NODE_IDS_KEY] ?: emptyList()
     val selectedNodes = selectedIds.mapNotNull<Long, BackendProjectViewNodeModel<T>> { state?.getNodeById(it) }
     uiDataSnapshotForSelection(selectedNodes, sink, snapshot)
@@ -251,7 +262,7 @@ abstract class TreeBasedProjectViewPaneModel<T : Any>(protected val project: Pro
   protected open fun uiDataSnapshotForSelection(
     selectedNodes: List<BackendProjectViewNodeModel<T>>,
     sink: DataSink,
-    snapshot: DataSnapshot,
+    snapshot: DataSnapshot?,
   ) {
     sink[PlatformCoreDataKeys.HELP_ID] = HelpID.PROJECT_VIEWS
     sink[LangDataKeys.IDE_VIEW] = MyIdeView(selectedNodes)
@@ -288,6 +299,24 @@ abstract class TreeBasedProjectViewPaneModel<T : Any>(protected val project: Pro
     sink.lazy(NamedLibraryElement.ARRAY_DATA_KEY) {
       psi.extractNamedLibraryElements(selectedNodes).nullize()?.toTypedArray()
     }
+    sink.lazy(PlatformDataKeys.DELETE_ELEMENT_PROVIDER) {
+      createDeleteProvider(selectedNodes)
+    }
+  }
+
+  /** The same choice [com.intellij.ide.projectView.impl.AbstractProjectViewPane] makes for its own selection. */
+  private fun createDeleteProvider(selectedNodes: List<BackendProjectViewNodeModel<T>>): DeleteProvider? {
+    if (selectedNodes.isEmpty()) return null
+    if (psi.extractModules(selectedNodes).isNotEmpty() || psi.extractUnloadedModules(selectedNodes).isNotEmpty()) {
+      return ModuleDeleteProvider.getInstance()
+    }
+    // TODO the legacy pane additionally offers DetachLibraryDeleteProvider for library nodes, which needs
+    //  getSelectedLibrary() and DetachLibraryDeleteProvider, both internal to intellij.platform.lang.impl.
+    return ProjectViewNodeDeleteProvider(
+      elements = psi.extractPsiElements(selectedNodes),
+      isHideEmptyMiddlePackages = ProjectViewPaneSettingsService.getInstance(project)
+        .isOptionSelected(ProjectViewPaneOptionImpl.HideEmptyMiddlePackages),
+    )
   }
 
   override suspend fun findNodeForSelectIn(selectInRequest: SelectInRequest): ProjectViewNodePath? {
@@ -306,6 +335,64 @@ abstract class TreeBasedProjectViewPaneModel<T : Any>(protected val project: Pro
     override fun selectElement(element: PsiElement) {
       currentTreeState.load()?.scheduleSelectElement(element)
     }
+  }
+  
+  private inner class MyCutCopyPasteDeleteHandler : ProjectViewPaneCutCopyPasteDeleteHandler {
+
+    override suspend fun performCopy(nodeIds: List<Long>) {
+      val dataContext = selectionDataContextByNodeIds(nodeIds) ?: return
+      DataContextCutCopyPasteDeleteHandler.copy(dataContext)
+    }
+
+    override suspend fun performCut(nodeIds: List<Long>) {
+      val dataContext = selectionDataContextByNodeIds(nodeIds) ?: return
+      DataContextCutCopyPasteDeleteHandler.cut(dataContext)
+    }
+
+    override suspend fun performPaste(nodeIds: List<Long>) {
+      val dataContext = selectionDataContextByNodeIds(nodeIds) ?: return
+      DataContextCutCopyPasteDeleteHandler.paste(dataContext)
+    }
+
+    override suspend fun performDelete(nodeIds: List<Long>) {
+      val dataContext = selectionDataContextByNodeIds(nodeIds) ?: return
+      DataContextCutCopyPasteDeleteHandler.delete(dataContext)
+    }
+
+    private fun selectionDataContextByNodeIds(nodeIds: List<Long>): DataContext? {
+      val selectedNodes = selectedNodes(nodeIds)
+      if (selectedNodes.isEmpty()) return null
+      return selectionDataContext(selectedNodes)
+    }
+
+    private fun selectedNodes(nodeIds: List<Long>): List<BackendProjectViewNodeModel<T>> {
+      val state = state ?: return emptyList()
+      return nodeIds.mapNotNull { state.getNodeById(it) }
+    }
+
+    /**
+     * The backend equivalent of the data context the monolith Project View would have for this selection.
+     *
+     * Needed because the copy/paste/delete handlers are all data-context based (see
+     * [DataContextCutCopyPasteDeleteHandler]), while the frontend sends node IDs only. [PlatformCoreDataKeys.MODULE]
+     * and [LangDataKeys.PASTE_TARGET_PSI_ELEMENT] are set explicitly, because in the monolith they are
+     * derived by [com.intellij.openapi.actionSystem.UiDataRule]s, which only run for component-based
+     * (`PreCachedDataContext`) contexts and therefore not for this one.
+     */
+    private fun selectionDataContext(selectedNodes: List<BackendProjectViewNodeModel<T>>): DataContext =
+      CustomizedDataContext.withSnapshot(DataContext.EMPTY_CONTEXT) { sink ->
+        sink[CommonDataKeys.PROJECT] = project
+        uiDataSnapshotForSelection(selectedNodes, sink, snapshot = null)
+        sink.lazy(LangDataKeys.PASTE_TARGET_PSI_ELEMENT) {
+          // The same as PasteTargetRule, which derives the paste target from the single selected element.
+          psi.extractPsiElements(selectedNodes).singleOrNull()
+        }
+        sink.lazy(PlatformCoreDataKeys.MODULE) {
+          val singleNode = selectedNodes.singleOrNull() ?: return@lazy null
+          psi.extractSingleModule(singleNode)
+          ?: psi.extractPsiElements(listOf(singleNode)).singleOrNull()?.let { ModuleUtilCore.findModuleForPsiElement(it) }
+        }
+      }
   }
 
   private inner class ProjectViewPaneTreeState(

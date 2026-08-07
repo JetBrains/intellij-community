@@ -17,6 +17,9 @@ import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.ide.util.treeView.NodeDescriptor
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor
 import com.intellij.idea.AppMode
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.CustomizedDataContext
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.DataSnapshot
 import com.intellij.openapi.actionSystem.LangDataKeys
@@ -33,9 +36,11 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.platform.ide.navigation.NavigationOptions
 import com.intellij.platform.ide.navigation.NavigationService
 import com.intellij.platform.projectView.actions.legacyProjectViewOption
+import com.intellij.platform.projectView.impl.DataContextCutCopyPasteDeleteHandler
 import com.intellij.platform.projectView.pane.PROJECT_VIEW_SELECTED_NODE_IDS_KEY
 import com.intellij.platform.projectView.pane.ProjectViewNodeModel
 import com.intellij.platform.projectView.pane.ProjectViewNodePath
+import com.intellij.platform.projectView.pane.ProjectViewPaneCutCopyPasteDeleteHandler
 import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptor
 import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorBuilder
 import com.intellij.platform.projectView.pane.ProjectViewPaneId
@@ -152,6 +157,8 @@ private class LegacyBackendProjectViewPaneModel(
   private val addSelectInTargetDescriptors: Boolean,
 ) : ProjectViewPaneModel {
   private val id = projectViewPaneId(if (subId == null) legacyPaneManager.id else "${legacyPaneManager.id}:$subId")
+
+  override val cutCopyPasteDeleteHandler: ProjectViewPaneCutCopyPasteDeleteHandler = MyCutCopyPasteDeleteHandler()
 
   override suspend fun describe(builder: ProjectViewPaneDescriptorBuilder): ProjectViewPaneDescriptor = builder.run {
     if (legacyPaneManager.legacyPane.isDefaultPane(project)) {
@@ -320,6 +327,46 @@ private class LegacyBackendProjectViewPaneModel(
       val parentIds = loadIds(path.parentPath) ?: return null
       val id = legacyPaneManager.loadNode(parentIds.last(), path.lastPathComponent)?.id ?: return null
       return parentIds + id
+    }
+  }
+
+  private inner class MyCutCopyPasteDeleteHandler : ProjectViewPaneCutCopyPasteDeleteHandler {
+    override suspend fun performCopy(nodeIds: List<Long>) {
+      val dataContext = selectionDataContext(nodeIds) ?: return
+      DataContextCutCopyPasteDeleteHandler.copy(dataContext)
+    }
+
+    override suspend fun performCut(nodeIds: List<Long>) {
+      val dataContext = selectionDataContext(nodeIds) ?: return
+      DataContextCutCopyPasteDeleteHandler.cut(dataContext)
+    }
+
+    override suspend fun performPaste(nodeIds: List<Long>) {
+      val dataContext = selectionDataContext(nodeIds) ?: return
+      DataContextCutCopyPasteDeleteHandler.paste(dataContext)
+    }
+
+    override suspend fun performDelete(nodeIds: List<Long>) {
+      val dataContext = selectionDataContext(nodeIds) ?: return
+      DataContextCutCopyPasteDeleteHandler.delete(dataContext)
+    }
+
+    /**
+     * The data context the legacy pane itself would have for this selection.
+     *
+     * Unlike the new pane model, the legacy wrapper stays entirely data-context based: pushing the selection
+     * into the legacy tree and asking the pane for its snapshot is exactly what [uiDataSnapshot] does, and it
+     * gives all the keys the copy/paste/delete handlers need, including the pane's own
+     * [com.intellij.openapi.actionSystem.PlatformDataKeys.DELETE_ELEMENT_PROVIDER] choice.
+     */
+    private suspend fun selectionDataContext(nodeIds: List<Long>): DataContext? {
+      if (nodeIds.isEmpty()) return null
+      return withContext(Dispatchers.UI) {
+        CustomizedDataContext.withSnapshot(DataContext.EMPTY_CONTEXT) { sink ->
+          sink[CommonDataKeys.PROJECT] = project
+          legacyPaneManager.uiDataSnapshot(sink, nodeIds)
+        }
+      }
     }
   }
 }

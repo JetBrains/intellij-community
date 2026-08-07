@@ -142,6 +142,19 @@ internal class ProjectViewPaneTester internal constructor(
     Assertions.assertEquals(expected.trimIndent().trimEnd(), dumpSubtree(*pathByMainText.toTypedArray()))
   }
 
+  /**
+   * Sends the cut/copy/paste/delete requests the frontend provider sends, carrying the node IDs of the
+   * given nodes as the current selection. Fire-and-forget, exactly like in production: await the observable
+   * effect (the clipboard, the tree, the VFS) rather than the call itself.
+   */
+  fun requestCopy(vararg nodes: Node): Unit = model.requestCopy(nodes.map { it.projectViewNode.id })
+
+  fun requestCut(vararg nodes: Node): Unit = model.requestCut(nodes.map { it.projectViewNode.id })
+
+  fun requestPaste(vararg nodes: Node): Unit = model.requestPaste(nodes.map { it.projectViewNode.id })
+
+  fun requestDelete(vararg nodes: Node): Unit = model.requestDelete(nodes.map { it.projectViewNode.id })
+
   private suspend fun childrenOf(node: Node): List<Node>? = model.awaitNodeChildren(node) { true }
 
   private suspend fun dump(node: Node, depth: Int, maxDepth: Int, sb: StringBuilder) {

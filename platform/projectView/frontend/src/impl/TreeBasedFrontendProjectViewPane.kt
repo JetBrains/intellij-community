@@ -94,6 +94,7 @@ internal class TreeBasedFrontendProjectViewPane(
   private val expandRequests = Channel<ExpandRequest>(capacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
   private val treeExpander = ProjectViewTreeExpander(tree, expandRequests)
   private val autoscrollToSourceHandler = MyAutoscrollToSourceHandler(project)
+  private val cutCopyPasteDeleteProvider = FrontendProjectViewCutCopyPasteDeleteProvider(paneTreeModel)
 
   private inner class ContentPanel(content: JComponent) : SimpleToolWindowPanel(true), UiDataProvider {
     init {
@@ -337,6 +338,10 @@ internal class TreeBasedFrontendProjectViewPane(
     sink[PROJECT_VIEW_SELECTED_NODE_IDS_KEY] = tree.selectionPaths?.mapNotNull { path ->
       (path?.lastPathComponent as? Node)?.projectViewNode?.id
     }
+    sink[PlatformDataKeys.CUT_PROVIDER] = cutCopyPasteDeleteProvider
+    sink[PlatformDataKeys.COPY_PROVIDER] = cutCopyPasteDeleteProvider
+    sink[PlatformDataKeys.PASTE_PROVIDER] = cutCopyPasteDeleteProvider
+    sink[PlatformDataKeys.DELETE_ELEMENT_PROVIDER] = cutCopyPasteDeleteProvider
     sink[CommonDataKeys.NAVIGATABLE_ARRAY] = tree.selectionPaths?.mapNotNull { path ->
       (path?.lastPathComponent as? Node)?.projectViewNode?.let { paneTreeModel.createNavigatable(it) }
     }?.toTypedArray()
