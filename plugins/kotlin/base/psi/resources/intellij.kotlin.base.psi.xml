@@ -28,6 +28,9 @@
     <focusModeProvider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.KotlinFocusModeProvider"/>
     <importBlockRangeProvider implementation="org.jetbrains.kotlin.idea.KotlinImportBlockRangeProvider"/>
     <lang.substitutor language="kotlin" order="last" implementationClass="org.jetbrains.kotlin.idea.KotlinLanguageSubstitutor"/>
+    <applicationService
+            serviceInterface="org.jetbrains.kotlin.analysis.decompiler.psi.KotlinLabelProviderService"
+            serviceImplementation="org.jetbrains.kotlin.idea.base.psi.fileTypes.IdeKotlinLabelProviderService"/>
   </extensions>
   <extensions defaultExtensionNs="com.intellij.jvm">
     <declarationSearcher language="kotlin" implementationClass="org.jetbrains.kotlin.idea.KotlinDeclarationSearcher"/>
