@@ -52,6 +52,13 @@ public class AllInPackageGradleConfigurationProducer extends AbstractGradleTestR
   }
 
   @Override
+  protected @Nullable PsiPackage getElementForFirstRun(@NotNull ConfigurationContext context, @NotNull PsiElement sourceElement) {
+    PsiPackage element = getElement(context);
+    if (element != null) return element;
+    return sourceElement instanceof PsiPackage psiPackage ? psiPackage : null;
+  }
+
+  @Override
   protected @NotNull String getLocationName(@NotNull ConfigurationContext context, @NotNull PsiPackage element) {
     return String.format("'%s'", element.getName());
   }
@@ -63,6 +70,21 @@ public class AllInPackageGradleConfigurationProducer extends AbstractGradleTestR
     @NotNull List<? extends PsiPackage> chosenElements
   ) {
     return ExecutionBundle.message("test.in.scope.presentable.text", element.getQualifiedName());
+  }
+
+  @Override
+  protected @NotNull List<String> getTaskTargetNames(@NotNull ConfigurationContext context,
+                                                      @NotNull PsiPackage element,
+                                                      @NotNull List<? extends PsiPackage> chosenElements) {
+    return List.of(element.getQualifiedName());
+  }
+
+  @Override
+  protected @NotNull String suggestTaskFirstConfigurationName(@NotNull ConfigurationContext context,
+                                                               @NotNull PsiPackage element,
+                                                               @NotNull List<? extends PsiPackage> chosenElements,
+                                                               @NotNull List<String> selectedTestTaskNames) {
+    return createTaskFirstConfigurationNameIn(selectedTestTaskNames, getTaskTargetNames(context, element, chosenElements));
   }
 
   @Override

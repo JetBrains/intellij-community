@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.util.containers.ContainerUtil;
@@ -61,6 +62,13 @@ public class TestMethodGradleConfigurationProducer extends AbstractGradleTestRun
   }
 
   @Override
+  protected @Nullable PsiMethod getElementForFirstRun(@NotNull ConfigurationContext context, @NotNull PsiElement sourceElement) {
+    PsiMethod element = getElement(context);
+    if (element != null) return element;
+    return sourceElement instanceof PsiMethod psiMethod ? psiMethod : null;
+  }
+
+  @Override
   protected @NotNull String getLocationName(@NotNull ConfigurationContext context, @NotNull PsiMethod element) {
     return element.getName();
   }
@@ -74,6 +82,17 @@ public class TestMethodGradleConfigurationProducer extends AbstractGradleTestRun
     PsiClass psiClass = Objects.requireNonNull(getContainingClass(context.getLocation(), element));
     List<? extends PsiClass> elements = chosenElements.isEmpty() ? List.of(psiClass) : chosenElements;
     return StringUtil.join(elements, aClass -> aClass.getName() + "." + element.getName(), "|");
+  }
+
+  @Override
+  protected @NotNull List<String> getTaskTargetNames(
+    @NotNull ConfigurationContext context,
+    @NotNull PsiMethod element,
+    @NotNull List<? extends PsiClass> chosenElements
+  ) {
+    PsiClass psiClass = Objects.requireNonNull(getContainingClass(context.getLocation(), element));
+    List<? extends PsiClass> elements = chosenElements.isEmpty() ? List.of(psiClass) : chosenElements;
+    return ContainerUtil.map(elements, aClass -> aClass.getName() + "." + element.getName());
   }
 
   @Override

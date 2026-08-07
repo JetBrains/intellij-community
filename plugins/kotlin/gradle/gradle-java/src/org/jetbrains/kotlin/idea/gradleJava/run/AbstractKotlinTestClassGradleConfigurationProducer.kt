@@ -29,6 +29,8 @@ abstract class AbstractKotlinMultiplatformTestClassGradleConfigurationProducer :
     override val forceGradleRunner: Boolean get() = true
     override val hasTestFramework: Boolean get() = true
 
+    override fun usesBaseTestTasksChooser(): Boolean = false
+
     private val mppTestTasksChooser = MultiplatformTestTasksChooser()
 
     abstract fun isApplicable(module: Module, platform: TargetPlatform): Boolean
@@ -87,6 +89,7 @@ abstract class AbstractKotlinMultiplatformTestClassGradleConfigurationProducer :
     ) {
         val locationName = classes.singleOrNull()?.name
         val dataContext = MultiplatformTestTasksChooser.createContext(context.dataContext, locationName)
+        val availableTestTaskNames = mppTestTasksChooser.listAvailableTasks(classes).map { it.testName }.distinct()
 
         mppTestTasksChooser.multiplatformChooseTasks(context.project, dataContext, classes) { tasks ->
             val configuration = fromContext.configuration as GradleRunConfiguration
@@ -99,7 +102,12 @@ abstract class AbstractKotlinMultiplatformTestClassGradleConfigurationProducer :
                 performRunnable.run()
             }
             settings.externalProjectPath = ExternalSystemApiUtil.getExternalProjectPath(module)
-            configuration.name = classes.joinToString("|") { it.name ?: "<error>" }
+            val selectedTestTaskNames = tasks.flatMap { it.values }.map { it.testName }.distinct()
+            configuration.name = if (availableTestTaskNames.size > 1) {
+                createTaskFirstConfigurationNameFor(selectedTestTaskNames, classes.map { it.name ?: "<error>" })
+            } else {
+                classes.joinToString("|") { it.name ?: "<error>" }
+            }
             performRunnable.run()
         }
     }

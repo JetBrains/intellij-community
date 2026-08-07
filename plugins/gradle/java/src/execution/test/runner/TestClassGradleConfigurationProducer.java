@@ -75,6 +75,13 @@ public class TestClassGradleConfigurationProducer extends AbstractGradleTestRunC
   }
 
   @Override
+  protected @Nullable PsiClass getElementForFirstRun(@NotNull ConfigurationContext context, @NotNull PsiElement sourceElement) {
+    PsiClass element = getElement(context);
+    if (element != null) return element;
+    return sourceElement instanceof PsiClass psiClass ? psiClass : null;
+  }
+
+  @Override
   protected @NotNull String getLocationName(@NotNull ConfigurationContext context, @NotNull PsiClass element) {
     return Objects.requireNonNull(element.getName());
   }
@@ -87,6 +94,16 @@ public class TestClassGradleConfigurationProducer extends AbstractGradleTestRunC
   ) {
     List<? extends PsiClass> elements = chosenElements.isEmpty() ? List.of(element) : chosenElements;
     return StringUtil.join(elements, aClass -> aClass.getName(), "|");
+  }
+
+  @Override
+  protected @NotNull List<String> getTaskTargetNames(
+    @NotNull ConfigurationContext context,
+    @NotNull PsiClass element,
+    @NotNull List<? extends PsiClass> chosenElements
+  ) {
+    List<? extends PsiClass> elements = chosenElements.isEmpty() ? List.of(element) : chosenElements;
+    return ContainerUtil.map(elements, psiClass -> Objects.requireNonNull(psiClass.getName()));
   }
 
   @Override

@@ -26,9 +26,10 @@ package com.intellij.execution.actions;
  import com.intellij.openapi.util.registry.Registry;
  import com.intellij.openapi.util.text.StringUtil;
  import com.intellij.openapi.vfs.VirtualFile;
- import org.jetbrains.annotations.Nls;
- import org.jetbrains.annotations.NotNull;
- import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
  import javax.swing.Icon;
  import java.util.ArrayList;
@@ -163,15 +164,18 @@ package com.intellij.execution.actions;
     return producers.get(0);
   }
 
-  private void perform(@NotNull ConfigurationFromContext configurationFromContext, @NotNull ConfigurationContext context) {
+  @VisibleForTesting
+  void perform(@NotNull ConfigurationFromContext configurationFromContext, @NotNull ConfigurationContext context) {
     int eventCount = IdeEventQueue.getInstance().getEventCount();
-    RunnerAndConfigurationSettings configurationSettings = configurationFromContext.getConfigurationSettings();
-    context.setConfiguration(configurationSettings);
+    context.setConfiguration(configurationFromContext.getConfigurationSettings());
     configurationFromContext.onFirstRun(context, () -> {
+      // A producer may replace the generated settings after showing additional UI, for example when a test task is selected.
+      RunnerAndConfigurationSettings configurationSettings = configurationFromContext.getConfigurationSettings();
+      // Updates the context again with the settings that will actually run.
+      context.setConfiguration(configurationSettings);
       if (LOG.isDebugEnabled()) {
-        RunnerAndConfigurationSettings settings = context.getConfiguration();
-        RunConfiguration configuration = settings == null ? null : settings.getConfiguration();
-        String configurationClass = configuration == null ? null : configuration.getClass().getName();
+        RunConfiguration configuration = configurationSettings.getConfiguration();
+        String configurationClass = configuration.getClass().getName();
         LOG.debug(String.format("Create run configuration: %s", configurationClass));
       }
       // Reset event counter if some UI was shown as

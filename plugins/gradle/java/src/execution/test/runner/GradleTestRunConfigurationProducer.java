@@ -24,12 +24,14 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.plugins.gradle.execution.GradleRunConfigurationProducer;
 import org.jetbrains.plugins.gradle.execution.GradleRunnerUtil;
 import org.jetbrains.plugins.gradle.execution.build.CachedModuleDataFinder;
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.TestRunner;
+import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleModuleData;
 import org.jetbrains.plugins.gradle.util.TasksToRun;
 
@@ -134,6 +136,49 @@ public abstract class GradleTestRunConfigurationProducer extends GradleRunConfig
 
   protected TestTasksChooser getTestTasksChooser() {
     return testTasksChooser;
+  }
+
+  protected static @NotNull String createTaskFirstConfigurationNameFor(
+    @NotNull List<String> taskNames,
+    @NotNull List<String> targetNames
+  ) {
+    return GradleBundle.message(
+      "gradle.tests.task.first.configuration.name.for",
+      suggestSelectionName(taskNames),
+      suggestSelectionName(targetNames)
+    );
+  }
+
+  protected static @NotNull String createTaskFirstConfigurationNameIn(
+    @NotNull List<String> taskNames,
+    @NotNull List<String> targetNames
+  ) {
+    return GradleBundle.message(
+      "gradle.tests.task.first.configuration.name.in",
+      suggestSelectionName(taskNames),
+      suggestSelectionName(targetNames)
+    );
+  }
+
+  protected static @NotNull String suggestSelectionName(@NotNull List<String> names) {
+    List<String> distinctNames = names.stream().distinct().toList();
+    if (distinctNames.isEmpty()) return "";
+    if (distinctNames.size() == 1) return distinctNames.getFirst();
+    return GradleBundle.message("gradle.tests.pattern.producer.configuration.name", distinctNames.getFirst(), distinctNames.size() - 1);
+  }
+
+  protected static @Nullable String resolveGradleIdentityPath(@NotNull Module module) {
+    GradleModuleData gradleModuleData = CachedModuleDataFinder.getGradleModuleData(module);
+    return gradleModuleData == null ? null : gradleModuleData.getGradleIdentityPathOrNull();
+  }
+
+  /**
+   * Checks producer-specific metadata without comparing editable configuration options.
+   * Specialized producers should override this when task tokens alone do not identify their configurations.
+   */
+  @VisibleForTesting
+  protected boolean isConfigurationCompatibleForSelectedTasks(@NotNull GradleRunConfiguration configuration) {
+    return true;
   }
 
   @TestOnly
