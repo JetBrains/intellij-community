@@ -11,6 +11,8 @@ import com.intellij.python.community.helpersLocator.PythonHelpersLocator;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Time;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.python.ResultKt;
+import com.jetbrains.python.sdk.SdkExtKt;
 import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonEnvUtil;
@@ -100,13 +102,16 @@ public class PyLegacySkeletonGenerator extends PySkeletonGenerator {
 
     public @NotNull Map<String, String> getEnvironment() {
       Map<String, String> env = new HashMap<>();
-      final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(mySdk);
+      final PythonSdkFlavor<?> flavor = PythonSdkFlavor.getFlavor(mySdk);
       final String flavorPathParam = flavor != null ? flavor.envPathParam() : null;
       // TODO Investigate whether it's possible to pass this directory as an ordinary "extraSysPath" entry
       if (myWorkingDir != null && flavorPathParam != null) {
         env = PySdkUtil.mergeEnvVariables(env, ImmutableMap.of(flavorPathParam, myWorkingDir));
       }
-      env = PySdkUtil.mergeEnvVariables(env, PySdkUtil.activateVirtualEnv(mySdk));
+      final Map<String, String> activation = ResultKt.orLogException(SdkExtKt.activationEnvironmentBlocking(mySdk), LOG, true);
+      if (activation != null) {
+        env = PySdkUtil.mergeEnvVariables(env, activation);
+      }
       PythonEnvUtil.setPythonDontWriteBytecode(env);
       if (myPrebuilt) {
         env.put("IS_PREGENERATED_SKELETONS", "1");

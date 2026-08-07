@@ -10,18 +10,15 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.ui.EDT;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.run.ActivatableScriptExtKt;
 import com.jetbrains.python.run.CommandLinePatcher;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.sdk.impl.PySdkBundle;
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
-import com.jetbrains.python.sdk.terminal.Shell;
 import kotlin.coroutines.Continuation;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
@@ -33,10 +30,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Path;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 /**
  * A more flexible cousin of SdkVersionUtil.
@@ -53,7 +48,6 @@ public final class PySdkUtil {
   // Windows EOF marker, Ctrl+Z
   private static final int SUBSTITUTE = 26;
   public static final String PATH_ENV_VARIABLE = "PATH";
-  private static final Key<Map<String, String>> ENVIRONMENT_KEY = Key.create("ENVIRONMENT_KEY");
 
   private PySdkUtil() {
     // explicitly none
@@ -198,50 +192,6 @@ public final class PySdkUtil {
     return result;
   }
 
-  @ApiStatus.Internal
-  public static @NotNull Map<String, String> activateVirtualEnv(@NotNull Sdk sdk) {
-    final Map<String, String> cached = sdk.getUserData(ENVIRONMENT_KEY);
-    if (cached != null) return cached;
-
-    final String sdkHome = sdk.getHomePath();
-    if (sdkHome == null || sdkHome.trim().isEmpty()) {
-      // homePath is empty (not null) by default.
-      // If we cache values when path is empty, we would stuck with empty env and never reread it once path set
-      LOG.warn("homePath is null or empty, skipping env loading for " + sdk.getName());
-      return Collections.emptyMap();
-    }
-
-    var additionalData = sdk.getSdkAdditionalData();
-    if (additionalData == null) {
-      return Collections.emptyMap();
-    }
-    final Map<String, String> environment = activateVirtualEnv(sdkHome);
-    // Do not cache a failed/empty read (e.g. a timed-out conda activation): caching it would poison every
-    // later launch of this interpreter for the whole session. Retry on the next launch instead (PY-91371).
-    if (!environment.isEmpty()) {
-      sdk.putUserData(ENVIRONMENT_KEY, environment);
-    }
-    return environment;
-  }
-
-  /**
-   * @deprecated doesn't support targets
-   */
-  @ApiStatus.Internal
-  @Deprecated(forRemoval = true)
-  public static @NotNull Map<String, String> activateVirtualEnv(@NotNull String sdkHome) {
-    var pythonEnvironment = PythonEnvironmentKt.detectPythonEnvironment(Path.of(sdkHome)).getSuccessOrNull();
-    if (!(pythonEnvironment instanceof Activatable)) return Collections.emptyMap();
-
-    var shellType = Optional.ofNullable(Shell.Companion.getSystemDefaultShell()).map(Shell::getType).orElse(Shell.Type.UNKNOWN);
-
-    var activateScript = ((Activatable)pythonEnvironment).getActivation().invoke(shellType);
-    if (activateScript == null) {
-      return Collections.emptyMap();
-    }
-
-    return Collections.unmodifiableMap(ActivatableScriptExtKt.readPythonEnvironment(activateScript));
-  }
   /**
    * @deprecated use {@link PythonInterpreterKt#getVersion(PythonInterpreter, Continuation)}
    * or {@link com.intellij.python.community.execService.python.ApiKt#validatePythonAndGetInfo(Path, Continuation)}

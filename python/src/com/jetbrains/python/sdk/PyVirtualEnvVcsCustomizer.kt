@@ -11,6 +11,7 @@ import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.service
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleUtil
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.options.UiDslUnnamedConfigurable
 import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.project.Project
@@ -41,7 +42,7 @@ internal class PyVirtualEnvVcsCustomizer : VcsEnvCustomizer() {
     val pyRichSdk = sdk.pythonInterpreter()
     if (pyRichSdk.isActivatable) {
       // in case of virtualenv sdk on unix we activate virtualenv
-      envs.putAll(PySdkUtil.activateVirtualEnv(sdk))
+      envs.putAll(runBlockingMaybeCancellable { sdk.activationEnvironment() }.successOrNull ?: emptyMap())
     }
   }
 

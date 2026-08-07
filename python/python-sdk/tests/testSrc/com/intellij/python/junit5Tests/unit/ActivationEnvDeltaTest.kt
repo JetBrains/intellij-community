@@ -1,12 +1,12 @@
 package com.intellij.python.junit5Tests.unit
 
-import com.jetbrains.python.run.activationEnvDelta
+import com.intellij.python.sdk.backend.service.ActivatableEnvironmentService.Companion.activationEnvDelta
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 
 /**
- * Unit tests for the activation env diff behind [readPythonEnvironment][com.jetbrains.python.run.readPythonEnvironment].
+ * Unit tests for `ActivatableEnvironmentService.activationEnvDelta`, the activation env diff.
  * See PY-71917: the previous implementation kept only a fixed whitelist and dropped everything a conda
  * `activate.d` script exported.
  */

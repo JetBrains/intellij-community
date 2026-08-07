@@ -1,9 +1,10 @@
 package com.jetbrains.python.sdk.flavors
 
 import com.intellij.execution.target.TargetedCommandLineBuilder
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.remote.RemoteSdkPropertiesPaths
-import com.jetbrains.python.sdk.PySdkUtil
+import com.jetbrains.python.sdk.activationEnvironment
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 
 /**
@@ -29,7 +30,7 @@ interface PyFlavorData {
       }
       targetCommandLineBuilder.setExePath(interpreterPath)
       if (!PythonSdkUtil.isRemote(sdk)) {
-        PySdkUtil.activateVirtualEnv(sdk)
+        runBlockingMaybeCancellable { sdk.activationEnvironment() }
       }
     }
 

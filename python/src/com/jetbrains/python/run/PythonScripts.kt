@@ -43,7 +43,6 @@ import com.jetbrains.python.sdk.PythonEnvUtil
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.configureBuilderToRunPythonOnTarget
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
-import com.jetbrains.python.sdk.flavors.conda.fixCondaPathEnvIfNeeded
 import com.jetbrains.python.sdk.targetAdditionalData
 import com.jetbrains.python.target.PyTargetAwareAdditionalData.Companion.pathsAddedByUser
 import org.jetbrains.annotations.ApiStatus
@@ -120,12 +119,6 @@ fun PythonExecution.buildTargetedCommandLine(
     commandLineBuilder.ptyOptions = LocalTargetPtyOptions(LocalPtyOptions.defaults())
   }
 
-  // This fix shouldn't be here, since flavor patches envs (see configureBuilderToRunPythonOnTarget), but envs
-  // then overwritten by patchEnvironmentVariablesForVirtualenv and envs
-  // Fix must be removed after path merging implementation
-  if (sdk != null) {
-    commandLineBuilder.fixCondaPathEnvIfNeeded(sdk)
-  }
   return commandLineBuilder.build()
 }
 

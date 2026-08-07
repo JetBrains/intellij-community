@@ -4,6 +4,7 @@ package com.intellij.python.terminal
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.module.ModuleUtilCore
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.projectRoots.Sdk
@@ -22,7 +23,7 @@ import com.intellij.python.terminal.shared.PyTerminalBundle
 import com.intellij.python.terminal.shared.PyVirtualEnvTerminalSettings
 import com.jetbrains.python.orLogException
 import com.jetbrains.python.sdk.Activatable
-import com.jetbrains.python.sdk.PySdkUtil
+import com.jetbrains.python.sdk.activationEnvironment
 import com.jetbrains.python.sdk.PythonEnvironment
 import com.jetbrains.python.sdk.internal.PYTHON_MODULE_ID
 import com.jetbrains.python.sdk.pythonInterpreter
@@ -101,7 +102,7 @@ class PyVirtualEnvTerminalCustomizer : ShellExecOptionsCustomizer {
 
   private fun activateUnknownShell(sdk: Sdk, envs: MutableMap<String, String>): Jediterm? {
     //for other shells we read envs from activate script by the default shell and pass them to the process
-    val envVars = PySdkUtil.activateVirtualEnv(sdk)
+    val envVars = runBlockingMaybeCancellable { sdk.activationEnvironment() }.successOrNull ?: emptyMap()
     if (envVars.isEmpty()) {
       logger.warn("No vars found to activate in ${sdk.homePath}")
     }

@@ -88,8 +88,8 @@ import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest;
 import com.jetbrains.python.run.target.PySdkTargetPaths;
 import com.jetbrains.python.run.target.PythonCommandLineTargetEnvironmentProvider;
 import com.jetbrains.python.sdk.PySdkExtKt;
-import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonEnvUtil;
+import com.jetbrains.python.sdk.SdkExtKt;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
 import com.jetbrains.python.sdk.PythonInterpreter;
 import com.jetbrains.python.sdk.PythonInterpreterKt;
@@ -810,7 +810,9 @@ public abstract class PythonCommandLineState extends CommandLineState {
     boolean shouldActivate = (Registry.is("python.activate.virtualenv.on.run") && pythonInterpreter.isActivatable());
     if (!shouldActivate) return;
 
-    Map<String, String> activated = PySdkUtil.activateVirtualEnv(sdk);
+    // A failed activation read is already logged by ActivatableEnvironmentService; fall back to no extra vars here.
+    Map<String, String> activated = SdkExtKt.activationEnvironmentBlocking(sdk).getSuccessOrNull();
+    if (activated == null) activated = Map.of();
     env.putAll(activated);
 
     // User-specified env vars override activated ones, with special PATH merging

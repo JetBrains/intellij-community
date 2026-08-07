@@ -4,8 +4,10 @@ package com.jetbrains.python.sdk
 import com.intellij.execution.target.TargetBasedSdkAdditionalData
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.getOrCreateUserDataUnsafe
@@ -13,13 +15,17 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem
 import com.intellij.python.community.execService.python.validatePythonAndGetInfo
+import com.intellij.python.sdk.backend.service.ActivatableEnvironmentService
 import com.intellij.remote.RemoteSdkProperties
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
+import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.PythonInfo
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.mapResult
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
+import com.jetbrains.python.sdk.impl.PySdkBundle
 import com.jetbrains.python.sdk.impl.buildPresentationInfo
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil.isPythonSdk
@@ -210,3 +216,36 @@ suspend fun Sdk.validatePythonAndGetInfo(): PyResult<PythonInfo> = asBinToExecut
  */
 @get:Internal
 val PyResult<PythonInfo>.version: PyResult<LanguageLevel> get() = mapSuccess { it.languageLevel }
+
+/** The activation environment for [this] SDK's interpreter; a failure if the SDK has no valid home path. */
+@Internal
+suspend fun Sdk.activationEnvironment(): PyResult<Map<String, String>> {
+  val binaryPath = pythonBinaryPath().getOr { return it }
+  return service<ActivatableEnvironmentService>().activationEnvironment(binaryPath)
+}
+
+/**
+ * Blocking bridge to [activationEnvironment] for Java callers that cannot suspend; must be called off the EDT.
+ * Kotlin callers should call [activationEnvironment] inside `runBlockingMaybeCancellable` at the call site instead.
+ */
+@Deprecated("Blocking bridge for Java callers that cannot suspend; from Kotlin call the suspend activationEnvironment() instead")
+@Internal
+@RequiresBackgroundThread
+@RequiresBlockingContext
+fun Sdk.activationEnvironmentBlocking(): PyResult<Map<String, String>> {
+  val binaryPath = pythonBinaryPath().getOr { return it }
+  return runBlockingMaybeCancellable { service<ActivatableEnvironmentService>().activationEnvironment(binaryPath) }
+}
+
+/** [homePath] as a [PythonBinary], or a failure when it is absent or not a valid path or sdk is not the python sdk. */
+@Internal
+fun Sdk.pythonBinaryPath(): PyResult<PythonBinary> {
+  try {
+    requirePythonSdk()
+  } catch (_: IllegalArgumentException) {
+    return PyResult.localizedError(PySdkBundle.message("python.sdk.not.a.python.sdk", name))
+  }
+  val binaryPath = homePath?.let { try { Path.of(it) } catch (_: InvalidPathException) { null } }
+  return if (binaryPath != null) PyResult.success(binaryPath)
+  else PyResult.localizedError(PySdkBundle.message("dialog.message.broken.home.path.for", name))
+}

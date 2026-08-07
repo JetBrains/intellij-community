@@ -1,8 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk
 
+import com.intellij.openapi.components.service
 import com.intellij.platform.eel.EelOsFamily
+import com.intellij.platform.eel.pathSeparator
 import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.python.sdk.backend.service.ActivatableEnvironmentService
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.PythonHomePath
@@ -14,6 +17,7 @@ import com.jetbrains.python.sdk.terminal.Shell
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import kotlin.io.path.exists
+import kotlin.io.path.isDirectory
 import kotlin.io.path.pathString
 
 @ApiStatus.Internal
@@ -30,6 +34,12 @@ interface Activatable {
   data class Script(
     val scriptPath: Path,
     val args: List<String>? = null,
+    /**
+     * Post-processes the environment captured after running this activation script. Identity by default.
+     * conda uses it to append the base install's `Library\bin` to `PATH` (PY-57146): conda runs base python
+     * under the hood and its MKL DLLs live there, which activating a non-base env does not add.
+     */
+    val postProcessEnv: (Map<String, String>) -> Map<String, String> = { it },
   )
 
   val activation: (shellType: Shell.Type) -> Script?
@@ -95,13 +105,44 @@ sealed interface PythonEnvironment {
     val condaExecutable: Path? = null,
   ) : PythonEnvironment, HasPythonHome, Activatable {
     override val activation: (shellType: Shell.Type) -> Activatable.Script? = {
-      val activate = condaExecutable?.resolveSibling("activate")?.takeIf { it.exists() }
-                     ?: condaExecutable?.parent?.parent?.resolve("bin/activate")?.takeIf { it.exists() }
+      val osFamily = pythonBinaryPath.getEelDescriptor().osFamily
+      val isWindows = osFamily == EelOsFamily.Windows
 
-      activate?.let {
-        Activatable.Script(it, listOf(pythonHomePath.pathString))
+      val (baseSubdirs, scriptName) = when {
+        isWindows -> listOf("Scripts", "condabin") to "activate.bat"
+        else -> listOf("bin") to "activate"
+      }
+      // First existing `activate` script: next to the conda executable, then under the base install.
+      val activate = (listOfNotNull(condaExecutable?.resolveSibling(scriptName)) +
+                      baseSubdirs.mapNotNull { condaBaseDir?.resolve(it)?.resolve(scriptName) })
+        .firstOrNull { it.exists() }
+
+      activate?.let { activateScript ->
+        // conda runs base python under the hood; its MKL DLLs live in the base install's `Library\bin`, which
+        // activating a (non-base) env does not add. Append it *after* the activated env's own dirs so base python
+        // can load them while the env still takes precedence (PY-57146). Windows-only.
+        val additionalPaths = listOfNotNull(
+          condaBaseDir?.takeIf { isWindows && !isBase }?.resolve("Library")?.resolve("bin")?.takeIf { it.isDirectory() }
+        )
+
+        val postProcessEnv: (Map<String, String>) -> Map<String, String> =
+          if (additionalPaths.isEmpty()) { env -> env }
+          else { env ->
+            val patched = LinkedHashMap(env)
+            patched.entries.firstOrNull { it.key.equals("PATH", ignoreCase = true) }?.let { (k, v) ->
+              patched[k] = (listOf(v) + additionalPaths.map { it.pathString })
+                .filter { it.isNotEmpty() }
+                .joinToString(osFamily.pathSeparator)
+            }
+            patched
+          }
+
+        Activatable.Script(activateScript, listOf(pythonHomePath.pathString), postProcessEnv)
       }
     }
+
+    /** Root of the base conda installation (contains `condabin`/`Scripts`, `Library`, …); the conda executable lives two levels down. */
+    private val condaBaseDir: Path? get() = condaExecutable?.parent?.parent
   }
 
   /** System/global Python installation. */
@@ -131,3 +172,13 @@ fun PythonBinary.detectPythonEnvironment(): PyResult<PythonEnvironment> = detect
  */
 @get:ApiStatus.Internal
 val PythonEnvironment.version: PyResult<LanguageLevel> get() = validationInfo.mapSuccess { it.languageLevel }
+
+/** The activation environment for [this] Python environment. */
+@ApiStatus.Internal
+suspend fun PythonEnvironment.activationEnvironment(): PyResult<Map<String, String>> =
+  service<ActivatableEnvironmentService>().activationEnvironment(this)
+
+/** The activation environment for the interpreter at [this] path (its environment is detected on a cache miss). */
+@ApiStatus.Internal
+suspend fun PythonBinary.activationEnvironment(): PyResult<Map<String, String>> =
+  service<ActivatableEnvironmentService>().activationEnvironment(this)
