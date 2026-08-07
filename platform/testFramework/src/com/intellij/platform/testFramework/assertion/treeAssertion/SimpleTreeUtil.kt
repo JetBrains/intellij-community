@@ -1,6 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.testFramework.assertion.treeAssertion
 
+import com.intellij.platform.testFramework.assertion.treeAssertion.SimpleTreeAssertion.NodeMatcher
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import java.util.StringJoiner
 
 fun <T> SimpleTree<T>.toMutableTree(): SimpleMutableTree<T> =
@@ -103,6 +106,23 @@ private fun <T, R> SimpleTree<T>.mapTree(transform: (SimpleTree.Node<T>) -> Simp
     }
   }
   return tree
+}
+
+fun <T> SimpleTree<T>.node(name: String): SimpleTree.Node<T> =
+  node(NodeMatcher.name(name))
+
+fun <T> SimpleTree<T>.node(regex: Regex): SimpleTree.Node<T> =
+  node(NodeMatcher.regex(regex))
+
+fun <T> SimpleTree<T>.node(matcher: NodeMatcher<T>): SimpleTree.Node<T> {
+  val matchedNodes = allNodes().filter { matcher.matches(it) }.toList()
+  assertTrue(matchedNodes.isNotEmpty()) { "Cannot find node by NodeMatcher: $matcher" }
+  assertEquals(1, matchedNodes.size) {
+    "Cannot identify node by NodeMatcher: $matcher\n" +
+    " matchedNodes.names=${matchedNodes.map { it.name }}\n" +
+    " matchedNodes=$matchedNodes"
+  }
+  return matchedNodes.single()
 }
 
 fun <T> SimpleTree<T>.allNodes(): Sequence<SimpleTree.Node<T>> =

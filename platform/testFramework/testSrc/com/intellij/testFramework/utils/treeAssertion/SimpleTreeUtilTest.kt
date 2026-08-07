@@ -7,6 +7,7 @@ import com.intellij.platform.testFramework.assertion.treeAssertion.buildTree
 import com.intellij.platform.testFramework.assertion.treeAssertion.toMutableTree
 import com.intellij.platform.testFramework.assertion.treeAssertion.getTreeString
 import com.intellij.platform.testFramework.assertion.treeAssertion.mapTreeValues
+import com.intellij.platform.testFramework.assertion.treeAssertion.node
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -188,6 +189,101 @@ class SimpleTreeUtilTest {
     }
 
     SimpleTreeAssertion.assertTreeEquals(expectedTree, actualTree)
+  }
+
+  @Nested
+  inner class AssertNodeTest {
+
+    @Test
+    fun `finds node by name and calls assert`() {
+      val tree = buildTree {
+        root("root", 0) {
+          node("child", 42)
+        }
+      }
+      Assertions.assertEquals(42, tree.node("child").value)
+    }
+
+    @Test
+    fun `fails when node with name is not found`() {
+      val tree = buildTree {
+        root("root", 0)
+      }
+      Assertions.assertThrows(AssertionError::class.java) {
+        tree.node("nonexistent")
+      }
+    }
+
+    @Test
+    fun `fails when several nodes with name are found`() {
+      val tree = buildTree {
+        root("root", 0) {
+          node("child", 21)
+          node("child", 42)
+        }
+      }
+      Assertions.assertThrows(AssertionError::class.java) {
+        tree.node("child")
+      }
+    }
+
+    @Test
+    fun `finds node by regex and calls assert`() {
+      val tree = buildTree {
+        root("root", 0) {
+          node("child-123", 42)
+        }
+      }
+      Assertions.assertEquals(42, tree.node("child-\\d+".toRegex()).value)
+    }
+
+    @Test
+    fun `fails when node with regex is not found`() {
+      val tree = buildTree {
+        root("root", 0)
+      }
+      Assertions.assertThrows(AssertionError::class.java) {
+        tree.node("nonexistent".toRegex())
+      }
+    }
+    @Test
+    fun `fails when several nodes with regex are found`() {
+      val tree = buildTree {
+        root("root", 0) {
+          node("child", 21)
+          node("child", 42)
+        }
+      }
+      Assertions.assertThrows(AssertionError::class.java) {
+        tree.node("child".toRegex())
+      }
+    }
+
+    @Test
+    fun `propagates assertion failure from lambda`() {
+      val tree = buildTree {
+        root("root", 0) {
+          node("child", 42)
+        }
+      }
+      Assertions.assertThrows(AssertionError::class.java) {
+        Assertions.assertEquals(99, tree.node("child").value)
+      }
+    }
+
+    @Test
+    fun `finds deeply nested node`() {
+      val tree = buildTree {
+        root("root", 0) {
+          node("level1", 1) {
+            node("level2", 2) {
+              node("deep", 100)
+            }
+          }
+        }
+      }
+      Assertions.assertEquals(100, tree.node("deep").value)
+    }
   }
 
   @Nested
