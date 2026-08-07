@@ -323,7 +323,10 @@ public final class EditorPainter implements TextDrawingCallback {
     private boolean paintPlaceholderText() {
       CharSequence hintText = myEditor.getPlaceholder();
       EditorComponentImpl editorComponent = myEditor.getContentComponent();
-      if (myDocument.getTextLength() > 0 || hintText == null || hintText.isEmpty() ||
+      // An empty document puts every inline and after-line-end inlay on its single line, which is where the hint reads too.
+      // What the line already carries says more than a hint asking for content does, so the line goes to the inlay.
+      if (myDocument.getTextLength() > 0 || myInlayModel.hasInlineElements() || myInlayModel.hasAfterLineEndElements() ||
+          hintText == null || hintText.isEmpty() ||
           KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner() == editorComponent &&
           !myEditor.getShowPlaceholderWhenFocused()) {
         return false;
