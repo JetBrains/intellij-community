@@ -11,10 +11,8 @@ import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowEP
 import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.ToolWindowId
-import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesProvider
-import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService
-import com.intellij.openapi.wm.ex.ProjectFrameCapability
-import com.intellij.openapi.wm.ex.ProjectFrameUiPolicy
+import com.intellij.openapi.wm.ex.ProjectFrameTypeBean
+import com.intellij.openapi.wm.ex.ProjectFrameTypeService
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
@@ -199,18 +197,27 @@ class ProjectFrameToolWindowLayoutServiceTest {
   }
 
   @Test
-  fun uiPolicyLayoutProfileSuppressesToolWindowEpWhenFrameTypeIsMissing() {
-    registerSuppressedToolWindowLayout()
+  fun frameTypeProfileSuppressesToolWindowEpWhenLayoutFrameTypeDoesNotMatch() {
+    registerLayoutBean(
+      ProjectFrameToolWindowLayoutBean().apply {
+        id = "dedicated"
+        frameType = "OTHER"
+        toolWindows = listOf(suppressedToolWindow("Suppressed"))
+      }
+    )
     CountingToolWindowFactory.createdCount = 0
     ExtensionTestUtil.maskExtensions(ToolWindowEP.EP_NAME, listOf(suppressedToolWindowEp()), disposable, fireEvents = false)
     ExtensionTestUtil.maskExtensions(
-      ProjectFrameCapabilitiesService.EP_NAME,
-      listOf(testUiPolicyProvider { "dedicated" }),
+      ProjectFrameTypeService.EP_NAME,
+      listOf(ProjectFrameTypeBean().apply {
+        id = "DEDICATED"
+        toolWindowLayoutProfile = "dedicated"
+      }),
       disposable,
       fireEvents = false,
     )
 
-    val tasks = runBlocking { computeToolWindowBeans(project, projectFrameTypeId = null) }
+    val tasks = runBlocking { computeToolWindowBeans(project, projectFrameTypeId = "DEDICATED") }
 
     assertThat(tasks).isEmpty()
     assertThat(CountingToolWindowFactory.createdCount).isEqualTo(0)
@@ -256,18 +263,6 @@ private fun suppressedToolWindowEp(): ToolWindowEP {
     id = "Suppressed"
     anchor = ToolWindowAnchor.LEFT.toString()
     factoryClass = CountingToolWindowFactory::class.java.name
-  }
-}
-
-private fun testUiPolicyProvider(profileIdProvider: () -> String?): ProjectFrameCapabilitiesProvider {
-  return object : ProjectFrameCapabilitiesProvider {
-    override fun getCapabilities(project: Project): Set<ProjectFrameCapability> {
-      return emptySet()
-    }
-
-    override fun getUiPolicy(project: Project, capabilities: Set<ProjectFrameCapability>): ProjectFrameUiPolicy? {
-      return profileIdProvider()?.let { ProjectFrameUiPolicy(toolWindowLayoutProfileId = it) }
-    }
   }
 }
 

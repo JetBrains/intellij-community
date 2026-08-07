@@ -55,7 +55,7 @@ import com.intellij.openapi.wm.ToolWindowType
 import com.intellij.openapi.wm.WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
 import com.intellij.openapi.wm.WindowInfo
 import com.intellij.openapi.wm.WindowManager
-import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService
+import com.intellij.openapi.wm.ex.ProjectFrameTypeService
 import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
@@ -198,18 +198,12 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
         delay = SystemProperties.getIntProperty("actionSystem.keyGestureDblClickTime", 300),
         coroutineScope = coroutineScope,
       )
-      val projectFrameLayoutProfile = resolveProjectFrameToolWindowLayoutProfile(project = project, isNewUi = isNewUi)
-      if (state.noStateLoaded) {
-        loadDefault(projectFrameLayoutProfile)
-      }
       @Suppress("LeakingThis")
       state.scheduledLayout.afterChange(this) { dl ->
         dl?.let { toolWindowSetInitializer.scheduleSetLayout(it) }
       }
       state.scheduledLayout.get()?.let { toolWindowSetInitializer.scheduleSetLayout(it) }
-      applyProjectFrameLayoutPolicy(projectFrameLayoutProfile) { layout ->
-        toolWindowSetInitializer.scheduleSetLayout(layout)
-      }
+      // the frame-type layout profile is resolved in `doInit`, once `projectFrameTypeId` is known
     }
   }
 
@@ -426,6 +420,22 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     projectFrameTypeId: String? = this.projectFrameTypeId,
   ) {
     this.projectFrameTypeId = projectFrameTypeId
+
+    // Resolved here rather than in the constructor: the layout profile is keyed by frame type, and
+    // `projectFrameTypeId` is only known now. `initUi` below consumes whatever layout we schedule.
+    val projectFrameLayoutProfile = resolveProjectFrameToolWindowLayoutProfile(
+      projectFrameTypeId = projectFrameTypeId,
+      project = project,
+      isNewUi = isNewUi,
+    )
+    if (state.noStateLoaded) {
+      // `noStateLoaded` is set exactly when no layout was scheduled, so this cannot overwrite a restored one.
+      loadDefault(projectFrameLayoutProfile)
+    }
+    applyProjectFrameLayoutPolicy(projectFrameLayoutProfile) { layout ->
+      toolWindowSetInitializer.scheduleSetLayout(layout)
+    }
+
     withContext(ModalityState.any().asContextElement()) {
       val defaultPaneInitialization = launch(Dispatchers.EDT) {
         this@ToolWindowManagerImpl.projectFrame = pane.frame
@@ -526,7 +536,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   }
 
   private fun getProjectFrameToolWindowLayoutProfileId(): String? {
-    return service<ProjectFrameCapabilitiesService>().getUiPolicy(project)?.toolWindowLayoutProfileId
+    return service<ProjectFrameTypeService>().getToolWindowLayoutProfileId(projectFrameTypeId)
   }
 
   private fun getDefaultToolWindowPaneIfInitialized(): ToolWindowPane {
@@ -557,12 +567,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     }
   }
 
-  private fun loadDefault(
-    projectFrameLayoutProfile: ProjectFrameToolWindowLayoutProfile? = resolveProjectFrameToolWindowLayoutProfile(
-      project = project,
-      isNewUi = isNewUi,
-    ),
-  ) {
+  private fun loadDefault(projectFrameLayoutProfile: ProjectFrameToolWindowLayoutProfile?) {
     val layout = projectFrameLayoutProfile?.profile?.layout ?: ToolWindowDefaultLayoutManager.getInstance().getLayoutCopy()
     toolWindowSetInitializer.scheduleSetLayout(layout)
   }
