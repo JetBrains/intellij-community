@@ -3,24 +3,8 @@ package com.intellij.platform.testFramework.assertion.treeAssertion
 
 import java.util.StringJoiner
 
-fun <T> SimpleTree<T>.deepCopyTree(): SimpleMutableTree<T> {
-  val queue = ArrayDeque<Pair<SimpleTree.Node<T>, SimpleMutableTree.Node<T>>>()
-  val tree = SimpleTreeImpl<T>()
-  for (root in roots) {
-    val mutableRoot = SimpleTreeImpl.Node(root.name, root.value)
-    tree.roots.add(mutableRoot)
-    queue.add(root to mutableRoot)
-  }
-  while (queue.isNotEmpty()) {
-    val (node, mutableNode) = queue.removeFirst()
-    for (child in node.children) {
-      val mutableChild = SimpleTreeImpl.Node(child.name, child.value)
-      mutableNode.children.add(mutableChild)
-      queue.add(child to mutableChild)
-    }
-  }
-  return tree
-}
+fun <T> SimpleTree<T>.toMutableTree(): SimpleMutableTree<T> =
+  mapTree { SimpleTreeImpl.Node(it.name, it.value) }
 
 fun <T> SimpleTree<T>.getTreeString(): String {
   val result = StringJoiner("\n")

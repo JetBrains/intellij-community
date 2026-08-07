@@ -3,7 +3,7 @@ package com.intellij.testFramework.utils.treeAssertion
 
 import com.intellij.platform.testFramework.assertion.treeAssertion.SimpleTreeAssertion
 import com.intellij.platform.testFramework.assertion.treeAssertion.buildTree
-import com.intellij.platform.testFramework.assertion.treeAssertion.deepCopyTree
+import com.intellij.platform.testFramework.assertion.treeAssertion.toMutableTree
 import com.intellij.platform.testFramework.assertion.treeAssertion.getTreeString
 import com.intellij.platform.testFramework.assertion.treeAssertion.mapTreeValues
 import org.junit.jupiter.api.Assertions
@@ -12,8 +12,8 @@ import org.junit.jupiter.api.Test
 class SimpleTreeUtilTest {
 
   @Test
-  fun `test SimpleTreeUtil#deepCopyTree`() {
-    val tree = buildTree<Int> {
+  fun `test SimpleTreeUtil#toMutableTree`() {
+    val tree = buildTree {
       root("1", 1) {
         node("1.1", 2) {
           node("1.1.1", 3)
@@ -34,8 +34,8 @@ class SimpleTreeUtilTest {
       }
     }
 
-    val treeCopy1 = tree.deepCopyTree()
-    val treeCopy2 = tree.deepCopyTree()
+    val treeCopy1 = tree.toMutableTree()
+    val treeCopy2 = tree.toMutableTree()
 
     SimpleTreeAssertion.assertTreeEquals(tree, treeCopy1)
     SimpleTreeAssertion.assertTreeEquals(tree, treeCopy2)
