@@ -117,6 +117,7 @@ abstract class K2GradleCodeInsightTestCase : AbstractKotlinGradleCodeInsightBase
                 withBuildFile(gradleVersion, gradleDsl = GradleDsl.KOTLIN) {
                     withKotlinJvmPlugin()
                     withPrefix { code("val customConf by configurations.creating {}") }
+                    withPrefix { code("configurations.register(\"customExtendingImplementation\") { extendsFrom(configurations.implementation.get()) }") }
                     withPrefix { code("val customSourceSet by sourceSets.creating {}") }
                 }
             }

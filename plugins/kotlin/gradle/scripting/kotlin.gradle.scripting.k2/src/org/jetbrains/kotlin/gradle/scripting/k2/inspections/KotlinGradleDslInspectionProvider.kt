@@ -104,7 +104,7 @@ class KotlinGradleDslInspectionProvider : GradleDslInspectionProvider {
         holder: ProblemsHolder,
         isOnTheFly: Boolean
     ): PsiElementVisitor {
-        return KotlinAvoidDuplicateDependenciesInspectionVisitor(holder, isOnTheFly)
+        return KotlinAvoidDuplicateDependenciesInspectionVisitor(holder)
     }
 
     override fun isTaskMissingDescriptionInspectionAvailable(file: PsiFile): Boolean =
