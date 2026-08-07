@@ -3284,6 +3284,8 @@ a:com.intellij.ide.projectView.impl.ProjectTreeStructure
 - com.intellij.ide.projectView.impl.AbstractProjectTreeStructure
 - com.intellij.ide.projectView.ProjectViewSettings
 - isHideEmptyMiddlePackages():Z
+f:com.intellij.ide.projectView.impl.ProjectViewDragImageUtil
+- s:createDraggedImage(javax.swing.JTree):com.intellij.openapi.util.Pair
 f:com.intellij.ide.projectView.impl.ProjectViewFileNestingService
 - com.intellij.openapi.components.PersistentStateComponent
 - com.intellij.openapi.util.ModificationTracker

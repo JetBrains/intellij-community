@@ -94,8 +94,6 @@ import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
-import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
@@ -112,22 +110,16 @@ import org.jetbrains.concurrency.Promises;
 
 import javax.swing.Icon;
 import javax.swing.JComponent;
-import javax.swing.JLabel;
 import javax.swing.JTree;
-import javax.swing.SwingConstants;
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.datatransfer.Transferable;
 import java.awt.dnd.DnDConstants;
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -1103,123 +1095,7 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
 
     @Override
     public @Nullable Pair<Image, Point> createDraggedImage(DnDAction action, Point dragOrigin, @NotNull DnDDragStartBean bean) {
-      try {
-        ProjectViewRendererKt.setGrayedTextPaintingEnabled(false);
-        final TreePath[] paths = getSelectionPaths();
-        var tree = getTree();
-        if (tree == null || paths == null || paths.length == 0) return null;
-        var dragImageRows = createDragImageRows(tree, paths);
-        BufferedImage image = paintDragImageRows(tree, dragImageRows);
-        return new Pair<>(image, new Point());
-      }
-      finally {
-        ProjectViewRendererKt.setGrayedTextPaintingEnabled(true);
-      }
-    }
-
-    private static @NotNull ArrayList<DragImageRow> createDragImageRows(@NotNull JTree tree, @Nullable TreePath @NotNull [] paths) {
-      var count = 0;
-      int maxItemsToShow = paths.length < 20 ? paths.length : 10;
-      var dragImageRows = new ArrayList<DragImageRow>();
-      for (TreePath path : paths) {
-        dragImageRows.add(new NodeRow(tree, path));
-        count++;
-        if (count > maxItemsToShow) {
-          dragImageRows.add(new MoreFilesRow(tree, paths.length - maxItemsToShow));
-          break;
-        }
-      }
-      return dragImageRows;
-    }
-
-    private static @NotNull BufferedImage paintDragImageRows(@NotNull JTree tree, @NotNull ArrayList<DragImageRow> dragImageRows) {
-      var totalHeight = 0;
-      var maxWidth = 0;
-      for (var row : dragImageRows) {
-        var size = row.getSize();
-        maxWidth = Math.max(maxWidth, size.width);
-        totalHeight += size.height;
-      }
-      var gc = tree.getGraphicsConfiguration();
-      BufferedImage image = ImageUtil.createImage(gc, maxWidth, totalHeight, BufferedImage.TYPE_INT_ARGB);
-      Graphics2D g = (Graphics2D)image.getGraphics();
-      try {
-        for (var row : dragImageRows) {
-          row.paint(g);
-          g.translate(0, row.getSize().height);
-        }
-      }
-      finally {
-        g.dispose();
-      }
-      return image;
-    }
-
-    private abstract static class DragImageRow {
-      abstract @NotNull Dimension getSize();
-      abstract void paint(@NotNull Graphics2D g);
-    }
-
-    private static final class NodeRow extends DragImageRow {
-      private final @NotNull JTree tree;
-      private final @Nullable TreePath path;
-      private @Nullable Dimension size;
-
-      NodeRow(@NotNull JTree tree, @Nullable TreePath path) {
-        this.tree = tree;
-        this.path = path;
-      }
-
-      @Override
-      @NotNull
-      Dimension getSize() {
-        var size = this.size;
-        if (size == null) {
-          size = getRenderer(tree, path).getPreferredSize();
-          this.size = size;
-        }
-        return size;
-      }
-
-      @Override
-      void paint(@NotNull Graphics2D g) {
-        var renderer = getRenderer(tree, path);
-        renderer.setSize(getSize());
-        renderer.paint(g);
-      }
-
-      private static @NotNull Component getRenderer(@NotNull JTree tree, @Nullable TreePath path) {
-        return tree.getCellRenderer().getTreeCellRendererComponent(
-          tree,
-          TreeUtil.getLastUserObject(path),
-          false,
-          false,
-          true,
-          tree.getRowForPath(path),
-          false
-        );
-      }
-    }
-
-    private static final class MoreFilesRow extends MyDragSource.DragImageRow {
-      private final @NotNull JLabel moreLabel;
-
-      MoreFilesRow(JTree tree, int moreItemsCount) {
-        moreLabel = new JLabel(IdeBundle.message("label.more.files", moreItemsCount), EmptyIcon.ICON_16, SwingConstants.LEADING);
-        moreLabel.setFont(tree.getFont());
-        moreLabel.setSize(moreLabel.getPreferredSize());
-      }
-
-      @Override
-      @NotNull
-      Dimension getSize() {
-        return moreLabel.getSize();
-      }
-
-      @Override
-      void paint(@NotNull Graphics2D g) {
-        moreLabel.paint(g);
-      }
+      return ProjectViewDragImageUtil.createDraggedImage(getTree());
     }
   }
 
