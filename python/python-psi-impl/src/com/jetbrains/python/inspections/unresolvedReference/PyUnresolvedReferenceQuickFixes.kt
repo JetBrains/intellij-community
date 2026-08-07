@@ -7,6 +7,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiReference
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.QualifiedName
 import com.intellij.util.ObjectUtils
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.inspections.quickfix.AddFieldQuickFix
@@ -37,6 +38,7 @@ import com.jetbrains.python.psi.types.PyClassTypeImpl
 import com.jetbrains.python.psi.types.PyModuleType
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.TypeEvalContext
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 
 /** `UnresolvedRefTrueFalseQuickFix` for `true` / `false` typos. */
@@ -154,4 +156,21 @@ internal fun getCreateMemberFromUsageFixes(
     }
   }
   return result
+}
+
+@ApiStatus.Internal
+interface PyUnresolvedReferenceQuickFixes {
+  fun getInstallPackageQuickFixes(node: PyElement, reference: PsiReference, refName: String): List<LocalQuickFix>
+
+  fun getInstallAllPackagesQuickFix(unresolvedRefs: List<PyPackageInstallAllProblemInfo>): LocalQuickFix?
+
+  fun getAddSourceRootQuickFix(node: PyElement): LocalQuickFix?
+
+  fun getAddIgnoredIdentifierQuickFixes(qualifiedNames: List<QualifiedName>): List<LocalQuickFix>
+
+  fun getImportStatementQuickFixes(element: PsiElement): List<LocalQuickFix>
+
+  fun getAutoImportFixes(node: PyElement, reference: PsiReference, element: PsiElement): List<LocalQuickFix>
+
+  fun getPluginQuickFixes(fixes: MutableList<LocalQuickFix>, reference: PsiReference)
 }

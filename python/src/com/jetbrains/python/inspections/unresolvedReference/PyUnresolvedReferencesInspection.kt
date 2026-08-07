@@ -56,7 +56,6 @@ import com.jetbrains.python.module.PySourceRootDetectionService
 import com.jetbrains.python.packaging.PyPackageUtil
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.isNotInstalledAndCanBeInstalled
-import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyCallExpression
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyElement
@@ -68,7 +67,6 @@ import com.jetbrains.python.psi.impl.references.PyFromImportNameReference
 import com.jetbrains.python.psi.impl.references.PyImportReference
 import com.jetbrains.python.psi.resolve.fromModule
 import com.jetbrains.python.psi.resolve.resolveInRoot
-import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.sdk.isReadOnly
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import org.intellij.lang.annotations.Pattern
@@ -108,12 +106,13 @@ class PyUnresolvedReferencesInspection : PyInspection() {
   }
 
   private fun createVisitor(holder: ProblemsHolder, session: LocalInspectionToolSession): PyUnresolvedReferencesVisitor =
-    Visitor(holder,
-            ignoredIdentifiers,
-            PyInspectionVisitor.getContext(session),
-            getEffectiveLanguageLevel(session.file),
-            strictClassAttributes,
-            strictInstanceAttributes)
+    PyUnresolvedReferencesVisitor(holder,
+                                  ignoredIdentifiers,
+                                  PyInspectionVisitor.getContext(session),
+                                  getEffectiveLanguageLevel(session.file),
+                                  strictClassAttributes,
+                                  strictInstanceAttributes,
+                                  QuickFixes)
 
   override fun getOptionsPane(): OptPane = OptPane.pane(
     OptPane.stringList("ignoredIdentifiers",
@@ -123,14 +122,7 @@ class PyUnresolvedReferencesInspection : PyInspection() {
     OptPane.checkbox("strictInstanceAttributes",
                      PyPsiBundle.message("INSP.unresolved.refs.strict.instance.attr.option")))
 
-  private class Visitor(
-    holder: ProblemsHolder,
-    ignoredIdentifiers: List<String>,
-    context: TypeEvalContext,
-    languageLevel: LanguageLevel,
-    strictClassAttributes: Boolean,
-    strictInstanceAttributes: Boolean,
-  ) : PyUnresolvedReferencesVisitor(holder, ignoredIdentifiers, context, languageLevel, strictClassAttributes, strictInstanceAttributes) {
+  private object QuickFixes : PyUnresolvedReferenceQuickFixes {
 
     override fun getInstallPackageQuickFixes(
       node: PyElement,
@@ -172,8 +164,8 @@ class PyUnresolvedReferencesInspection : PyInspection() {
       return listOfNotNull(InstallPackageQuickFix(packageName))
     }
 
-    override fun getInstallAllPackagesQuickFix(): InstallAllPackagesQuickFix {
-      return InstallAllPackagesQuickFix(myUnresolvedRefs.map { it.refName }.distinct())
+    override fun getInstallAllPackagesQuickFix(unresolvedRefs: List<PyPackageInstallAllProblemInfo>): InstallAllPackagesQuickFix {
+      return InstallAllPackagesQuickFix(unresolvedRefs.map { it.refName }.distinct())
     }
 
     override fun getAddSourceRootQuickFix(node: PyElement): LocalQuickFix? {
@@ -321,19 +313,6 @@ class PyUnresolvedReferencesInspection : PyInspection() {
         provider.registerQuickFixes(reference, fixes)
       }
     }
-  }
-
-  companion object {
-    private val KEY = Key.create<PyUnresolvedReferencesVisitor>("PyUnresolvedReferencesInspection.Visitor")
-
-    private val SHORT_NAME_KEY = Key.create<PyUnresolvedReferencesInspection>(PyUnresolvedReferencesInspection::class.java.simpleName)
-
-    fun getInstance(element: PsiElement?): PyUnresolvedReferencesInspection? {
-      element ?: return null
-
-      val inspectionProfile: InspectionProfile = InspectionProjectProfileManager.getInstance(element.project).currentProfile
-      return inspectionProfile.getUnwrappedTool(SHORT_NAME_KEY.toString(), element) as PyUnresolvedReferencesInspection?
-    }
 
     private fun createInstallAndImportQuickFix(project: Project, pythonSdk: Sdk, importedModuleName: String, asName: String?): LocalQuickFix? {
       val packageName = PyPsiPackageUtil.moduleToPackageName(importedModuleName)
@@ -361,6 +340,19 @@ class PyUnresolvedReferencesInspection : PyInspection() {
       val callExpression = PsiTreeUtil.getParentOfType(node,
                                                        PyCallExpression::class.java)
       return callExpression != null && node === callExpression.callee
+    }
+  }
+
+  companion object {
+    private val KEY = Key.create<PyUnresolvedReferencesVisitor>("PyUnresolvedReferencesInspection.Visitor")
+
+    private val SHORT_NAME_KEY = Key.create<PyUnresolvedReferencesInspection>(PyUnresolvedReferencesInspection::class.java.simpleName)
+
+    fun getInstance(element: PsiElement?): PyUnresolvedReferencesInspection? {
+      element ?: return null
+
+      val inspectionProfile: InspectionProfile = InspectionProjectProfileManager.getInstance(element.project).currentProfile
+      return inspectionProfile.getUnwrappedTool(SHORT_NAME_KEY.toString(), element) as PyUnresolvedReferencesInspection?
     }
   }
 }

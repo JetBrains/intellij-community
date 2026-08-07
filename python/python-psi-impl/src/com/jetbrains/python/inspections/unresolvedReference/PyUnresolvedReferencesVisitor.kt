@@ -85,22 +85,22 @@ import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.psi.types.isAnyOrUnknown
 import com.jetbrains.python.psi.types.isUnknown
 import one.util.streamex.StreamEx
-import org.jetbrains.annotations.VisibleForTesting
 import java.util.Collections
 
-abstract class PyUnresolvedReferencesVisitor @JvmOverloads protected constructor(
+class PyUnresolvedReferencesVisitor(
   holder: ProblemsHolder?,
   ignoredIdentifiers: List<String>,
   context: TypeEvalContext,
   @Suppress("UNUSED_PARAMETER") languageLevel: LanguageLevel,  // kept for binary compat with Java subclasses
   private val myStrictClassAttributes: Boolean,
-  private val myStrictInstanceAttributes: Boolean = false,
+  private val myStrictInstanceAttributes: Boolean,
+  private val quickFixes: PyUnresolvedReferenceQuickFixes,
 ) : PyInspectionVisitor(holder, context) {
   private val myIgnoredIdentifiers: ImmutableSet<String> = ImmutableSet.copyOf(ignoredIdentifiers)
 
   @Volatile
   private var myIsEnabled: Boolean? = null
-  protected val myUnresolvedRefs: MutableList<PyPackageInstallAllProblemInfo> = Collections.synchronizedList(ArrayList())
+  private val myUnresolvedRefs: MutableList<PyPackageInstallAllProblemInfo> = Collections.synchronizedList(ArrayList())
 
   override fun visitPyTargetExpression(node: PyTargetExpression) {
     // Augmented assignments (e.g., `x += 1`) do have a target expression,
@@ -440,7 +440,7 @@ abstract class PyUnresolvedReferencesVisitor @JvmOverloads protected constructor
       fixes.addAll(getCreateMemberFromUsageFixes(myTypeEvalContext, spec.qualifierType, reference, spec.refText))
     }
     if (spec.fallbackToUnqualifiedFix) {
-      fixes.addAll(getAutoImportFixes(spec.node, reference, element))
+      fixes.addAll(quickFixes.getAutoImportFixes(spec.node, reference, element))
       fixes.addIfNotNull(getCreateClassFix(myTypeEvalContext, spec.refText, element))
     }
     return fixes
@@ -449,22 +449,22 @@ abstract class PyUnresolvedReferencesVisitor @JvmOverloads protected constructor
   private fun emitProblem(spec: ProblemSpec, fixes: MutableList<LocalQuickFix>) {
     val hlType = computeHighlightType(spec.severity)
 
-    ContainerUtil.addAll(fixes, getImportStatementQuickFixes(spec.element))
-    ContainerUtil.addAll(fixes, getAddIgnoredIdentifierQuickFixes(spec.qualifiedNames))
+    ContainerUtil.addAll(fixes, quickFixes.getImportStatementQuickFixes(spec.element))
+    ContainerUtil.addAll(fixes, quickFixes.getAddIgnoredIdentifierQuickFixes(spec.qualifiedNames))
 
-    val installPackageQuickFixes = getInstallPackageQuickFixes(spec.node, spec.reference, spec.refName)
+    val installPackageQuickFixes = quickFixes.getInstallPackageQuickFixes(spec.node, spec.reference, spec.refName)
     val installAll = installPackageQuickFixes.isNotEmpty()
     if (installAll) {
       ContainerUtil.addAll(fixes, installPackageQuickFixes)
       myUnresolvedRefs.add(PyPackageInstallAllProblemInfo(spec.node, spec.message, hlType, spec.refName, fixes))
     }
 
-    ContainerUtil.addIfNotNull(fixes, getAddSourceRootQuickFix(spec.node))
+    ContainerUtil.addIfNotNull(fixes, quickFixes.getAddSourceRootQuickFix(spec.node))
 
     // PySubstitutionChunkReference: install-all only, no direct registerProblem.
     if (spec.reference is PySubstitutionChunkReference) return
 
-    getPluginQuickFixes(fixes, spec.reference)
+    quickFixes.getPluginQuickFixes(fixes, spec.reference)
     if (!installAll) {
       registerProblem(spec.node, spec.message, hlType, *fixes.toTypedArray(), rangeInElement = spec.rangeInElement)
     }
@@ -614,7 +614,7 @@ abstract class PyUnresolvedReferencesVisitor @JvmOverloads protected constructor
     val refNames = ContainerUtil.map2Set(
       myUnresolvedRefs,
       com.intellij.util.Function { it: PyPackageInstallAllProblemInfo? -> it!!.refName })
-    val installAllPackageQuickFixes = getInstallAllPackagesQuickFix()
+    val installAllPackageQuickFixes = quickFixes.getInstallAllPackagesQuickFix(myUnresolvedRefs)
     for (unresolved in myUnresolvedRefs) {
       val quickFixes: MutableList<LocalQuickFix> = unresolved.fixes.toMutableList()
       if (refNames.size > 1) {
@@ -636,29 +636,6 @@ abstract class PyUnresolvedReferencesVisitor @JvmOverloads protected constructor
       }
     }
     return ignoreUnresolved
-  }
-
-  protected open fun getInstallPackageQuickFixes(
-    node: PyElement,
-    reference: PsiReference,
-    refName: String,
-  ): List<LocalQuickFix> = emptyList()
-
-  protected open fun getInstallAllPackagesQuickFix(): LocalQuickFix? = null
-
-  protected open fun getAddSourceRootQuickFix(node: PyElement): LocalQuickFix? {
-    return null
-  }
-
-  protected open fun getAddIgnoredIdentifierQuickFixes(qualifiedNames: List<QualifiedName>): List<LocalQuickFix> = emptyList()
-
-  protected open fun getImportStatementQuickFixes(element: PsiElement): List<LocalQuickFix> = emptyList()
-
-  protected open fun getAutoImportFixes(node: PyElement, reference: PsiReference, element: PsiElement): List<LocalQuickFix> = emptyList()
-
-  @VisibleForTesting
-  open fun getPluginQuickFixes(fixes: MutableList<LocalQuickFix>, reference: PsiReference) {
-    // Nothing.
   }
 
   private data class ProblemSpec(
