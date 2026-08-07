@@ -80,6 +80,26 @@ describe("jps-module argument parsing", () => {
     })
   })
 
+  it("parses unregister arguments", () => {
+    deepEqual(parseArguments(["unregister", "community/foo/intellij.foo.iml"]), {
+      help: false,
+      command: "unregister",
+      imlPaths: ["community/foo/intellij.foo.iml"],
+      fixImlEof: false,
+    })
+  })
+
+  it("rejects --fix-iml-eof for unregister", () => {
+    try {
+      parseArguments(["unregister", "foo.iml", "--fix-iml-eof"])
+    }
+    catch (error) {
+      match(error.message, /not supported by unregister/)
+      return
+    }
+    throw new Error("Expected parseArguments to throw")
+  })
+
   it("rejects missing iml paths", () => {
     try {
       parseArguments(["register"])
@@ -248,6 +268,42 @@ describe("jps-module CLI", () => {
     }
   })
 
+  it("unregisters a missing community module from both project structures", async () => {
+    const rootDir = await createFixtureRoot()
+    try {
+      await writeTextFile(join(rootDir, ".idea/modules.xml"), createModulesXml([
+        "$PROJECT_DIR$/community/plugins/a/intellij.a.iml",
+        "$PROJECT_DIR$/community/plugins/z/intellij.z.iml",
+      ]))
+      await writeTextFile(join(rootDir, "community/.idea/modules.xml"), createModulesXml([
+        "$PROJECT_DIR$/plugins/a/intellij.a.iml",
+        "$PROJECT_DIR$/plugins/z/intellij.z.iml",
+      ]))
+
+      const {runtime, writes} = createRuntime(rootDir)
+      const {io, stdout, stderr} = createRecordingIo()
+      const exitCode = await runCli(["unregister", "community/plugins/a/intellij.a.iml"], {runtime, io})
+
+      equal(exitCode, 0)
+      equal(stderr.length, 0)
+      deepEqual(writes.map((path) => path.replace(rootDir, "<root>")), [
+        "<root>/.idea/modules.xml",
+        "<root>/community/.idea/modules.xml",
+      ])
+      match(stdout.join("\n"), /Updated \.idea\/modules\.xml: removed entry for/)
+      match(stdout.join("\n"), /Updated community\/\.idea\/modules\.xml: removed entry for/)
+      deepEqual(moduleLines(await readFile(join(rootDir, ".idea/modules.xml"), "utf8")), [
+        "<module fileurl=\"file://$PROJECT_DIR$/community/plugins/z/intellij.z.iml\" filepath=\"$PROJECT_DIR$/community/plugins/z/intellij.z.iml\" />",
+      ])
+      deepEqual(moduleLines(await readFile(join(rootDir, "community/.idea/modules.xml"), "utf8")), [
+        "<module fileurl=\"file://$PROJECT_DIR$/plugins/z/intellij.z.iml\" filepath=\"$PROJECT_DIR$/plugins/z/intellij.z.iml\" />",
+      ])
+    }
+    finally {
+      await rm(rootDir, {recursive: true, force: true})
+    }
+  })
+
   it("removes non-community module entries from the community project", async () => {
     const rootDir = await createFixtureRoot()
     try {
@@ -351,5 +407,14 @@ describe("jps-module CLI", () => {
 
     equal(exitCode, usageExitCode)
     match(stderr.join("\n"), /At least one \.iml path is required/)
+  })
+
+  it("documents unregister in help", async () => {
+    const {io, stdout, stderr} = createRecordingIo()
+    const exitCode = await runCli(["--help"], {io})
+
+    equal(exitCode, 0)
+    equal(stderr.length, 0)
+    match(stdout.join("\n"), /unregister <path-to-iml>/)
   })
 })

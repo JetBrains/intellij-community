@@ -30,15 +30,16 @@ export function printUsage() {
   return [
     "Usage:",
     "  bun build/jps-module.mjs register <path-to-iml>... [--fix-iml-eof]",
+    "  bun build/jps-module.mjs unregister <path-to-iml>...",
     "  bun build/jps-module.mjs check <path-to-iml>... [--fix-iml-eof]",
     "",
     "Description:",
-    "  Register JPS .iml modules in .idea/modules.xml and, for community modules,",
-    "  community/.idea/modules.xml. Entries are ordered by the .iml basename without",
+    "  Register or unregister JPS .iml module entries in .idea/modules.xml and, for",
+    "  community modules, community/.idea/modules.xml. Entries are ordered by the .iml basename without",
     "  the .iml suffix, matching org.jetbrains.intellij.build.ModulesXml.",
     "",
     "Options:",
-    "  --fix-iml-eof  Remove trailing line breaks from listed .iml files",
+    "  --fix-iml-eof  Remove trailing line breaks from listed .iml files (register and check only)",
     "  --help         Print this help",
   ].join("\n")
 }
@@ -107,8 +108,11 @@ export function parseArguments(argv) {
   if (help) {
     return {help, command, imlPaths, fixImlEof}
   }
-  if (command !== "register" && command !== "check") {
-    throw new UsageError("Command must be 'register' or 'check'.")
+  if (command !== "register" && command !== "unregister" && command !== "check") {
+    throw new UsageError("Command must be 'register', 'unregister', or 'check'.")
+  }
+  if (command === "unregister" && fixImlEof) {
+    throw new UsageError("--fix-iml-eof is not supported by unregister.")
   }
   if (imlPaths.length === 0) {
     throw new UsageError("At least one .iml path is required.")
@@ -131,13 +135,13 @@ function isInsidePath(path, parent) {
   return rel !== "" && !rel.startsWith("..") && !isAbsolute(rel)
 }
 
-function resolveImlPath(rawPath, runtime) {
+function resolveImlPath(rawPath, runtime, requireExistingFile = true) {
   const pathBase = runtime.cwd ?? runtime.rootDir
   const absolutePath = isAbsolute(rawPath) ? resolve(rawPath) : resolve(pathBase, rawPath)
   if (!isInsidePath(absolutePath, runtime.rootDir)) {
     throw new Error(`Refusing to operate on a module outside the repository: ${rawPath}`)
   }
-  if (!runtime.exists(absolutePath)) {
+  if (requireExistingFile && !runtime.exists(absolutePath)) {
     throw new Error(`Module file does not exist: ${toPosixPath(relative(runtime.rootDir, absolutePath))}`)
   }
   return absolutePath
@@ -217,11 +221,16 @@ function isProjectDirFilepathInsideProject(filepath, projectHome) {
 export function updateModulesXmlContent(text, projectHome, modulesXmlPath, modulePaths, options = {}) {
   const parsed = parseModulesXml(text, modulesXmlPath)
   const dropEntriesOutsideProjectHome = options.dropEntriesOutsideProjectHome ?? false
+  const removeModuleFilepaths = new Set((options.removeModulePaths ?? []).map((modulePath) => createModuleFilePath(projectHome, modulePath)))
   const diagnostics = []
   const entryByFilepath = new Map()
   const keptEntries = []
 
   for (const entry of parsed.entries) {
+    if (removeModuleFilepaths.has(entry.filepath)) {
+      diagnostics.push(`removed entry for ${entry.filepath}`)
+      continue
+    }
     if (dropEntriesOutsideProjectHome && !isProjectDirFilepathInsideProject(entry.filepath, projectHome)) {
       diagnostics.push(`removed entry outside project for ${entry.filepath}`)
       continue
@@ -242,20 +251,22 @@ export function updateModulesXmlContent(text, projectHome, modulesXmlPath, modul
     keptEntries.push(normalizedEntry)
   }
 
-  let nextOriginalIndex = parsed.entries.length
-  for (const modulePath of modulePaths) {
-    const filepath = createModuleFilePath(projectHome, modulePath)
-    if (entryByFilepath.has(filepath)) {
-      continue
+  if (removeModuleFilepaths.size === 0) {
+    let nextOriginalIndex = parsed.entries.length
+    for (const modulePath of modulePaths) {
+      const filepath = createModuleFilePath(projectHome, modulePath)
+      if (entryByFilepath.has(filepath)) {
+        continue
+      }
+      const entry = {
+        filepath,
+        fileurl: normalizeFileUrl(filepath),
+        originalIndex: nextOriginalIndex++,
+      }
+      diagnostics.push(`added entry for ${filepath}`)
+      entryByFilepath.set(filepath, entry)
+      keptEntries.push(entry)
     }
-    const entry = {
-      filepath,
-      fileurl: normalizeFileUrl(filepath),
-      originalIndex: nextOriginalIndex++,
-    }
-    diagnostics.push(`added entry for ${filepath}`)
-    entryByFilepath.set(filepath, entry)
-    keptEntries.push(entry)
   }
 
   const sortedEntries = [...keptEntries].sort((left, right) => {
@@ -322,8 +333,9 @@ function createProjectUpdates(imlPaths, runtime) {
 }
 
 export function runOperation(args, runtime = createDefaultRuntime(), io = createDefaultIo()) {
-  const imlPaths = args.imlPaths.map((imlPath) => resolveImlPath(imlPath, runtime))
-  const write = args.command === "register"
+  const unregister = args.command === "unregister"
+  const imlPaths = args.imlPaths.map((imlPath) => resolveImlPath(imlPath, runtime, !unregister))
+  const write = args.command !== "check"
   const changedFiles = []
 
   for (const update of createProjectUpdates(imlPaths, runtime)) {
@@ -336,7 +348,10 @@ export function runOperation(args, runtime = createDefaultRuntime(), io = create
       update.projectHome,
       formatRel(update.modulesXmlPath, runtime.rootDir),
       update.modulePaths,
-      {dropEntriesOutsideProjectHome: update.dropEntriesOutsideProjectHome},
+      {
+        dropEntriesOutsideProjectHome: update.dropEntriesOutsideProjectHome,
+        removeModulePaths: unregister ? update.modulePaths : [],
+      },
     )
     if (!result.changed) {
       continue
@@ -364,7 +379,7 @@ export function runOperation(args, runtime = createDefaultRuntime(), io = create
   }
 
   if (changedFiles.length === 0) {
-    io.stdout("JPS module registration is already canonical.")
+    io.stdout(unregister ? "JPS module entries are already absent." : "JPS module registration is already canonical.")
     return 0
   }
   if (!write) {
