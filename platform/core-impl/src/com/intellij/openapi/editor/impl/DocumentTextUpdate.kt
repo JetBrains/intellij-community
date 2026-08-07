@@ -4,6 +4,7 @@ package com.intellij.openapi.editor.impl
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.ex.DocumentSettings
+import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.ShutDownTracker
 import kotlin.concurrent.Volatile
@@ -32,7 +33,7 @@ internal sealed class DocumentTextUpdate(
     val exceptions = DocumentDelayedExceptions(isPceWarningEnabled())
     val listeners = getListeners()
     var result: T? = null
-    ProgressManager.getInstance().executeNonCancelableSection {
+    Cancellation.computeInNonCancelableSection<Unit, RuntimeException> {
       notifyBeforeTextChange(listeners, changeEvent, revertedEvent, exceptions)
       isInTextUpdate = true
       try {
