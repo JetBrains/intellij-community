@@ -2,8 +2,10 @@ package com.intellij.tools.build.bazel.ijPluginPackager
 
 import com.intellij.util.io.assertMatches
 import com.intellij.util.io.directoryContent
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
+import java.nio.file.Files
 import java.nio.file.Path
 
 internal class IjPluginPackagerTest {
@@ -48,6 +50,8 @@ internal class IjPluginPackagerTest {
     val outputDirectory = tempDirectory.resolve("output")
     IjPluginPackager.main(arrayOf(
       outputDirectory.toString(),
+      "--plugin_content_yaml",
+      outputDirectory.resolve("plugin-content.yaml").toString(),
       "--descriptor_module",
       "descriptor:${inputDirectory.resolve("descriptor.jar")}",
       "--content_module",
@@ -71,6 +75,17 @@ internal class IjPluginPackagerTest {
       </idea-plugin>
     """.trimIndent()
     outputDirectory.assertMatches(directoryContent {
+      file("plugin-content.yaml", """
+        - name: lib/descriptor.jar
+          modules:
+          - name: descriptor
+        - name: lib/embedded.module.jar
+          contentModules:
+          - name: embedded.module
+        - name: lib/modules/optional.module.jar
+          contentModules:
+          - name: optional.module
+      """.trimIndent())
       dir("lib") {
         zip("descriptor.jar") {
           file("__index__")
@@ -90,5 +105,26 @@ internal class IjPluginPackagerTest {
         }
       }
     })
+  }
+
+  @Test
+  fun doesNotGeneratePluginContentYamlIfOptionIsNotSpecified(@TempDir tempDirectory: Path) {
+    val inputDirectory = tempDirectory.resolve("input")
+    directoryContent {
+      zip("descriptor.jar") {
+        dir("META-INF") {
+          file("plugin.xml", "<idea-plugin><id>my.plugin</id></idea-plugin>")
+        }
+      }
+    }.generate(inputDirectory)
+
+    val outputDirectory = tempDirectory.resolve("output")
+    IjPluginPackager.main(arrayOf(
+      outputDirectory.toString(),
+      "--descriptor_module",
+      "descriptor:${inputDirectory.resolve("descriptor.jar")}",
+    ))
+
+    assertFalse(Files.exists(outputDirectory.resolve("plugin-content.yaml")))
   }
 }

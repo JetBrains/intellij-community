@@ -13,7 +13,8 @@ import java.nio.file.Path
 /**
  * Builds a plugin distribution from JARs of its modules.
  *
- * Command-line format: `output_directory --descriptor_module module_name:path_to_jar [--content_module module_name:path_to_jar]...`.
+ * Command-line format: `output_directory [--plugin_content_yaml path] --descriptor_module module_name:path_to_jar
+ * [--content_module module_name:path_to_jar]...`.
  */
 //todo: support persistent worker mode
 object IjPluginPackager {
@@ -22,35 +23,49 @@ object IjPluginPackager {
     require(args.isNotEmpty()) { "Expected an output directory" }
 
     var descriptorModule: ModuleArgument? = null
+    var pluginContentYamlPath: Path? = null
     val contentModuleArguments = HashMap<String, ModuleArgument>()
     var index = 1
     while (index < args.size) {
       require(index + 1 < args.size) { "Expected a value after ${args[index]}" }
-      val module = parseModuleArgument(args[index + 1])
       when (args[index]) {
         "--descriptor_module" -> {
           require(descriptorModule == null) { "--descriptor_module must be specified only once" }
-          descriptorModule = module
+          descriptorModule = parseModuleArgument(args[index + 1])
         }
         "--content_module" -> {
+          val module = parseModuleArgument(args[index + 1])
           val oldValue = contentModuleArguments.put(module.name, module)
           require(oldValue == null) { "Two --content_module arguments for the same module: ${module.name}" }
+        }
+        "--plugin_content_yaml" -> {
+          require(pluginContentYamlPath == null) { "--plugin_content_yaml must be specified only once" }
+          pluginContentYamlPath = Path.of(args[index + 1])
         }
         else -> error("Unknown option: ${args[index]}")
       }
       index += 2
     }
 
-    val libDirectory = Path.of(args[0]).resolve("lib")
+    val outputDirectory = Path.of(args[0])
+    val libDirectory = outputDirectory.resolve("lib")
     Files.createDirectories(libDirectory)
-    val descriptorJar = requireNotNull(descriptorModule) { "--descriptor_module must be specified" }.jar
+    val descriptorModuleArgument = requireNotNull(descriptorModule) { "--descriptor_module must be specified" }
+    val descriptorJar = descriptorModuleArgument.jar
     val originalPluginXmlContent = readEntryFromZip(descriptorJar, PLUGIN_DESCRIPTOR_ENTRY_NAME)
     requireNotNull(originalPluginXmlContent) { "$PLUGIN_DESCRIPTOR_ENTRY_NAME is not found in $descriptorJar" }
     val contentModules = parseContentAndXIncludes(originalPluginXmlContent, descriptorJar.toString()).contentModules
+    val pluginContentYamlWriter = pluginContentYamlPath?.let { PluginContentYamlWriter(it, outputDirectory) }
 
-    val contentModuleDescriptors = packContentModulesAndReturnTheirDescriptors(contentModules, contentModuleArguments, libDirectory)
+    val contentModuleDescriptors = packContentModulesAndReturnTheirDescriptors(
+      contentModules = contentModules,
+      contentModuleArguments = contentModuleArguments,
+      libDirectory = libDirectory,
+      pluginContentYamlWriter = pluginContentYamlWriter,
+    )
 
-    PluginJarPackager(libDirectory.resolve(descriptorJar.fileName)).use {
+    val descriptorOutputJar = libDirectory.resolve(descriptorJar.fileName)
+    PluginJarPackager(descriptorOutputJar).use {
       it.addEntriesFromJar(descriptorJar) { filePath, dataFetcher ->
         if (!isIncludedFromModuleOutput(filePath)) {
           return@addEntriesFromJar null
@@ -65,13 +80,15 @@ object IjPluginPackager {
         data
       }
     }
-
+    pluginContentYamlWriter?.addModule(descriptorOutputJar, descriptorModuleArgument.name)
+    pluginContentYamlWriter?.write()
   }
 
   private fun packContentModulesAndReturnTheirDescriptors(
     contentModules: List<ContentModuleElement>,
     contentModuleArguments: HashMap<String, ModuleArgument>,
     libDirectory: Path,
+    pluginContentYamlWriter: PluginContentYamlWriter?,
   ): Map<String, ByteArray> {
     val contentModuleDescriptors = HashMap<String, ByteArray>()
     for (contentModule in contentModules) {
@@ -79,7 +96,8 @@ object IjPluginPackager {
       val destinationDirectory = if (contentModule.loadingRule == ModuleLoadingRuleValue.EMBEDDED) libDirectory else libDirectory.resolve("modules")
       Files.createDirectories(destinationDirectory)
       val contentDescriptorName = "${contentModule.name}.xml"
-      PluginJarPackager(destinationDirectory.resolve("${contentModule.name}.jar")).use {
+      val outputJar = destinationDirectory.resolve("${contentModule.name}.jar")
+      PluginJarPackager(outputJar).use {
         it.addEntriesFromJar(contentModuleArgument.jar) { filePath, dataFetcher ->
           if (!isIncludedFromModuleOutput(filePath)) {
             return@addEntriesFromJar null
@@ -95,6 +113,7 @@ object IjPluginPackager {
           }
         }
       }
+      pluginContentYamlWriter?.addContentModule(outputJar, contentModule.name)
     }
     return contentModuleDescriptors
   }

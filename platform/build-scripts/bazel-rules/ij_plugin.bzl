@@ -7,12 +7,15 @@ load("@rules_kotlin//kotlin/internal:defs.bzl", _KtJvmInfo = "KtJvmInfo")
 def _ij_plugin_impl(ctx):
     dir_name = ctx.attr.name
     output_dir = ctx.actions.declare_directory(dir_name)
+    content_yaml_file = ctx.actions.declare_file("plugin-content.yaml")
 
     plugin_descriptor_module_info = ctx.attr.descriptor_module[_KtJvmInfo]
     plugin_descriptor_jar = plugin_descriptor_module_info.all_output_jars[0]
     inputs = [plugin_descriptor_jar]
     args = ctx.actions.args()
     args.add(output_dir.path)
+    args.add("--plugin_content_yaml")
+    args.add(content_yaml_file.path)
     args.add("--descriptor_module")
     args.add(plugin_descriptor_module_info.module_name + ":" + plugin_descriptor_jar.path)
     for content_module in ctx.attr.content_modules:
@@ -24,7 +27,7 @@ def _ij_plugin_impl(ctx):
 
     ctx.actions.run(
         inputs = inputs,
-        outputs = [output_dir],
+        outputs = [output_dir, content_yaml_file],
         arguments = [args],
         executable = ctx.executable._packager,
         mnemonic = "IjPluginPackaging",
