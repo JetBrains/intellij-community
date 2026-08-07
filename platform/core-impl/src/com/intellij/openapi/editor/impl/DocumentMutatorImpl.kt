@@ -11,7 +11,7 @@ import com.intellij.openapi.editor.ReadOnlyFragmentModificationException
 import com.intellij.openapi.editor.actionSystem.DocCommandGroupId
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.ex.DocumentMutator
-import com.intellij.openapi.editor.ex.DocumentRangeMarkerTree
+import com.intellij.openapi.editor.ex.RangeMarkerStorage
 import com.intellij.openapi.editor.ex.DocumentSettings
 import com.intellij.openapi.editor.ex.DocumentSnapshot
 import com.intellij.openapi.editor.ex.DocumentTextPatch
@@ -23,9 +23,9 @@ import java.util.function.UnaryOperator
 import kotlin.concurrent.Volatile
 
 internal abstract class DocumentMutatorImpl(
-  private val settings: DocumentSettings,
-  private val dispatcher: DocumentEventDispatcherImpl,
-  private val tree: DocumentRangeMarkerTree,
+    private val settings: DocumentSettings,
+    private val dispatcher: DocumentEventDispatcherImpl,
+    private val tree: RangeMarkerStorage,
 ) : DocumentMutator {
   @Volatile private var textChangeInProgress = false
 

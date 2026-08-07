@@ -31,7 +31,7 @@ interface DocumentCore {
    * Returns storage and lookup support for range markers and guarded blocks
    */
   @Contract(pure = true)
-  fun tree(): DocumentRangeMarkerTree
+  fun rangeMarkers(): RangeMarkerStorage
 
   /**
    * Returns listener storage and notification dispatch support

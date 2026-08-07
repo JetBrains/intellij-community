@@ -4,7 +4,7 @@ package com.intellij.openapi.editor.impl
 import com.intellij.openapi.editor.ex.DocumentCore
 import com.intellij.openapi.editor.ex.DocumentEventDispatcher
 import com.intellij.openapi.editor.ex.DocumentMutator
-import com.intellij.openapi.editor.ex.DocumentRangeMarkerTree
+import com.intellij.openapi.editor.ex.RangeMarkerStorage
 import com.intellij.openapi.editor.ex.DocumentSettings
 import com.intellij.openapi.editor.ex.DocumentSnapshot
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater
@@ -18,7 +18,7 @@ internal class DocumentCoreImpl private constructor(
   @Volatile private var snapshot: DocumentSnapshot, // mutable via SNAPSHOT_UPDATER
   private val settings: DocumentSettings,
   private val dispatcher: DocumentEventDispatcherImpl,
-  private val tree: DocumentRangeMarkerTree,
+  private val tree: RangeMarkerStorage,
 ) : DocumentCore {
   private val live: CharSequence = LiveCharSequence()
   private val mutator: DocumentMutator = MutatorImpl()
@@ -32,7 +32,7 @@ internal class DocumentCoreImpl private constructor(
     return live
   }
 
-  override fun tree(): DocumentRangeMarkerTree {
+  override fun rangeMarkers(): RangeMarkerStorage {
     return tree
   }
 
@@ -98,7 +98,7 @@ internal class DocumentCoreImpl private constructor(
     fun createCore(chars: CharSequence, acceptSlashR: Boolean, forUseInNonAWTThread: Boolean): DocumentCore {
       val settings = DocumentSettingsImpl(!forUseInNonAWTThread, acceptSlashR, chars)
       val dispatcher = DocumentEventDispatcherImpl(settings)
-      val tree = DocumentRangeMarkerTreeImpl(dispatcher)
+      val tree = RangeMarkerStorageImpl(dispatcher)
       val snapshot = DocumentSnapshotImpl(chars)
       return DocumentCoreImpl(snapshot, settings, dispatcher, tree)
     }

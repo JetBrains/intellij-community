@@ -5,7 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ex.DocumentEventDispatcher;
 import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.editor.ex.DocumentRangeMarkerTree;
+import com.intellij.openapi.editor.ex.RangeMarkerStorage;
 import com.intellij.openapi.editor.ex.MarkupIterator;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.util.ProperTextRange;
@@ -24,15 +24,15 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
-final class DocumentRangeMarkerTreeImpl implements DocumentRangeMarkerTree {
-  private static final Logger LOG = Logger.getInstance(DocumentRangeMarkerTreeImpl.class);
+final class RangeMarkerStorageImpl implements RangeMarkerStorage {
+  private static final Logger LOG = Logger.getInstance(RangeMarkerStorageImpl.class);
   private static final List<RangeMarker> GUARDED_IN_PROGRESS = new ArrayList<>(0);
 
   private final RangeMarkerTree<RangeMarkerEx> myRangeMarkers;
   private final RangeMarkerTree<RangeMarkerEx> myPersistentRangeMarkers;
   private final AtomicReference<List<RangeMarker>> myCachedGuardedBlocks;
 
-  DocumentRangeMarkerTreeImpl(@NotNull DocumentEventDispatcher dispatcher) {
+  RangeMarkerStorageImpl(@NotNull DocumentEventDispatcher dispatcher) {
     myRangeMarkers = new RangeMarkerTree<>(dispatcher);
     myPersistentRangeMarkers = new PersistentRangeMarkerTree(dispatcher);
     myCachedGuardedBlocks = new AtomicReference<>();

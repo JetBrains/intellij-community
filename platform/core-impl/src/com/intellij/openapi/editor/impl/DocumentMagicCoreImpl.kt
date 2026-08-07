@@ -7,7 +7,7 @@ import com.intellij.openapi.editor.ex.DocumentEventDispatcher
 import com.intellij.openapi.editor.ex.DocumentEx
 import com.intellij.openapi.editor.ex.DocumentMagicCore
 import com.intellij.openapi.editor.ex.DocumentMutator
-import com.intellij.openapi.editor.ex.DocumentRangeMarkerTree
+import com.intellij.openapi.editor.ex.RangeMarkerStorage
 import com.intellij.openapi.editor.ex.DocumentSettings
 import com.intellij.openapi.editor.ex.DocumentSnapshot
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater
@@ -40,7 +40,7 @@ internal class DocumentMagicCoreImpl private constructor(
   private val settingsReal: DocumentSettings,
 ): DocumentMagicCore {
   private val dispatcher = DocumentMagicEventDispatcherImpl()
-  private val tree = DocumentRangeMarkerTreeImpl(dispatcher)
+  private val tree = RangeMarkerStorageImpl(dispatcher)
   private val mutatorElf = DocumentElfMutatorImpl()
   private val mutatorReal = DocumentRealMutatorImpl()
   private val sync = ElfRealSyncImpl()
@@ -73,7 +73,7 @@ internal class DocumentMagicCoreImpl private constructor(
     }
   }
 
-  override fun tree(): DocumentRangeMarkerTree {
+  override fun rangeMarkers(): RangeMarkerStorage {
     return tree
   }
 
@@ -175,7 +175,7 @@ internal class DocumentMagicCoreImpl private constructor(
       return this@DocumentMagicCoreImpl.liveElf
     }
 
-    override fun tree(): DocumentRangeMarkerTree {
+    override fun rangeMarkers(): RangeMarkerStorage {
       return this@DocumentMagicCoreImpl.tree
     }
 
@@ -205,7 +205,7 @@ internal class DocumentMagicCoreImpl private constructor(
       return this@DocumentMagicCoreImpl.liveReal
     }
 
-    override fun tree(): DocumentRangeMarkerTree {
+    override fun rangeMarkers(): RangeMarkerStorage {
       return this@DocumentMagicCoreImpl.tree
     }
 

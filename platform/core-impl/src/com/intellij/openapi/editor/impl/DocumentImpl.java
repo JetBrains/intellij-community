@@ -211,12 +211,12 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
 
   @Override
   public @NotNull RangeMarker createRangeMarker(int startOffset, int endOffset, boolean surviveOnExternalChange) {
-    return impl.tree().createRangeMarker(hostDocument(), startOffset, endOffset, surviveOnExternalChange);
+    return impl.rangeMarkers().createRangeMarker(hostDocument(), startOffset, endOffset, surviveOnExternalChange);
   }
 
   @Override
   public boolean removeRangeMarker(@NotNull RangeMarkerEx rangeMarker) {
-    return impl.tree().removeRangeMarker(rangeMarker);
+    return impl.rangeMarkers().removeRangeMarker(rangeMarker);
   }
 
   @Override
@@ -228,7 +228,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
     boolean greedyToRight,
     int layer
   ) {
-    impl.tree().registerRangeMarker(rangeMarker, start, end, greedyToLeft, greedyToRight, layer);
+    impl.rangeMarkers().registerRangeMarker(rangeMarker, start, end, greedyToLeft, greedyToRight, layer);
   }
 
   @Override
@@ -238,7 +238,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
 
   @Override
   public boolean processRangeMarkersOverlappingWith(int start, int end, @NotNull Processor<? super RangeMarker> processor) {
-    return impl.tree().processRangeMarkersOverlappingWith(start, end, processor);
+    return impl.rangeMarkers().processRangeMarkersOverlappingWith(start, end, processor);
   }
 
   @Override
@@ -295,27 +295,27 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
 
   @Override
   public @NotNull RangeMarker createGuardedBlock(int startOffset, int endOffset) {
-    return impl.tree().createGuardedBlock(hostDocument(), startOffset, endOffset);
+    return impl.rangeMarkers().createGuardedBlock(hostDocument(), startOffset, endOffset);
   }
 
   @Override
   public void removeGuardedBlock(@NotNull RangeMarker block) {
-    impl.tree().removeGuardedBlock(block);
+    impl.rangeMarkers().removeGuardedBlock(block);
   }
 
   @Override
   public @NotNull List<RangeMarker> getGuardedBlocks() {
-    return impl.tree().getGuardedBlocks();
+    return impl.rangeMarkers().getGuardedBlocks();
   }
 
   @Override
   public @Nullable RangeMarker getOffsetGuard(int offset) {
-    return impl.tree().getOffsetGuard(offset);
+    return impl.rangeMarkers().getOffsetGuard(offset);
   }
 
   @Override
   public @Nullable RangeMarker getRangeGuard(int start, int end) {
-    return impl.tree().getRangeGuard(start, end);
+    return impl.rangeMarkers().getRangeGuard(start, end);
   }
 
   @Override
@@ -385,7 +385,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
 
   @ApiStatus.Internal
   public void documentCreatedFrom(@NotNull VirtualFile f, int tabSize) {
-    impl.tree().restoreRangeMarkersFromFile(f, hostDocument(), tabSize);
+    impl.rangeMarkers().restoreRangeMarkersFromFile(f, hostDocument(), tabSize);
   }
 
   @ApiStatus.Internal
@@ -457,13 +457,13 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
   @TestOnly
   @ApiStatus.Internal
   public int getRangeMarkersSize() {
-    return impl.tree().getRangeMarkersSize();
+    return impl.rangeMarkers().getRangeMarkersSize();
   }
 
   @TestOnly
   @ApiStatus.Internal
   public int getRangeMarkersNodeSize() {
-    return impl.tree().getRangeMarkersNodeSize();
+    return impl.rangeMarkers().getRangeMarkersNodeSize();
   }
 
   private @NotNull DocumentImpl hostDocument() {

@@ -16,7 +16,7 @@ import org.jetbrains.annotations.TestOnly
  * @see com.intellij.openapi.editor.ex.DocumentEx.processRangeMarkers(Processor)
  */
 @ApiStatus.Internal
-interface DocumentRangeMarkerTree {
+interface RangeMarkerStorage {
   fun createRangeMarker(
     hostDocument: DocumentEx,
     startOffset: Int,
