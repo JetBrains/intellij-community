@@ -31,6 +31,10 @@ internal class TerminalMouseEventsHandlerImpl(
   private var lastMotionReport: Point? = null
 
   override fun mousePressed(x: Int, y: Int, event: MouseEvent) {
+    // Some other handler may already consume this event, for example, hyperlinks logic.
+    // Do not send a mouse report to the process in this case.
+    if (event.isConsumed) return
+
     if (shouldSendMouseData(MouseMode.MOUSE_REPORTING_NORMAL, MouseMode.MOUSE_REPORTING_BUTTON_MOTION)) {
       var code = createButtonCode(event)
       if (code != MouseButtonCodes.NONE) {
@@ -47,6 +51,10 @@ internal class TerminalMouseEventsHandlerImpl(
   }
 
   override fun mouseReleased(x: Int, y: Int, event: MouseEvent) {
+    // Some other handler may already consume this event, for example, hyperlinks logic.
+    // Do not send a mouse report to the process in this case.
+    if (event.isConsumed) return
+
     if (shouldSendMouseData(MouseMode.MOUSE_REPORTING_NORMAL, MouseMode.MOUSE_REPORTING_BUTTON_MOTION)) {
       var code = createButtonCode(event)
       if (code != MouseButtonCodes.NONE) {
@@ -66,6 +74,10 @@ internal class TerminalMouseEventsHandlerImpl(
   }
 
   override fun mouseMoved(x: Int, y: Int, event: MouseEvent) {
+    // Some other handler may already consume this event, for example, hyperlinks logic.
+    // Do not send a mouse report to the process in this case.
+    if (event.isConsumed) return
+
     if (lastMotionReport == Point(x, y)) {
       return
     }
@@ -78,6 +90,10 @@ internal class TerminalMouseEventsHandlerImpl(
   }
 
   override fun mouseDragged(x: Int, y: Int, event: MouseEvent) {
+    // Some other handler may already consume this event, for example, hyperlinks logic.
+    // Do not send a mouse report to the process in this case.
+    if (event.isConsumed) return
+
     if (lastMotionReport == Point(x, y)) {
       return
     }
@@ -94,6 +110,10 @@ internal class TerminalMouseEventsHandlerImpl(
   }
 
   override fun mouseWheelMoved(x: Int, y: Int, event: MouseWheelEvent) {
+    // Some other handler may already consume this event, for example, hyperlinks logic.
+    // Do not send a mouse report to the process in this case.
+    if (event.isConsumed) return
+
     if (settings.enableMouseReporting() && terminalState.mouseMode != MouseMode.MOUSE_REPORTING_NONE && !event.isShiftDown) {
       editor.selectionModel.removeSelection()
       // mousePressed() handles mouse wheel using SCROLLDOWN and SCROLLUP buttons
