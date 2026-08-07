@@ -99,4 +99,10 @@ public class PyInjectionResolveTest extends PyResolveTestCase {
   public void testQuotedUnionTypeReferenceTopLevel() {
     assertResolvesTo(PyClass.class, "int");
   }
+
+  // PY-88670
+  public void testQuotedTypeReferenceInTypeVar() {
+    assertResolvesTo(PyClass.class, "int");
+  }
+
 }

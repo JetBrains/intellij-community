@@ -1315,6 +1315,28 @@ class PyGenericTypeTest : PyCodeInsightTestCase() {
       """)
   }
 
+  @Test
+  @TestFor(issues = ["PY-85336"])
+  fun `apply expected generic type to right hand side`() = test("""
+      class A[T]: ...
+      class B[T](A[T]): ...
+      
+      a: A[int] = B()
+      #             └ TYPE B[Unknown] FIXME B[int]
+      """)
+
+  @Test
+  @TestFor(issues = ["PY-88690"])
+  fun `no false positive assigning partially specialized generic subclass`() = test("""
+      class A[X, Y]:
+          def __init__(self, x: X, y: Y): ...
+
+      class B[T](A[int, T]): ...
+
+      a: B[int] = B(1, 2)
+      #                 └ TYPE B[int]
+      """)
+
   @Nested
   inner class Pep695Syntax {
     @Test

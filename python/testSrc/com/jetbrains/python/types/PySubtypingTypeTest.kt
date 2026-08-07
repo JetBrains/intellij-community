@@ -1121,6 +1121,17 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
       print(abs(a))
       print(round(a))
       """)
+
+    @Test
+    @TestFor(issues = ["PY-88298"])
+    fun `str passed to super __new__ of str subclass`() = test(TestOptions(assertRecursionPrevention = false), """
+      class StrIdentifier(str):
+          __slots__ = ()
+
+      class SiteSlug(StrIdentifier):
+          def __new__(cls, value):
+              return super().__new__(cls, str(value).lower()) # assert no issues here
+      """)
   }
 
   @Nested
