@@ -928,6 +928,8 @@
               extensions="iws"/>
     <fileType name="IDEA_MODULE" implementationClass="com.intellij.ide.highlighter.ModuleFileType" fieldName="INSTANCE" extensions="iml"/>
     <fileType name="IDEA_PROJECT" implementationClass="com.intellij.ide.highlighter.ProjectFileType" fieldName="INSTANCE" extensions="ipr"/>
+    <fileType name="TOOL_WINDOW_TAB" implementationClass="com.intellij.openapi.wm.impl.tabInEditor.ToolWindowEditorTabFileType"
+              fieldName="INSTANCE"/>
     <backgroundPostStartupActivity implementation="com.intellij.openapi.fileTypes.impl.ApproveRemovedMappingsActivity"/>
     <applicationService serviceInterface="com.intellij.ide.plugins.PluginEnabler"
                         serviceImplementation="com.intellij.ide.plugins.DynamicPluginEnabler"
