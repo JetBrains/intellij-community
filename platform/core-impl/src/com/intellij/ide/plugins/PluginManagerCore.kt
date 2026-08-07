@@ -764,7 +764,14 @@ object PluginManagerCore {
       val boundaryExclusion = exclusionChain.windowed(2).firstOrNull { (pluginModule, other) -> other.pluginId != pluginModule.pluginId }
       if (boundaryExclusion != null) {
         val excludedRequiredDescriptor = boundaryExclusion[1]
-        registerLoadingError(PluginDependencyCannotBeLoaded(plugin, excludedRequiredDescriptor, shouldNotifyUser))
+        val rootCauseDescriptor = exclusionChain.last()
+        val rootCause = resolvedPluginSet.getExclusionReason(rootCauseDescriptor)!!
+        if (rootCause is PluginIsMarkedDisabled && rootCause.descriptor.pluginId == excludedRequiredDescriptor.pluginId) {
+          registerLoadingError(PluginDependencyIsDisabled(plugin, rootCause.descriptor.pluginId, shouldNotifyUser))
+        }
+        else {
+          registerLoadingError(PluginDependencyCannotBeLoaded(plugin, excludedRequiredDescriptor, shouldNotifyUser))
+        }
       }
       else {
         val rootCauseDescriptor = exclusionChain.last()

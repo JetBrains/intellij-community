@@ -7,6 +7,7 @@ import com.intellij.openapi.util.BuildNumber
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
 import com.intellij.platform.pluginSystem.testFramework.PluginSetTestBuilder
 import com.intellij.platform.pluginSystem.testFramework.PseudoProductTestPluginInitContext
+import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.platform.testFramework.plugins.content
 import com.intellij.platform.testFramework.plugins.depends
 import com.intellij.platform.testFramework.plugins.installAt
@@ -23,8 +24,8 @@ import org.junit.jupiter.api.extension.RegisterExtension
 /**
  * Tests for plugin initialization: [PluginInitializationContext.selectCandidateSubset]
  * 
- * This function performs plugin selection (compatibility, version selection, disabled/incompatible filtering)
- * and ID conflict resolution in a single operation.
+ * Candidate selection performs version selection, configured-subset filtering, and ID conflict resolution. Tests that cover disabled,
+ * incompatible, and other loading constraints explicitly invoke [PluginInitializationContext.resolveConstraints].
  */
 class PluginInitializationSelectCandidateSubsetTest {
   
@@ -67,7 +68,8 @@ class PluginInitializationSelectCandidateSubsetTest {
       override fun isPluginDisabled(id: PluginId): Boolean = id in disabledPlugins
       override val explicitPluginSubsetToLoad: Set<PluginId>? = explicitPluginSubsetToLoad
       override val disablePluginLoadingCompletely: Boolean = disablePluginLoadingCompletely
-      override val currentProductModeId: String = "test"
+      override val currentProductModeId: String = ProductMode.MONOLITH.id
+      override val environmentConfiguredModules: Map<PluginModuleId, PluginInitializationContext.EnvironmentConfiguredModuleData> = emptyMap()
       override val expiredPlugins: Set<PluginId> = emptySet()
     }
   }
@@ -202,6 +204,29 @@ class PluginInitializationSelectCandidateSubsetTest {
     }
 
     @Test
+    fun `selected versions retain discovery order`() {
+      val firstPath = pluginsDirPath.resolve("first")
+      val middlePath = pluginsDirPath.resolve("middle")
+      val lastPath = pluginsDirPath.resolve("last")
+      plugin("foo") { version = "1.0" }.installAt(firstPath)
+      plugin("bar") { version = "1.0" }.installAt(middlePath)
+      plugin("foo") { version = "2.0" }.installAt(lastPath)
+
+      val foo1 = PluginSetTestBuilder.fromPath(firstPath).discoverPlugins().second.pluginLists.single().plugins.single()
+      val bar = PluginSetTestBuilder.fromPath(middlePath).discoverPlugins().second.pluginLists.single().plugins.single()
+      val foo2 = PluginSetTestBuilder.fromPath(lastPath).discoverPlugins().second.pluginLists.single().plugins.single()
+      val discoveryResult = PluginsDiscoveryResult.build(
+        listOf(DiscoveredPluginsList(listOf(foo1, bar, foo2), PluginsSourceContext.Custom))
+      )
+
+      val (candidateSubset, excludedPlugins) = testCandidateSubsetSelection(discoveryResult = discoveryResult)
+
+      assertThat(candidateSubset.plugins.map { it.pluginId.idString }).containsExactly("bar", "foo")
+      assertThat(excludedPlugins).hasSize(1)
+      assertThat(excludedPlugins.single().plugin).isSameAs(foo1)
+    }
+
+    @Test
     fun `three versions select newest compatible`() {
       plugin("foo") { version = "1.0" }.installAt(pluginsDirPath)
       plugin("foo") { version = "2.0" }.installAt(pluginsDirPath)
@@ -217,7 +242,7 @@ class PluginInitializationSelectCandidateSubsetTest {
     }
 
     @Test
-    fun `incompatible plugin is excluded`() {
+    fun `incompatible plugin remains a candidate and is excluded by constraints`() {
       plugin("foo") {
         version = "1.0"
         untilBuild = "300.*"
@@ -229,20 +254,27 @@ class PluginInitializationSelectCandidateSubsetTest {
       }.installAt(pluginsDirPath)
 
       val (_, discoveryResult) = PluginSetTestBuilder.fromPath(pluginsDirPath).discoverPlugins()
-      val (result, excludedPlugins) = testCandidateSubsetSelection(
-        productBuildNumber = BuildNumber.fromString("250.0")!!,
-        discoveryResult = discoveryResult
+      val initContext = createInitContext(productBuildNumber = BuildNumber.fromString("250.0")!!)
+      val excludedPlugins = mutableListOf<ExcludedPluginInfo>()
+      val candidateSubset = initContext.selectCandidateSubset(
+        discoveryResult,
+        onPluginExcluded = { reason -> excludedPlugins.add(ExcludedPluginInfo(reason.descriptor.getMainDescriptor(), reason)) },
       )
+      val resolvedPluginSet = initContext.resolveConstraints(candidateSubset)
+      val foo = candidateSubset.resolvePluginId(PluginId.getId("foo"))!!
+      val bar = candidateSubset.resolvePluginId(PluginId.getId("bar"))!!
 
-      assertThat(result.plugins).hasSize(1)
-      assertThat(result.plugins[0].pluginId.idString).isEqualTo("foo")
-      assertThat(excludedPlugins).hasSize(1)
-      assertThat(excludedPlugins[0].reason.hasIncompatibilityReason<PluginIncompatibilityReason.UntilBuildConstraintViolation>()).isTrue()
-      assertThat(excludedPlugins[0].plugin.pluginId.idString).isEqualTo("bar")
+      assertThat(candidateSubset.plugins).hasSize(2)
+      assertThat(excludedPlugins).isEmpty()
+      assertThat(resolvedPluginSet.isResolved(foo)).isTrue()
+      assertThat(resolvedPluginSet.isExcluded(bar)).isTrue()
+      assertThat(
+        resolvedPluginSet.getExclusionReason(bar)!!.hasIncompatibilityReason<PluginIncompatibilityReason.UntilBuildConstraintViolation>()
+      ).isTrue()
     }
 
     @Test
-    fun `all plugins incompatible produces empty result`() {
+    fun `all incompatible plugins remain candidates and are excluded by constraints`() {
       plugin("foo") {
         version = "1.0"
         untilBuild = "100.*"
@@ -254,15 +286,19 @@ class PluginInitializationSelectCandidateSubsetTest {
       }.installAt(pluginsDirPath)
 
       val (_, discoveryResult) = PluginSetTestBuilder.fromPath(pluginsDirPath).discoverPlugins()
-      val (result, excludedPlugins) = testCandidateSubsetSelection(
-        productBuildNumber = BuildNumber.fromString("250.0")!!,
-        discoveryResult = discoveryResult
+      val initContext = createInitContext(productBuildNumber = BuildNumber.fromString("250.0")!!)
+      val excludedPlugins = mutableListOf<ExcludedPluginInfo>()
+      val candidateSubset = initContext.selectCandidateSubset(
+        discoveryResult,
+        onPluginExcluded = { reason -> excludedPlugins.add(ExcludedPluginInfo(reason.descriptor.getMainDescriptor(), reason)) },
       )
+      val resolvedPluginSet = initContext.resolveConstraints(candidateSubset)
 
-      assertThat(result.plugins).isEmpty()
-      assertThat(excludedPlugins).hasSize(2)
-      assertThat(excludedPlugins.all {
-        it.reason.hasIncompatibilityReason<PluginIncompatibilityReason.UntilBuildConstraintViolation>()
+      assertThat(candidateSubset.plugins).hasSize(2)
+      assertThat(excludedPlugins).isEmpty()
+      assertThat(candidateSubset.plugins.none(resolvedPluginSet::isResolved)).isTrue()
+      assertThat(candidateSubset.plugins.all {
+        resolvedPluginSet.getExclusionReason(it)!!.hasIncompatibilityReason<PluginIncompatibilityReason.UntilBuildConstraintViolation>()
       }).isTrue()
     }
 
@@ -331,7 +367,7 @@ class PluginInitializationSelectCandidateSubsetTest {
     }
 
     @Test
-    fun `incompatible plugin is excluded before disabled check`() {
+    fun `incompatible plugin is excluded before disabled check during constraint resolution`() {
       plugin("foo") {
         version = "1.0"
         untilBuild = "100.*" // incompatible
@@ -344,16 +380,18 @@ class PluginInitializationSelectCandidateSubsetTest {
         productBuildNumber = BuildNumber.fromString("250.0")!!
       )
 
-      val result = initContext.selectCandidateSubset(
+      val candidateSubset = initContext.selectCandidateSubset(
         discoveryResult,
         onPluginExcluded = { reason -> excludedPlugins.add(ExcludedPluginInfo(reason.descriptor.getMainDescriptor(), reason)) }
       )
+      val plugin = candidateSubset.plugins.single()
+      val resolvedPluginSet = initContext.resolveConstraints(candidateSubset)
 
-      // Plugin should be excluded as incompatible (compatibility check happens first)
-      assertThat(result.plugins).isEmpty()
-      assertThat(excludedPlugins).hasSize(1)
-      assertThat(excludedPlugins[0].reason.hasIncompatibilityReason<PluginIncompatibilityReason.UntilBuildConstraintViolation>()).isTrue()
-      assertThat(excludedPlugins[0].plugin.pluginId.idString).isEqualTo("foo")
+      assertThat(excludedPlugins).isEmpty()
+      assertThat(resolvedPluginSet.isExcluded(plugin)).isTrue()
+      assertThat(
+        resolvedPluginSet.getExclusionReason(plugin)!!.hasIncompatibilityReason<PluginIncompatibilityReason.UntilBuildConstraintViolation>()
+      ).isTrue()
     }
   }
 
@@ -567,7 +605,7 @@ class PluginInitializationSelectCandidateSubsetTest {
     }
 
     @Test
-    fun `disabled plugin excluded when not required by essential plugin`() {
+    fun `disabled plugin remains a candidate and is excluded when not required by essential plugin`() {
       plugin("foo") { version = "1.0" }.installAt(pluginsDirPath)
       plugin("bar") { version = "1.0" }.installAt(pluginsDirPath)
 
@@ -578,18 +616,19 @@ class PluginInitializationSelectCandidateSubsetTest {
         disabledPlugins = setOf(PluginId.getId("bar"))
       )
 
-      val filteredResult = initContext.selectCandidateSubset(
+      val candidateSubset = initContext.selectCandidateSubset(
         discoveryResult,
         onPluginExcluded = { reason -> excludedPlugins.add(ExcludedPluginInfo(reason.descriptor.getMainDescriptor(), reason)) }
       )
+      val resolvedPluginSet = initContext.resolveConstraints(candidateSubset)
+      val foo = candidateSubset.resolvePluginId(PluginId.getId("foo"))!!
+      val bar = candidateSubset.resolvePluginId(PluginId.getId("bar"))!!
 
-      // Only foo should be loaded, bar is disabled and not required
-      assertThat(filteredResult.plugins).hasSize(1)
-      assertThat(filteredResult.plugins[0].pluginId.idString).isEqualTo("foo")
-      
-      assertThat(excludedPlugins).hasSize(1)
-      assertThat(excludedPlugins[0].reason).isInstanceOf(PluginIsMarkedDisabled::class.java)
-      assertThat(excludedPlugins[0].plugin.pluginId.idString).isEqualTo("bar")
+      assertThat(candidateSubset.plugins).hasSize(2)
+      assertThat(excludedPlugins).isEmpty()
+      assertThat(resolvedPluginSet.isResolved(foo)).isTrue()
+      assertThat(resolvedPluginSet.isExcluded(bar)).isTrue()
+      assertThat(resolvedPluginSet.getExclusionReason(bar)).isInstanceOf(PluginIsMarkedDisabled::class.java)
     }
 
     @Test
@@ -609,18 +648,21 @@ class PluginInitializationSelectCandidateSubsetTest {
         disabledPlugins = setOf(PluginId.getId("bar"), PluginId.getId("baz"))
       )
 
-      val filteredResult = initContext.selectCandidateSubset(
+      val candidateSubset = initContext.selectCandidateSubset(
         discoveryResult,
         onPluginExcluded = { reason -> excludedPlugins.add(ExcludedPluginInfo(reason.descriptor.getMainDescriptor(), reason)) }
       )
+      val resolvedPluginSet = initContext.resolveConstraints(candidateSubset)
+      val foo = candidateSubset.resolvePluginId(PluginId.getId("foo"))!!
+      val bar = candidateSubset.resolvePluginId(PluginId.getId("bar"))!!
+      val baz = candidateSubset.resolvePluginId(PluginId.getId("baz"))!!
 
-      // foo and bar loaded (bar required by foo), baz excluded
-      assertThat(filteredResult.plugins).hasSize(2)
-      assertThat(filteredResult.plugins.map { it.pluginId.idString }).containsExactlyInAnyOrder("foo", "bar")
-      
-      assertThat(excludedPlugins).hasSize(1)
-      assertThat(excludedPlugins[0].reason).isInstanceOf(PluginIsMarkedDisabled::class.java)
-      assertThat(excludedPlugins[0].plugin.pluginId.idString).isEqualTo("baz")
+      assertThat(candidateSubset.plugins).hasSize(3)
+      assertThat(excludedPlugins).isEmpty()
+      assertThat(resolvedPluginSet.isResolved(foo)).isTrue()
+      assertThat(resolvedPluginSet.isResolved(bar)).isTrue()
+      assertThat(resolvedPluginSet.isExcluded(baz)).isTrue()
+      assertThat(resolvedPluginSet.getExclusionReason(baz)).isInstanceOf(PluginIsMarkedDisabled::class.java)
     }
   }
 
@@ -628,7 +670,7 @@ class PluginInitializationSelectCandidateSubsetTest {
   inner class IncompatibleWithEssentialPlugins {
 
     @Test
-    fun `plugin excluded when essential declares incompatible-with it`() {
+    fun `plugin remains a candidate and is excluded when essential declares incompatible-with it`() {
       plugin("foo") {
         version = "1.0"
         incompatibleWith = listOf("bar")
@@ -642,18 +684,19 @@ class PluginInitializationSelectCandidateSubsetTest {
         essentialPlugins = setOf(PluginId.getId("foo"))
       )
 
-      val filteredResult = initContext.selectCandidateSubset(
+      val candidateSubset = initContext.selectCandidateSubset(
         discoveryResult,
         onPluginExcluded = { reason -> excludedPlugins.add(ExcludedPluginInfo(reason.descriptor.getMainDescriptor(), reason)) }
       )
+      val resolvedPluginSet = initContext.resolveConstraints(candidateSubset)
+      val foo = candidateSubset.resolvePluginId(PluginId.getId("foo"))!!
+      val bar = candidateSubset.resolvePluginId(PluginId.getId("bar"))!!
 
-      // Only foo should be loaded, bar is incompatible with essential foo
-      assertThat(filteredResult.plugins).hasSize(1)
-      assertThat(filteredResult.plugins[0].pluginId.idString).isEqualTo("foo")
-      
-      assertThat(excludedPlugins).hasSize(1)
-      assertThat(excludedPlugins[0].reason).isInstanceOf(IncompatibleWithAnotherModule::class.java)
-      assertThat(excludedPlugins[0].plugin.pluginId.idString).isEqualTo("bar")
+      assertThat(candidateSubset.plugins).hasSize(2)
+      assertThat(excludedPlugins).isEmpty()
+      assertThat(resolvedPluginSet.isResolved(foo)).isTrue()
+      assertThat(resolvedPluginSet.isExcluded(bar)).isTrue()
+      assertThat(resolvedPluginSet.getExclusionReason(bar)).isInstanceOf(IncompatibleWithAnotherModule::class.java)
     }
 
     @Test
@@ -708,7 +751,7 @@ class PluginInitializationSelectCandidateSubsetTest {
     }
 
     @Test
-    fun `plugin excluded when essential declares incompatible-with plugin alias`() {
+    fun `plugin remains a candidate and is excluded when essential declares incompatible-with plugin alias`() {
       plugin("foo") {
         version = "1.0"
         incompatibleWith = listOf("bar-alias")
@@ -725,18 +768,19 @@ class PluginInitializationSelectCandidateSubsetTest {
         essentialPlugins = setOf(PluginId.getId("foo"))
       )
 
-      val filteredResult = initContext.selectCandidateSubset(
+      val candidateSubset = initContext.selectCandidateSubset(
         discoveryResult,
         onPluginExcluded = { reason -> excludedPlugins.add(ExcludedPluginInfo(reason.descriptor.getMainDescriptor(), reason)) }
       )
+      val resolvedPluginSet = initContext.resolveConstraints(candidateSubset)
+      val foo = candidateSubset.resolvePluginId(PluginId.getId("foo"))!!
+      val bar = candidateSubset.resolvePluginId(PluginId.getId("bar"))!!
 
-      // Only foo should be loaded, bar is incompatible (via alias resolution)
-      assertThat(filteredResult.plugins).hasSize(1)
-      assertThat(filteredResult.plugins[0].pluginId.idString).isEqualTo("foo")
-      
-      assertThat(excludedPlugins).hasSize(1)
-      assertThat(excludedPlugins[0].reason).isInstanceOf(IncompatibleWithAnotherModule::class.java)
-      assertThat(excludedPlugins[0].plugin.pluginId.idString).isEqualTo("bar")
+      assertThat(candidateSubset.plugins).hasSize(2)
+      assertThat(excludedPlugins).isEmpty()
+      assertThat(resolvedPluginSet.isResolved(foo)).isTrue()
+      assertThat(resolvedPluginSet.isExcluded(bar)).isTrue()
+      assertThat(resolvedPluginSet.getExclusionReason(bar)).isInstanceOf(IncompatibleWithAnotherModule::class.java)
     }
   }
 
@@ -870,7 +914,7 @@ class PluginInitializationSelectCandidateSubsetTest {
     }
 
     @Test
-    fun `incompatible plugins are filtered before subset selection`() {
+    fun `incompatible plugin outside explicit subset is excluded by subset selection`() {
       plugin("foo") {
         version = "1.0"
         untilBuild = "100.*"
@@ -884,18 +928,17 @@ class PluginInitializationSelectCandidateSubsetTest {
         productBuildNumber = BuildNumber.fromString("250.0")!!
       )
 
-      val filteredResult = initContext.selectCandidateSubset(
+      val candidateSubset = initContext.selectCandidateSubset(
         discoveryResult,
         onPluginExcluded = { reason -> excludedPlugins.add(ExcludedPluginInfo(reason.descriptor.getMainDescriptor(), reason)) }
       )
+      val resolvedPluginSet = initContext.resolveConstraints(candidateSubset)
 
-      // Only bar should remain
-      assertThat(filteredResult.plugins).hasSize(1)
-      assertThat(filteredResult.plugins[0].pluginId.idString).isEqualTo("bar")
-
-      // foo excluded as incompatible (not as "not required")
+      assertThat(candidateSubset.plugins).hasSize(1)
+      assertThat(candidateSubset.plugins.single().pluginId.idString).isEqualTo("bar")
+      assertThat(resolvedPluginSet.isResolved(candidateSubset.plugins.single())).isTrue()
       assertThat(excludedPlugins).hasSize(1)
-      assertThat(excludedPlugins[0].reason.hasIncompatibilityReason<PluginIncompatibilityReason.UntilBuildConstraintViolation>()).isTrue()
+      assertThat(excludedPlugins[0].reason.hasProductReason<PluginIsNotContainedInTheExplicitlyConfiguredSubsetOfPluginsForLoading>()).isTrue()
       assertThat(excludedPlugins[0].plugin.pluginId.idString).isEqualTo("foo")
     }
 
@@ -1211,6 +1254,31 @@ class PluginInitializationSelectCandidateSubsetTest {
       assertThat(excludedPlugins).hasSize(1)
       assertThat(excludedPlugins[0].plugin.pluginId.idString).isEqualTo("foo")
       assertThat(excludedPlugins[0].reason).isInstanceOf(PluginIsMarkedDisabled::class.java)
+    }
+
+    @Test
+    fun `dependency on disabled candidate retains disabled dependency error`() {
+      plugin("foo") {
+        version = "1.0"
+        depends("bar")
+      }.installAt(pluginsDirPath)
+      plugin("bar") { version = "1.0" }.installAt(pluginsDirPath)
+
+      val (_, discoveryResult) = PluginSetTestBuilder.fromPath(pluginsDirPath).discoverPlugins()
+      val initContext = createInitContext(disabledPlugins = setOf(PluginId.getId("bar")))
+      val candidateSubset = initContext.selectCandidateSubset(discoveryResult) {}
+      val resolvedPluginSet = initContext.resolveConstraints(candidateSubset)
+      val nonLoadReasons = mutableListOf<PluginNonLoadReason>()
+
+      PluginManagerCore.adaptResolvedPluginSetAsOldPluginSet(
+        input = PluginSubsystemInput(initContext, discoveryResult),
+        resolvedPluginSet = resolvedPluginSet,
+        registerLoadingError = nonLoadReasons::add,
+      )
+
+      assertThat(nonLoadReasons).hasSize(1)
+      assertThat(nonLoadReasons.single()).isInstanceOf(PluginDependencyIsDisabled::class.java)
+      assertThat((nonLoadReasons.single() as PluginDependencyIsDisabled).dependencyId).isEqualTo(PluginId.getId("bar"))
     }
   }
 }

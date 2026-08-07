@@ -54,6 +54,7 @@ private class PluginSetConstraintsResolver(
 
   fun resolveConstraints(): ResolvedPluginSet {
     applyEnvironmentConfiguredExclusions()
+    excludeIncompatibleAndDisabledPlugins()
     applyProductRulesImposedExclusions()
 
     val constraintBuilders = listOf(
@@ -132,12 +133,6 @@ private class PluginSetConstraintsResolver(
     }
   }
 
-  private fun applyProductRulesImposedExclusions() {
-    for ((module, reason) in initContext.provideModuleExclusionsImposedByProductRules(candidateSet)) {
-      exclude(ProductRulesImposedExclusion(module, reason))
-    }
-  }
-
   private fun applyEnvironmentConfiguredExclusions() {
     for ((moduleId, envConfig) in initContext.environmentConfiguredModules) {
       val module = candidateSet.resolveContentModuleId(moduleId) ?: run {
@@ -149,6 +144,29 @@ private class PluginSetConstraintsResolver(
       if (envConfig.unavailabilityReason != null) {
         exclude(ExcludedByEnvironmentConfiguration(module, envConfig.unavailabilityReason))
       }
+    }
+  }
+
+  private fun excludeIncompatibleAndDisabledPlugins() {
+    for (candidate in candidates.keys) {
+      if (candidate !is PluginMainDescriptor) {
+        continue
+      }
+      val incompatibility = initContext.validatePluginIsCompatible(candidate)
+      if (incompatibility != null) {
+        exclude(incompatibility)
+        continue
+      }
+      if (initContext.isPluginDisabled(candidate.pluginId) && !candidate.isEssential()) {
+        exclude(PluginIsMarkedDisabled(candidate))
+        continue
+      }
+    }
+  }
+
+  private fun applyProductRulesImposedExclusions() {
+    for ((module, reason) in initContext.provideModuleExclusionsImposedByProductRules(candidateSet)) {
+      exclude(ProductRulesImposedExclusion(module, reason))
     }
   }
 

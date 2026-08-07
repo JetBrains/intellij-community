@@ -51,7 +51,17 @@ class ProductPluginInitContext(
       }
     }
   }
-  private val disabledPlugins: Set<PluginId> get() = disabledPluginsOverride ?: DisabledPluginsState.getDisabledIds()
+
+  private val disabledPlugins: Set<PluginId> get() {
+    if (disabledPluginsOverride != null) {
+      return disabledPluginsOverride
+    }
+    if (explicitPluginSubsetToLoad != null) {
+      return emptySet()
+    }
+    return DisabledPluginsState.getDisabledIds()
+  }
+
   private val expiredPlugins: Set<PluginId> get() = expiredPluginsOverride ?: ExpiredPluginsState.expiredPluginIds
   private val brokenPluginVersions: Map<PluginId, Set<String>> get() = brokenPluginVersionsOverride ?: getBrokenPluginVersions()
 

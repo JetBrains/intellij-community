@@ -7,23 +7,19 @@ import com.intellij.util.text.VersionComparatorUtil
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * Selects the candidate subset by applying all business logic for plugin selection and ID conflict resolution.
+ * Selects one candidate version per plugin ID and resolves ID conflicts. The resulting descriptors are not necessarily loadable;
+ * [PluginInitializationContext.resolveConstraints] subsequently excludes disabled, incompatible, and otherwise invalid candidates.
  * 
  * The selection process depends on the configuration:
  * 
  * **Regular mode** (default):
- * 1. Validates plugin compatibility (build version constraints)
- * 2. Selects the most recent version per plugin ID
- * 3. Filters out disabled plugins (except those required by essential plugins)
- * 4. Filters out plugins incompatible with essential plugins (except those required by essential plugins)
- * 5. Resolves ID conflicts (plugins/modules declaring the same ID or alias)
+ * 1. Selects the most recent compatible version per plugin ID, or the most recent version if none are compatible
+ * 2. Resolves ID conflicts (plugins/modules declaring the same ID or alias), using loading hints when one descriptor is preferable
  * 
  * **Explicit subset mode** ([PluginInitializationContext.explicitPluginSubsetToLoad] is set):
- * 1. Validates plugin compatibility
- * 2. Selects the most recent version per plugin ID
- * 3. Loads only explicitly listed plugins and their transitive dependencies
- * 4. Does NOT filter disabled plugins or incompatible-with declarations
- * 5. Resolves ID conflicts
+ * 1. Selects plugin versions as in regular mode
+ * 2. Keeps only explicitly listed and essential plugins and their transitive dependencies
+ * 3. Resolves ID conflicts using hints supplied by the initialization context
  * 
  * **Disabled completely mode** ([PluginInitializationContext.disablePluginLoadingCompletely] is true):
  * - Loads only the CORE plugin, all others are excluded
@@ -49,29 +45,37 @@ fun PluginInitializationContext.selectCandidateSubset(
     selectOnlyCorePlugin(discoveredPlugins, onPluginExcluded)
   }
   else {
-    val compatible = selectMostRecentCompatible(discoveredPlugins, onPluginExcluded)
-    val filtered = applyDisabledAndIncompatibleWithForEssentialPluginsFilters(compatible, onPluginExcluded)
-    filtered
+    selectMostRecentCompatibleOrJustMostRecentPerPluginId(discoveredPlugins, onPluginExcluded)
   }
   return resolveIdConflicts(candidatePlugins, onPluginExcluded)
 }
 
-private fun PluginInitializationContext.selectMostRecentCompatible(
+/**
+ * if there are more than one version of a plugin, we select the newest compatible plugin (or just the newest if there are no compatible ones)
+ */
+private fun PluginInitializationContext.selectMostRecentCompatibleOrJustMostRecentPerPluginId(
   discoveredPlugins: List<DiscoveredPluginsList>,
   onPluginExcluded: (DescriptorExclusionReason) -> Unit,
 ): List<PluginMainDescriptor> {
   val selectedPluginsByPluginId = LinkedHashMap<PluginId, PluginMainDescriptor>()
   for (pluginList in discoveredPlugins) {
     for (plugin in pluginList.plugins) {
-      validatePluginIsCompatible(plugin)?.let { reason ->
-        onPluginExcluded(reason)
-        continue
-      }
-
       val pluginId = plugin.pluginId
       val existingPlugin = selectedPluginsByPluginId[pluginId]
       if (existingPlugin == null) {
         selectedPluginsByPluginId[pluginId] = plugin
+        continue
+      }
+
+      val existingIncompatibility = validatePluginIsCompatible(existingPlugin)
+      val pluginIncompatibility = validatePluginIsCompatible(plugin)
+      if (existingIncompatibility != null && pluginIncompatibility == null) {
+        onPluginExcluded(existingIncompatibility)
+        selectedPluginsByPluginId[pluginId] = plugin
+        continue
+      }
+      if (existingIncompatibility == null && pluginIncompatibility != null) {
+        onPluginExcluded(pluginIncompatibility)
         continue
       }
 
@@ -92,59 +96,21 @@ private fun PluginInitializationContext.selectMostRecentCompatible(
   }
 }
 
-private fun PluginInitializationContext.applyDisabledAndIncompatibleWithForEssentialPluginsFilters(
-  compatiblePlugins: List<PluginMainDescriptor>,
-  onPluginExcluded: (DescriptorExclusionReason) -> Unit
-): List<PluginMainDescriptor> {
-  val essentialPlugins = compatiblePlugins.filter { it.pluginId in essentialPlugins }
-  val ambiguousPluginSet = AmbiguousPluginSet.build(compatiblePlugins)
-  val allEssentialModules = PluginDependencyAnalysis.getRequiredTransitiveModules(
-    this,
-    essentialPlugins,
-    ambiguousPluginSet,
-  )
-  // we should exclude incompatibilities for essential modules early, because otherwise it might result in a dependency cycle later
-  // note: includes possible incompatible-with for content modules IJPL-200858
-  val incompatibleWithEssentialModules = hashMapOf<PluginModuleDescriptor, PluginModuleDescriptor>()
-  for (essentialModule in allEssentialModules) {
-    for (incompatibleId in essentialModule.incompatiblePlugins) {
-      for (incompatibleModule in ambiguousPluginSet.resolvePluginId(incompatibleId)) {
-        incompatibleWithEssentialModules.putIfAbsent(incompatibleModule, essentialModule)
-      }
-    }
-  }
-  return compatiblePlugins.filter { plugin ->
-    when {
-      isPluginDisabled(plugin.pluginId) && plugin !in allEssentialModules -> {
-        onPluginExcluded(PluginIsMarkedDisabled(plugin))
-        false
-      }
-      plugin in incompatibleWithEssentialModules.keys && plugin !in allEssentialModules -> {
-        onPluginExcluded(IncompatibleWithAnotherModule(plugin, incompatibleWithEssentialModules[plugin]!!))
-        false
-      }
-      else -> {
-        true
-      }
-    }
-  }
-}
-
 private fun PluginInitializationContext.selectFromExplicitSubset(
   discoveredPlugins: List<DiscoveredPluginsList>,
   onPluginExcluded: (DescriptorExclusionReason) -> Unit,
 ): List<PluginMainDescriptor> {
-  val compatiblePlugins = selectMostRecentCompatible(discoveredPlugins, onPluginExcluded)
+  val plugins = selectMostRecentCompatibleOrJustMostRecentPerPluginId(discoveredPlugins, onPluginExcluded)
   val explicitSubset = explicitPluginSubsetToLoad ?: emptySet()
-  val pluginIdsSubset = essentialPlugins + explicitSubset
-  val pluginSubset = compatiblePlugins.filter { it.pluginId in pluginIdsSubset }
-  val ambiguousPluginSet = AmbiguousPluginSet.build(compatiblePlugins)
+  val pluginIdsSubset = essentialPlugins + explicitSubset // TODO consider explicit subset as essential and exclude everything non-essential, move this logic into constraint resolver
+  val pluginSubset = plugins.filter { it.pluginId in pluginIdsSubset }
+  val ambiguousPluginSet = AmbiguousPluginSet.build(plugins)
   val requiredModules = PluginDependencyAnalysis.getRequiredTransitiveModules(
     this,
     pluginSubset,
     ambiguousPluginSet,
   )
-  return compatiblePlugins.filter { plugin ->
+  return plugins.filter { plugin ->
     if (plugin in requiredModules) {
       true
     } else {

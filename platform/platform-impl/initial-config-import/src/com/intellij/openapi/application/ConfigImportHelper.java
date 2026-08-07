@@ -1073,7 +1073,7 @@ public final class ConfigImportHelper {
         options.compatibleBuildNumber, Collections.emptySet(), Collections.emptySet(), brokenPluginVersions
       );
       var nonLoadablePlugins = new HashMap<PluginId, PluginMainDescriptor>();
-      var candidatePlugins = PluginInitContextSelectCandidateSubsetKt.selectCandidateSubset(
+      var selectedCandidates = PluginInitContextSelectCandidateSubsetKt.selectCandidateSubset(
         initContext,
         oldIdePlugins,
         reason -> {
@@ -1088,7 +1088,16 @@ public final class ConfigImportHelper {
           return Unit.INSTANCE;
         }
       ).getPlugins();
-      // TODO 'plugin is broken' is already applied by 'selectCandidateSubset'
+      // additionally filter the selected candidates by compatibility
+      var candidatePlugins = new ArrayList<PluginMainDescriptor>(selectedCandidates.size());
+      for (var plugin : selectedCandidates) {
+        if (PluginManagerCore.INSTANCE.isCompatible(plugin, options.compatibleBuildNumber)) {
+          candidatePlugins.add(plugin);
+        }
+        else {
+          nonLoadablePlugins.put(plugin.getPluginId(), plugin);
+        }
+      }
       if (Boolean.getBoolean(UPDATE_ONLY_INCOMPATIBLE_PLUGINS_PROPERTY)) {
         partitionNonBundled(candidatePlugins, pluginsToDownload, pluginsToMigrate, descriptor -> {
           var brokenVersions = brokenPluginVersions != null ? brokenPluginVersions.get(descriptor.getPluginId()) : null;
