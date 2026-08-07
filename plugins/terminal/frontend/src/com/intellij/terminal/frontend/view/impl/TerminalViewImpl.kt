@@ -72,7 +72,6 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.terminal.TerminalPanelMarker
-import org.jetbrains.plugins.terminal.TerminalToolWindowFactory
 import org.jetbrains.plugins.terminal.block.completion.ShellCommandSpecsManagerImpl
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.TerminalCommandCompletionServices
 import org.jetbrains.plugins.terminal.block.output.TerminalOutputEditorInputMethodSupport
@@ -250,6 +249,11 @@ class TerminalViewImpl(
       sessionDeferred,
     )
 
+    // Should be created before "configureOutputEditor" is called where mouse reporting is configured (TerminalMouseEventsHandlerImpl).
+    // To make mouse events first handled by hyperlinks logic and only then reported to the process.
+    val alternateBufferDecorationApplier = createEditorTextDecorationApplier(
+      alternateBufferEditor, coroutineScope.asDisposable(), consumeOnlyOnCtrlClick = true,
+    )
     configureOutputEditor(
       project,
       editor = alternateBufferEditor,
@@ -297,6 +301,11 @@ class TerminalViewImpl(
       sessionDeferred,
     )
 
+    // Should be created before "configureOutputEditor" is called where mouse reporting is configured (TerminalMouseEventsHandlerImpl).
+    // To make mouse events first handled by hyperlinks logic and only then reported to the process.
+    val outputDecorationApplier = createEditorTextDecorationApplier(
+      outputEditor, coroutineScope.asDisposable(), consumeOnlyOnCtrlClick = true,
+    )
     configureOutputEditor(
       project,
       editor = outputEditor,
@@ -369,8 +378,6 @@ class TerminalViewImpl(
     // Configure hyperlinks' processing.
     // The filter-based and OSC8 hyperlinks of an editor must share a single decoration applier,
     // because its click/hover handling operates on editor-global markup.
-    val outputDecorationApplier = createEditorTextDecorationApplier(outputEditor, coroutineScope.asDisposable())
-    val alternateBufferDecorationApplier = createEditorTextDecorationApplier(alternateBufferEditor, coroutineScope.asDisposable())
     coroutineScope.launch {
       val eelDescriptor = sessionDeferred.await().eelDescriptor
       outputBufferHyperlinksFacade = installHyperlinksProcessing(

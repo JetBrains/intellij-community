@@ -58,11 +58,21 @@ internal class EditorHyperlinkInteraction(
 
   /**
    * @param link a highlighter that is already in the editor, expected to be valid
+   * @param consumeOnlyOnCtrlClick if `true`, [event] is consumed only when the Ctrl/Cmd modifier key was pressed.
+   * A plain click is left unconsumed, so it still reaches other listeners.
+   * By default, consume the event not taking modifiers into account.
    */
+  @JvmOverloads
   @RequiresEdt(generateAssertion = false)
-  fun followLink(link: RangeHighlighterEx, event: EditorMouseEvent, action: () -> Unit) {
-    if (effectSupplier.isInvisibleLink(link) && !event.isCtrlPressed) {
-      hintManager.showHint(link, event, action)
+  fun followLink(
+    link: RangeHighlighterEx,
+    event: EditorMouseEvent,
+    consumeOnlyOnCtrlClick: Boolean = false,
+    action: () -> Unit
+  ) {
+    val ctrlPressed = event.isCtrlPressed
+    if (effectSupplier.isInvisibleLink(link) && !ctrlPressed) {
+      hintManager.showHint(link, event, consumeOnHintOpen = !consumeOnlyOnCtrlClick, action)
     }
     else {
       action()
@@ -70,7 +80,9 @@ internal class EditorHyperlinkInteraction(
       if (effectSupplier.isInvisibleLink(link)) {
         EditorHyperlinkUsageCollector.logInvisibleHyperlinkFollowed(HyperlinkFollowedPlace.EDITOR_LINK_CTRL_CLICKED)
       }
-      event.consume()
+      if (!consumeOnlyOnCtrlClick || ctrlPressed) {
+        event.consume()
+      }
     }
   }
 
@@ -189,7 +201,7 @@ internal class EditorHyperlinkInteraction(
 private fun defaultFollowedHyperlinkAttributes(): TextAttributes =
   EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.FOLLOWED_HYPERLINK_ATTRIBUTES)
 
-private val EditorMouseEvent.isCtrlPressed: Boolean
+internal val EditorMouseEvent.isCtrlPressed: Boolean
   get() = if (localEel.platform.isMac) mouseEvent.isMetaDown else mouseEvent.isControlDown
 
 private val KeyEvent.isCtrlOnly: Boolean

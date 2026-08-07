@@ -13,6 +13,10 @@ internal class TerminalMouseEventsHandlerImpl(
   private val session: Deferred<TerminalSession>,
 ) : TerminalMouseEventsHandler {
   override fun onMouseEvent(x: Int, y: Int, event: MouseEvent) {
+    // Some other handler may already consume this event, for example, hyperlinks logic.
+    // Do not send a mouse report to the process in this case.
+    if (event.isConsumed) return
+
     val terminalSession = session.getNow() ?: return
     val encodedEvent = terminalSession.processMouseEvent(
       event,
