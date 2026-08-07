@@ -158,7 +158,13 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
     for (Runnable action : myResetActions) {
       action.run();
     }
-    DaemonCodeAnalyzer.getInstance(myProject).restart(this);
+
+    if (!myProject.isDisposed()) {
+      DaemonCodeAnalyzer daemonCodeAnalyzer = myProject.getServiceIfCreated(DaemonCodeAnalyzer.class);
+      if (daemonCodeAnalyzer != null) {
+        daemonCodeAnalyzer.restart(this);
+      }
+    }
   }
 
   @Override
