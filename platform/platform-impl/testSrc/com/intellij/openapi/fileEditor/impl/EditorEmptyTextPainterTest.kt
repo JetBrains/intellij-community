@@ -22,6 +22,7 @@ import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.impl.finishEmptyEditorStartupBeforeProjectView
 import com.intellij.openapi.project.impl.presentProjectViewOnStartup
+import com.intellij.openapi.project.impl.shouldRestoreStartupEditorFocus
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.LightVirtualFile
@@ -954,6 +955,20 @@ internal class EditorEmptyTextPainterTest {
     )
 
     assertThat(events).containsExactly("activated")
+  }
+
+  @Test
+  fun startupEditorFocusIsRestoredOnlyWhenProjectViewTookIt() {
+    val startupFocusOwner = object : JPanel() {
+      override fun isShowing(): Boolean = true
+    }
+    val projectView = JPanel()
+    val projectViewFocusOwner = JPanel().also { projectView.add(it) }
+
+    assertThat(shouldRestoreStartupEditorFocus(startupFocusOwner, projectViewFocusOwner, projectView)).isTrue()
+    assertThat(shouldRestoreStartupEditorFocus(startupFocusOwner, null, projectView)).isTrue()
+    assertThat(shouldRestoreStartupEditorFocus(startupFocusOwner, JPanel(), projectView)).isFalse()
+    assertThat(shouldRestoreStartupEditorFocus(JPanel(), projectViewFocusOwner, projectView)).isFalse()
   }
 
   @Test

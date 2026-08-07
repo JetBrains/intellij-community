@@ -50,10 +50,13 @@ import com.intellij.openapi.project.ReadmeShownUsageCollector.README_OPENED_ON_S
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.project.isNotificationSilentMode
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.ActionCallback
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.await
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
@@ -108,8 +111,10 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.ApiStatus
+import java.awt.Component
 import java.awt.Dimension
 import java.awt.Frame
+import java.awt.KeyboardFocusManager
 import java.awt.Rectangle
 import java.awt.event.WindowEvent
 import java.awt.event.WindowStateListener
@@ -118,6 +123,7 @@ import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.JFrame
+import javax.swing.SwingUtilities
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.resume
 import kotlin.math.min
@@ -894,22 +900,77 @@ private suspend fun openProjectViewIfNeeded(project: Project, toolWindowInitJob:
 
   // todo should we use `runOnceForProject(project, "OpenProjectViewOnStart")` or not?
   val toolWindowManager = project.serviceAsync<ToolWindowManager>()
-  withContext(Dispatchers.ui(CoroutineSupport.UiDispatcherKind.STRICT)) {
+  val focusRestore = withContext(Dispatchers.ui(CoroutineSupport.UiDispatcherKind.STRICT)) outer@{
     if (toolWindowManager.activeToolWindowId == null) {
+      val shouldFocusProjectView = focusProjectView()
+      val focusOwner = if (!shouldFocusProjectView && !AppMode.isRemoteDevHost()) {
+        KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner
+      }
+      else {
+        null
+      }
       val toolWindow = toolWindowManager.getToolWindow(ToolWindowId.PROJECT_VIEW)
       if (toolWindow != null) {
         // maybe readAction
-        withContext(Dispatchers.EDT) {
+        return@outer withContext(Dispatchers.EDT) {
           presentProjectViewOnStartup(
-            focusProjectView = focusProjectView() && !AppMode.isRemoteDevHost(),
+            focusProjectView = shouldFocusProjectView && !AppMode.isRemoteDevHost(),
             showProjectView = { toolWindow.show(null) },
             activateProjectView = { toolWindow.activate(null, true) },
           )
+          focusOwner?.let { ProjectViewStartupFocusRestore(toolWindow, it, toolWindow.getReady(PROJECT_VIEW_STARTUP_REQUESTOR)) }
         }
       }
     }
+    null
+  }
+
+  if (focusRestore != null) {
+    try {
+      withTimeoutOrNull(PROJECT_VIEW_STARTUP_READY_TIMEOUT) {
+        focusRestore.ready.await()
+      }
+    }
+    catch (e: CancellationException) {
+      throw e
+    }
+    catch (e: RuntimeException) {
+      logger<ProjectFrameAllocator>().warn("Project view did not become ready while preserving startup editor focus", e)
+    }
+    withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      restoreStartupEditorFocus(project, focusRestore)
+    }
   }
 }
+
+@RequiresEdt
+private fun restoreStartupEditorFocus(project: Project, restore: ProjectViewStartupFocusRestore) {
+  val focusOwner = restore.focusOwner
+  val currentFocusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner
+  if (!shouldRestoreStartupEditorFocus(focusOwner, currentFocusOwner, restore.toolWindow.component)) {
+    return
+  }
+  IdeFocusManager.getInstance(project).requestFocusInProject(focusOwner, project)
+}
+
+/** Keeps a later user focus choice, while repairing focus stolen by Project view initialization. */
+internal fun shouldRestoreStartupEditorFocus(
+  startupFocusOwner: Component,
+  currentFocusOwner: Component?,
+  projectViewComponent: Component,
+): Boolean {
+  return startupFocusOwner.isShowing &&
+         (currentFocusOwner == null || SwingUtilities.isDescendingFrom(currentFocusOwner, projectViewComponent))
+}
+
+private data class ProjectViewStartupFocusRestore(
+  @JvmField val toolWindow: ToolWindow,
+  @JvmField val focusOwner: Component,
+  @JvmField val ready: ActionCallback,
+)
+
+private const val PROJECT_VIEW_STARTUP_REQUESTOR = "project view startup"
+private val PROJECT_VIEW_STARTUP_READY_TIMEOUT = 5.seconds
 
 /**
  * Focuses the Project view that [openProjectViewIfNeeded] showed without activation, because the editor area's empty state claimed that
