@@ -182,5 +182,6 @@ enum class GradleStatisticsEventGroups {
     KotlinFeatures,
     GradlePerformance,
     UseScenarios,
-    BuildReports
+    BuildReports,
+    JsTestBrowser,
 }

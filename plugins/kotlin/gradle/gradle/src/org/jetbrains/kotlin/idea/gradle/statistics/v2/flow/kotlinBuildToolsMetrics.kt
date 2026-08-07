@@ -65,6 +65,19 @@ enum class KotlinBuildToolFusMetricName(val metric: KotlinBuildToolFusMetric<*>)
     JS_ES_TARGET(ConcatenatedAllowedListValuesStringFusMetric("JS_ES_TARGET", listOf("es5", "es2015", "default"))),
     JS_MODULE_SYSTEM(ConcatenatedAllowedListValuesStringFusMetric("JS_MODULE_SYSTEM", listOf("plain", "amd", "commonjs", "umd", "es", "default"))),
 
+    JS_TEST_BROWSER_TYPE(ConcatenatedAllowedListValuesStringFusMetric("JS_TEST_BROWSER_TYPE", listOf("chromium", "firefox", "webkit"))),
+    JS_TEST_BROWSER_CHANGED_OPTION(
+        ConcatenatedAllowedListValuesStringFusMetric(
+            "JS_TEST_BROWSER_CHANGED_OPTION",
+            listOf(
+                "testsLocation",
+                "headless",
+                "launchArgs",
+                "launchEnvironmentVariables",
+                "customBrowserExecutable"
+            )
+        )
+    ),
     NPM_PUBLISH_PLUGIN_ENABLED(KotlinBuildToolBooleanFusMetric("NPM_PUBLISH_PLUGIN_ENABLED")),
     ENABLED_COMPILER_PLUGIN_JS_PLAIN_OBJECTS(KotlinBuildToolBooleanFusMetric("ENABLED_COMPILER_PLUGIN_JS_PLAIN_OBJECTS")),
 

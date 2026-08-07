@@ -149,5 +149,12 @@ val kotlinBuildToolsFusEvenList = listOf(
             KotlinBuildToolFusMetricName.HTTP_BUILD_REPORT,
             KotlinBuildToolFusMetricName.BUILD_SCAN_BUILD_REPORT
         )
+    ),
+
+    FusFlowSendingStep(
+        GradleStatisticsEventGroups.JsTestBrowser, listOf(
+            KotlinBuildToolFusMetricName.JS_TEST_BROWSER_TYPE,
+            KotlinBuildToolFusMetricName.JS_TEST_BROWSER_CHANGED_OPTION,
+        )
     )
 )
