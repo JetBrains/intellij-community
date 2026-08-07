@@ -37,6 +37,16 @@
             forClass="org.jetbrains.kotlin.psi.KtStringTemplateExpression"
             implementationClass="org.jetbrains.kotlin.psi.psiUtil.KtStringTemplateExpressionManipulator"/>
 
+    <fileType.fileViewProviderFactory filetype="kotlin_builtins" implementationClass="com.intellij.psi.ClassFileViewProviderFactory"/>
+    <filetype.stubBuilder filetype="kotlin_builtins" implementationClass="com.intellij.psi.impl.compiled.ClassFileStubBuilder"/>
+    <filetype.decompiler filetype="kotlin_builtins" implementationClass="com.intellij.psi.impl.compiled.ClassFileDecompiler"/>
+
+    <!-- since 192 use light service @Service instead of this declaration -->
+    <applicationService serviceImplementation="org.jetbrains.kotlin.analysis.decompiler.stub.file.ClsKotlinBinaryClassCache"/>
+
+    <applicationService serviceImplementation="org.jetbrains.kotlin.load.kotlin.KotlinBinaryClassCache"/>
+
+    <projectService serviceImplementation="org.jetbrains.kotlin.analysis.decompiled.light.classes.ClsJavaStubByVirtualFileCache"/>
   </extensions>
   <extensions defaultExtensionNs="com.intellij.jvm">
     <declarationSearcher language="kotlin" implementationClass="org.jetbrains.kotlin.idea.KotlinDeclarationSearcher"/>

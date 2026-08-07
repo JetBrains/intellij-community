@@ -31,8 +31,6 @@
   <!-- comes from the Kotlin compiler -->
   <xi:include href="/META-INF/analysis-api/analysis-api-fir.xml"/>
 
-  <xi:include href="/META-INF/caches.xml"/>
-
   <content namespace="jetbrains">
     <module name="intellij.kotlin.base.projectModel" loading="required"/>
     <module name="intellij.kotlin.base.analysis.platform"/>

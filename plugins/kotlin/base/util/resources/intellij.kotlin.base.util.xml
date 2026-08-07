@@ -24,4 +24,19 @@
     <module name="intellij.platform.util.ui"/>
   </dependencies>
   <!-- endregion -->
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey
+            key="kotlin.caches.fine.grained.entity.validation"
+            description="Allow a fine grained cache entity validation"
+            defaultValue="true"
+            restartRequired="true"
+    />
+
+    <registryKey
+            key="kotlin.caches.fine.grained.throttling.timeout.ms"
+            description="Minimal time in ms between two successive invalidations of the same cache on low memory"
+            defaultValue="5000"
+            restartRequired="true"
+    />
+  </extensions>
 </idea-plugin>
