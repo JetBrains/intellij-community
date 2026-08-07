@@ -105,8 +105,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     val initialPluginUpdateSourceStates = collectInitialPluginUpdateSources()
     session.pluginUpdateSourceStates.putAll(initialPluginUpdateSourceStates)
     return InitSessionResult(initialPluginState.visiblePlugins,
-                             session.pluginStates.mapValues { it.value?.isEnabled },
-                             initialPluginUpdateSourceStates)
+                             session.pluginStates.mapValues { it.value?.isEnabled })
   }
 
   override suspend fun getVisiblePlugins(showImplementationDetails: Boolean): List<PluginUiModel> {

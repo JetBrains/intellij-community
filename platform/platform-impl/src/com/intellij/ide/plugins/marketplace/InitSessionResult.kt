@@ -3,7 +3,6 @@ package com.intellij.ide.plugins.marketplace
 
 import com.intellij.ide.plugins.api.PluginDto
 import com.intellij.ide.plugins.newui.PluginUiModel
-import com.intellij.ide.plugins.newui.PluginUpdateSourceState
 import com.intellij.openapi.extensions.PluginId
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -14,7 +13,6 @@ import org.jetbrains.annotations.ApiStatus
 data class InitSessionResult(
   @Transient val visiblePlugins: List<PluginUiModel> = emptyList(),
   val pluginStates: Map<PluginId, Boolean?> = emptyMap(),
-  val pluginUpdateSourceStates: Map<PluginId, PluginUpdateSourceState> = emptyMap(),
   val visiblePluginDtos: List<PluginDto> = visiblePlugins.map { plugin -> PluginDto.fromModel(plugin, true) },
 ) {
   fun getVisiblePluginsList(): List<PluginUiModel> = visiblePlugins.ifEmpty { visiblePluginDtos }
