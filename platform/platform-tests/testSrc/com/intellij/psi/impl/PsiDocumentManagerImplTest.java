@@ -979,13 +979,14 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
 
   @IJIgnore(issue = "IJPL-252062")
   public void testDoNotLeakForgottenUncommittedDocument() throws Exception {
-    ApplicationManager.getApplication().executeOnPooledThread(() -> ReadAction.compute(() -> {
+    Future<GCWatcher> f = ApplicationManager.getApplication().executeOnPooledThread(() -> ReadAction.compute(() -> {
       Document document = createFreeThreadedDocument();
       document.insertString(0, " ");
       assertTrue(getPsiDocumentManager().isUncommited(document));
       assertSameElements(getPsiDocumentManager().getUncommittedDocuments(), document);
       return GCWatcher.tracking(document);
-    })).get().ensureCollected();
+    }));
+    PlatformTestUtil.waitForFuture(f).ensureCollected();
 
     assertEmpty(getPsiDocumentManager().getUncommittedDocuments());
   }
