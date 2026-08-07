@@ -1479,6 +1479,8 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("jetbrains.mlapi.catboost"),
     jetbrainsLibrary("jetbrains.mlapi.catboost.shadow.need.slf4j"),
     jetbrainsLibrary("jetbrains.mlapi.core"),
+    jetbrainsLibrary("jetbrains.patronus.codeowners.lib.core"),
+    jetbrainsLibrary("jetbrains.patronus.codeowners.lib.serialization"),
     jetbrainsLibrary("jshell-frontend"),
     jetbrainsLibrary("jvm-native-trusted-roots"),
     jetbrainsLibrary("kotlin-gradle-plugin-idea"),

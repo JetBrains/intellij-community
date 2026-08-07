@@ -1,0 +1,36 @@
+### auto-generated section `iml intellij.codeowners` start
+exports_files([
+  "intellij.codeowners.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.codeowners` end
+
+### auto-generated section `build intellij.codeowners` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "codeowners_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "codeowners",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":codeowners_resources"],
+  exports = [
+    "@lib//:codeowners-jetbrains-patronus-codeowners-lib-core",
+    "@lib//:codeowners-jetbrains-patronus-codeowners-lib-serialization",
+  ],
+  runtime_deps = [
+    "@lib//:codeowners-jetbrains-patronus-codeowners-lib-core",
+    "@lib//:codeowners-jetbrains-patronus-codeowners-lib-serialization",
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
+    "@lib//:slf4j-api",
+    "@lib//:squareup-okio-jvm",
+    "@lib//:slf4j-jdk14",
+  ]
+)
+### auto-generated section `build intellij.codeowners` end
