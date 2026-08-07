@@ -19,4 +19,7 @@ internal class BackendProjectViewPaneService(
   companion object {
     fun getInstance(project: Project): BackendProjectViewPaneService = project.service()
   }
+
+  override val isFrontend: Boolean
+    get() = false
 }

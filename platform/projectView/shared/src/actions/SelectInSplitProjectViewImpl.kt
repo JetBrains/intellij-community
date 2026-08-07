@@ -111,7 +111,7 @@ private data class SelectOpenedFileTask(
   private val invokedManually: Boolean,
 ) : SelectTask() {
   override suspend fun select() {
-    val paneId = ProjectViewToolWindowService.getInstance(project).currentPaneId ?: return
+    val paneDescriptor = ProjectViewToolWindowService.getInstance(project).currentPaneDescriptor ?: return
     val aggregator = FrontendProjectViewPaneAggregator.getInstance(project)
     withContext(Dispatchers.EDT) { // "thanks" to a ton of legacy API (like FileEditor.isValid), we need both EDT and read action here
       val fileEditors = fileEditors()
@@ -128,7 +128,7 @@ private data class SelectOpenedFileTask(
         }
         val nodePath = withTimeoutOrNull(15.seconds) {
           LOG.debug { "Looking for the node to select for $fileEditor" }
-          aggregator.findNodeForOpenedFile(paneId, editorChoice, invokedManually)
+          aggregator.findNodeForOpenedFile(paneDescriptor, editorChoice, invokedManually)
         }
         LOG.debug { "Found the node to select: $nodePath" }
         if (nodePath != null) {

@@ -49,10 +49,10 @@ internal suspend fun <T> withProjectViewPane(
   block: suspend (ProjectViewPaneTester) -> T,
 ): T = coroutineScope {
   val aggregator = FrontendProjectViewPaneAggregator.getInstance(project)
-  val descriptors = aggregator.getPaneDescriptorsFlow().first { it.isNotEmpty() }
-  val descriptor = descriptors.firstOrNull { it.id.idString == paneIdString }
-                   ?: error("No Project View pane '$paneIdString'. Available: ${descriptors.map { it.id.idString }}")
-  val paneId = descriptor.id
+  val descriptors = aggregator.getPaneDescriptorsFlow().first { descriptors ->
+    descriptors.any { it.id.idString == paneIdString }
+  }
+  val descriptor = descriptors.first { it.id.idString == paneIdString }
   val model = FrontendProjectViewPaneTreeModel(project, descriptor)
 
   // Harness-owned progress signal, bumped once per applied event, so the tester can await population.
@@ -61,14 +61,14 @@ internal suspend fun <T> withProjectViewPane(
   val pumps = childScope("ProjectViewPaneTestHarness pumps")
   // Consumer loop (EDT-confined): apply backend events into the tree model.
   pumps.launch(Dispatchers.EDT) {
-    aggregator.getPaneStateFlow(paneId).collect { event ->
+    aggregator.getPaneStateFlow(descriptor).collect { event ->
       model.applyStateChange(event)
       applied.update { it + 1 }
     }
   }
   // Request loop (off-EDT): forward outbound requests (load-children/navigate/...) to the backend.
   pumps.launch {
-    val out = aggregator.getPaneRequestChannel(paneId)
+    val out = aggregator.getPaneRequestChannel(descriptor)
     for (request in model.requestChannel) {
       out.send(request)
     }

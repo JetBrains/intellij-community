@@ -4,6 +4,7 @@ package com.intellij.platform.projectView.frontend.pane
 import com.intellij.ide.SelectInTarget
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.projectView.actions.ProjectViewActionSupport
+import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorImpl
 import com.intellij.platform.projectView.pane.ProjectViewPaneId
 import com.intellij.platform.projectView.pane.ProjectViewPaneRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneStateEvent
@@ -15,7 +16,7 @@ import javax.swing.JComponent
 
 @ApiStatus.Internal
 interface FrontendProjectViewPane {
-  val id: ProjectViewPaneId
+  val descriptor: ProjectViewPaneDescriptorImpl
 
   val displayName: @NlsSafe String
 
@@ -41,3 +42,7 @@ interface FrontendProjectViewPane {
   
   fun getOptionSupport(): ProjectViewActionSupport
 }
+
+@get:ApiStatus.Internal
+val FrontendProjectViewPane.id: ProjectViewPaneId
+  get() = descriptor.id

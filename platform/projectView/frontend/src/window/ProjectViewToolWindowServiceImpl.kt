@@ -26,8 +26,10 @@ import com.intellij.platform.projectView.frontend.actions.ProjectViewActionSuppo
 import com.intellij.platform.projectView.frontend.actions.SplitProjectViewAutoscrollFromSource
 import com.intellij.platform.projectView.frontend.impl.TreeBasedFrontendProjectViewPane
 import com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPane
+import com.intellij.platform.projectView.frontend.pane.id
 import com.intellij.platform.projectView.pane.FrontendProjectViewPaneAggregator
 import com.intellij.platform.projectView.pane.ProjectViewNodePath
+import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorImpl
 import com.intellij.platform.projectView.pane.ProjectViewPaneId
 import com.intellij.platform.projectView.pane.projectViewPaneId
 import com.intellij.platform.projectView.window.ProjectViewToolWindowService
@@ -92,8 +94,8 @@ internal class ProjectViewToolWindowServiceImpl(
   }
   private val optionService = ProjectViewActionSupportImpl(currentPaneMutableFlow)
 
-  override val currentPaneId: ProjectViewPaneId?
-    get() = currentPaneMutableFlow.value?.id
+  override val currentPaneDescriptor: ProjectViewPaneDescriptorImpl?
+    get() = currentPaneMutableFlow.value?.descriptor
 
   override fun getActionSupport(): ProjectViewActionSupport = optionService
 
@@ -123,7 +125,7 @@ internal class ProjectViewToolWindowServiceImpl(
           for (descriptor in paneDescriptors) {
             managementScope.launch(CoroutineName("Manage PV pane ${descriptor.id}")) {
               try {
-                LOG.debug { "Initializing pane ${descriptor.id}" }
+                LOG.debug { "Initializing pane ${descriptor.id}, descriptor = $descriptor" }
                 val pane = withContext(Dispatchers.UI) {
                   TreeBasedFrontendProjectViewPane(project, descriptor)
                 }
@@ -223,7 +225,7 @@ internal class ProjectViewToolWindowServiceImpl(
           if (currentPane == pane) {
             LOG.debug { "The pane ${pane.id} is selected, starting to collect its updates"}
             try {
-              aggregator.getPaneStateFlow(pane.id).collect { event ->
+              aggregator.getPaneStateFlow(pane.descriptor).collect { event ->
                 try {
                   LOG.trace { "Update pane state for ${pane.id}: $event" }
                   pane.applyStateChange(event)
@@ -251,7 +253,7 @@ internal class ProjectViewToolWindowServiceImpl(
       launch(CoroutineName("Pane ${pane.id} requests to the backend")) {
         LOG.debug { "Sending pane requests for ${pane.id}" }
         try {
-          val outChannel = aggregator.getPaneRequestChannel(pane.id)
+          val outChannel = aggregator.getPaneRequestChannel(pane.descriptor)
           for (request in pane.requestChannel) {
             try {
               LOG.trace { "Sent request for pane ${pane.id}: $request" }
@@ -282,12 +284,12 @@ internal class ProjectViewToolWindowServiceImpl(
     newPane: FrontendProjectViewPane,
   ): Content {
     val contentManager = toolWindow.contentManager
-    val oldContent = findOldContent(contentManager, newPane.id)
-    val wasSelected = oldContent != null && contentManager.isSelected(oldContent)
-    // This has to be done now so the content is removed and added in a single EDT event.
-    // The old pane's job will be canceled when the content is disposed.
-    if (oldContent != null) {
-      LOG.debug { "There's already a pane with ID = ${newPane.id}, removing its content before adding the new one" }
+    var wasSelected = false
+    findOldContentAndPane(contentManager, newPane.id)?.let { (oldContent, oldPane) ->
+      wasSelected = contentManager.isSelected(oldContent)
+      // This has to be done now so the content is removed and added in a single EDT event.
+      // The old pane's job will be canceled when the content is disposed.
+      LOG.debug { "Replacing the pane with ID = ${newPane.id}: old descriptor = ${oldPane.descriptor}, new descriptor = ${newPane.descriptor}" }
       contentManager.removeContent(oldContent, true)
     }
 
@@ -325,11 +327,11 @@ internal class ProjectViewToolWindowServiceImpl(
     return newContent
   }
 
-  private fun findOldContent(contentManager: ContentManager, id: ProjectViewPaneId): Content? {
+  private fun findOldContentAndPane(contentManager: ContentManager, id: ProjectViewPaneId): Pair<Content, FrontendProjectViewPane>? {
     for (i in 0 until contentManager.contentCount) {
       val content = contentManager.getContent(i) ?: continue
       val pane = content.getUserData(PANE_KEY) ?: continue
-      if (pane.id == id) return content
+      if (pane.id == id) return Pair(content, pane)
     }
     return null
   }

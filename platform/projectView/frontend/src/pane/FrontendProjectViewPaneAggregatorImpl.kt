@@ -1,6 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:OptIn(ExperimentalAtomicApi::class)
+
 package com.intellij.platform.projectView.frontend.pane
 
+import com.intellij.idea.AppMode
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.project.projectId
@@ -8,7 +11,6 @@ import com.intellij.platform.projectView.actions.EditorChoice
 import com.intellij.platform.projectView.pane.FrontendProjectViewPaneAggregator
 import com.intellij.platform.projectView.pane.ProjectViewNodePath
 import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorImpl
-import com.intellij.platform.projectView.pane.ProjectViewPaneId
 import com.intellij.platform.projectView.pane.ProjectViewPaneRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneStateEvent
 import com.intellij.platform.projectView.pane.SelectInRequestDTO
@@ -21,6 +23,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlin.concurrent.atomics.AtomicBoolean
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
 
 internal class FrontendProjectViewPaneAggregatorImpl(
   private val project: Project,
@@ -31,70 +35,63 @@ internal class FrontendProjectViewPaneAggregatorImpl(
 
   private suspend fun backendService(): ProjectViewRpc = ProjectViewRpc.getInstance()
   
-  private val paneDescriptors = MutableStateFlow<Collection<AggregatedDescriptor>>(emptyList())
+  private val paneDescriptors = MutableStateFlow<Collection<ProjectViewPaneDescriptorImpl>>(emptyList())
   
+  private val isBackendLoaded = AtomicBoolean(false)
+
   init {
     coroutineScope.launch(CoroutineName("PV pane descriptors fetching")) {
-      val frontendDescriptors = frontendService().getPaneDescriptors().associate {
-        it.id to AggregatedDescriptor(it, isFrontend = true)
+      val frontendDescriptors = frontendService().getPaneDescriptors().associateBy { it.id }
+      if (!AppMode.isMonolith()) { // in the monolith mode, the backend is immediately available, no point loading light panes
+        paneDescriptors.value = frontendDescriptors.values
       }
-      paneDescriptors.value = frontendDescriptors.values
-      LOG.info("Loaded the frontend PV pane descriptors: ${frontendDescriptors.values.joinToString { it.descriptor.id.idString }}")
-      val backendDescriptors = backendService().getPaneDescriptors(project.projectId()).associate {
-        it.id to AggregatedDescriptor(it, isFrontend = false)
-      }
-      LOG.info("Loaded the backend PV pane descriptors: ${backendDescriptors.values.joinToString { it.descriptor.id.idString }}")
+      LOG.info("Loaded the frontend PV pane descriptors: ${frontendDescriptors.values.joinToString { it.id.idString }}")
+      val backendDescriptors = backendService().getPaneDescriptors(project.projectId()).associateBy { it.id }
+      LOG.info("Loaded the backend PV pane descriptors: ${backendDescriptors.values.joinToString { it.id.idString }}")
       paneDescriptors.value = (frontendDescriptors + backendDescriptors).values
+      isBackendLoaded.store(true)
     }
   }
 
   override suspend fun getPaneDescriptorsFlow(): Flow<Collection<ProjectViewPaneDescriptorImpl>> {
-    return paneDescriptors.asStateFlow().map { descriptors -> descriptors.map { it.descriptor } }
+    return paneDescriptors.asStateFlow()
   }
 
-  override suspend fun getPaneStateFlow(paneId: ProjectViewPaneId): Flow<ProjectViewPaneStateEvent> {
-    return if (isFrontendPane(paneId)) {
-      frontendService().getPaneStateFlow(paneId)
+  override suspend fun getPaneStateFlow(paneDescriptor: ProjectViewPaneDescriptorImpl): Flow<ProjectViewPaneStateEvent> {
+    return if (paneDescriptor.isFrontend) {
+      frontendService().getPaneStateFlow(paneDescriptor.id)
     }
     else {
-      backendService().getPaneStateFlow(project.projectId(), paneId).map { it.toEvent() }
+      backendService().getPaneStateFlow(project.projectId(), paneDescriptor.id).map { it.toEvent() }
     }
   }
 
-  override suspend fun getPaneRequestChannel(paneId: ProjectViewPaneId): SendChannel<ProjectViewPaneRequest> {
-    return if (isFrontendPane(paneId)) {
-      frontendService().getPaneRequestChannel(paneId)
+  override suspend fun getPaneRequestChannel(paneDescriptor: ProjectViewPaneDescriptorImpl): SendChannel<ProjectViewPaneRequest> {
+    return if (paneDescriptor.isFrontend) {
+      frontendService().getPaneRequestChannel(paneDescriptor.id)
     }
     else {
-      backendService().getPaneRequestChannel(project.projectId(), paneId)
+      backendService().getPaneRequestChannel(project.projectId(), paneDescriptor.id)
     }
   }
 
-  override suspend fun findNodeForOpenedFile(paneId: ProjectViewPaneId, editorChoice: EditorChoice, isInvokedManually: Boolean): ProjectViewNodePath? {
-    return if (isFrontendPane(paneId)) {
-      frontendService().findNodeForOpenedFile(paneId, editorChoice, isInvokedManually)
+  override suspend fun findNodeForOpenedFile(paneDescriptor: ProjectViewPaneDescriptorImpl, editorChoice: EditorChoice, isInvokedManually: Boolean): ProjectViewNodePath? {
+    return if (paneDescriptor.isFrontend) {
+      frontendService().findNodeForOpenedFile(paneDescriptor.id, editorChoice, isInvokedManually)
     }
     else {
-      backendService().findNodeForOpenedFile(project.projectId(), paneId, editorChoice, isInvokedManually)
+      backendService().findNodeForOpenedFile(project.projectId(), paneDescriptor.id, editorChoice, isInvokedManually)
     }
-  }
-
-  private fun isFrontendPane(paneId: ProjectViewPaneId): Boolean {
-    val descriptors = paneDescriptors.value.filter { it.descriptor.id == paneId }
-    return descriptors.all { it.isFrontend } // when we have a mix, the backend wins
   }
 
   override suspend fun findNodeForSelectIn(selectInRequest: SelectInRequestDTO): ProjectViewNodePath? {
-    // Select-In doesn't carry a pane id, so ask the frontend panes first (their live @Transient context survives in-process),
-    // and fall back to the backend when no frontend pane owns the requested target.
-    return frontendService().findNodeForSelectIn(selectInRequest)
-           ?: backendService().findNodeForSelectIn(project.projectId(), selectInRequest)
+    return if (isBackendLoaded.load()) {
+      backendService().findNodeForSelectIn(project.projectId(), selectInRequest)
+    }
+    else {
+      frontendService().findNodeForSelectIn(selectInRequest)
+    }
   }
 }
-
-private data class AggregatedDescriptor(
-  val descriptor: ProjectViewPaneDescriptorImpl,
-  val isFrontend: Boolean,
-)
 
 private val LOG = logger<FrontendProjectViewPaneAggregatorImpl>()

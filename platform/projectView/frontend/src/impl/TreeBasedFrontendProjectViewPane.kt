@@ -107,8 +107,8 @@ internal class TreeBasedFrontendProjectViewPane(
     }
   }
 
-  override val id: ProjectViewPaneId
-    get() = paneTreeModel.descriptor.id
+  override val descriptor: ProjectViewPaneDescriptorImpl
+    get() = paneTreeModel.descriptor
 
   override val displayName: @NlsSafe String
     get() = paneTreeModel.descriptor.presentableName

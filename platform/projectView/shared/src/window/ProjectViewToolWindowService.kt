@@ -6,7 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.platform.projectView.actions.ProjectViewActionSupport
 import com.intellij.platform.projectView.pane.ProjectViewNodePath
-import com.intellij.platform.projectView.pane.ProjectViewPaneId
+import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorImpl
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
 
@@ -16,7 +16,7 @@ interface ProjectViewToolWindowService {
     @JvmStatic fun getInstance(project: Project): ProjectViewToolWindowService = project.service()
   }
 
-  val currentPaneId: ProjectViewPaneId?
+  val currentPaneDescriptor: ProjectViewPaneDescriptorImpl?
 
   @RequiresEdt
   fun setupToolWindow(toolWindow: ToolWindow)

@@ -16,6 +16,7 @@ internal data class ProjectViewPaneIdImpl(
 @Serializable
 data class ProjectViewPaneDescriptorImpl(
   val id: ProjectViewPaneId,
+  val isFrontend: Boolean,
   val presentableName: @NlsSafe String,
   val order: Int,
   val isDefault: Boolean,
@@ -24,6 +25,7 @@ data class ProjectViewPaneDescriptorImpl(
 
 @ApiStatus.Internal
 class ProjectViewPaneDescriptorBuilderImpl : ProjectViewPaneDescriptorBuilder {
+  var isFrontend: Boolean = false
   private var isDefault = false
   private val selectInTargets = mutableListOf<SelectInTargetDescriptor>()
 
@@ -46,6 +48,7 @@ class ProjectViewPaneDescriptorBuilderImpl : ProjectViewPaneDescriptorBuilder {
   ): ProjectViewPaneDescriptor {
     return ProjectViewPaneDescriptorImpl(
       id = id,
+      isFrontend = isFrontend,
       presentableName = presentableName,
       order = order,
       isDefault = isDefault,

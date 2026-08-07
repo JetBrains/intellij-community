@@ -45,12 +45,14 @@ interface ProjectViewPaneProvider {
 
 @OptIn(ExperimentalAtomicApi::class)
 @ApiStatus.Internal
-open class ProjectViewPaneService(
+abstract class ProjectViewPaneService(
   private val project: Project,
   coroutineScope: CoroutineScope,
   private val getProviders: () -> List<ProjectViewPaneProvider>,
   private val debugName: String = "ProjectViewPaneService",
 ) {
+  
+  protected abstract val isFrontend: Boolean
 
   private val managers = AtomicReference<Map<ProjectViewPaneId, ProjectViewPaneManager>?>(null)
   
@@ -64,6 +66,13 @@ open class ProjectViewPaneService(
     }
     managers.store(result)
     result
+  }
+
+  private suspend fun createProjectViewPaneManager(pane: ProjectViewPaneModel): ProjectViewPaneManager {
+    val builder = ProjectViewPaneDescriptorBuilderImpl()
+    builder.isFrontend = isFrontend
+    val descriptor = pane.describe(builder)
+    return ProjectViewPaneManager(pane, descriptor as ProjectViewPaneDescriptorImpl)
   }
 
   init {
@@ -111,11 +120,6 @@ open class ProjectViewPaneService(
     val selectInRequest = selectInRequestDTO.toSelectInRequest(project) ?: return null
     return manager.pane.findNodeForSelectIn(selectInRequest)
   }
-}
-
-private suspend fun createProjectViewPaneManager(pane: ProjectViewPaneModel): ProjectViewPaneManager {
-  val descriptor = pane.describe(ProjectViewPaneDescriptorBuilderImpl())
-  return ProjectViewPaneManager(pane, descriptor as ProjectViewPaneDescriptorImpl)
 }
 
 private class ProjectViewPaneManager(val pane: ProjectViewPaneModel, val descriptor: ProjectViewPaneDescriptorImpl) {
