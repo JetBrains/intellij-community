@@ -29,7 +29,9 @@ public class ShowEditMaximizedAction extends DumbAwareAction {
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.BGT;
+    // update() reads the selected cell and its value; column pinning adds a frozen table it may come from,
+    // so that live selection read must run on the EDT (was BGT before pinning).
+    return ActionUpdateThread.EDT;
   }
 
   @Override
