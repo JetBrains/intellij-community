@@ -94,7 +94,8 @@ public class ExpressionSelectorModExpander implements PostfixModExpander {
         return new ModCommandAction() {
           @Override
           public @NotNull Presentation getPresentation(@NotNull ActionContext ctx) {
-            return Presentation.of(title).withHighlighting(expr.getTextRange());
+            return Presentation.of(title)
+              .withHighlighting(PostfixModExpander.rangesToHighlight(actionContext, expr.getTextRange()));
           }
 
           @Override

@@ -1,8 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.modcommand;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.injected.editor.DocumentWindow;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
@@ -14,6 +15,11 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Context in which the action is invoked.
+ * <p>
+ * {@link #offset()} and {@link #selection()} are always expressed in the coordinate space of {@link #file()}.
+ * In particular, if {@link #file()} is an injected fragment, they are offsets in the injected document,
+ * not in the host document. Use {@link #mapToInjected()} and {@link #mapToHost()} to switch between the spaces
+ * instead of mapping the offsets by hand.
  *
  * @param project   current project
  * @param file      current file
@@ -94,8 +100,50 @@ public record ActionContext(
   }
 
   /**
+   * @return a new {@link ActionContext} which is bound to the host file, rather than the injected file,
+   * with {@link #offset()} and {@link #selection()} mapped to the host document.
+   * Returns {@code this} if {@link #file()} is not an injected fragment.
+   * @see #mapToInjected()
+   */
+  public @NotNull ActionContext mapToHost() {
+    if (!(file.getFileDocument() instanceof DocumentWindow documentWindow)) return this;
+    PsiFile hostFile = InjectedLanguageManager.getInstance(project).getTopLevelFile(file);
+    if (hostFile == null || hostFile == file) return this;
+    int offset = this.offset >= 0 ? documentWindow.injectedToHost(this.offset) : this.offset;
+    int start = this.selection.getStartOffset() >= 0
+                ? documentWindow.injectedToHost(this.selection.getStartOffset()) : this.selection.getStartOffset();
+    int end = this.selection.getEndOffset() >= 0
+              ? documentWindow.injectedToHost(this.selection.getEndOffset()) : this.selection.getEndOffset();
+    return new ActionContext(project, hostFile, offset, new TextRange(start, Math.max(start, end)), element);
+  }
+
+  /**
+   * Switches to the fragment injected at {@link #offset()}, if there is one. Actions invoked from a place that
+   * works with the top-level file only, like the completion engine, get a host-bound context; this is the way for
+   * an action that needs to analyze the injected PSI to move into the injected coordinate space as a whole,
+   * rather than mapping separate offsets and ending up with a context that mixes the two spaces.
+   *
+   * @return a new {@link ActionContext} bound to the fragment injected at {@link #offset()},
+   * with {@link #offset()} and {@link #selection()} mapped to the injected document;
+   * {@code this} if nothing is injected there, or {@link #file()} is an injected fragment already.
+   * @see #mapToHost()
+   */
+  public @NotNull ActionContext mapToInjected() {
+    InjectedLanguageManager manager = InjectedLanguageManager.getInstance(project);
+    if (manager.isInjectedFragment(file)) return this;
+    PsiElement injectedElement = manager.findInjectedElementAt(file, offset);
+    if (injectedElement == null) return this;
+    PsiFile injectedFile = injectedElement.getContainingFile();
+    if (!manager.isInjectedFragment(injectedFile) || !(injectedFile.getFileDocument() instanceof DocumentWindow)) return this;
+    return mapToInjected(injectedFile);
+  }
+
+  /**
    * @param injectedFile a file injected somewhere inside the {@link #file()}
-   * @return a new {@link ActionContext} which is bound to the injected file, rather than the host file.
+   * @return a new {@link ActionContext} which is bound to the injected file, rather than the host file,
+   * with {@link #offset()} and {@link #selection()} mapped to the injected document.
+   * @see #mapToInjected()
+   * @see #mapToHost()
    */
   public @NotNull ActionContext mapToInjected(@NotNull PsiFile injectedFile) {
     if (!(injectedFile.getFileDocument() instanceof DocumentWindow documentWindow)) {

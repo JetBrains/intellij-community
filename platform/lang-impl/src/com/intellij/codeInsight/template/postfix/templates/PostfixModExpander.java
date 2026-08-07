@@ -1,12 +1,14 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.templates;
 
-import com.intellij.injected.editor.DocumentWindow;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -52,9 +54,9 @@ public interface PostfixModExpander {
   /**
    * Expands the template as a {@link ModCommand}, suitable for use in ModCompletion and preview/batch modes.
    * <p>
-   * In case of injections, {@code actionContext.file()} is the injected file,
-   * {@code actionContext.offset()} is the offset in the injected file,
-   * {@code actionContext.selection()} is the selection range in the HOST file.
+   * {@code ctx.offset()}, {@code ctx.selection()} and {@code keyRange} are all in the coordinate space of
+   * {@code ctx.file()}, which is the injected file in case of injections. Callers that get a host-bound context
+   * switch to that space with {@link ActionContext#mapToInjected()} before computing {@code keyRange}.
    */
   @NotNull ModCommand expand(@NotNull ActionContext ctx,
                              @NotNull PostfixTemplateProvider provider,
@@ -64,8 +66,9 @@ public interface PostfixModExpander {
    * Creates a {@link ModCommand} that deletes the postfix template key from a copy of the file and then
    * runs {@code action} on the resulting {@link ModPsiUpdater} to perform the actual expansion.
    * <p>
-   * The key deletion (placing a zero-length selection at the key start, mapping host offsets into injected
-   * files, removing the key text and committing the document) is performed before {@code action} runs.
+   * The key deletion (placing a zero-length selection at the key start, removing the key text and committing
+   * the document) is performed before {@code action} runs. Both {@code keyRange} and {@code ctx.selection()}
+   * are in {@code ctx.file()} coordinates, which is the injected file in case of injections.
    */
   static @NotNull ModCommand psiUpdateRemovingTemplateKey(@NotNull ActionContext ctx,
                                                           @NotNull TextRange keyRange,
@@ -76,15 +79,28 @@ public interface PostfixModExpander {
     });
   }
 
+  /**
+   * Maps ranges computed in {@code ctx.file()} coordinates into host coordinates, for use in
+   * {@link com.intellij.modcommand.Presentation#withHighlighting(TextRange...)}.
+   * <p>
+   * Presentation highlighting is resolved against the file of the context the executor runs with, and in completion
+   * that is the top-level file, while the expansion itself is computed in the injected fragment. Passing injected
+   * ranges as they are highlights the host text at the same numeric offsets, which is a different place entirely.
+   * Returns the ranges unchanged when {@code ctx.file()} is not an injected fragment.
+   */
+  static @NotNull TextRange @NotNull [] rangesToHighlight(@NotNull ActionContext ctx, @NotNull TextRange @NotNull ... ranges) {
+    InjectedLanguageManager manager = InjectedLanguageManager.getInstance(ctx.project());
+    PsiFile file = ctx.file();
+    if (!manager.isInjectedFragment(file)) return ranges;
+    return ContainerUtil.map2Array(ranges, TextRange.class, range -> manager.injectedToHost(file, range));
+  }
+
   private static void deleteTemplateKeyAndCommit(@NotNull ModPsiUpdater updater,
                                                  @NotNull ActionContext ctx,
                                                  @NotNull TextRange keyRange) {
     updater.select(TextRange.from(keyRange.getStartOffset(), 0));
-    int endOffset = ctx.selection().getStartOffset();
-    if (ctx.file().getFileDocument() instanceof DocumentWindow documentWindow) {
-      endOffset = documentWindow.hostToInjected(endOffset);
-    }
-    updater.getDocument().deleteString(PostfixLiveTemplate.positiveOffset(keyRange.getStartOffset()), endOffset);
+    updater.getDocument().deleteString(PostfixLiveTemplate.positiveOffset(keyRange.getStartOffset()),
+                                       ctx.selection().getStartOffset());
     PsiDocumentManager.getInstance(updater.getProject()).commitDocument(updater.getDocument());
   }
 }

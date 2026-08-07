@@ -12,7 +12,6 @@ import com.intellij.codeInsight.template.postfix.templates.PostfixModExpander;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvider;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplatesUtils;
-import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
@@ -68,15 +67,12 @@ public class PostfixTemplateLookupElement extends CustomLiveTemplateLookupElemen
       int offset = ctx.offset();
       String key = PostfixLiveTemplate.computeTemplateKeyWithoutContextChecking(myProvider, file.getProject(), file.getLanguage(), sequence, offset);
       if (key == null) return IntentionPreviewInfo.EMPTY;
-      TextRange keyRange = PostfixTemplatesUtils.computeKeyRange(ctx, key, myTemplate.getKey());
-      InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(ctx.project());
-      if (injectedLanguageManager.isInjectedFragment(file)) {
-        TextRange selection = TextRange.create(injectedLanguageManager.injectedToHost(file, ctx.selection().getStartOffset()),
-                                               injectedLanguageManager.injectedToHost(file, ctx.selection().getEndOffset()));
-        ctx = ctx.withSelection(selection);
-      }
-      var command = expander.expand(ctx, myProvider, keyRange);
-      return IntentionPreviewUtils.getModCommandPreview(command, ctx);
+      // Switch to the injected fragment as a whole, so that the key range and the expansion are computed
+      // in the same coordinate space as ctx.offset() and ctx.selection(); a no-op if there is no injection.
+      ActionContext context = ctx.mapToInjected();
+      TextRange keyRange = PostfixTemplatesUtils.computeKeyRange(context, key, myTemplate.getKey());
+      var command = expander.expand(context, myProvider, keyRange);
+      return IntentionPreviewUtils.getModCommandPreview(command, context);
     }
     return IntentionPreviewInfo.EMPTY;
   }

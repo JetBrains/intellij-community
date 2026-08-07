@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.source.tree.injected;
 
@@ -65,10 +65,14 @@ public final class InjectedEditorWindowTrackerImpl extends InjectedEditorWindowT
 
   @Override
   public void disposeEditorFor(@NotNull DocumentWindow documentWindow) {
+    DocumentWindowImpl target = (DocumentWindowImpl)documentWindow;
     synchronized (allEditors) {
       for (Iterator<EditorWindowImpl> iterator = allEditors.iterator(); iterator.hasNext(); ) {
         EditorWindowImpl editor = iterator.next();
-        if (InjectionRegistrarImpl.intersect(editor.getDocument(), (DocumentWindowImpl)documentWindow)) {
+        // allEditors is application-wide, so the host ranges alone don't identify an editor: injections sitting at the same
+        // offsets in unrelated host documents would match as well. Compare the host document first.
+        if (editor.getDocument().getDelegate().equals(target.getDelegate()) &&
+            InjectionRegistrarImpl.intersect(editor.getDocument(), target)) {
           editor.dispose();
           iterator.remove();
         }

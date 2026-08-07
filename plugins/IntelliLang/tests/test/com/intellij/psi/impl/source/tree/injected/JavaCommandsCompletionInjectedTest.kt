@@ -196,7 +196,7 @@ class JavaCommandsCompletionInjectedTest : LightFixtureCompletionTestCase() {
             void a(Object o, List<String> a, String[] b) {
                 for (int i = 0; i < a.size(); i++) {
         
-                }       \s
+                }
             }
         }""${'"'};
       }
@@ -230,6 +230,9 @@ class JavaCommandsCompletionInjectedTest : LightFixtureCompletionTestCase() {
     if (state != null) {
       WriteCommandAction.runWriteCommandAction(project) { state.gotoEnd(false) }
     }
+    // the caret must end up right after the expansion, exactly as in the non-injected
+    // codeInsight/template/postfix/templates/cast/singleExpression_after.java: a coarse updated range would
+    // drag it to the start of the injected region instead, leaving the text itself intact
     // language="JAVA"
     myFixture.checkResult("""
       class Hello {
@@ -237,7 +240,7 @@ class JavaCommandsCompletionInjectedTest : LightFixtureCompletionTestCase() {
         import java.util.List;
         class A {
             void a(Object o, List<String> a, String[] b) {
-                (() o)
+                (() o)<caret>
             }
         }""${'"'};
       }
@@ -278,7 +281,7 @@ class JavaCommandsCompletionInjectedTest : LightFixtureCompletionTestCase() {
         import java.util.List;
         class A {
             void a(Object o, List<String> a, String[] b) {
-                 = () o;       \s
+                  = () o;
             }
         }""${'"'};
       }
@@ -332,5 +335,38 @@ class JavaCommandsCompletionInjectedTest : LightFixtureCompletionTestCase() {
     val text = myFixture.file.text
     assertFalse( text.contains("a.var"))
     assertTrue(text.contains("= a;"))
+  }
+
+  fun testPostfixInInjectionDeletesTheWholeKey() {
+    TemplateManagerImpl.setTemplateTesting(getTestRootDisposable())
+    LiveTemplateCompletionContributor.setShowTemplatesInTests(true, getTestRootDisposable())
+    Registry.get("postfix.template.mod.completion.enabled").setValue(true, getTestRootDisposable())
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+      class Hello {
+        @org.intellij.lang.annotations.Language("JAVA") String string = ""${'"'}
+        import java.util.List;
+        class A {
+            void a(Object o, List<String> a, String[] b) {
+                a.sou<caret>
+            }
+        }""${'"'};
+      }
+      """.trimIndent())
+    val elements = myFixture.completeBasic()
+    val item = elements.first { element ->
+      element is CompletionItemLookupElement &&
+      element.item() is PostfixTemplateModCompletionItemProvider.PostfixModCompletionItem &&
+      element.lookupString == "soutv"
+    }
+    selectItem(item)
+    val state = TemplateManagerImpl.getTemplateState(myFixture.editor)
+    if (state != null) {
+      WriteCommandAction.runWriteCommandAction(project) { state.gotoEnd(false) }
+    }
+    val text = myFixture.file.text
+    assertTrue(text, text.contains("""System.out.println("a = " + a);"""))
+    // the template key must be gone completely: a leftover dot would glue onto the expansion
+    assertFalse(text, text.contains("a.System"))
+    assertFalse(text, text.contains("a.sou"))
   }
 }

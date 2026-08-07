@@ -153,8 +153,9 @@ final class PsiUpdateImpl {
         }, this);
         Disposer.register(this, disposable);
         if (selectionToDelete != null) {
-          // The supplied selection is in host-document coordinates (completion uses the top-level editor);
-          // map it into the injected copy's coordinate space, as myDocument is the copy of the injected file here.
+          // The supplied selection is in host-document coordinates (ModPsiUpdaterImpl normalizes to them via
+          // ActionContext#mapToHost); map it into the injected copy's coordinate space,
+          // as myDocument is the copy of the injected file here.
           Document injectedDocument = origFile.getFileDocument();
           if (injectedDocument instanceof DocumentWindow window) {
             int start = injectionManager.mapInjectedOffsetToUnescaped(origFile, window.hostToInjected(selectionToDelete.getStartOffset()));
@@ -373,8 +374,9 @@ final class PsiUpdateImpl {
 
     private ModPsiUpdaterImpl(@NotNull ActionContext actionContext, boolean deleteSelection) {
       myActionContext = actionContext;
-      myCaretOffset = myCaretVirtualEnd = actionContext.offset();
-      mySelection = actionContext.selection();
+      ActionContext hostContext = actionContext.mapToHost();
+      myCaretOffset = myCaretVirtualEnd = hostContext.offset();
+      mySelection = hostContext.selection();
       myDeleteSelection = deleteSelection;
     }
 

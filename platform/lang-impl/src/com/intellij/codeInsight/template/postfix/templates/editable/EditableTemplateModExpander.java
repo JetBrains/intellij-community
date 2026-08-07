@@ -76,7 +76,7 @@ public class EditableTemplateModExpander implements PostfixModExpander {
 
     List<ModCommandAction> actions = ContainerUtil.mapNotNull(
       virtualExpressions,
-      expr -> buildExpandModAction(expr, myTemplate.getElementRenderer().fun(expr),
+      expr -> buildExpandModAction(actionContext, expr, myTemplate.getElementRenderer().fun(expr),
                                    new TextRange(keyRange.getStartOffset(), keyRange.getStartOffset()), provider));
     if (actions.isEmpty()) {
       return ModCommand.nop();
@@ -85,14 +85,16 @@ public class EditableTemplateModExpander implements PostfixModExpander {
   }
 
   @SuppressWarnings("HardCodedStringLiteral") // expression text is used as chooser item title
-  private @NotNull ModCommandAction buildExpandModAction(@NotNull PsiElement virtualExpression,
+  private @NotNull ModCommandAction buildExpandModAction(@NotNull ActionContext actionContext,
+                                                         @NotNull PsiElement virtualExpression,
                                                          @NotNull String title,
                                                          @NotNull TextRange key,
                                                          @NotNull PostfixTemplateProvider provider) {
     return new ModCommandAction() {
       @Override
       public @NotNull Presentation getPresentation(@NotNull ActionContext ctx) {
-        return Presentation.of(title).withHighlighting(virtualExpression.getTextRange());
+        return Presentation.of(title)
+          .withHighlighting(PostfixModExpander.rangesToHighlight(actionContext, virtualExpression.getTextRange()));
       }
 
       @Override
