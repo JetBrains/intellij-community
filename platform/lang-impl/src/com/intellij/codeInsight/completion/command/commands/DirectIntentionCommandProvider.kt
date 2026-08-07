@@ -286,7 +286,7 @@ internal class DirectIntentionCommandProvider : CommandProvider {
               })
             }
           }
-          for (entry: MutableMap.MutableEntry<LocalInspectionToolWrapper?, List<ProblemDescriptor?>?> in inspectionResult.entries) {
+          for (entry: Map.Entry<LocalInspectionToolWrapper?, List<ProblemDescriptor?>?> in inspectionResult.entries) {
             val inspectionToolWrapper: LocalInspectionToolWrapper = entry.key ?: continue
             val descriptors: List<ProblemDescriptor?> = entry.value ?: continue
             for (descriptor in descriptors) {

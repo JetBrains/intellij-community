@@ -69,7 +69,7 @@ class UnloadedModulesInProjectFileIndexTest {
     assertEmpty(getDependentUnloadedModules(common))
   }
 
-  private fun getDependentUnloadedModules(main: Module): MutableSet<String> {
+  private fun getDependentUnloadedModules(main: Module): Set<String> {
     return DirectoryIndex.getInstance(projectModel.project).getDependentUnloadedModules(main)
   }
 

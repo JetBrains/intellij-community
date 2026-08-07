@@ -84,7 +84,7 @@ class DirectInspectionFixCompletionCommand(
         }
       }
       val result = readAction {
-        for (entry: MutableMap.MutableEntry<LocalInspectionToolWrapper?, List<ProblemDescriptor?>?> in inspectionResult.entries) {
+        for (entry: Map.Entry<LocalInspectionToolWrapper?, List<ProblemDescriptor?>?> in inspectionResult.entries) {
           val descriptors = entry.value ?: continue
           for (descriptor in descriptors) {
             if (descriptor !is ProblemDescriptorBase) continue

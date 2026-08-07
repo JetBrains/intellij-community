@@ -917,7 +917,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         val exitBlock: Boolean,
         val varsToFlush: List<KtVariableDescriptor>
     ) : InstructionTransfer(offset, varsToFlush) {
-        override fun dispatch(state: DfaMemoryState, interpreter: DataFlowInterpreter): MutableList<DfaInstructionState> {
+        override fun dispatch(state: DfaMemoryState, interpreter: DataFlowInterpreter): List<DfaInstructionState> {
             if (exitBlock) {
                 val value = state.pop()
                 check(!(value !is DfaControlTransferValue || value.target !== DfaControlTransferValue.RETURN_TRANSFER)) {
