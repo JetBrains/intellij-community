@@ -14,6 +14,7 @@ import tools.jackson.core.json.JsonFactory
 import tools.jackson.databind.JsonNode
 import tools.jackson.databind.node.JsonNodeFactory
 import java.math.BigDecimal
+import java.math.BigInteger
 
 private val LOG = Logger.getInstance("com.intellij.json.networknt.wrapper.PsiToJsonNodeConverter")
 
@@ -151,12 +152,17 @@ private fun convertNumber(adapter: JsonValueAdapter, walker: JsonLikePsiWalker):
       JsonNodeFactory.instance.numberNode(bd)
     }
     else {
-      val longVal = java.lang.Long.parseLong(text)
-      if (longVal in Int.MIN_VALUE..Int.MAX_VALUE) {
-        JsonNodeFactory.instance.numberNode(longVal.toInt())
-      }
-      else {
-        JsonNodeFactory.instance.numberNode(longVal)
+      val integer = BigInteger(text)
+      when {
+        integer >= BigInteger.valueOf(Int.MIN_VALUE.toLong()) && integer <= BigInteger.valueOf(Int.MAX_VALUE.toLong()) -> {
+          JsonNodeFactory.instance.numberNode(integer.toInt())
+        }
+        integer >= BigInteger.valueOf(Long.MIN_VALUE) && integer <= BigInteger.valueOf(Long.MAX_VALUE) -> {
+          JsonNodeFactory.instance.numberNode(integer.toLong())
+        }
+        else -> {
+          JsonNodeFactory.instance.numberNode(integer)
+        }
       }
     }
   }

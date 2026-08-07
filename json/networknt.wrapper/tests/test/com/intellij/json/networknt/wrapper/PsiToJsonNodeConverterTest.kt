@@ -9,6 +9,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.intellij.lang.annotations.Language
 import tools.jackson.databind.JsonNode
 import tools.jackson.databind.node.ArrayNode
+import tools.jackson.databind.node.BigIntegerNode
 import tools.jackson.databind.node.BooleanNode
 import tools.jackson.databind.node.DecimalNode
 import tools.jackson.databind.node.IntNode
@@ -16,6 +17,7 @@ import tools.jackson.databind.node.LongNode
 import tools.jackson.databind.node.NullNode
 import tools.jackson.databind.node.ObjectNode
 import tools.jackson.databind.node.StringNode
+import java.math.BigInteger
 
 class PsiToJsonNodeConverterTest : BasePlatformTestCase() {
 
@@ -97,6 +99,13 @@ class PsiToJsonNodeConverterTest : BasePlatformTestCase() {
     val node = convertJson("9999999999")
     assertThat(node).isInstanceOf(LongNode::class.java)
     assertThat(node!!.longValue()).isEqualTo(9999999999L)
+  }
+
+  fun `test integer parsing beyond long range`() {
+    val value = BigInteger.valueOf(Long.MAX_VALUE).add(BigInteger.valueOf(123L))
+    val node = convertJson(value.toString())
+    assertThat(node).isInstanceOf(BigIntegerNode::class.java)
+    assertThat(node!!.bigIntegerValue()).isEqualTo(value)
   }
 
   fun `test float parsing positive`() {
