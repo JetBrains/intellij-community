@@ -57,6 +57,9 @@
     <orderEntry type="module" module-name="intellij.platform.externalSystem" scope="TEST" />
     <orderEntry type="module" module-name="intellij.gradle.settings" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.fir.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.test" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-tests" level="project" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.compose.ide.plugin.k2" />
 </module>

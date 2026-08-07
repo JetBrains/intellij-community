@@ -234,6 +234,11 @@ jvm_library(
         "//plugins/gradle/settings:settings_test_lib",
         "//libraries/junit4",
         "//libraries/junit4:junit4_test_lib",
+        "//plugins/kotlin/fir/testFramework",
+        "//plugins/kotlin/fir/testFramework:testFramework_test_lib",
+        "//plugins/kotlin/intellij.kotlin.base.test:base-test",
+        "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
+        "@lib//:kotlinc-kotlin-compiler-tests",
     ],
 )
 ### auto-generated section `build intellij.compose.ide.plugin.k2.tests` end
