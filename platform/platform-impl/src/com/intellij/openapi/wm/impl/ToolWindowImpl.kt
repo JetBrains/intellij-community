@@ -863,7 +863,6 @@ private val LOG = logger<ToolWindowManagerImpl>()
         group.addSeparator()
       }
       group.add(ActionManager.getInstance().getAction(SpeedSearchAction.ID))
-      group.addAction(ActionManager.getInstance().getAction("MoveToolWindowTabToEditorAction"))
       group.addSeparator()
       contentManager.valueIfInitialized?.let {
         group.add(TabbedContentAction.CloseAllAction(it))
