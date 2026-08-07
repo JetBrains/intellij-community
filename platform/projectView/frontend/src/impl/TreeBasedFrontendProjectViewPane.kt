@@ -41,6 +41,7 @@ import com.intellij.ui.popup.HintUpdateSupply
 import com.intellij.ui.stripe.ErrorStripe
 import com.intellij.ui.stripe.ErrorStripePainter
 import com.intellij.ui.stripe.TreeUpdater
+import com.intellij.ui.treeStructure.CachingTreePath
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.EditSourceOnEnterKeyHandler
@@ -369,6 +370,12 @@ private class ProjectViewTreeExpander(tree: Tree, private val expandRequests: Se
   override fun expandSelected(tree: JTree) {
     val selection = tree.selectionPaths?.toList() ?: return
     val result = expandRequests.trySend(ExpandRequest(selection))
+    check(!result.isFailure)
+  }
+
+  override fun expandAll(tree: JTree) {
+    val root = tree.model?.root ?: return
+    val result = expandRequests.trySend(ExpandRequest(listOf(CachingTreePath(root))))
     check(!result.isFailure)
   }
 
