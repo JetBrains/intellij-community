@@ -58,8 +58,8 @@ abstract class StreamChainFilteringTestCase : DebuggerTestCase() {
     method: Method,
     bytecodeOffset: Long,
   ): List<StreamChain> {
-    val breakpointElement = readAction { positionResolver.getNearestElementToBreakpoint(project, position) } ?: return chains
-    return filterTraceableStreams(chains, position, breakpointElement, method, bytecodeOffset)
+    val contextElement = readAction { positionResolver.getNearestElementToBreakpoint(project, position) } ?: return chains
+    return filterTraceableStreams(chains, position, contextElement, method, bytecodeOffset)
   }
 
   /**

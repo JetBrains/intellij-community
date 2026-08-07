@@ -2,6 +2,7 @@
 package com.intellij.debugger.streams.lib.impl
 
 import com.intellij.debugger.engine.JavaDebugProcess
+import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.withDebugContext
 import com.intellij.debugger.impl.ClassLoadingUtils
 import com.intellij.debugger.impl.DebuggerContextImpl
@@ -78,7 +79,13 @@ abstract class JvmLibrarySupportProvider : LibrarySupportProvider {
     val position = session.currentPosition ?: return chains
     val context = debugProcess.debuggerSession.contextManager.context
     return withDebugContext(context) {
-      val location = runCatching { context.frameProxy?.location() }.getOrNull() ?: return@withDebugContext chains
+      val location = try {
+        context.frameProxy?.location()
+      }
+      catch (e: EvaluateException) {
+        LOG.debug("Cannot get the current execution location, keeping all the chains", e)
+        null
+      } ?: return@withDebugContext chains
       filterTraceableStreams(chains, position, contextElement, location.method(), location.codeIndex())
     }
   }

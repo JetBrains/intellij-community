@@ -23,16 +23,18 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.transformLatest
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
-import java.util.function.Function
 
 internal class StreamDebuggerSessionLifecycleListener(private val project: Project) : XDebuggerManagerListener {
   override fun processStarted(debugProcess: XDebugProcess) {
@@ -47,16 +49,24 @@ internal class StreamDebuggerSessionLifecycleListener(private val project: Proje
 private val positionResolver = DebuggerPositionResolverImpl()
 
 /**
+ * Sentinel for an already finished session.
+ * It is a [StateFlow] rather than a `flowOf(...)` on purpose: subscribers await a value with `first { ... }` and rely on
+ * the flow not completing but staying alive until their own scope is canceled (see `LinqInlayDisplay` in Rider).
+ */
+private val SESSION_FINISHED: StateFlow<ChainDetectionState> =
+  MutableStateFlow(ChainDetectionState(null, null, ChainStatus.NotFound))
+
+/**
  * Tracks chain detection state per debug session as a shared re-computable flow (existence + traceability from the current execution position).
  */
 @Service(Service.Level.PROJECT)
 class ChainDetectionStateManager(private val cs: CoroutineScope) {
   private val sessionStates = ConcurrentHashMap<XDebugSession, SessionState>()
 
-  fun chainStateFlow(session: XDebugSession): Flow<ChainDetectionState> = sessionState(session).status
+  fun chainStateFlow(session: XDebugSession): Flow<ChainDetectionState> = sessionState(session)?.status ?: SESSION_FINISHED
 
   fun inlayStateFlow(session: XDebugSession): Flow<StreamChainInlayState> =
-    sessionState(session).status.mapNotNull { status ->
+    chainStateFlow(session).mapNotNull { status ->
       val ctx = status.suspendContext ?: return@mapNotNull StreamChainInlayState.Hidden
       val topFrame = ctx.activeExecutionStack?.topFrame
       // check that frame is not changed
@@ -77,8 +87,19 @@ class ChainDetectionStateManager(private val cs: CoroutineScope) {
     sessionStates.remove(session)?.cancel()
   }
 
-  private fun sessionState(session: XDebugSession): SessionState =
-    sessionStates.computeIfAbsent(session) { SessionState(it, cs.childScope("StreamDebugger session state")) }
+  /**
+   * Returns null for an already finished session
+   */
+  private fun sessionState(session: XDebugSession): SessionState? {
+    if (session.isStopped) return null
+    val state = sessionStates.computeIfAbsent(session) { SessionState(it, cs.childScope("StreamDebugger session state")) }
+    if (session.isStopped) { // the session has finished concurrently with computeIfAbsent
+      sessionStates.remove(session, state)
+      state.cancel()
+      return null
+    }
+    return state
+  }
 
   @OptIn(ExperimentalCoroutinesApi::class)
   private class SessionState(private val session: XDebugSession, private val scope: CoroutineScope) {
@@ -107,6 +128,9 @@ class ChainDetectionStateManager(private val cs: CoroutineScope) {
       trySend(snapshot())
       awaitClose()
     }
+      // `trySend` can silently drop the *newest* snapshot once the buffer is full.
+      // With conflation `trySend` never fails, and a stale snapshot is dropped instead of the fresh one.
+      .conflate()
       .distinctUntilChanged()
       .transformLatest { snap ->
         emit(snap)
@@ -158,8 +182,7 @@ sealed interface StreamChainInlayState {
 }
 
 private fun providersFor(language: Language): List<LibrarySupportProvider> =
-  LibrarySupportProvider.EP_NAME.getByGroupingKey(language.id, ChainDetectionStateManager::class.java,
-                                                  Function { obj: LibrarySupportProvider? -> obj!!.getLanguageId() })
+  LibrarySupportProvider.EP_NAME.getByGroupingKey(language.id, ChainDetectionStateManager::class.java) { it.getLanguageId() }
 
 private fun getChains(element: PsiElement): List<StreamChainWithLibrary> {
   val elementLanguageId = element.language.id

@@ -153,6 +153,23 @@ internal class StreamChainFilteringTest : StreamChainFilteringTestCase() {
 
   fun testStopInsideBlockLambda() = doFilteringTestAtBreakpoint("StopInsideBlockLambda")
 
+  // Stop inside a lambda of a chain that is itself an argument of another chain: the inner chain is already running,
+  // and the outer one is not traceable from the frame of that lambda even it has not reached `limit` yet.
+  fun testStopInsideNestedArgumentLambda() = doFilteringTestAtBreakpoint("StopInsideNestedArgumentLambda")
+
+  // A chain in a field initializer of an anonymous class. We stop in the synthetic `<init>` of the anonymous class,
+  // and `DebuggerUtilsEx.getContainingMethod` returns the lexically enclosing `main` as the host,
+  // and the traversal of its body never enters class bodies.
+  // Nothing is matched against the bytecode, and every chain stays traceable.
+  fun testFieldInitializerInAnonymousClass() = doFilteringTest(
+    "FieldInitializerInAnonymousClass",
+    BeforeInvoke("of"),
+    AfterInvoke("of"),
+    BeforeInvoke("map"),
+    AfterInvoke("map"),
+    BeforeInvoke("count"),
+  )
+
   // Several independent streams in one multi-line statement: the fast path alone (line comparison) already
   // filters the streams that are fully above the stop line, without any bytecode analysis.
   fun testMultiLineStatement() = doFilteringTest(

@@ -65,7 +65,7 @@ interface LibrarySupportProvider {
   /**
    * Filters [chains] leaving only those that can still be correctly traced from the current execution position of
    * [session], i.e. the chains whose first operator has not started executing yet. [contextElement] is the PSI element
-   * at the breakpoint, already resolved for chain detection and passed in to avoid resolving it again.
+   * at the current execution position, already resolved for chain detection and passed in to avoid resolving it again.
    *
    * The default keeps every chain; JVM-specific providers override to drop already-(partially-)executed chains using the
    * current bytecode position.

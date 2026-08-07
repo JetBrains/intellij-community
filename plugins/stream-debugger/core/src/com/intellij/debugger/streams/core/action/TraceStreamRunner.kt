@@ -61,11 +61,10 @@ class TraceStreamRunner(val cs: CoroutineScope) {
         .chainStateFlow(session)
         .first { it.status !is ChainStatus.Computing }
     }
-    if (chainsState.status !is ChainStatus.Found) {
-      LOG.error("Cannot build chains: $chainsState")
-      return@launch
+    LOG.info("Action was triggered with stream chains state: $chainsState")
+    if (chainsState.status is ChainStatus.Found) {
+      displayChains(session, chainsState.status.chains)
     }
-    displayChains(session, chainsState.status.chains)
   }
 
   private suspend fun displayChains(

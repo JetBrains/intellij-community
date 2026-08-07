@@ -7,9 +7,9 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 sealed interface ChainStatus {
-  object Computing : ChainStatus
-  object LanguageNotSupported : ChainStatus
-  object NotFound : ChainStatus
+  data object Computing : ChainStatus
+  data object LanguageNotSupported : ChainStatus
+  data object NotFound : ChainStatus
   data class Found(val chains: List<StreamChainWithLibrary>) : ChainStatus
 }
 

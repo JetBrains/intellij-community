@@ -80,18 +80,29 @@ private data class ClassifiedStreams(
   val uncertain: List<StreamChain>,
 )
 
+/**
+ * Matches the first operator of each chain against the bytecode of [method]
+ * and keeps the chain if that operator's method call is ahead of [bytecodeOffset].
+ *
+ * Note: whenever the PSI and the bytecode cannot be matched reliably, the chain is kept.
+ * This fallback is chosen deliberately because the probability of a user hitting a debugger
+ * in an expression containing multiple streams on one line is quite low.
+ */
 private suspend fun filterByBytecodeOffset(
-  breakpointElement: PsiElement,
+  contextElement: PsiElement,
   chains: List<StreamChain>,
   method: Method,
   bytecodeOffset: Long,
 ): List<StreamChain> {
-  val mappings = readAction { computeStreamCallMappings(breakpointElement, chains) }
+  val mappings = readAction { computeStreamCallMappings(contextElement, chains) }
+  // Nothing to match against the bytecode, so return what the line number-based filtering already decided
   if (mappings.callIdToChain.isEmpty()) return mappings.candidates
 
   val firstOperatorOffsets = matchOperatorOffsets(method, mappings.callIdToChain, mappings.lineRange)
   return mappings.candidates.filter { chain ->
     val offset = firstOperatorOffsets[chain]
+    // A null offset means that the first operator was found in the PSI wasn't matched with the bytecode
+    // (ex. because we built a wrong ASM signature for the method)
     offset == null || offset >= bytecodeOffset
   }
 }
@@ -106,9 +117,11 @@ private suspend fun filterByBytecodeOffset(
  *
  * All the necessary information from the source code is precomputed at this stage to avoid mixing bytecode analysis and PSI parsing on DMT.
  */
-private fun computeStreamCallMappings(breakpointElement: PsiElement, chains: List<StreamChain>): StreamCallMappings {
-  val psiFile = breakpointElement.containingFile ?: return StreamCallMappings(chains, emptyMap(), IntRange.EMPTY)
-  val host = DebuggerUtilsEx.getContainingMethod(breakpointElement) ?: return StreamCallMappings(chains, emptyMap(), IntRange.EMPTY)
+private fun computeStreamCallMappings(contextElement: PsiElement, chains: List<StreamChain>): StreamCallMappings {
+  val psiFile = contextElement.containingFile ?: return StreamCallMappings(chains, emptyMap(), IntRange.EMPTY)
+  // `DebuggerUtilsEx.getContainingMethod` returns `null` when the position is not inside a method, a lambda or an initializer.
+  // In practice this is a field initializer that we do not support now.
+  val host = DebuggerUtilsEx.getContainingMethod(contextElement) ?: return StreamCallMappings(chains, emptyMap(), IntRange.EMPTY)
   val document = psiFile.fileDocument
 
   val firstOperatorCallToChain = LinkedHashMap<PsiMethodCallExpression, StreamChain>()
@@ -117,7 +130,15 @@ private fun computeStreamCallMappings(breakpointElement: PsiElement, chains: Lis
     val firstOperator = chain.intermediateCalls.firstOrNull() ?: chain.terminationCall
     val firstOperatorCall = findPsiMethodCall(psiFile, firstOperator.textRange)
     when {
+      // For Java the operator range is exactly `PsiMethodCallExpression.getTextRange()` and `findPsiMethodCall`
+      // requires an exact match, so the call is normally found.
+      // Null means the PSI no longer matches the ranges the chain was built from: chains are collected in a single `smartReadAction`,
+      // while we are in a separate `readAction` on the debugger thread, and the file could have been edited in between.
+      // We cannot analyze such chain, so keep it.
       firstOperatorCall == null -> candidates += chain
+      // The operator belongs to a JVM method other than the one we are stopped in.
+      // The most common case is a stop inside a lambda inside the stream chain -
+      // lambdas are compiled into a separate method, so supporting such cases will significantly complicate the algorithm.
       DebuggerUtilsEx.getContainingMethod(firstOperatorCall) != host -> Unit // operator in a nested method is already executing
       else -> {
         candidates += chain
@@ -129,6 +150,7 @@ private fun computeStreamCallMappings(breakpointElement: PsiElement, chains: Lis
   val hostBody = DebuggerUtilsEx.getBody(host)
   val lineRange = computeLineBoundsForChains(document, chains)
 
+  // hostBody may be null: an abstract or native method, where execution cannot stop, or PSI broken by an edit made while the session was paused.
   if (firstOperatorCallToChain.isEmpty() || hostBody == null) return StreamCallMappings(candidates, emptyMap(), lineRange)
 
   val signatureCounter = HashMap<String, Int>()
@@ -136,6 +158,11 @@ private fun computeStreamCallMappings(breakpointElement: PsiElement, chains: Lis
   visitMethodCallsInExecutionOrder(hostBody) { methodCall ->
     if (document.getLineNumber(methodCall.textRange.startOffset) !in lineRange) return@visitMethodCallsInExecutionOrder
     val callee = methodCall.resolveMethod() ?: return@visitMethodCallsInExecutionOrder
+    // Restoring the descriptor from the PSI may fail.
+    // For plain calls like the Stream API this is exactly what javac emits, but it diverges in:
+    // - synthetic access$NNN bridges
+    // - Kotlin ($default overloads have another descriptor, inline functions produce no instruction at all)
+    // It's not a big deal for us if we fail - after all, it's a heuristic and the chain stays visible
     val signature = callee.name + ClassUtil.getAsmMethodSignature(callee)
     val ordinal = signatureCounter.compute(signature) { _, value -> if (value == null) 0 else value + 1 }!!
 
