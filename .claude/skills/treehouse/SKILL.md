@@ -46,14 +46,31 @@ Only `write acquire` reserves and prepares a workspace for use.
 
 ## Acquire a workspace
 
+For Codex, first verify that the built-in `request_permissions` tool is available. If it is not,
+do not acquire a lease; report that Treehouse cannot be used in the current session. Do not ask the
+user to change permission settings, restart with `--add-dir`, or grant access to the Treehouse pool.
+
 ```bash
 ../../../community/tools/bun.cmd ./scripts/treehouse.ts write acquire --holder <session-id>
 ```
 
 Use the current development or agent session ID as `--holder` when one is available. If it is
 omitted, the CLI uses `TREEHOUSE_LEASE_HOLDER`, then generates a unique `agent-<UUID>` label. The
-result contains the workspace path, lease ID, holder, and receipt path. Change the working directory
-to the returned workspace path and keep all subsequent work there.
+result contains the workspace path, lease ID, holder, and receipt path. Keep running from the
+original checkout until the permission step below succeeds.
+
+For Codex, changing a tool's working directory does not add the leased workspace to the session's
+writable roots. Immediately after acquisition, and before any task edit or write command inside it,
+use the built-in `request_permissions` tool to request filesystem write access to exactly the
+returned workspace `path` with session scope. After the grant, use that path as the working
+directory for all subsequent tools. Do not request its parent Treehouse pool, the source checkout,
+the shared Git directory, or full access, and do not replace the single workspace grant with
+repeated per-command escalations.
+
+If the grant is denied, do not enter, edit, or run commands in the leased workspace. Immediately
+run `write return --workspace <leased-path>` from the original checkout to return the untouched
+lease. If return fails, retain and report the path, lease ID, and holder as required below; do not
+ask the user to reconfigure permissions.
 
 Acquisition captures the caller checkout's `HEAD`, obtains a clean lease, and detaches the leased
 workspace at that exact commit. The caller's index, working-tree changes, and untracked files are
