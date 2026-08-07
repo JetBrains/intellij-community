@@ -22,4 +22,12 @@
     <module name="intellij.platform.lang.impl"/>
   </dependencies>
   <!-- endregion -->
+
+  <extensionPoints>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.supportAvailability"
+            interface="org.jetbrains.kotlin.idea.codeinsight.utils.KotlinSupportAvailability"
+            dynamic="true"/>
+
+  </extensionPoints>
 </idea-plugin>

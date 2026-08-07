@@ -31,6 +31,12 @@
     <applicationService
             serviceInterface="org.jetbrains.kotlin.analysis.decompiler.psi.KotlinLabelProviderService"
             serviceImplementation="org.jetbrains.kotlin.idea.base.psi.fileTypes.IdeKotlinLabelProviderService"/>
+
+    <!--suppress SplitModeXmlApiUsage -->
+    <lang.elementManipulator
+            forClass="org.jetbrains.kotlin.psi.KtStringTemplateExpression"
+            implementationClass="org.jetbrains.kotlin.psi.psiUtil.KtStringTemplateExpressionManipulator"/>
+
   </extensions>
   <extensions defaultExtensionNs="com.intellij.jvm">
     <declarationSearcher language="kotlin" implementationClass="org.jetbrains.kotlin.idea.KotlinDeclarationSearcher"/>

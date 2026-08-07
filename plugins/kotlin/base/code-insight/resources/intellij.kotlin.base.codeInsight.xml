@@ -44,6 +44,10 @@
   </dependencies>
   <!-- endregion -->
 <extensions defaultExtensionNs="com.intellij">
+
+    <registryKey key="kotlin.shorten.context.sensitive.resolution.qualifiers.by.default"
+               description="Allows reference shortener to remove explicit qualifiers on references which could be resolved by context-sensitive resolution (when the corresponding language feature is enabled)"
+               defaultValue="true" />
     <codeInsight.linkHandler
             prefix="#kotlinClass/"
             handlerClass="org.jetbrains.kotlin.idea.highlighter.markers.KotlinClassTooltipLinkHandler"/>

@@ -34,7 +34,6 @@
   <xi:include href="/META-INF/language.xml"/>
   <xi:include href="/META-INF/jps.xml"/>
   <xi:include href="/META-INF/caches.xml"/>
-  <xi:include href="/META-INF/kotlin-core.xml"/>
   <xi:include href="/META-INF/scripting-v1.xml"/>
 
   <xi:include href="/META-INF/command-completion-k2.xml">

@@ -54,6 +54,17 @@
   <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
 
+    <pathMacroExpandableProtocol protocol="kotlin-js-meta"/>
+
+    <lang.floatingToolbar language="kotlin"/>
+
+    <stacktrace.fold substring="at kotlinx.coroutines."/>
+
+
+    <registryKey key="kotlin.multiline.function.parameters.info"
+                 description="Activates the mode of line-by-line display of the function parameters info, if there are more than three of them"
+                 defaultValue="false" />
+
     <applicationService serviceInterface="org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider"
                         serviceImplementation="org.jetbrains.kotlin.idea.fir.plugin.K2KotlinPluginModeProvider"/>
     <lang.importOptimizer language="kotlin" implementationClass="org.jetbrains.kotlin.idea.imports.KotlinFirImportOptimizer"/>

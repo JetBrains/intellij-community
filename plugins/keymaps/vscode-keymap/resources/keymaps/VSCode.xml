@@ -322,7 +322,6 @@
     <keyboard-shortcut first-keystroke="ctrl k" second-keystroke="ctrl q" />
   </action>
   <action id="JumpToLastWindow" />
-  <action id="KotlinShellExecute" />
   <action id="Maven.ExpandAll">
     <keyboard-shortcut first-keystroke="ctrl add" />
   </action>

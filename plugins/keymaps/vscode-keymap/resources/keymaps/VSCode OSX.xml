@@ -415,7 +415,6 @@
         <keyboard-shortcut first-keystroke="meta k" second-keystroke="meta q" />
     </action>
     <action id="JumpToLastWindow" />
-    <action id="KotlinShellExecute" />
     <action id="Maven.ExpandAll">
         <keyboard-shortcut first-keystroke="meta add" />
     </action>

@@ -47,6 +47,12 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+
+    <registryKey key="kotlin.cache.packages.strong.map"
+                 description="Hold info about packages using strong references instead of soft ones"
+                 defaultValue="true"
+                 restartRequired="true"/>
+
     <gotoRelatedProvider implementation="org.jetbrains.kotlin.idea.goto.KotlinExpectOrActualGotoRelatedProvider"/>
     <applicationService serviceInterface="org.jetbrains.kotlin.analysis.decompiler.psi.BuiltinsVirtualFileProvider"
                         serviceImplementation="org.jetbrains.kotlin.idea.base.analysis.builtins.IdeBuiltInsVirtualFileProviderImpl"/>

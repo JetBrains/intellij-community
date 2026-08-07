@@ -25,7 +25,12 @@
     <module name="intellij.platform.projectModel"/>
   </dependencies>
   <!-- endregion -->
+
   <extensionPoints>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.buildSystemTypeDetector"
+            interface="org.jetbrains.kotlin.idea.configuration.BuildSystemTypeDetector"
+            dynamic="true"/>
     <extensionPoint
             qualifiedName="org.jetbrains.kotlin.idea.base.platforms.targetPlatformDetector"
             interface="org.jetbrains.kotlin.idea.base.facet.platform.TargetPlatformDetector"

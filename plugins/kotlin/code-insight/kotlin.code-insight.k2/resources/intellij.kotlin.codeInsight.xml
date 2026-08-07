@@ -70,6 +70,11 @@
             dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
+    <registryKey
+            key="kotlin.enable.inlay.hint.for.lambda.return.type"
+            description="Show inlay hint for lambda return type"
+            defaultValue="false"
+            restartRequired="false"/>
 
     <annotationSupport language="kotlin" implementationClass="com.intellij.psi.impl.source.tree.java.JavaAnnotationSupport"/>
 
