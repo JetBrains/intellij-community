@@ -7,7 +7,7 @@ import com.intellij.util.text.VersionComparatorUtil
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * Selects plugins to load by applying all business logic for plugin selection and ID conflict resolution.
+ * Selects the candidate subset by applying all business logic for plugin selection and ID conflict resolution.
  * 
  * The selection process depends on the configuration:
  * 
@@ -30,10 +30,10 @@ import org.jetbrains.annotations.ApiStatus
  * - Resolves ID conflicts (though typically only CORE remains)
  *
  * @param onPluginExcluded Callback invoked for each excluded [PluginMainDescriptor]
- * @return [UnambiguousPluginSet] containing plugins selected for loading with all ID conflicts resolved
+ * @return [UnambiguousPluginSet] containing the candidate subset with all ID conflicts resolved
  */
 @ApiStatus.Internal
-fun PluginInitializationContext.selectPluginsToLoad(
+fun PluginInitializationContext.selectCandidateSubset(
   discoveryResult: PluginsDiscoveryResult,
   onPluginExcluded: (DescriptorExclusionReason) -> Unit,
 ): UnambiguousPluginSet {
@@ -41,7 +41,7 @@ fun PluginInitializationContext.selectPluginsToLoad(
   if (discoveredPlugins.isEmpty()) {
     return UnambiguousPluginSet.tryBuild(emptyList())!!
   }
-  val pluginsToLoad = if (explicitPluginSubsetToLoad != null) {
+  val candidatePlugins = if (explicitPluginSubsetToLoad != null) {
     // does not care about disabled plugins and incompatible-with for essential plugins
     selectFromExplicitSubset(discoveredPlugins, onPluginExcluded)
   }
@@ -53,7 +53,7 @@ fun PluginInitializationContext.selectPluginsToLoad(
     val filtered = applyDisabledAndIncompatibleWithForEssentialPluginsFilters(compatible, onPluginExcluded)
     filtered
   }
-  return resolveIdConflicts(pluginsToLoad, onPluginExcluded)
+  return resolveIdConflicts(candidatePlugins, onPluginExcluded)
 }
 
 private fun PluginInitializationContext.selectMostRecentCompatible(

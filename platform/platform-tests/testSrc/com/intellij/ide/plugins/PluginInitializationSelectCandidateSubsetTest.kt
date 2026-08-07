@@ -21,12 +21,12 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 
 /**
- * Tests for plugin initialization: [PluginInitializationContext.selectPluginsToLoad]
+ * Tests for plugin initialization: [PluginInitializationContext.selectCandidateSubset]
  * 
  * This function performs plugin selection (compatibility, version selection, disabled/incompatible filtering)
  * and ID conflict resolution in a single operation.
  */
-class PluginInitializationSelectPluginsToLoadTest {
+class PluginInitializationSelectCandidateSubsetTest {
   
   init {
     Logger.setFactory(TestLoggerFactory::class.java)
@@ -72,7 +72,7 @@ class PluginInitializationSelectPluginsToLoadTest {
     }
   }
 
-  private fun testPluginSelection(
+  private fun testCandidateSubsetSelection(
     essentialPlugins: Set<PluginId> = emptySet(),
     disabledPlugins: Set<PluginId> = emptySet(),
     productBuildNumber: BuildNumber = BuildNumber.fromString("241.0")!!,
@@ -89,7 +89,7 @@ class PluginInitializationSelectPluginsToLoadTest {
       disablePluginLoadingCompletely = disablePluginLoadingCompletely
     )
 
-    val result = initContext.selectPluginsToLoad(
+    val result = initContext.selectCandidateSubset(
       discoveryResult,
       onPluginExcluded = { reason -> excludedPlugins.add(ExcludedPluginInfo(reason.descriptor.getMainDescriptor(), reason)) }
     )
@@ -106,7 +106,7 @@ class PluginInitializationSelectPluginsToLoadTest {
       plugin("foo") { version = "2.0" }.installAt(pluginsDirPath)
 
       val (_, discoveryResult) = PluginSetTestBuilder.fromPath(pluginsDirPath).discoverPlugins()
-      val (result, excludedPlugins) = testPluginSelection(discoveryResult = discoveryResult)
+      val (result, excludedPlugins) = testCandidateSubsetSelection(discoveryResult = discoveryResult)
 
       assertThat(result.plugins).hasSize(1)
       assertThat(result.plugins[0].version).isEqualTo("2.0")
@@ -128,7 +128,7 @@ class PluginInitializationSelectPluginsToLoadTest {
       }.installAt(pluginsDirPath)
 
       val (_, discoveryResult) = PluginSetTestBuilder.fromPath(pluginsDirPath).discoverPlugins()
-      val (result, excludedPlugins) = testPluginSelection(
+      val (result, excludedPlugins) = testCandidateSubsetSelection(
         productBuildNumber = BuildNumber.fromString("250.0")!!,
         discoveryResult = discoveryResult
       )
@@ -160,7 +160,7 @@ class PluginInitializationSelectPluginsToLoadTest {
         DiscoveredPluginsList(systemPlugins.pluginLists[0].plugins, PluginsSourceContext.SystemPropertyProvided)
       ))
       
-      val result = initContext.selectPluginsToLoad(
+      val result = initContext.selectCandidateSubset(
         discoveredPlugins,
         onPluginExcluded = { reason -> excludedPlugins.add(ExcludedPluginInfo(reason.descriptor.getMainDescriptor(), reason)) }
       )
@@ -188,7 +188,7 @@ class PluginInitializationSelectPluginsToLoadTest {
 
       fun assertBundledIsSuperseded(discoveryResult: List<DiscoveredPluginsList>) {
         val discoveryResult = PluginsDiscoveryResult.build(discoveryResult)
-        val (result, excludedPlugins) = testPluginSelection(discoveryResult = discoveryResult)
+        val (result, excludedPlugins) = testCandidateSubsetSelection(discoveryResult = discoveryResult)
 
         assertThat(result.plugins).hasSize(1)
         assertThat(result.plugins[0].version).isEqualTo("2.0")
@@ -208,7 +208,7 @@ class PluginInitializationSelectPluginsToLoadTest {
       plugin("foo") { version = "3.0" }.installAt(pluginsDirPath)
 
       val (_, discoveryResult) = PluginSetTestBuilder.fromPath(pluginsDirPath).discoverPlugins()
-      val (result, excludedPlugins) = testPluginSelection(discoveryResult = discoveryResult)
+      val (result, excludedPlugins) = testCandidateSubsetSelection(discoveryResult = discoveryResult)
 
       assertThat(result.plugins).hasSize(1)
       assertThat(result.plugins[0].version).isEqualTo("3.0")
@@ -229,7 +229,7 @@ class PluginInitializationSelectPluginsToLoadTest {
       }.installAt(pluginsDirPath)
 
       val (_, discoveryResult) = PluginSetTestBuilder.fromPath(pluginsDirPath).discoverPlugins()
-      val (result, excludedPlugins) = testPluginSelection(
+      val (result, excludedPlugins) = testCandidateSubsetSelection(
         productBuildNumber = BuildNumber.fromString("250.0")!!,
         discoveryResult = discoveryResult
       )
@@ -254,7 +254,7 @@ class PluginInitializationSelectPluginsToLoadTest {
       }.installAt(pluginsDirPath)
 
       val (_, discoveryResult) = PluginSetTestBuilder.fromPath(pluginsDirPath).discoverPlugins()
-      val (result, excludedPlugins) = testPluginSelection(
+      val (result, excludedPlugins) = testCandidateSubsetSelection(
         productBuildNumber = BuildNumber.fromString("250.0")!!,
         discoveryResult = discoveryResult
       )
@@ -271,7 +271,7 @@ class PluginInitializationSelectPluginsToLoadTest {
       val excludedPlugins = mutableListOf<ExcludedPluginInfo>()
       val initContext = createInitContext()
       
-      val result = initContext.selectPluginsToLoad(
+      val result = initContext.selectCandidateSubset(
         PluginsDiscoveryResult.build(emptyList()),
         onPluginExcluded = { reason -> excludedPlugins.add(ExcludedPluginInfo(reason.descriptor.getMainDescriptor(), reason)) }
       )
@@ -287,7 +287,7 @@ class PluginInitializationSelectPluginsToLoadTest {
       plugin("baz") { version = "1.0" }.installAt(pluginsDirPath)
 
       val (_, discoveryResult) = PluginSetTestBuilder.fromPath(pluginsDirPath).discoverPlugins()
-      val (result, excludedPlugins) = testPluginSelection(discoveryResult = discoveryResult)
+      val (result, excludedPlugins) = testCandidateSubsetSelection(discoveryResult = discoveryResult)
 
       assertThat(result.plugins).hasSize(3)
       assertThat(result.plugins.map { it.pluginId.idString })
@@ -313,7 +313,7 @@ class PluginInitializationSelectPluginsToLoadTest {
       }.installAt(pluginsDirPath)
 
       val (_, discoveryResult) = PluginSetTestBuilder.fromPath(pluginsDirPath).discoverPlugins()
-      val (result, excludedPlugins) = testPluginSelection(
+      val (result, excludedPlugins) = testCandidateSubsetSelection(
         productBuildNumber = BuildNumber.fromString("250.0")!!,
         discoveryResult = discoveryResult
       )
@@ -344,7 +344,7 @@ class PluginInitializationSelectPluginsToLoadTest {
         productBuildNumber = BuildNumber.fromString("250.0")!!
       )
 
-      val result = initContext.selectPluginsToLoad(
+      val result = initContext.selectCandidateSubset(
         discoveryResult,
         onPluginExcluded = { reason -> excludedPlugins.add(ExcludedPluginInfo(reason.descriptor.getMainDescriptor(), reason)) }
       )
@@ -373,7 +373,7 @@ class PluginInitializationSelectPluginsToLoadTest {
       }.installAt(pluginsDirPath)
 
       val (_, discoveryResult) = PluginSetTestBuilder.fromPath(pluginsDirPath).discoverPlugins()
-      val (result, excludedPlugins) = testPluginSelection(
+      val (result, excludedPlugins) = testCandidateSubsetSelection(
         essentialPlugins = setOf(PluginId.getId("foo")),
         discoveryResult = discoveryResult
       )
@@ -398,7 +398,7 @@ class PluginInitializationSelectPluginsToLoadTest {
       }.installAt(pluginsDirPath)
 
       val (_, discoveryResult) = PluginSetTestBuilder.fromPath(pluginsDirPath).discoverPlugins()
-      val (result, excludedPlugins) = testPluginSelection(
+      val (result, excludedPlugins) = testCandidateSubsetSelection(
         essentialPlugins = setOf(PluginId.getId("bar")),
         discoveryResult = discoveryResult
       )
@@ -423,7 +423,7 @@ class PluginInitializationSelectPluginsToLoadTest {
       }.installAt(pluginsDirPath)
 
       val (_, discoveryResult) = PluginSetTestBuilder.fromPath(pluginsDirPath).discoverPlugins()
-      val (result, excludedPlugins) = testPluginSelection(
+      val (result, excludedPlugins) = testCandidateSubsetSelection(
         essentialPlugins = setOf(PluginId.getId("foo"), PluginId.getId("bar")),
         discoveryResult = discoveryResult
       )
@@ -446,7 +446,7 @@ class PluginInitializationSelectPluginsToLoadTest {
       }.installAt(pluginsDirPath)
 
       val (_, discoveryResult) = PluginSetTestBuilder.fromPath(pluginsDirPath).discoverPlugins()
-      val (result, excludedPlugins) = testPluginSelection(discoveryResult = discoveryResult)
+      val (result, excludedPlugins) = testCandidateSubsetSelection(discoveryResult = discoveryResult)
 
       assertThat(result.plugins).isEmpty()
       assertThat(excludedPlugins).hasSize(2)
@@ -462,7 +462,7 @@ class PluginInitializationSelectPluginsToLoadTest {
       }.installAt(pluginsDirPath)
 
       val (_, discoveryResult) = PluginSetTestBuilder.fromPath(pluginsDirPath).discoverPlugins()
-      val (result, excludedPlugins) = testPluginSelection(discoveryResult = discoveryResult)
+      val (result, excludedPlugins) = testCandidateSubsetSelection(discoveryResult = discoveryResult)
 
       assertThat(result.plugins).isEmpty()
       assertThat(excludedPlugins).hasSize(2)
@@ -477,7 +477,7 @@ class PluginInitializationSelectPluginsToLoadTest {
       }.installAt(pluginsDirPath)
 
       val (_, discoveryResult) = PluginSetTestBuilder.fromPath(pluginsDirPath).discoverPlugins()
-      val (result, excludedPlugins) = testPluginSelection(discoveryResult = discoveryResult)
+      val (result, excludedPlugins) = testCandidateSubsetSelection(discoveryResult = discoveryResult)
 
       assertThat(result.plugins).isEmpty()
       assertThat(excludedPlugins).hasSize(1)
@@ -498,7 +498,7 @@ class PluginInitializationSelectPluginsToLoadTest {
       }.installAt(pluginsDirPath)
 
       val (_, discoveryResult) = PluginSetTestBuilder.fromPath(pluginsDirPath).discoverPlugins()
-      val (result, excludedPlugins) = testPluginSelection(discoveryResult = discoveryResult)
+      val (result, excludedPlugins) = testCandidateSubsetSelection(discoveryResult = discoveryResult)
 
       // Both plugins should be excluded due to conflict on "common" alias
       assertThat(result.plugins).isEmpty()
@@ -527,7 +527,7 @@ class PluginInitializationSelectPluginsToLoadTest {
       }.installAt(pluginsDirPath)
 
       val (_, discoveryResult) = PluginSetTestBuilder.fromPath(pluginsDirPath).discoverPlugins()
-      val (result, excludedPlugins) = testPluginSelection(discoveryResult = discoveryResult)
+      val (result, excludedPlugins) = testCandidateSubsetSelection(discoveryResult = discoveryResult)
 
       // Both plugins should be excluded due to conflict
       assertThat(result.plugins).isEmpty()
@@ -555,7 +555,7 @@ class PluginInitializationSelectPluginsToLoadTest {
         disabledPlugins = setOf(PluginId.getId("bar"))
       )
 
-      val filteredResult = initContext.selectPluginsToLoad(
+      val filteredResult = initContext.selectCandidateSubset(
         discoveryResult,
         onPluginExcluded = { reason -> excludedPlugins.add(ExcludedPluginInfo(reason.descriptor.getMainDescriptor(), reason)) }
       )
@@ -578,7 +578,7 @@ class PluginInitializationSelectPluginsToLoadTest {
         disabledPlugins = setOf(PluginId.getId("bar"))
       )
 
-      val filteredResult = initContext.selectPluginsToLoad(
+      val filteredResult = initContext.selectCandidateSubset(
         discoveryResult,
         onPluginExcluded = { reason -> excludedPlugins.add(ExcludedPluginInfo(reason.descriptor.getMainDescriptor(), reason)) }
       )
@@ -609,7 +609,7 @@ class PluginInitializationSelectPluginsToLoadTest {
         disabledPlugins = setOf(PluginId.getId("bar"), PluginId.getId("baz"))
       )
 
-      val filteredResult = initContext.selectPluginsToLoad(
+      val filteredResult = initContext.selectCandidateSubset(
         discoveryResult,
         onPluginExcluded = { reason -> excludedPlugins.add(ExcludedPluginInfo(reason.descriptor.getMainDescriptor(), reason)) }
       )
@@ -642,7 +642,7 @@ class PluginInitializationSelectPluginsToLoadTest {
         essentialPlugins = setOf(PluginId.getId("foo"))
       )
 
-      val filteredResult = initContext.selectPluginsToLoad(
+      val filteredResult = initContext.selectCandidateSubset(
         discoveryResult,
         onPluginExcluded = { reason -> excludedPlugins.add(ExcludedPluginInfo(reason.descriptor.getMainDescriptor(), reason)) }
       )
@@ -672,7 +672,7 @@ class PluginInitializationSelectPluginsToLoadTest {
         essentialPlugins = setOf(PluginId.getId("foo"))
       )
 
-      val filteredResult = initContext.selectPluginsToLoad(
+      val filteredResult = initContext.selectCandidateSubset(
         discoveryResult,
         onPluginExcluded = { reason -> excludedPlugins.add(ExcludedPluginInfo(reason.descriptor.getMainDescriptor(), reason)) }
       )
@@ -696,7 +696,7 @@ class PluginInitializationSelectPluginsToLoadTest {
       val excludedPlugins = mutableListOf<ExcludedPluginInfo>()
       val initContext = createInitContext()
 
-      val filteredResult = initContext.selectPluginsToLoad(
+      val filteredResult = initContext.selectCandidateSubset(
         discoveryResult,
         onPluginExcluded = { reason -> excludedPlugins.add(ExcludedPluginInfo(reason.descriptor.getMainDescriptor(), reason)) }
       )
@@ -725,7 +725,7 @@ class PluginInitializationSelectPluginsToLoadTest {
         essentialPlugins = setOf(PluginId.getId("foo"))
       )
 
-      val filteredResult = initContext.selectPluginsToLoad(
+      val filteredResult = initContext.selectCandidateSubset(
         discoveryResult,
         onPluginExcluded = { reason -> excludedPlugins.add(ExcludedPluginInfo(reason.descriptor.getMainDescriptor(), reason)) }
       )
@@ -764,7 +764,7 @@ class PluginInitializationSelectPluginsToLoadTest {
         explicitPluginSubsetToLoad = setOf(PluginId.getId("bar"))
       )
 
-      val filteredResult = initContext.selectPluginsToLoad(
+      val filteredResult = initContext.selectCandidateSubset(
         discoveryResult,
         onPluginExcluded = { reason -> excludedPlugins.add(ExcludedPluginInfo(reason.descriptor.getMainDescriptor(), reason)) }
       )
@@ -792,7 +792,7 @@ class PluginInitializationSelectPluginsToLoadTest {
         explicitPluginSubsetToLoad = setOf(PluginId.getId("bar"))
       )
 
-      val filteredResult = initContext.selectPluginsToLoad(
+      val filteredResult = initContext.selectCandidateSubset(
         discoveryResult,
         onPluginExcluded = { reason -> excludedPlugins.add(ExcludedPluginInfo(reason.descriptor.getMainDescriptor(), reason)) }
       )
@@ -826,7 +826,7 @@ class PluginInitializationSelectPluginsToLoadTest {
         explicitPluginSubsetToLoad = setOf(PluginId.getId("c"))
       )
 
-      val filteredResult = initContext.selectPluginsToLoad(
+      val filteredResult = initContext.selectCandidateSubset(
         discoveryResult,
         onPluginExcluded = { reason -> excludedPlugins.add(ExcludedPluginInfo(reason.descriptor.getMainDescriptor(), reason)) }
       )
@@ -856,7 +856,7 @@ class PluginInitializationSelectPluginsToLoadTest {
         explicitPluginSubsetToLoad = setOf(PluginId.getId("bar"))
       )
 
-      val filteredResult = initContext.selectPluginsToLoad(
+      val filteredResult = initContext.selectCandidateSubset(
         discoveryResult,
         onPluginExcluded = { reason -> excludedPlugins.add(ExcludedPluginInfo(reason.descriptor.getMainDescriptor(), reason)) }
       )
@@ -884,7 +884,7 @@ class PluginInitializationSelectPluginsToLoadTest {
         productBuildNumber = BuildNumber.fromString("250.0")!!
       )
 
-      val filteredResult = initContext.selectPluginsToLoad(
+      val filteredResult = initContext.selectCandidateSubset(
         discoveryResult,
         onPluginExcluded = { reason -> excludedPlugins.add(ExcludedPluginInfo(reason.descriptor.getMainDescriptor(), reason)) }
       )
@@ -911,7 +911,7 @@ class PluginInitializationSelectPluginsToLoadTest {
         explicitPluginSubsetToLoad = setOf(PluginId.getId("bar"))
       )
 
-      val filteredResult = initContext.selectPluginsToLoad(
+      val filteredResult = initContext.selectCandidateSubset(
         discoveryResult,
         onPluginExcluded = { reason -> excludedPlugins.add(ExcludedPluginInfo(reason.descriptor.getMainDescriptor(), reason)) }
       )
@@ -948,7 +948,7 @@ class PluginInitializationSelectPluginsToLoadTest {
         explicitPluginSubsetToLoad = emptySet()
       )
 
-      val filteredResult = initContext.selectPluginsToLoad(
+      val filteredResult = initContext.selectCandidateSubset(
         discoveryResult,
         onPluginExcluded = { reason -> excludedPlugins.add(ExcludedPluginInfo(reason.descriptor.getMainDescriptor(), reason)) }
       )
@@ -976,7 +976,7 @@ class PluginInitializationSelectPluginsToLoadTest {
       val excludedPlugins = mutableListOf<ExcludedPluginInfo>()
       val initContext = createInitContext(disablePluginLoadingCompletely = true)
 
-      val filteredResult = initContext.selectPluginsToLoad(
+      val filteredResult = initContext.selectCandidateSubset(
         discoveryResult,
         onPluginExcluded = { reason -> excludedPlugins.add(ExcludedPluginInfo(reason.descriptor.getMainDescriptor(), reason)) }
       )
@@ -1001,7 +1001,7 @@ class PluginInitializationSelectPluginsToLoadTest {
       val excludedPlugins = mutableListOf<ExcludedPluginInfo>()
       val initContext = createInitContext(disablePluginLoadingCompletely = true)
 
-      val filteredResult = initContext.selectPluginsToLoad(
+      val filteredResult = initContext.selectCandidateSubset(
         discoveryResult,
         onPluginExcluded = { reason -> excludedPlugins.add(ExcludedPluginInfo(reason.descriptor.getMainDescriptor(), reason)) }
       )
@@ -1021,7 +1021,7 @@ class PluginInitializationSelectPluginsToLoadTest {
       val excludedPlugins = mutableListOf<ExcludedPluginInfo>()
       val initContext = createInitContext(disablePluginLoadingCompletely = true)
 
-      val filteredResult = initContext.selectPluginsToLoad(
+      val filteredResult = initContext.selectCandidateSubset(
         PluginsDiscoveryResult.build(emptyList()),
         onPluginExcluded = { reason -> excludedPlugins.add(ExcludedPluginInfo(reason.descriptor.getMainDescriptor(), reason)) }
       )
@@ -1047,7 +1047,7 @@ class PluginInitializationSelectPluginsToLoadTest {
       }.installAt(pluginsDirPath)
 
       val (_, discoveryResult) = PluginSetTestBuilder.fromPath(pluginsDirPath).discoverPlugins()
-      val (result, excludedPlugins) = testPluginSelection(discoveryResult = discoveryResult)
+      val (result, excludedPlugins) = testCandidateSubsetSelection(discoveryResult = discoveryResult)
 
       assertThat(result.plugins).hasSize(2)
       assertThat(excludedPlugins).isEmpty()
@@ -1076,7 +1076,7 @@ class PluginInitializationSelectPluginsToLoadTest {
       plugin("foo") { version = "1.0" }.installAt(pluginsDirPath)
 
       val (_, discoveryResult) = PluginSetTestBuilder.fromPath(pluginsDirPath).discoverPlugins()
-      val (result, _) = testPluginSelection(discoveryResult = discoveryResult)
+      val (result, _) = testCandidateSubsetSelection(discoveryResult = discoveryResult)
 
       assertThat(result.resolvePluginId(PluginId.getId("unknown"))).isNull()
     }
@@ -1102,7 +1102,7 @@ class PluginInitializationSelectPluginsToLoadTest {
       plugin("baz") { version = "1.0" }.installAt(pluginsDirPath)
 
       val (_, discoveryResult) = PluginSetTestBuilder.fromPath(pluginsDirPath).discoverPlugins()
-      val (result, excludedPlugins) = testPluginSelection(discoveryResult = discoveryResult)
+      val (result, excludedPlugins) = testCandidateSubsetSelection(discoveryResult = discoveryResult)
 
       // Only baz should remain (foo versions conflict, bar conflicts with foo)
       assertThat(result.plugins).hasSize(1)
@@ -1117,7 +1117,7 @@ class PluginInitializationSelectPluginsToLoadTest {
     @Test
     fun `empty plugin list produces empty result`() {
       val discoveryResult = PluginsDiscoveryResult.build(emptyList())
-      val (result, _) = testPluginSelection(discoveryResult = discoveryResult)
+      val (result, _) = testCandidateSubsetSelection(discoveryResult = discoveryResult)
 
       assertThat(result.plugins).isEmpty()
       assertThat(result.buildFullPluginIdMapping()).isEmpty()
@@ -1132,7 +1132,7 @@ class PluginInitializationSelectPluginsToLoadTest {
       }.installAt(pluginsDirPath)
 
       val (_, discoveryResult) = PluginSetTestBuilder.fromPath(pluginsDirPath).discoverPlugins()
-      val (result, excludedPlugins) = testPluginSelection(discoveryResult = discoveryResult)
+      val (result, excludedPlugins) = testCandidateSubsetSelection(discoveryResult = discoveryResult)
 
       assertThat(result.plugins).hasSize(1)
       assertThat(excludedPlugins).isEmpty()
@@ -1152,7 +1152,7 @@ class PluginInitializationSelectPluginsToLoadTest {
       plugin("foo") { version = "3.0" }.installAt(pluginsDirPath)
 
       val (_, discoveryResult) = PluginSetTestBuilder.fromPath(pluginsDirPath).discoverPlugins()
-      val (result, excludedPlugins) = testPluginSelection(discoveryResult = discoveryResult)
+      val (result, excludedPlugins) = testCandidateSubsetSelection(discoveryResult = discoveryResult)
 
       assertThat(result.plugins).hasSize(1)
       assertThat(result.plugins[0].version).isEqualTo("3.0")
@@ -1175,7 +1175,7 @@ class PluginInitializationSelectPluginsToLoadTest {
       val (_, discoveryResult) = PluginSetTestBuilder.fromPath(pluginsDirPath).discoverPlugins()
       
       // Neither plugin disabled
-      val (result, excludedPlugins) = testPluginSelection(discoveryResult = discoveryResult)
+      val (result, excludedPlugins) = testCandidateSubsetSelection(discoveryResult = discoveryResult)
 
       // Both should be excluded due to ID conflict
       assertThat(result.plugins).isEmpty()
@@ -1198,7 +1198,7 @@ class PluginInitializationSelectPluginsToLoadTest {
       val (_, discoveryResult) = PluginSetTestBuilder.fromPath(pluginsDirPath).discoverPlugins()
       
       // Disable foo, keep bar enabled
-      val (result, excludedPlugins) = testPluginSelection(
+      val (result, excludedPlugins) = testCandidateSubsetSelection(
         disabledPlugins = setOf(PluginId.getId("foo")),
         discoveryResult = discoveryResult
       )

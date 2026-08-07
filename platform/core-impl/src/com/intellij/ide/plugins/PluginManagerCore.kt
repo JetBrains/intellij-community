@@ -462,21 +462,21 @@ object PluginManagerCore {
     reportingPolicy: PluginLoadingErrorReportingPolicy,
     configureClassLoaders: Boolean,
   ): PluginManagerState {
-    var initStagesActivity = parentActivity?.startChild("selectPluginsToLoad") // no safe end() call, because if it fails, it won't matter
-    val excludedFromLoading = IdentityHashMap<PluginMainDescriptor, DescriptorExclusionReason>()
-    val pluginsToLoad = initContext.selectPluginsToLoad(discoveredPlugins) { reason ->
+    var initStagesActivity = parentActivity?.startChild("selectCandidateSubset") // no safe end() call, because if it fails, it won't matter
+    val excludedFromCandidateSubset = IdentityHashMap<PluginMainDescriptor, DescriptorExclusionReason>()
+    val candidateSubset = initContext.selectCandidateSubset(discoveredPlugins) { reason ->
       if (reason.descriptor !is PluginMainDescriptor) {
-        logger.error("Non-main descriptor passed to selectPluginsToLoad: ${reason.descriptor}")
+        logger.error("Non-main descriptor passed to selectCandidateSubset: ${reason.descriptor}")
       }
-      excludedFromLoading[reason.descriptor.getMainDescriptor()] = reason
+      excludedFromCandidateSubset[reason.descriptor.getMainDescriptor()] = reason
     }
-    initStagesActivity = initStagesActivity?.endAndStart("selectPluginsToLoad post-process")
+    initStagesActivity = initStagesActivity?.endAndStart("selectCandidateSubset post-process")
     val incompletePlugins = HashMap<PluginId, PluginMainDescriptor>()
     val shadowedBundledIds = HashSet<PluginId>()
     for (pluginList in discoveredPlugins.pluginLists) {
       for (plugin in pluginList.plugins) {
-        val exclusionReason = excludedFromLoading[plugin]
-        if (pluginsToLoad.resolvePluginId(plugin.pluginId) == null && exclusionReason != null && exclusionReason !is PluginVersionIsSuperseded) {
+        val exclusionReason = excludedFromCandidateSubset[plugin]
+        if (candidateSubset.resolvePluginId(plugin.pluginId) == null && exclusionReason != null && exclusionReason !is PluginVersionIsSuperseded) {
           val existing = incompletePlugins[plugin.pluginId]
           if (existing == null || VersionComparatorUtil.compare(plugin.version, existing.version) > 0) {
             incompletePlugins[plugin.pluginId] = plugin
@@ -489,16 +489,16 @@ object PluginManagerCore {
         }
       }
     }
-    val totalPluginSet = AmbiguousPluginSet.build(pluginsToLoad.plugins + incompletePlugins.values)
+    val totalPluginSet = AmbiguousPluginSet.build(candidateSubset.plugins + incompletePlugins.values)
     val pluginNonLoadReasons = incompletePlugins.values.mapNotNull { plugin ->
-      excludedFromLoading[plugin]!!.toSelectionPluginNonLoadReason()?.let { plugin.pluginId to it }
+      excludedFromCandidateSubset[plugin]!!.toSelectionPluginNonLoadReason()?.let { plugin.pluginId to it }
     }.toMap(mutableMapOf())
 
-    if (initContext.checkEssentialPlugins && pluginsToLoad.resolvePluginId(CORE_ID) == null) {
+    if (initContext.checkEssentialPlugins && candidateSubset.resolvePluginId(CORE_ID) == null) {
       throw EssentialPluginMissingException(listOf("$CORE_ID (platform prefix: ${System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY)})"))
         .apply {
           incompletePlugins[CORE_ID]
-            ?.let(excludedFromLoading::get)
+            ?.let(excludedFromCandidateSubset::get)
             ?.let(PluginInitializationDiagnosticUtils::getLogMessageForRootExclusionReason)
             ?.let { addSuppressed(Exception(it)) }
         }
@@ -525,7 +525,7 @@ object PluginManagerCore {
       }
     }
 
-    val resolvedPluginSet = initContext.resolveConstraints(pluginsToLoad)
+    val resolvedPluginSet = initContext.resolveConstraints(candidateSubset)
     PluginInitializationDiagnosticUtils.logExclusionTree(logger, resolvedPluginSet, incompletePlugins)
     val (pluginSet, cycleErrors) = adaptResolvedPluginSetAsOldPluginSet(
       input = PluginSubsystemInput(initContext, discoveredPlugins),

@@ -16,7 +16,7 @@ import com.intellij.ide.plugins.isExcluded
 import com.intellij.ide.plugins.loadDescriptorFromArtifact
 import com.intellij.ide.plugins.loadDescriptors
 import com.intellij.ide.plugins.resolveConstraints
-import com.intellij.ide.plugins.selectPluginsToLoad
+import com.intellij.ide.plugins.selectCandidateSubset
 import com.intellij.ide.plugins.shortLogDescription
 import com.intellij.ide.plugins.validatePluginIsCompatible
 import com.intellij.openapi.application.PluginAutoUpdateRepository.PluginUpdateInfo
@@ -151,12 +151,12 @@ object PluginAutoUpdater {
       discoveredPlugins + DiscoveredPluginsList(updates.values.toList(), PluginsSourceContext.Custom)
     )
     val excludedDescriptors = mutableMapOf<PluginMainDescriptor, DescriptorExclusionReason>()
-    val pluginsToLoad = initContext.selectPluginsToLoad(composedDiscoveryResult) { reason ->
+    val candidateSubset = initContext.selectCandidateSubset(composedDiscoveryResult) { reason ->
       if (reason !is PluginVersionIsSuperseded) {
         excludedDescriptors[reason.descriptor.getMainDescriptor()] = reason
       }
     }
-    val pluginSet = initContext.resolveConstraints(pluginsToLoad)
+    val pluginSet = initContext.resolveConstraints(candidateSubset)
     for ((id, updateDesc) in updates) {
       // no third-party plugin check, settings are not available at this point; that check must be done when downloading the updates
       if (initContext.validatePluginIsCompatible(updateDesc) != null) {

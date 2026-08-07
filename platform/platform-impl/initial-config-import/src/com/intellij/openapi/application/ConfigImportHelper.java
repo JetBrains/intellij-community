@@ -17,7 +17,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImplKt;
 import com.intellij.ide.plugins.PluginDescriptorLoader;
 import com.intellij.ide.plugins.PluginInitContextFactory;
-import com.intellij.ide.plugins.PluginInitContextSelectPluginsToLoadKt;
+import com.intellij.ide.plugins.PluginInitContextSelectCandidateSubsetKt;
 import com.intellij.ide.plugins.PluginInstaller;
 import com.intellij.ide.plugins.PluginMainDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
@@ -1073,7 +1073,7 @@ public final class ConfigImportHelper {
         options.compatibleBuildNumber, Collections.emptySet(), Collections.emptySet(), brokenPluginVersions
       );
       var nonLoadablePlugins = new HashMap<PluginId, PluginMainDescriptor>();
-      var loadablePlugins = PluginInitContextSelectPluginsToLoadKt.selectPluginsToLoad(
+      var candidatePlugins = PluginInitContextSelectCandidateSubsetKt.selectCandidateSubset(
         initContext,
         oldIdePlugins,
         reason -> {
@@ -1088,9 +1088,9 @@ public final class ConfigImportHelper {
           return Unit.INSTANCE;
         }
       ).getPlugins();
-      // TODO 'plugin is broken' is already applied by 'selectPluginsToLoad'
+      // TODO 'plugin is broken' is already applied by 'selectCandidateSubset'
       if (Boolean.getBoolean(UPDATE_ONLY_INCOMPATIBLE_PLUGINS_PROPERTY)) {
-        partitionNonBundled(loadablePlugins, pluginsToDownload, pluginsToMigrate, descriptor -> {
+        partitionNonBundled(candidatePlugins, pluginsToDownload, pluginsToMigrate, descriptor -> {
           var brokenVersions = brokenPluginVersions != null ? brokenPluginVersions.get(descriptor.getPluginId()) : null;
           return brokenVersions != null && brokenVersions.contains(descriptor.getVersion());
         });
@@ -1101,10 +1101,10 @@ public final class ConfigImportHelper {
         // Here we also put there plugins for which updates are available (or they are broken).
         // So the only difference is that here we try to download more plugins.
         var nonBundledPlugins = new ArrayList<IdeaPluginDescriptor>();
-        partitionNonBundled(loadablePlugins, nonBundledPlugins, pluginsToMigrate, _ -> true);
+        partitionNonBundled(candidatePlugins, nonBundledPlugins, pluginsToMigrate, _ -> true);
         partitionNonBundled(nonLoadablePlugins.values(), nonBundledPlugins, pluginsToMigrate, _ -> true);
         var updates = fetchPluginUpdatesFromMarketplace(options, ContainerUtil.map2Set(nonBundledPlugins, d -> d.getPluginId()));
-        partitionNonBundled(loadablePlugins, pluginsToDownload, pluginsToMigrate, d -> {
+        partitionNonBundled(candidatePlugins, pluginsToDownload, pluginsToMigrate, d -> {
           if (updates != null && updates.containsKey(d.getPluginId()) && !updates.get(d.getPluginId()).getVersion().equals(d.getVersion())) {
             return true;
           }
