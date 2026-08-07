@@ -39,6 +39,7 @@
     <module name="intellij.platform.util.ui"/>
     <module name="intellij.platform.vcs.impl"/>
     <module name="kotlin.jvm.shared"/>
+    <module name="kotlin.scripting"/>
   </dependencies>
   <!-- endregion -->
 

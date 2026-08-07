@@ -27,10 +27,6 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
     const val MAIN_FRONTEND_MODULE_NAME: String = "kotlin.frontend.split"
     private const val SERIALIZATION_COMPILER_PLUGIN_MODULE = "intellij.libraries.kotlinc.kotlinx.serialization.compiler.plugin"
 
-    val MODULES: List<String> = java.util.List.of(
-      "kotlin.scripting",
-    )
-
     private val KOTLIN_SCRIPTING_LIBRARIES = java.util.List.of(
       "kotlinc.kotlin-script-runtime",
       "kotlinc.kotlin-scripting-jvm"
@@ -91,10 +87,6 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
 
       for (moduleName in MODULES_SHARED_WITH_CLIENT) {
         spec.withModule(moduleName, "kotlin-plugin-shared.jar")
-      }
-
-      for (moduleName in MODULES) {
-        spec.withModule(moduleName)
       }
 
       basePluginsAndLibraries(spec)

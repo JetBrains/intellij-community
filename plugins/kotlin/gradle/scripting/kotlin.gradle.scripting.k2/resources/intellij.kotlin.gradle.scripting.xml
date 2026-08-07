@@ -41,6 +41,7 @@
     <module name="intellij.properties.psi"/>
     <module name="kotlin.gradle.gradle-java"/>
     <module name="kotlin.gradle.scripting.shared"/>
+    <module name="kotlin.scripting"/>
   </dependencies>
   <!-- endregion -->
 

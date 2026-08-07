@@ -39,6 +39,7 @@
     <module name="intellij.platform.projectModel.impl"/>
     <module name="intellij.platform.statistics"/>
     <module name="intellij.platform.util.ui"/>
+    <module name="kotlin.scripting"/>
   </dependencies>
   <!-- endregion -->
   <applicationListeners>

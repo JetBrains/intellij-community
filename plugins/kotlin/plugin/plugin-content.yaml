@@ -210,7 +210,6 @@
     files:
     - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/2/kotlin-scripting-jvm-2.jar
   modules:
-  - name: kotlin.scripting
   - name: intellij.kotlin.plugin
   contentModules:
   - name: intellij.kotlin.duplicate.scope
@@ -219,6 +218,9 @@
 - name: lib/kotlin.fir.frontend-independent.jar
   contentModules:
   - name: kotlin.fir.frontend-independent
+- name: lib/kotlin.scripting.jar
+  contentModules:
+  - name: kotlin.scripting
 - name: lib/kotlinc.allopen-compiler-plugin.jar
   library: kotlinc.allopen-compiler-plugin
   files:
