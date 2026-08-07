@@ -118,10 +118,37 @@ internal enum class GhosttyTerminalData(val code: Int) {
   COLOR_PALETTE(21),
 }
 
-/** `GhosttyCellData` (screen.h) — selector for `ghostty_cell_get`. */
+/** `GhosttyCellData` (screen.h) — selector for `ghostty_cell_get_multi`. */
 internal enum class GhosttyCellData(val code: Int) {
   CODEPOINT(1),
+  CONTENT_TAG(2),
   WIDE(3),
+  /** The cell's style id (`uint16_t`); 0 is always the default style, other ids are page-local. */
+  STYLE_ID(6),
+  /** Whether the cell carries an OSC 8 hyperlink (bool). */
+  HAS_HYPERLINK(7),
+}
+
+/** `GhosttyCellContentTag` (screen.h) — what kind of content a cell holds. */
+internal enum class GhosttyCellContentTag(val code: Int) {
+  CODEPOINT(0),
+  CODEPOINT_GRAPHEME(1),
+  BG_COLOR_PALETTE(2),
+  BG_COLOR_RGB(3);
+
+  companion object {
+    /**
+     * Map a raw C content-tag code. Unmodeled codes are coerced to [CODEPOINT_GRAPHEME], the
+     * conservative reading: it costs one grapheme lookup instead of silently dropping text.
+     */
+    fun of(code: Int): GhosttyCellContentTag = when (code) {
+      0 -> CODEPOINT
+      1 -> CODEPOINT_GRAPHEME
+      2 -> BG_COLOR_PALETTE
+      3 -> BG_COLOR_RGB
+      else -> CODEPOINT_GRAPHEME
+    }
+  }
 }
 
 /** `GhosttyRowData` (screen.h) — selector for `ghostty_row_get`. */

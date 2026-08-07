@@ -52,9 +52,11 @@ internal class JediTermVsGhosttyPerfTest {
   val ruleChain: RuleChain = RuleChain(projectRule, disposableRule)
 
   @Test
-  fun `compare JediTerm and Ghostty throughput through the session pipeline`() = timeoutRunBlocking(3.minutes) {
+  fun `compare JediTerm and Ghostty throughput through the session pipeline`() = timeoutRunBlocking(5.minutes) {
     val workloads = listOf(
       Workload("plain-text-scroll", plainTextWorkload()),
+      Workload("log-file-cat", logFileCatWorkload()),
+      Workload("single-long-line", singleLongLineWorkload()),
       Workload("sgr-colored-cells", sgrColoredWorkload()),
       Workload("cursor-motion", cursorMotionWorkload()),
       Workload("unicode-wide", unicodeWorkload()),
@@ -68,8 +70,9 @@ internal class JediTermVsGhosttyPerfTest {
     report.appendLine()
     report.appendLine("Terminal emulator throughput via TerminalSession (best of $MEASURED_RUNS after $WARMUP_RUNS warmup, ${COLUMNS}x$ROWS):")
     // "gh/jt" is Ghostty time divided by JediTerm time: >1 means Ghostty is that many times slower, <1 means faster.
-    report.appendLine("%-20s %10s %12s %12s %10s".format(
-      "workload", "size(KB)", "jediterm ms", "ghostty ms", "gh/jt"))
+    // The MB/s columns make the table directly comparable to `time cat <big file>` in a real terminal.
+    report.appendLine("%-20s %10s %12s %12s %9s %9s %8s".format(
+      "workload", "size(KB)", "jediterm ms", "ghostty ms", "jt MB/s", "gh MB/s", "gh/jt"))
 
     for (workload in workloads) {
       val sizeBytes = workload.payload.toByteArray(Charsets.UTF_8).size
@@ -78,11 +81,14 @@ internal class JediTermVsGhosttyPerfTest {
       // Sanity: both emulators actually processed the workload (its completion marker was observed).
       assertThat(jt).describedAs("JediTerm did not process '${workload.name}'").isPositive()
       assertThat(gh).describedAs("Ghostty did not process '${workload.name}'").isPositive()
-      report.appendLine("%-20s %10.1f %12.2f %12.2f %9.1fx".format(
+      val sizeMb = sizeBytes / 1024.0 / 1024.0
+      report.appendLine("%-20s %10.1f %12.2f %12.2f %9.1f %9.1f %7.1fx".format(
         workload.name,
         sizeBytes / 1024.0,
         jt / 1_000_000.0,
         gh / 1_000_000.0,
+        sizeMb / (jt / 1_000_000_000.0),
+        sizeMb / (gh / 1_000_000_000.0),
         gh.toDouble() / jt,
       ))
     }
@@ -154,10 +160,37 @@ internal class JediTermVsGhosttyPerfTest {
   // Workloads (payloads only; the harness appends a unique completion marker per send)
   // ---------------------------------------------------------------------------
 
-  /** A large plain-ASCII dump that scrolls the screen (like `cat`-ing a big log). */
+  /** A large plain-ASCII dump that scrolls the screen; every line fits the width, so nothing soft-wraps. */
   private fun plainTextWorkload(): String = buildString {
     val line = "The quick brown fox jumps over the lazy dog 0123456789 abcdefghijklmnopqrstuvwx"
     repeat(1_300) { append(line).append("\r\n") }
+  }
+
+  /**
+   * `cat`-ing an IDE log: ~1 MB of ~170-character lines (the average of a real idea.log), so at
+   * 80 columns every line soft-wraps into 2-3 rows. Wrapping is what separates this from
+   * [plainTextWorkload]: an incremental content update cannot start mid-line, so a wrapped line
+   * straddling the emitted/unemitted boundary is backed up to its first row and re-emitted whole.
+   */
+  private fun logFileCatWorkload(): String = buildString {
+    repeat(6_000) { i ->
+      append("2026-08-07 12:34:56,").append("%03d".format(i % 1000))
+      append(" [").append("%6d".format(i)).append("] INFO - #c.i.o.diagnostic.ExampleComponent - ")
+      append("request ").append(i % 10_000).append(" handled in 12 ms, state=RUNNING, payload: ")
+      append("abcdefghijklmnopqrstuvwxyz-0123456789")
+      append("\r\n")
+    }
+  }
+
+  /**
+   * One 128 KB logical line with no line break at all — the worst case for incremental updates:
+   * the line never leaves the emitted/unemitted boundary, so each projection re-emits the whole
+   * soft-wrapped run accumulated so far (measured at ~15x the payload characters for the Ghostty
+   * pipeline; see `TerminalEmulatorOutputProjector.buildContentUpdate`).
+   */
+  private fun singleLongLineWorkload(): String = buildString {
+    val chunk = "wrap-me-0123456789-abcdefghijklmnopqrstuvwxyz-"
+    while (length < 128 * 1024) append(chunk)
   }
 
   /** Dense styled cells: a fresh 256-color SGR before every short token. */

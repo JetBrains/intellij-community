@@ -88,9 +88,13 @@ internal object LibGhosttyVt {
   fun gridRefRow(gridRef: MemorySegment, outRow: MemorySegment): GhosttyResult =
     GhosttyResult.of(GRID_REF_ROW.invokeExact(gridRef, outRow) as Int)
 
-  /** `ghostty_cell_get`: read a [GhosttyCellData] field of the opaque [cell] into [out]. */
-  fun cellGet(cell: Long, cellData: Int, out: MemorySegment): GhosttyResult =
-    GhosttyResult.of(CELL_GET.invokeExact(cell, cellData, out) as Int)
+  /**
+   * `ghostty_cell_get_multi`: read [count] [GhosttyCellData] fields of the opaque [cell] in one call.
+   * [keys] is a C array of `GhosttyCellData` codes and [values] a matching array of output pointers;
+   * [outWritten] receives how many values were written — on error, the index of the failing key.
+   */
+  fun cellGetMulti(cell: Long, count: Long, keys: MemorySegment, values: MemorySegment, outWritten: MemorySegment): GhosttyResult =
+    GhosttyResult.of(CELL_GET_MULTI.invokeExact(cell, count, keys, values, outWritten) as Int)
 
   /** `ghostty_row_get`: read a [GhosttyRowData] field of the opaque [row] into [out]. */
   fun rowGet(row: Long, rowData: Int, out: MemorySegment): GhosttyResult =
@@ -402,8 +406,8 @@ internal object LibGhosttyVt {
     FunctionDescriptor.of(C_INT, C_PTR, C_PTR, C_LONG, C_PTR)) }
   private val GRID_REF_ROW: MethodHandle by lazy { downcall("ghostty_grid_ref_row",
     FunctionDescriptor.of(C_INT, C_PTR, C_PTR)) }
-  private val CELL_GET: MethodHandle by lazy { downcall("ghostty_cell_get",
-    FunctionDescriptor.of(C_INT, C_LONG, C_INT, C_PTR)) }
+  private val CELL_GET_MULTI: MethodHandle by lazy { downcall("ghostty_cell_get_multi",
+    FunctionDescriptor.of(C_INT, C_LONG, C_LONG, C_PTR, C_PTR, C_PTR)) }
   private val ROW_GET: MethodHandle by lazy { downcall("ghostty_row_get",
     FunctionDescriptor.of(C_INT, C_LONG, C_INT, C_PTR)) }
   private val TERMINAL_MODE_GET: MethodHandle by lazy { downcall("ghostty_terminal_mode_get",

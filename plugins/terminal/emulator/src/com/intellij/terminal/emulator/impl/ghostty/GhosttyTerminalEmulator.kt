@@ -3,6 +3,7 @@ package com.intellij.terminal.emulator.impl.ghostty
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyCellContentTag
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyCellData
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyCellWide
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyCursorVisualStyle
@@ -93,7 +94,9 @@ import java.nio.charset.StandardCharsets
  *
  * Only the slice of the C API needed to mirror the screen + scrollback is used: terminal lifecycle,
  * `vt_write`, `terminal_get` for geometry/modes, the render state for dirty tracking, and the
- * grid-reference read path (`grid_ref` → `grid_ref_cell` / `grid_ref_style` / `grid_ref_row`).
+ * grid-reference read path (`grid_ref` → `grid_ref_cell` → `cell_get_multi`, with
+ * `grid_ref_style` / `grid_ref_graphemes` / `grid_ref_hyperlink_uri` reached only for cells that
+ * carry a style, grapheme cluster, or hyperlink, and `grid_ref_row` for the wrap flag).
  *
  * The shared library file is resolved by [com.intellij.terminal.emulator.impl.ghostty.bindings.LibGhosttyVtLocator].
  *
@@ -141,6 +144,25 @@ internal class GhosttyTerminalEmulator(
   private var scratchGraphemes: MemorySegment = arena.allocate(8L * C_INT.byteSize()) // uint32[8]; grows on OUT_OF_SPACE
   private val scratchGraphemesLen: MemorySegment = arena.allocate(C_LONG)
   private val scratchCellData = CellData()
+
+  // One ghostty_cell_get_multi call reads every per-cell scalar readCell needs: [scratchCellKeys]
+  // lists the GhosttyCellData codes and [scratchCellValues] the matching output addresses inside
+  // [scratchCellOut] (laid out at the CELL_OUT_OFF_* offsets). Filled once; the addresses are
+  // stable because the arena never moves allocations.
+  private val scratchCellOut: MemorySegment = arena.allocate(16L)
+  private val scratchCellKeys: MemorySegment = arena.allocate(C_INT, CELL_MULTI_KEYS.size.toLong()).also { keys ->
+    CELL_MULTI_KEYS.forEachIndexed { i, key -> keys.setAtIndex(C_INT, i.toLong(), key.code) }
+  }
+  private val scratchCellValues: MemorySegment = arena.allocate(C_PTR, CELL_MULTI_KEYS.size.toLong()).also { values ->
+    CELL_OUT_OFFSETS.forEachIndexed { i, offset -> values.setAtIndex(C_PTR, i.toLong(), scratchCellOut.asSlice(offset)) }
+  }
+  private val scratchCellWritten: MemorySegment = arena.allocate(C_LONG)
+
+  // Styles of the row being built, keyed by the cells' style id, so a run of equally styled cells
+  // costs one native style read and shares one CellStyle instance. Style ids are page-local (only
+  // id 0 — the default style — is universal) and a row never spans pages, so the cache must not
+  // outlive one buildRow.
+  private val rowStyleCache = HashMap<Int, CellStyle>()
 
   // The one and only input buffer for [write], which feeds longer input through it a chunk at a time. Both
   // halves of that matter: the arena is shared and frees nothing before close(), so allocating per write
@@ -571,6 +593,7 @@ internal class GhosttyTerminalEmulator(
 
   private fun buildRow(pointTag: GhosttyPointTag, y: Int): TerminalRow {
     ensureOpen()
+    rowStyleCache.clear() // style ids are only comparable within one page; a row never spans pages
     val width = terminalGetU16(GhosttyTerminalData.COLS)
     val cells = ArrayList<Cell>(width)
     for (x in 0 until width) {
@@ -922,6 +945,11 @@ internal class GhosttyTerminalEmulator(
    * Resolve the cell at ([pointTag], x, y) into [out]; false when the point is out of
    * bounds, or (reported via [logGridReadFailure]) when the engine fails to read the
    * resolved cell.
+   *
+   * One `cell_get_multi` call covers every per-cell scalar; the expensive lookups run
+   * only when those scalars say the cell has the data: graphemes for grapheme-cluster
+   * cells, the URI for hyperlinked cells, and the style for a style id the current row
+   * has not resolved yet (see [styleForId]).
    */
   private fun readCell(pointTag: GhosttyPointTag, x: Int, y: Int, out: CellData): Boolean {
     ensureOpen()
@@ -942,35 +970,66 @@ internal class GhosttyTerminalEmulator(
         return false
       }
       val cell = scratchCell.get(C_LONG, 0L)
-      out.codepoint = cellGetInt(cell, GhosttyCellData.CODEPOINT) ?: return false
-      out.wide = GhosttyCellWide.of(cellGetInt(cell, GhosttyCellData.WIDE) ?: return false)
-      out.combining = readGraphemeCombining()
-
-      scratchStyle.fill(0.toByte())
-      scratchStyle.set(C_LONG, 0L, STYLE_SIZE) // GHOSTTY_INIT_SIZED
-      val styleRead = LibGhosttyVt.gridRefStyle(scratchGridRef, scratchStyle)
-      if (styleRead == GhosttyResult.SUCCESS) {
-        out.fgTag = GhosttyStyleColorTag.of(scratchStyle.get(C_INT, STYLE_OFF_FG_TAG))
-        out.fg = readColorValue(out.fgTag, STYLE_OFF_FG_VAL)
-        out.bgTag = GhosttyStyleColorTag.of(scratchStyle.get(C_INT, STYLE_OFF_BG_TAG))
-        out.bg = readColorValue(out.bgTag, STYLE_OFF_BG_VAL)
-        out.bold = scratchStyle.get(C_BYTE, STYLE_OFF_BOLD).toInt() != 0
-        out.italic = scratchStyle.get(C_BYTE, STYLE_OFF_ITALIC).toInt() != 0
-        out.faint = scratchStyle.get(C_BYTE, STYLE_OFF_FAINT).toInt() != 0
-        out.blink = scratchStyle.get(C_BYTE, STYLE_OFF_BLINK).toInt() != 0
-        out.inverse = scratchStyle.get(C_BYTE, STYLE_OFF_INVERSE).toInt() != 0
-        out.invisible = scratchStyle.get(C_BYTE, STYLE_OFF_INVISIBLE).toInt() != 0
-        out.underline = GhosttySgrUnderline.of(scratchStyle.get(C_INT, STYLE_OFF_UNDERLINE))
+      val multiRead = LibGhosttyVt.cellGetMulti(cell, CELL_MULTI_KEYS.size.toLong(), scratchCellKeys, scratchCellValues, scratchCellWritten)
+      if (multiRead != GhosttyResult.SUCCESS) {
+        val failedKey = CELL_MULTI_KEYS.getOrNull(scratchCellWritten.get(C_LONG, 0L).toInt())
+        logGridReadFailure("ghostty_cell_get_multi($failedKey)", multiRead)
+        return false
       }
-      else {
-        // the cell keeps the default style
-        logGridReadFailure("ghostty_grid_ref_style", styleRead)
+      out.codepoint = scratchCellOut.get(C_INT, CELL_OUT_OFF_CODEPOINT)
+      out.wide = GhosttyCellWide.of(scratchCellOut.get(C_INT, CELL_OUT_OFF_WIDE))
+      if (GhosttyCellContentTag.of(scratchCellOut.get(C_INT, CELL_OUT_OFF_CONTENT_TAG)) == GhosttyCellContentTag.CODEPOINT_GRAPHEME) {
+        out.combining = readGraphemeCombining()
       }
-      out.hyperlink = readHyperlinkUri()
+      out.style = styleForId(scratchCellOut.get(C_SHORT, CELL_OUT_OFF_STYLE_ID).toInt() and 0xFFFF)
+      if (scratchCellOut.get(C_BYTE, CELL_OUT_OFF_HAS_HYPERLINK).toInt() != 0) {
+        out.hyperlink = readHyperlinkUri()
+      }
       return true
     } catch (t: Throwable) {
       throw RuntimeException("ghostty cell read failed", t)
     }
+  }
+
+  /**
+   * The [CellStyle] for a cell's [styleId], reading it through the current grid ref only when the
+   * row being built has not resolved that id yet. Id 0 is always the default style; other ids are
+   * page-local, which the per-row lifetime of [rowStyleCache] respects.
+   */
+  private fun styleForId(styleId: Int): CellStyle {
+    if (styleId == 0) return CellStyle.Default
+    return rowStyleCache.getOrPut(styleId) { readStyleFromGridRef() }
+  }
+
+  /** Read the current grid ref's style; the default style if the engine fails the read. */
+  private fun readStyleFromGridRef(): CellStyle {
+    scratchStyle.fill(0.toByte())
+    scratchStyle.set(C_LONG, 0L, STYLE_SIZE) // GHOSTTY_INIT_SIZED
+    val styleRead = LibGhosttyVt.gridRefStyle(scratchGridRef, scratchStyle)
+    if (styleRead != GhosttyResult.SUCCESS) {
+      logGridReadFailure("ghostty_grid_ref_style", styleRead)
+      return CellStyle.Default
+    }
+    val fgTag = GhosttyStyleColorTag.of(scratchStyle.get(C_INT, STYLE_OFF_FG_TAG))
+    val bgTag = GhosttyStyleColorTag.of(scratchStyle.get(C_INT, STYLE_OFF_BG_TAG))
+    return CellStyle(
+      foreground = toColor(fgTag, readColorValue(fgTag, STYLE_OFF_FG_VAL)),
+      background = toColor(bgTag, readColorValue(bgTag, STYLE_OFF_BG_VAL)),
+      bold = scratchStyle.get(C_BYTE, STYLE_OFF_BOLD).toInt() != 0,
+      faint = scratchStyle.get(C_BYTE, STYLE_OFF_FAINT).toInt() != 0,
+      italic = scratchStyle.get(C_BYTE, STYLE_OFF_ITALIC).toInt() != 0,
+      blink = scratchStyle.get(C_BYTE, STYLE_OFF_BLINK).toInt() != 0,
+      inverse = scratchStyle.get(C_BYTE, STYLE_OFF_INVERSE).toInt() != 0,
+      hidden = scratchStyle.get(C_BYTE, STYLE_OFF_INVISIBLE).toInt() != 0,
+      underline = when (GhosttySgrUnderline.of(scratchStyle.get(C_INT, STYLE_OFF_UNDERLINE))) {
+        GhosttySgrUnderline.NONE -> Underline.NONE
+        GhosttySgrUnderline.SINGLE -> Underline.SINGLE
+        GhosttySgrUnderline.DOUBLE -> Underline.DOUBLE
+        GhosttySgrUnderline.CURLY -> Underline.CURLY
+        GhosttySgrUnderline.DOTTED -> Underline.DOTTED
+        GhosttySgrUnderline.DASHED -> Underline.DASHED
+      },
+    )
   }
 
   /**
@@ -1058,24 +1117,6 @@ internal class GhosttyTerminalEmulator(
     return 0
   }
 
-  /**
-   * Read an int datum of the opaque [cell], or null when the engine rejects the read —
-   * per the C contract only possible for a data kind the library does not know.
-   */
-  private fun cellGetInt(cell: Long, cellData: GhosttyCellData): Int? {
-    scratchOut.set(C_INT, 0L, 0)
-    try {
-      val r = LibGhosttyVt.cellGet(cell, cellData.code, scratchOut)
-      if (r != GhosttyResult.SUCCESS) {
-        logGridReadFailure("ghostty_cell_get($cellData)", r)
-        return null
-      }
-    } catch (t: Throwable) {
-      throw RuntimeException("ghostty_cell_get failed", t)
-    }
-    return scratchOut.get(C_INT, 0L)
-  }
-
   private fun terminalGetU16(dataKind: GhosttyTerminalData): Int {
     ensureOpen()
     scratchOut.set(C_SHORT, 0L, 0.toShort())
@@ -1149,24 +1190,6 @@ internal class GhosttyTerminalEmulator(
       GhosttyCellWide.WIDE -> CellWidth.WIDE
       GhosttyCellWide.SPACER_TAIL, GhosttyCellWide.SPACER_HEAD -> CellWidth.SPACER
     }
-    val style = CellStyle(
-      foreground = toColor(fgTag, fg),
-      background = toColor(bgTag, bg),
-      bold = bold,
-      faint = faint,
-      italic = italic,
-      blink = blink,
-      inverse = inverse,
-      hidden = invisible,
-      underline = when (underline) {
-        GhosttySgrUnderline.NONE -> Underline.NONE
-        GhosttySgrUnderline.SINGLE -> Underline.SINGLE
-        GhosttySgrUnderline.DOUBLE -> Underline.DOUBLE
-        GhosttySgrUnderline.CURLY -> Underline.CURLY
-        GhosttySgrUnderline.DOTTED -> Underline.DOTTED
-        GhosttySgrUnderline.DASHED -> Underline.DASHED
-      },
-    )
     return Cell(codepoint, cellWidth, style, hyperlink, combining)
   }
 
@@ -1222,34 +1245,14 @@ internal class GhosttyTerminalEmulator(
     var wide: GhosttyCellWide = GhosttyCellWide.NARROW
     var combining: List<Int> = emptyList()
     var hyperlink: String? = null
-    var fgTag: GhosttyStyleColorTag = GhosttyStyleColorTag.NONE
-    var fg = 0 // palette index or packed 0xRRGGBB depending on fgTag
-    var bgTag: GhosttyStyleColorTag = GhosttyStyleColorTag.NONE
-    var bg = 0
-    var bold = false
-    var italic = false
-    var faint = false
-    var blink = false
-    var inverse = false
-    var invisible = false
-    var underline: GhosttySgrUnderline = GhosttySgrUnderline.NONE
+    var style: CellStyle = CellStyle.Default
 
     fun reset() {
       codepoint = 0
       wide = GhosttyCellWide.NARROW
       combining = emptyList()
       hyperlink = null
-      fgTag = GhosttyStyleColorTag.NONE
-      fg = 0
-      bgTag = GhosttyStyleColorTag.NONE
-      bg = 0
-      bold = false
-      italic = false
-      faint = false
-      blink = false
-      inverse = false
-      invisible = false
-      underline = GhosttySgrUnderline.NONE
+      style = CellStyle.Default
     }
   }
 }
@@ -1260,5 +1263,28 @@ internal class GhosttyTerminalEmulator(
  * practice a write is a single chunk; anything larger is simply streamed through in several.
  */
 private const val WRITE_BUFFER_BYTES: Long = 16L * 1024L
+
+/**
+ * The per-cell scalars fetched by `readCell`'s single `ghostty_cell_get_multi` call, in the order
+ * their output slots are laid out in the output block (see the CELL_OUT_OFF_* offsets).
+ */
+private val CELL_MULTI_KEYS = arrayOf(
+  GhosttyCellData.CODEPOINT,
+  GhosttyCellData.CONTENT_TAG,
+  GhosttyCellData.WIDE,
+  GhosttyCellData.STYLE_ID,
+  GhosttyCellData.HAS_HYPERLINK,
+)
+
+// Offsets of each key's output slot within the 16-byte output block; the C output types are
+// uint32_t, GhosttyCellContentTag, GhosttyCellWide, uint16_t, and bool, in [CELL_MULTI_KEYS] order.
+private const val CELL_OUT_OFF_CODEPOINT = 0L
+private const val CELL_OUT_OFF_CONTENT_TAG = 4L
+private const val CELL_OUT_OFF_WIDE = 8L
+private const val CELL_OUT_OFF_STYLE_ID = 12L
+private const val CELL_OUT_OFF_HAS_HYPERLINK = 14L
+private val CELL_OUT_OFFSETS = longArrayOf(
+  CELL_OUT_OFF_CODEPOINT, CELL_OUT_OFF_CONTENT_TAG, CELL_OUT_OFF_WIDE, CELL_OUT_OFF_STYLE_ID, CELL_OUT_OFF_HAS_HYPERLINK,
+)
 
 private val LOG: Logger = logger<GhosttyTerminalEmulator>()
