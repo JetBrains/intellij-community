@@ -20,6 +20,7 @@ import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.KeymapUtil
+import com.intellij.openapi.project.impl.finishEmptyEditorStartupBeforeProjectView
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.LightVirtualFile
@@ -39,6 +40,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
 import org.jdom.Element
@@ -896,6 +898,25 @@ internal class EditorEmptyTextPainterTest {
     waitForEmptyStateComponent(splitters, "The claimed empty state was not presented")
 
     assertThat(focusRequests).containsExactly(findFocusTargetComponent(splitters))
+  }
+
+  @Test
+  fun startupEmptyStateIsPresentedBeforeProjectViewIsOpened() {
+    runBlocking {
+      val startupEvents = mutableListOf<String>()
+
+      finishEmptyEditorStartupBeforeProjectView(
+        finishOpeningStartupEditors = { startupEvents.add("startup editors finished") },
+        presentEmptyEditor = { startupEvents.add("empty editor presented") },
+        openProjectView = { startupEvents.add("Project view opened") },
+      )
+
+      assertThat(startupEvents).containsExactly(
+        "startup editors finished",
+        "empty editor presented",
+        "Project view opened",
+      )
+    }
   }
 
   @Test

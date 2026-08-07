@@ -607,6 +607,22 @@ private suspend fun postOpenEditors(
   project: Project,
   toolWindowInitJob: Job,
 ) {
+  val startupEmptyStatePresentationHoldReleased = AtomicBoolean()
+
+  suspend fun releaseStartupEmptyStatePresentationHold() {
+    if (!startupEmptyStatePresentationHoldReleased.compareAndSet(false, true)) {
+      return
+    }
+    // `Dispatchers.EDT` rather than the strict UI dispatcher: releasing may mount or dispose the empty state right here, and both take
+    // the write-intent lock, which `Dispatchers.UI` forbids taking at all
+    withContext(NonCancellable + Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      if (!project.isDisposed) {
+        // project open is done opening editors: whatever the editor area shows now is what it keeps
+        fileEditorManager.mainSplitters.endStartupEmptyStatePresentationHold()
+      }
+    }
+  }
+
   try {
     withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
       // read the state of dockable editors
@@ -644,22 +660,37 @@ private suspend fun postOpenEditors(
                                    }
                                  }
       if (!isNotificationSilentMode(project)) {
-        openProjectViewIfNeeded(project, toolWindowInitJob, focusProjectView = { !emptyStateTakesFocus || !emptyStateClaimKept.get() })
-        findAndOpenReadmeIfNeeded(project)
+        finishEmptyEditorStartupBeforeProjectView(
+          finishOpeningStartupEditors = { findAndOpenReadmeIfNeeded(project) },
+          presentEmptyEditor = { releaseStartupEmptyStatePresentationHold() },
+          openProjectView = {
+            openProjectViewIfNeeded(project, toolWindowInitJob, focusProjectView = {
+              !emptyStateTakesFocus || !emptyStateClaimKept.get()
+            })
+          },
+        )
       }
       FUSProjectHotStartUpMeasurer.reportNoMoreEditorsOnStartup(System.nanoTime())
     }
   }
   finally {
-    // `Dispatchers.EDT` rather than the strict UI dispatcher: releasing may mount or dispose the empty state right here, and both take
-    // the write-intent lock, which `Dispatchers.UI` forbids taking at all
-    withContext(NonCancellable + Dispatchers.EDT + ModalityState.any().asContextElement()) {
-      if (!project.isDisposed) {
-        // project open is done opening editors: whatever the editor area shows now is what it keeps
-        fileEditorManager.mainSplitters.endStartupEmptyStatePresentationHold()
-      }
-    }
+    releaseStartupEmptyStatePresentationHold()
   }
+}
+
+/**
+ * Finishes every startup operation that may open an editor, then presents the empty editor before making the Project view visible.
+ * Once a tool window owns focus, a claiming empty state deliberately refuses to steal it, so activating the Project view first would
+ * lose the startup focus claim.
+ */
+internal suspend fun finishEmptyEditorStartupBeforeProjectView(
+  finishOpeningStartupEditors: suspend () -> Unit,
+  presentEmptyEditor: suspend () -> Unit,
+  openProjectView: suspend () -> Unit,
+) {
+  finishOpeningStartupEditors()
+  presentEmptyEditor()
+  openProjectView()
 }
 
 /**
