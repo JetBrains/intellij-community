@@ -3,6 +3,7 @@ package com.intellij.json.networknt.wrapper
 
 import com.intellij.json.JsonFileType
 import com.intellij.json.psi.JsonFile
+import com.intellij.json.json5.Json5FileType
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker
 import org.assertj.core.api.Assertions.assertThat
@@ -24,6 +25,14 @@ class PsiToJsonNodeConverterTest : BasePlatformTestCase() {
   private fun convertJson(@Language("JSON") json: String): JsonNode? {
     val psiFile = myFixture.configureByText(JsonFileType.INSTANCE, json) as JsonFile
     val rootElement = psiFile.topLevelValue ?: return null
+    val walker = JsonLikePsiWalker.getWalker(rootElement) ?: return null
+    return convertPsiToJsonNode(walker, rootElement)
+  }
+
+  // https://spec.json5.org/#numbers
+  private fun convertJson5(@Language("JSON5") json: String): JsonNode? {
+    val psiFile = myFixture.configureByText(Json5FileType.INSTANCE, json)
+    val rootElement = psiFile.firstChild ?: return null
     val walker = JsonLikePsiWalker.getWalker(rootElement) ?: return null
     return convertPsiToJsonNode(walker, rootElement)
   }
@@ -106,6 +115,74 @@ class PsiToJsonNodeConverterTest : BasePlatformTestCase() {
     val node = convertJson(value.toString())
     assertThat(node).isInstanceOf(BigIntegerNode::class.java)
     assertThat(node!!.bigIntegerValue()).isEqualTo(value)
+  }
+
+  // https://spec.json5.org/#numbers
+  fun `test JSON5 hexadecimal integer parsing`() {
+    val node = convertJson5("0x10")
+    assertThat(node).isInstanceOf(IntNode::class.java)
+    assertThat(node!!.intValue()).isEqualTo(16)
+  }
+
+  // https://www.rfc-editor.org/rfc/rfc8259#section-3
+  fun `test JSON string TRUE remains a string`() {
+    val node = convertJson("\"TRUE\"")
+    assertThat(node).isInstanceOf(StringNode::class.java)
+    assertThat(node!!.asText()).isEqualTo("TRUE")
+  }
+
+  // https://www.rfc-editor.org/rfc/rfc8259#section-3
+  @Suppress("JsonStandardCompliance")
+  fun `test uppercase JSON boolean is not parsed as boolean`() {
+    val node = convertJson("TRUE")
+    assertThat(node).isNotInstanceOf(BooleanNode::class.java)
+  }
+
+  // https://www.rfc-editor.org/rfc/rfc8259#section-7
+  @Suppress("JsonStandardCompliance")
+  fun `test single quoted JSON string is not converted`() {
+    assertThat(convertJson("'it''s'")).isNull()
+  }
+
+  // https://www.rfc-editor.org/rfc/rfc8259#section-6
+  fun `test hexadecimal JSON literal is not parsed as number`() {
+    assertJsonDoesNotProduceNumber("0x10")
+  }
+
+  // https://www.rfc-editor.org/rfc/rfc8259#section-6
+  fun `test binary JSON literal is not parsed as number`() {
+    assertJsonDoesNotProduceNumber("0b10000")
+  }
+
+  // https://www.rfc-editor.org/rfc/rfc8259#section-6
+  fun `test octal JSON literal is not parsed as number`() {
+    assertJsonDoesNotProduceNumber("0o20")
+  }
+
+  // https://www.rfc-editor.org/rfc/rfc8259#section-6
+  fun `test underscored JSON literal is not parsed as number`() {
+    assertJsonDoesNotProduceNumber("1_000")
+  }
+
+  // https://www.rfc-editor.org/rfc/rfc8259#section-6
+  fun `test signed JSON literal is not parsed as number`() {
+    assertJsonDoesNotProduceNumber("+1")
+  }
+
+  // https://www.rfc-editor.org/rfc/rfc8259#section-6
+  // https://spec.json5.org/#numbers
+  fun `test JSON Infinity extension is not parsed as JSON number`() {
+    assertJsonDoesNotProduceNumber("Infinity")
+  }
+
+  // https://www.rfc-editor.org/rfc/rfc8259#section-6
+  // https://spec.json5.org/#numbers
+  fun `test JSON NaN extension is not parsed as JSON number`() {
+    assertJsonDoesNotProduceNumber("NaN")
+  }
+
+  private fun assertJsonDoesNotProduceNumber(json: String) {
+    assertThat(convertJson(json)?.isNumber == true).isFalse()
   }
 
   fun `test float parsing positive`() {
