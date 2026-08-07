@@ -12,11 +12,11 @@ class JSpecifyTypeParameterBoundOverridesNullable {
 
   interface SubImplicitBound extends Filter<@Nullable Object> {
     // the implicit bound is `extends Object`, which is not-null in a @NullMarked scope
-    <<warning descr="Type parameter 'U' must not narrow the nullable bound declared by the overridden method">U</warning>> Sequence<U> filterMany(Sequence<U> in);
+    <<warning descr="Type parameter 'U' must not narrow the nullable bound declared by the overridden method in 'Filter'">U</warning>> Sequence<U> filterMany(Sequence<U> in);
   }
 
   interface SubNotNullBound extends Filter<@Nullable Object> {
-    <<warning descr="Type parameter 'U' must not narrow the nullable bound declared by the overridden method">U</warning> extends Object> Sequence<U> filterMany(Sequence<U> in);
+    <<warning descr="Type parameter 'U' must not narrow the nullable bound declared by the overridden method in 'Filter'">U</warning> extends Object> Sequence<U> filterMany(Sequence<U> in);
   }
 
   interface SubNullableBound extends Filter<@Nullable Object> {

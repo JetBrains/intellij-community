@@ -97,6 +97,7 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.search.JavaNullMethodArgumentUtil;
 import com.intellij.psi.impl.search.JavaOverridingMethodsSearcher;
+import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.JavaPsiRecordUtil;
@@ -1165,7 +1166,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
       PsiSubstitutor classSubstitutor = TypeConversionUtil.getMaybeSuperClassSubstitutor(base, derived, PsiSubstitutor.EMPTY);
       if (classSubstitutor == null) continue;
       for (int i = 0; i < typeParameters.length; i++) {
-        if (reportNarrowedTypeParameterBound(holder, typeParameters[i], superTypeParameters[i], classSubstitutor)) return;
+        if (reportNarrowedTypeParameterBound(holder, typeParameters[i], superTypeParameters[i], classSubstitutor, base)) return;
       }
     }
   }
@@ -1173,7 +1174,8 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
   private boolean reportNarrowedTypeParameterBound(@NotNull ProblemsHolder holder,
                                                   @NotNull PsiTypeParameter typeParameter,
                                                   @NotNull PsiTypeParameter superTypeParameter,
-                                                  @NotNull PsiSubstitutor classSubstitutor) {
+                                                  @NotNull PsiSubstitutor classSubstitutor,
+                                                  @NotNull PsiClass base) {
     if (boundNullability(superTypeParameter, classSubstitutor).nullability() != Nullability.NULLABLE) return false;
     TypeNullability typeNullability = TypeNullability.ofTypeParameter(typeParameter);
     Nullability nullability = typeNullability.nullability();
@@ -1185,7 +1187,8 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
     String messageKey = nullability == Nullability.NOT_NULL
                         ? "inspection.nullable.problems.NotNull.type.parameter.bound.overrides.Nullable"
                         : "inspection.nullable.problems.unspecified.type.parameter.bound.overrides.Nullable";
-    reportProblem(holder, anchor, LocalQuickFix.EMPTY_ARRAY, messageKey, typeParameter.getName());
+    reportProblem(holder, anchor, LocalQuickFix.EMPTY_ARRAY, messageKey,
+                  typeParameter.getName(), ClassPresentationUtil.getSimpleNameForClass(base));
     return true;
   }
 
