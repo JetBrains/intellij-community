@@ -380,6 +380,8 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/ant/jps-plugin/intellij.ant.jps.tests.iml" filepath="$PROJECT_DIR$/plugins/ant/jps-plugin/intellij.ant.jps.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/built-in-help/intellij.builtInHelp.iml" filepath="$PROJECT_DIR$/plugins/built-in-help/intellij.builtInHelp.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/classic-ui/intellij.classic.ui.iml" filepath="$PROJECT_DIR$/plugins/classic-ui/intellij.classic.ui.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.ownership/intellij.codeowners.iml" filepath="$PROJECT_DIR$/.ownership/intellij.codeowners.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.ownership/intellij.codeowners.iml" filepath="$PROJECT_DIR$/.ownership/intellij.codeowners.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/color-schemes/all-hallows-eve-color-scheme/intellij.color.scheme.all_hallows_eve.iml" filepath="$PROJECT_DIR$/plugins/color-schemes/all-hallows-eve-color-scheme/intellij.color.scheme.all_hallows_eve.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/color-schemes/blackboard-color-scheme/intellij.color.scheme.blackboard.iml" filepath="$PROJECT_DIR$/plugins/color-schemes/blackboard-color-scheme/intellij.color.scheme.blackboard.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/color-schemes/cobalt-color-scheme/intellij.color.scheme.cobalt.iml" filepath="$PROJECT_DIR$/plugins/color-schemes/cobalt-color-scheme/intellij.color.scheme.cobalt.iml" />

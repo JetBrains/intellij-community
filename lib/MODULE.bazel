@@ -469,6 +469,90 @@ http_file(
 )
 
 http_file(
+  name = "org_jetbrains_patronus-codeowners-lib-core-2026_08_05-1695_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/patronus/codeowners-lib-core/2026.08.05-1695/codeowners-lib-core-2026.08.05-1695.jar",
+  sha256 = "9d19caebf875c1fa47f63853712ff000558e6e6c44516a4f39ef30e16c33eabc",
+  downloaded_file_path = "codeowners-lib-core-2026.08.05-1695.jar"
+)
+
+http_file(
+  name = "org_jetbrains_patronus-patronus-api-annotations-2026_08_05-1695_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/patronus/patronus-api-annotations/2026.08.05-1695/patronus-api-annotations-2026.08.05-1695.jar",
+  sha256 = "a16e2b145dc67023e25a95e7e9371082302cb4435a849b8bc6bd810ddae41eb6",
+  downloaded_file_path = "patronus-api-annotations-2026.08.05-1695.jar"
+)
+
+http_file(
+  name = "org_jetbrains_patronus-gitignore-2026_08_05-1695_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/patronus/gitignore/2026.08.05-1695/gitignore-2026.08.05-1695.jar",
+  sha256 = "5403be472169628dde6722db2f064928dc3d4001a465753b9e2f8356a9afeacf",
+  downloaded_file_path = "gitignore-2026.08.05-1695.jar"
+)
+
+http_file(
+  name = "org_jetbrains_patronus-logging-2026_08_05-1695_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/patronus/logging/2026.08.05-1695/logging-2026.08.05-1695.jar",
+  sha256 = "609f0d5e588a0f3893dfe6137f06c3830a13d62e83fdb9c273eab301aeb5b90c",
+  downloaded_file_path = "logging-2026.08.05-1695.jar"
+)
+
+http_file(
+  name = "org_jetbrains_kotlinx-kotlinx-coroutines-slf4j-1_10_2_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-coroutines-slf4j/1.10.2/kotlinx-coroutines-slf4j-1.10.2.jar",
+  sha256 = "d65dee3cafa6f7bfaefedb493fc68b5c63abe750734fb8af92fac7a0d3101457",
+  downloaded_file_path = "kotlinx-coroutines-slf4j-1.10.2.jar"
+)
+
+http_file(
+  name = "org_jetbrains_patronus-codeowners-lib-core-2026_08_05-1695-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/patronus/codeowners-lib-core/2026.08.05-1695/codeowners-lib-core-2026.08.05-1695-sources.jar",
+  sha256 = "b42f40cd6953c229574850e6ec0dd11ba65b084e82d64c1a7b1cb7ffa5ad1b91",
+  downloaded_file_path = "codeowners-lib-core-2026.08.05-1695-sources.jar"
+)
+
+http_file(
+  name = "org_jetbrains_patronus-patronus-api-annotations-2026_08_05-1695-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/patronus/patronus-api-annotations/2026.08.05-1695/patronus-api-annotations-2026.08.05-1695-sources.jar",
+  sha256 = "bb84557e2464d5176b06ab68215b899f90dae7b0e4df9b8c715dfecdff2f5e7c",
+  downloaded_file_path = "patronus-api-annotations-2026.08.05-1695-sources.jar"
+)
+
+http_file(
+  name = "org_jetbrains_patronus-gitignore-2026_08_05-1695-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/patronus/gitignore/2026.08.05-1695/gitignore-2026.08.05-1695-sources.jar",
+  sha256 = "5beffb7a34c2374790f969a069455c01a1769fe0b00cf625bd1f1ed765e44ecc",
+  downloaded_file_path = "gitignore-2026.08.05-1695-sources.jar"
+)
+
+http_file(
+  name = "org_jetbrains_patronus-logging-2026_08_05-1695-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/patronus/logging/2026.08.05-1695/logging-2026.08.05-1695-sources.jar",
+  sha256 = "96c7f63b4226fa2449bb06596e37b9034f02f2da267c919b6e76246209591ffb",
+  downloaded_file_path = "logging-2026.08.05-1695-sources.jar"
+)
+
+http_file(
+  name = "org_jetbrains_kotlinx-kotlinx-coroutines-slf4j-1_10_2-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-coroutines-slf4j/1.10.2/kotlinx-coroutines-slf4j-1.10.2-sources.jar",
+  sha256 = "a4edfedd66dea73c9a66ac56d6f143d6d3ffae0f43e0747b47da11fcf1475dc2",
+  downloaded_file_path = "kotlinx-coroutines-slf4j-1.10.2-sources.jar"
+)
+
+http_file(
+  name = "org_jetbrains_patronus-codeowners-lib-serialization-2026_08_05-1695_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/patronus/codeowners-lib-serialization/2026.08.05-1695/codeowners-lib-serialization-2026.08.05-1695.jar",
+  sha256 = "fa185e203c3d584846f7ba63851f82ef3df115aa574c387283e489d9045772be",
+  downloaded_file_path = "codeowners-lib-serialization-2026.08.05-1695.jar"
+)
+
+http_file(
+  name = "org_jetbrains_patronus-codeowners-lib-serialization-2026_08_05-1695-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/patronus/codeowners-lib-serialization/2026.08.05-1695/codeowners-lib-serialization-2026.08.05-1695-sources.jar",
+  sha256 = "381a4234a7d46d97c4157b01f7db9ebc61eb69e81bd04fce395f485954ab96fb",
+  downloaded_file_path = "codeowners-lib-serialization-2026.08.05-1695-sources.jar"
+)
+
+http_file(
   name = "com_jetbrains_fus_reporting-ap-validation-all-1_0_229_http",
   url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/fus/reporting/ap-validation-all/1.0.229/ap-validation-all-1.0.229.jar",
   sha256 = "b02d4c38b8fae8c828fe548216d43373738f4439912e62d50a576c9f83cdc325",
@@ -15677,6 +15761,20 @@ http_file(
   url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/sqlite/native/3.42.0-jb.1/native-3.42.0-jb.1.jar",
   sha256 = "491c4ae84a1bad34c85624682a80def4f3a3a0fb9d517121d05c2dfeb94966f8",
   downloaded_file_path = "native-3.42.0-jb.1.jar"
+)
+
+http_file(
+  name = "com_squareup_okio-okio-jvm-3_16_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/squareup/okio/okio-jvm/3.16.0/okio-jvm-3.16.0.jar",
+  sha256 = "c737c035ca675187bf11a67ddb9581954bf0d5ca9f3e048e838b3267cf32b5c3",
+  downloaded_file_path = "okio-jvm-3.16.0.jar"
+)
+
+http_file(
+  name = "com_squareup_okio-okio-jvm-3_16_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/squareup/okio/okio-jvm/3.16.0/okio-jvm-3.16.0-sources.jar",
+  sha256 = "53b847af2f85c194f090e310d566ce700f3558c56c9a8c06d7362829875049c8",
+  downloaded_file_path = "okio-jvm-3.16.0-sources.jar"
 )
 
 http_file(

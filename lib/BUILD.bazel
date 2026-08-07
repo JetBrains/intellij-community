@@ -857,6 +857,111 @@ jvm_import(
 )
 
 copy_file(
+  name = "org.jetbrains.patronus/codeowners-lib-core-2026.08.05-1695.jar_copy",
+  src = "@org_jetbrains_patronus-codeowners-lib-core-2026_08_05-1695_http//file",
+  out = "org.jetbrains.patronus/codeowners-lib-core-2026.08.05-1695.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "org.jetbrains.patronus/patronus-api-annotations-2026.08.05-1695.jar_copy",
+  src = "@org_jetbrains_patronus-patronus-api-annotations-2026_08_05-1695_http//file",
+  out = "org.jetbrains.patronus/patronus-api-annotations-2026.08.05-1695.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "org.jetbrains.patronus/gitignore-2026.08.05-1695.jar_copy",
+  src = "@org_jetbrains_patronus-gitignore-2026_08_05-1695_http//file",
+  out = "org.jetbrains.patronus/gitignore-2026.08.05-1695.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "org.jetbrains.patronus/logging-2026.08.05-1695.jar_copy",
+  src = "@org_jetbrains_patronus-logging-2026_08_05-1695_http//file",
+  out = "org.jetbrains.patronus/logging-2026.08.05-1695.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "org.jetbrains.kotlinx/kotlinx-coroutines-slf4j-1.10.2.jar_copy",
+  src = "@org_jetbrains_kotlinx-kotlinx-coroutines-slf4j-1_10_2_http//file",
+  out = "org.jetbrains.kotlinx/kotlinx-coroutines-slf4j-1.10.2.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "codeowners-jetbrains-patronus-codeowners-lib-core",
+  exports = [
+    ":org_jetbrains_patronus-codeowners-lib-core-2026_08_05-1695_http_import",
+    ":org_jetbrains_patronus-patronus-api-annotations-2026_08_05-1695_http_import",
+    ":org_jetbrains_patronus-gitignore-2026_08_05-1695_http_import",
+    ":org_jetbrains_patronus-logging-2026_08_05-1695_http_import",
+    ":org_jetbrains_kotlinx-kotlinx-coroutines-slf4j-1_10_2_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "org_jetbrains_patronus-codeowners-lib-core-2026_08_05-1695_http_import",
+  jar = "@org_jetbrains_patronus-codeowners-lib-core-2026_08_05-1695_http//file",
+  source_jar = "@org_jetbrains_patronus-codeowners-lib-core-2026_08_05-1695-sources_http//file"
+)
+
+jvm_import(
+  name = "org_jetbrains_patronus-patronus-api-annotations-2026_08_05-1695_http_import",
+  jar = "@org_jetbrains_patronus-patronus-api-annotations-2026_08_05-1695_http//file",
+  source_jar = "@org_jetbrains_patronus-patronus-api-annotations-2026_08_05-1695-sources_http//file"
+)
+
+jvm_import(
+  name = "org_jetbrains_patronus-gitignore-2026_08_05-1695_http_import",
+  jar = "@org_jetbrains_patronus-gitignore-2026_08_05-1695_http//file",
+  source_jar = "@org_jetbrains_patronus-gitignore-2026_08_05-1695-sources_http//file"
+)
+
+jvm_import(
+  name = "org_jetbrains_patronus-logging-2026_08_05-1695_http_import",
+  jar = "@org_jetbrains_patronus-logging-2026_08_05-1695_http//file",
+  source_jar = "@org_jetbrains_patronus-logging-2026_08_05-1695-sources_http//file"
+)
+
+jvm_import(
+  name = "org_jetbrains_kotlinx-kotlinx-coroutines-slf4j-1_10_2_http_import",
+  jar = "@org_jetbrains_kotlinx-kotlinx-coroutines-slf4j-1_10_2_http//file",
+  source_jar = "@org_jetbrains_kotlinx-kotlinx-coroutines-slf4j-1_10_2-sources_http//file"
+)
+
+copy_file(
+  name = "org.jetbrains.patronus/codeowners-lib-serialization-2026.08.05-1695.jar_copy",
+  src = "@org_jetbrains_patronus-codeowners-lib-serialization-2026_08_05-1695_http//file",
+  out = "org.jetbrains.patronus/codeowners-lib-serialization-2026.08.05-1695.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "codeowners-jetbrains-patronus-codeowners-lib-serialization",
+  exports = [
+    ":org_jetbrains_patronus-codeowners-lib-serialization-2026_08_05-1695_http_import",
+    ":org_jetbrains_patronus-codeowners-lib-core-2026_08_05-1695_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "org_jetbrains_patronus-codeowners-lib-serialization-2026_08_05-1695_http_import",
+  jar = "@org_jetbrains_patronus-codeowners-lib-serialization-2026_08_05-1695_http//file",
+  source_jar = "@org_jetbrains_patronus-codeowners-lib-serialization-2026_08_05-1695-sources_http//file"
+)
+
+copy_file(
   name = "com.jetbrains.fus.reporting/ap-validation-all-1.0.229.jar_copy",
   src = "@com_jetbrains_fus_reporting-ap-validation-all-1_0_229_http//file",
   out = "com.jetbrains.fus.reporting/ap-validation-all-1.0.229.jar",
@@ -19677,6 +19782,21 @@ copy_file(
 jvm_import(
   name = "sqlite-native",
   jar = "@org_sqlite-native-3_42_0-jb_1_http//file",
+  visibility = ["//visibility:public"]
+)
+
+copy_file(
+  name = "com.squareup.okio/okio-jvm-3.16.0.jar_copy",
+  src = "@com_squareup_okio-okio-jvm-3_16_0_http//file",
+  out = "com.squareup.okio/okio-jvm-3.16.0.jar",
+  allow_symlink = True,
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "squareup-okio-jvm",
+  jar = "@com_squareup_okio-okio-jvm-3_16_0_http//file",
+  source_jar = "@com_squareup_okio-okio-jvm-3_16_0-sources_http//file",
   visibility = ["//visibility:public"]
 )
 

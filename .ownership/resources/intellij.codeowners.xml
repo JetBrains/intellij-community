@@ -1,0 +1,10 @@
+<idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.json"/>
+  </dependencies>
+  <!-- endregion -->
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <!-- endregion -->
+</idea-plugin>

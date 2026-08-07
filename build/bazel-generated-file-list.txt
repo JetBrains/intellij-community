@@ -1,3 +1,4 @@
+.ownership
 RegExpSupport
 aether-dependency-resolver
 android-customization
