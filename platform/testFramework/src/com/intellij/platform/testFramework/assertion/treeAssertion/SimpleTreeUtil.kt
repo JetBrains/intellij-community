@@ -104,3 +104,16 @@ private fun <T, R> SimpleTree<T>.mapTree(transform: (SimpleTree.Node<T>) -> Simp
   }
   return tree
 }
+
+fun <T> SimpleTree<T>.allNodes(): Sequence<SimpleTree.Node<T>> =
+  Sequence {
+    object : Iterator<SimpleTree.Node<T>> {
+      val stack = ArrayDeque(roots)
+      override fun hasNext() = stack.isNotEmpty()
+      override fun next(): SimpleTree.Node<T> {
+        val node = stack.removeLast()
+        stack.addAll(node.children)
+        return node
+      }
+    }
+  }

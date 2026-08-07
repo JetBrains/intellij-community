@@ -2,11 +2,13 @@
 package com.intellij.testFramework.utils.treeAssertion
 
 import com.intellij.platform.testFramework.assertion.treeAssertion.SimpleTreeAssertion
+import com.intellij.platform.testFramework.assertion.treeAssertion.allNodes
 import com.intellij.platform.testFramework.assertion.treeAssertion.buildTree
 import com.intellij.platform.testFramework.assertion.treeAssertion.toMutableTree
 import com.intellij.platform.testFramework.assertion.treeAssertion.getTreeString
 import com.intellij.platform.testFramework.assertion.treeAssertion.mapTreeValues
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
 class SimpleTreeUtilTest {
@@ -186,5 +188,59 @@ class SimpleTreeUtilTest {
     }
 
     SimpleTreeAssertion.assertTreeEquals(expectedTree, actualTree)
+  }
+
+  @Nested
+  inner class AllNodesTest {
+
+    @Test
+    fun `empty tree returns empty sequence`() {
+      val tree = buildTree<Int> {}
+      Assertions.assertEquals(emptyList<Any>(), tree.allNodes().toList())
+    }
+
+    @Test
+    fun `single root returns that node`() {
+      val tree = buildTree {
+        root("root", 42)
+      }
+      val nodes = tree.allNodes().toList()
+      Assertions.assertEquals(1, nodes.size)
+      Assertions.assertEquals("root", nodes[0].name)
+      Assertions.assertEquals(42, nodes[0].value)
+    }
+
+    @Test
+    fun `returns all nodes`() {
+      val tree = buildTree {
+        root("1", 1) {
+          node("1.1", 2) {
+            node("1.1.1", 3)
+            node("1.1.2", 4)
+          }
+          node("1.2", 5)
+        }
+      }
+      val nodes = tree.allNodes().toList()
+      Assertions.assertEquals(5, nodes.size)
+      Assertions.assertEquals(setOf("1", "1.1", "1.1.1", "1.1.2", "1.2"), nodes.map { it.name }.toSet())
+    }
+
+    @Test
+    fun `traversal order is right-to-left DFS`() {
+      val tree = buildTree {
+        root("1", Unit) {
+          node("1.1", Unit) {
+            node("1.1.1", Unit)
+            node("1.1.2", Unit)
+          }
+          node("1.2", Unit)
+        }
+      }
+      Assertions.assertEquals(
+        listOf("1", "1.2", "1.1", "1.1.2", "1.1.1"),
+        tree.allNodes().map { it.name }.toList(),
+      )
+    }
   }
 }
