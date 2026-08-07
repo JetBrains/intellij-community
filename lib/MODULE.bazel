@@ -2108,17 +2108,17 @@ http_file(
 )
 
 http_file(
-    name = "org_jetbrains_intellij_deps-gradle-api-9_7_0-rc-1_http",
-    downloaded_file_path = "gradle-api-9.7.0-rc-1.jar",
-    sha256 = "3877da1dea8632975a50662e34b08af413de85ad9c8be85ffc9cada293eca166",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/gradle-api/9.7.0-rc-1/gradle-api-9.7.0-rc-1.jar",
+    name = "org_jetbrains_intellij_deps-gradle-api-9_7_0_http",
+    downloaded_file_path = "gradle-api-9.7.0.jar",
+    sha256 = "6fbb1aa9e83b3bd083289aa62705505d24007066c4b526f8eb1d2971eb892e16",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/gradle-api/9.7.0/gradle-api-9.7.0.jar",
 )
 
 http_file(
-    name = "org_jetbrains_intellij_deps-gradle-api-9_7_0-rc-1-sources_http",
-    downloaded_file_path = "gradle-api-9.7.0-rc-1-sources.jar",
-    sha256 = "66314fdaeaf266761a0eca9b2bbe0d801bed16a573176759ffdd9f14433dcf86",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/gradle-api/9.7.0-rc-1/gradle-api-9.7.0-rc-1-sources.jar",
+    name = "org_jetbrains_intellij_deps-gradle-api-9_7_0-sources_http",
+    downloaded_file_path = "gradle-api-9.7.0-sources.jar",
+    sha256 = "3e149c4f1476e280ca60021bf41c4c36596f9a49acef2cb3b8141243ac827db4",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/gradle-api/9.7.0/gradle-api-9.7.0-sources.jar",
 )
 
 http_file(
