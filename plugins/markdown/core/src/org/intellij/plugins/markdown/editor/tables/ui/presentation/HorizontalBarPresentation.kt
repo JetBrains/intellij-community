@@ -15,7 +15,6 @@ import com.intellij.openapi.actionSystem.impl.ToolbarUtils
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -30,7 +29,6 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import org.jetbrains.annotations.ApiStatus
 import com.intellij.psi.PsiElement
-import com.intellij.psi.util.PsiVersioningService
 import com.intellij.psi.util.siblings
 import com.intellij.psi.util.startOffset
 import com.intellij.ui.LightweightHint
@@ -74,7 +72,11 @@ class HorizontalBarPresentation(private val editor: Editor, private val table: M
     EditorUtil.disposeWithEditor(editor, listenerDisposable)
     document.addDocumentListener(object : DocumentListener {
       override fun documentChanged(event: DocumentEvent) {
-        if (isInvalid || refreshScheduled) return
+        if (isInvalid) {
+          boundsState = emptyBoundsState
+          return
+        }
+        if (refreshScheduled) return
         refreshScheduled = true
         ApplicationManager.getApplication().invokeLater(
           {
@@ -119,15 +121,13 @@ class HorizontalBarPresentation(private val editor: Editor, private val table: M
     get() = boundsState.height
 
   override fun paint(graphics: Graphics2D, attributes: TextAttributes) {
-    PsiVersioningService.freezePsiVersion {
-      if (isInvalid) {
-        return@freezePsiVersion
-      }
-      graphics.useCopy { local ->
-        GraphicsUtil.setupAntialiasing(local)
-        GraphicsUtil.setupRoundedBorderAntialiasing(local)
-        paintBars(local)
-      }
+    if (editor.isDisposed || boundsState == emptyBoundsState) {
+      return
+    }
+    graphics.useCopy { local ->
+      GraphicsUtil.setupAntialiasing(local)
+      GraphicsUtil.setupRoundedBorderAntialiasing(local)
+      paintBars(local)
     }
   }
 

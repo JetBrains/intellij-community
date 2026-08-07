@@ -13,14 +13,12 @@ import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.impl.ToolbarUtils
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
-import com.intellij.psi.SmartPointerManager
-import com.intellij.psi.SmartPsiFileRange
 import com.intellij.psi.util.siblings
 import com.intellij.psi.util.startOffset
 import com.intellij.ui.LightweightHint
@@ -35,6 +33,7 @@ import org.intellij.plugins.markdown.editor.tables.ui.presentation.GraphicsUtils
 import org.intellij.plugins.markdown.editor.tables.ui.presentation.GraphicsUtils.useCopy
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableRow
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableSeparatorRow
+import org.jetbrains.annotations.VisibleForTesting
 import java.awt.Dimension
 import java.awt.Graphics2D
 import java.awt.Point
@@ -43,40 +42,60 @@ import java.awt.event.MouseEvent
 import java.lang.ref.WeakReference
 import javax.swing.SwingUtilities
 
-internal class VerticalBarPresentation(
+@VisibleForTesting
+class VerticalBarPresentation private constructor(
   private val editor: Editor,
   private val row: PsiElement,
+  private val rowLocation: RowLocation,
+  private val tableRangeMarker: RangeMarker?,
   private val hover: Boolean,
-  private val accent: Boolean = false
+  private val accent: Boolean,
+  initialBoundsState: BoundsState?
 ): BasePresentation() {
   private data class BoundsState(
     val width: Int,
     val height: Int
   )
 
-  private var boundsState = initialState
+  private var boundsState = initialBoundsState ?: initialState
 
-  private val tableRangePointer: SmartPsiFileRange? = TableUtils.findTable(row)?.let { table ->
-    SmartPointerManager.getInstance(table.project).createSmartPsiFileRangePointer(table.containingFile, table.textRange)
+  private enum class RowLocation {
+    FIRST,
+    LAST,
+    OTHER
   }
 
+  constructor(editor: Editor, row: PsiElement, hover: Boolean, accent: Boolean = false) : this(
+    editor,
+    row,
+    calculateRowLocation(row),
+    createTableRangeMarker(editor, row),
+    hover,
+    accent,
+    null,
+  )
+
   init {
-    PsiDocumentManager.getInstance(row.project).performForCommittedDocument(editor.document) {
-      invokeLater(ModalityState.stateForComponent(editor.contentComponent)) {
-        if (shouldShowInlay()) {
-          val calculated = BoundsState(barWidth, editor.lineHeight)
-          boundsState = calculated
-          fireSizeChanged(Dimension(0, 0), Dimension(calculated.width, calculated.height))
+    if (initialBoundsState == null) {
+      PsiDocumentManager.getInstance(row.project).performForCommittedDocument(editor.document) {
+        val tableRange = tableRangeMarker
+        if (tableRange?.isValid == true) {
+          invokeLater(ModalityState.stateForComponent(editor.contentComponent)) {
+            if (shouldShowInlay(tableRange)) {
+              val calculated = BoundsState(barWidth, editor.lineHeight)
+              boundsState = calculated
+              fireSizeChanged(Dimension(0, 0), Dimension(calculated.width, calculated.height))
+            }
+          }
         }
       }
     }
   }
 
-  private fun shouldShowInlay(): Boolean {
-    if (editor.isDisposed) {
+  private fun shouldShowInlay(tableRange: RangeMarker): Boolean {
+    if (editor.isDisposed || !tableRange.isValid) {
       return false
     }
-    val tableRange = tableRangePointer?.range ?: return false
     return editor.softWrapModel.getSoftWrapsForRange(tableRange.startOffset, tableRange.endOffset).isEmpty()
   }
 
@@ -86,29 +105,10 @@ internal class VerticalBarPresentation(
   override val height
     get() = boundsState.height
 
-  private enum class RowLocation {
-    FIRST,
-    LAST,
-    OTHER
-  }
-
-  private val rowLocation
-    get() = when {
-      (row as? MarkdownTableRow)?.isHeaderRow == true -> RowLocation.FIRST
-      (row as? MarkdownTableRow)?.isLast == true -> RowLocation.LAST
-      row is MarkdownTableSeparatorRow && !hasRowAfter(row) -> RowLocation.LAST
-      else -> RowLocation.OTHER
-    }
-
-  private fun hasRowAfter(element: PsiElement): Boolean {
-    return element.siblings(forward = true).find { it is MarkdownTableRow } != null
-  }
-
   override fun paint(graphics: Graphics2D, attributes: TextAttributes) {
     if (editor.isDisposed || boundsState == initialState) {
       return
     }
-    if (tableRangePointer?.range == null) return
     graphics.useCopy { local ->
       GraphicsUtil.setupAntialiasing(local)
       GraphicsUtil.setupRoundedBorderAntialiasing(local)
@@ -197,6 +197,10 @@ internal class VerticalBarPresentation(
 
   override fun toString() = "VerticalBarPresentation"
 
+  private fun withHover(hover: Boolean): VerticalBarPresentation {
+    return VerticalBarPresentation(editor, row, rowLocation, tableRangeMarker, hover, accent, boundsState)
+  }
+
   private fun calculateToolbarPosition(componentHeight: Int): Point {
     val position = editor.offsetToXY(row.startOffset)
     // Position hint relative to the editor
@@ -245,6 +249,17 @@ internal class VerticalBarPresentation(
 
     private val initialState = BoundsState(0, 0)
 
+    private fun calculateRowLocation(row: PsiElement): RowLocation = when {
+      (row as? MarkdownTableRow)?.isHeaderRow == true -> RowLocation.FIRST
+      (row as? MarkdownTableRow)?.isLast == true -> RowLocation.LAST
+      row is MarkdownTableSeparatorRow && row.siblings(forward = true).find { it is MarkdownTableRow } == null -> RowLocation.LAST
+      else -> RowLocation.OTHER
+    }
+
+    private fun createTableRangeMarker(editor: Editor, row: PsiElement): RangeMarker? {
+      return TableUtils.findTable(row)?.textRange?.let(editor.document::createRangeMarker)
+    }
+
     private fun uiDataSnapshot(sink: DataSink, row: PsiElement) {
       val elementReference = WeakReference(row)
       sink.lazy(TableActionKeys.ELEMENT) { elementReference }
@@ -259,13 +274,11 @@ internal class VerticalBarPresentation(
     }
 
     fun create(factory: PresentationFactory, editor: Editor, row: PsiElement): InlayPresentation {
+      val basePresentation = VerticalBarPresentation(editor, row, false)
+      val base = wrapPresentation(factory, editor, basePresentation)
       return factory.changeOnHover(
-        wrapPresentation(factory, editor, VerticalBarPresentation(editor, row, false)),
-        {
-          runReadAction {
-            wrapPresentation(factory, editor, VerticalBarPresentation(editor, row, true))
-          }
-        }
+        base,
+        { wrapPresentation(factory, editor, basePresentation.withHover(true)) }
       )
     }
   }
