@@ -8,6 +8,7 @@ import org.jetbrains.intellij.build.BuildPaths
 import org.jetbrains.intellij.build.DistFile
 import org.jetbrains.intellij.build.MAVEN_REPO
 import org.jetbrains.intellij.build.classPath.PluginBuildResult
+import org.jetbrains.intellij.build.generateInclusionReasonForContentModule
 import org.jetbrains.intellij.build.impl.ModuleIncludeReasons
 import org.jetbrains.intellij.build.impl.ModuleItem
 import org.jetbrains.intellij.build.impl.ProjectLibraryData
@@ -106,7 +107,7 @@ private fun buildPluginContentReport(pluginToEntries: List<PluginBuildResult>, b
 
     writePluginStart(writer, buildResult)
 
-    val contentModuleReason = "<- ${buildResult.mainModule} (plugin content)"
+    val contentModuleReason = generateInclusionReasonForContentModule(buildResult.mainModule)
 
     writeContentEntries(writer, fileToEntry, buildPaths) { w, entries ->
       writeModules(

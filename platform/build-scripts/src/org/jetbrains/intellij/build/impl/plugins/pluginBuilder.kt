@@ -59,7 +59,9 @@ internal suspend fun buildPlugins(
   val scrambleTool = context.proprietaryBuildTools.scrambleTool
   val isScramblingSkipped = layoutOnly || context.options.buildStepsToSkip.contains(BuildOptions.SCRAMBLING_STEP)
 
-  val results = plugins.mapConcurrent(workerDispatcher = Dispatchers.IO) { pluginLayout ->
+  val (pluginsBuildInProcess, pluginsBuildByBazel) = partitionPluginsByBuildingMethod(plugins, context)
+
+  val resultsForPluginsBuiltInProcess = pluginsBuildInProcess.mapConcurrent(workerDispatcher = Dispatchers.IO) { pluginLayout ->
     withContext(CoroutineName("Build plugin (module=${pluginLayout.mainModule})")) {
       buildPlugin(
         pluginLayout = pluginLayout,
@@ -77,6 +79,9 @@ internal suspend fun buildPlugins(
       )
     }
   }
+
+  val resultsForPluginsBuiltByBazel = buildPluginsByBazel(pluginsBuildByBazel, targetDir, context)
+  val results = (resultsForPluginsBuiltInProcess + resultsForPluginsBuiltByBazel.map { it to null }).sortedBy { it.first.mainModule }
 
   val scrambleTasks = results.mapNotNull { it.second }
   if (scrambleTasks.isNotEmpty()) {

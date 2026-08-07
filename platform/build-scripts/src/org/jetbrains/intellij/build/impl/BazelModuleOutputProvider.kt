@@ -221,6 +221,10 @@ internal class BazelModuleOutputProvider(
     return jars
   }
 
+  fun findPluginDistributionTargetDescription(mainModuleName: String) : BazelTargetsInfo.PluginDistributionTargetDescription? {
+    return state.bazelTargetsMap.pluginDistributionTargets[mainModuleName]
+  }
+
   private fun getModuleOutputRootsImpl(module: JpsModule, forTests: Boolean): List<Path> {
     val bazelTargetsMap = state.bazelTargetsMap
     val moduleDescription = bazelTargetsMap.modules[module.name] ?: error("Cannot find module '${module.name}' in the project")

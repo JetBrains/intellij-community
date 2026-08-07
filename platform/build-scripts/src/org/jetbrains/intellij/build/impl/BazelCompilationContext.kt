@@ -167,10 +167,16 @@ class BazelTargetsInfo {
   )
 
   @Serializable
+  data class PluginDistributionTargetDescription(
+    @JvmField val target: String,
+    @JvmField val distributionDirectory: String,
+  )  @Serializable
+
   data class TargetsFile(
     @JvmField val modules: Map<String, TargetsFileModuleDescription>,
     @JvmField val imlTargets: List<String> = emptyList(),
     @JvmField val projectLibraries: Map<String, LibraryDescription>,
+    @JvmField val pluginDistributionTargets: Map<String, PluginDistributionTargetDescription>,
   )
 }
 

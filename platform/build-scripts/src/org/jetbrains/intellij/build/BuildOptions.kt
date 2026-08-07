@@ -520,6 +520,12 @@ data class BuildOptions(
   var generateRuntimeModuleRepository: Boolean = getBooleanProperty("intellij.build.generate.runtime.module.repository", true)
 
   /**
+   * If the option is set to `true`, plugins with `plugin.xml` marked with `BUILD_USING_BAZEL_MARKER` in a comment will be built by Bazel
+   */
+  @Internal
+  var buildPluginsByBazel: Boolean = getBooleanProperty("intellij.build.build.plugins.by.bazel", false)
+
+  /**
    * Specifies a prefix to use when looking for an artifact of a [org.jetbrains.intellij.build.JetBrainsRuntimeDistribution] to be bundled with distributions.
    * If `null`, `"jbr_jcef-"` will be used.
    */

@@ -86,6 +86,7 @@ jvm_library(
         "//platform/util/jdom",
         "//libraries/jackson3/databind",
         "@lib//:json-schema-validator",
+        "@lib//:kaml",
         "//libraries/kotlinx/serialization/json",
         "//libraries/kotlinx/serialization/core",
         "//platform/util/zip",
