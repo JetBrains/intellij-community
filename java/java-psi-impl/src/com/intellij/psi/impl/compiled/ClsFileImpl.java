@@ -339,6 +339,9 @@ public class ClsFileImpl extends PsiBinaryFileImpl
           }
 
           mirrorTreeElement = SourceTreeToPsiMap.psiToTreeNotNull(mirror);
+          // force to parse;
+          // the non-cancelable section below must only wire mirrors, never parse
+          mirrorTreeElement.getFirstChildNode();
           try {
             TreeElement _mirrorTreeElement = mirrorTreeElement;
             ProgressManager.getInstance().executeNonCancelableSection(() -> {

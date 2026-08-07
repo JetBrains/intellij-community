@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi;
 
 import com.intellij.JavaTestUtil;
@@ -7,6 +7,11 @@ import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.impl.CoreProgressManager;
+import com.intellij.openapi.progress.impl.ProgressManagerImpl;
+import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -15,6 +20,7 @@ import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.impl.compiled.ClsElementImpl;
@@ -193,6 +199,44 @@ public class ClsMirrorBuildingTest extends LightIdeaTestCase {
       PsiElement element = psiFile.findElementAt(i);
       assertTrue(i + ":" + element, element != null && !(element instanceof ClsElementImpl));
     }
+  }
+
+  public void testMirrorParsingIsCancellable() {
+    String path = JavaTestUtil.getJavaTestDataPath() + "/../../mockJDK-1.8/jre/lib/rt.jar!/java/lang/Class.class";
+    VirtualFile vFile = StandardFileSystems.jar().refreshAndFindFileByPath(path);
+    assertNotNull(path, vFile);
+    ClsFileImpl clsFile = assertInstanceOf(PsiManager.getInstance(getProject()).findFile(vFile), ClsFileImpl.class);
+
+    boolean[] canceledInsideParsing = {false};
+    ProgressIndicatorBase indicator = new ProgressIndicatorBase();
+    CoreProgressManager.CheckCanceledHook hook = __ -> {
+      //try to match inside decompiler
+      if (!indicator.isCanceled() && StackWalker.getInstance().walk(
+        frames -> frames.anyMatch(f -> "ensureParsed".equals(f.getMethodName()) &&
+                                       "com.intellij.psi.impl.source.tree.LazyParseableElement".equals(f.getClassName())))) {
+        canceledInsideParsing[0] = true;
+        indicator.cancel();
+        return true;
+      }
+      return false;
+    };
+
+    ProgressManagerImpl progressManager = (ProgressManagerImpl)ProgressManager.getInstance();
+    try {
+      progressManager.runWithHook(hook, () -> BinaryFileTypeDecompilers.getInstance().allowDecompilerSlowOperation(() -> {
+        progressManager.runProcess(() -> clsFile.getMirror(), indicator);
+        return null;
+      }));
+      fail("mirror parsing wasn't canceled; could it be running inside a non-cancelable section?");
+    }
+    catch (ProcessCanceledException e) {
+      assertTrue(canceledInsideParsing[0]);
+    }
+
+    assertNull(clsFile.getCachedMirror());
+
+    PsiElement mirror = BinaryFileTypeDecompilers.getInstance().allowDecompilerSlowOperation(() -> clsFile.getMirror());
+    assertTrue(assertInstanceOf(mirror, PsiJavaFile.class).getClasses().length > 0);
   }
 
   public void testInnerClassDetection() throws IOException {
