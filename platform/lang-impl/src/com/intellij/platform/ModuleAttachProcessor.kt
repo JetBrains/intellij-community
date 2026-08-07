@@ -59,8 +59,12 @@ class ModuleAttachProcessor : ProjectAttachProcessor() {
                                             projectDir: Path,
                                             callback: ProjectOpenedCallback?,
                                             beforeOpen: (suspend (Project) -> Boolean)?): Boolean {
-    LOG.info("Attaching directory: $projectDir")
     val dotIdeaDir = projectDir.resolve(Project.DIRECTORY_STORE_FOLDER)
+    if (Files.notExists(dotIdeaDir)) {
+      return false
+    }
+
+    LOG.info("Attaching directory: $projectDir")
 
     val newModule: Module? = try {
       findMainModule(project, dotIdeaDir) ?: findMainModule(project, projectDir)
@@ -109,7 +113,7 @@ private suspend fun findMainModule(project: Project, projectDir: Path): Module? 
   }
 }
 
-private suspend fun attachModule(project: Project, imlFile: Path): Module {
+internal suspend fun attachModule(project: Project, imlFile: Path): Module {
   val moduleManager = ModuleManager.getInstance(project)
   val model = moduleManager.getModifiableModel()
   val module = model.loadModule(imlFile.invariantSeparatorsPathString)

@@ -11,6 +11,7 @@
 
     <projectAttachProcessor implementation="com.intellij.platform.WorkspaceModelCacheAttachProcessor" order="first" id="WorkspaceModelCacheAttachProcessor"/>
     <projectAttachProcessor implementation="com.intellij.platform.ModuleAttachProcessor" order="after WorkspaceModelCacheAttachProcessor"/>
+    <projectAttachProcessor implementation="com.intellij.platform.ImportNewProjectAttachProcessor" order="last"/>
 
     <renameHandler implementation="com.intellij.platform.renameProject.RenameProjectHandler"/>
     <renameHandler implementation="com.intellij.platform.renameProject.ProjectFolderRenameHandler"/>

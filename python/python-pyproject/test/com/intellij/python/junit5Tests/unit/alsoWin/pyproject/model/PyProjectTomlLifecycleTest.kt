@@ -10,7 +10,7 @@ import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.writeText
-import com.intellij.platform.ModuleAttachProcessor
+import com.intellij.platform.attachToProjectAsync
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity
 import com.intellij.platform.workspace.jps.entities.FacetEntity
@@ -113,7 +113,7 @@ internal class PyProjectTomlLifecycleTest {
     try {
       val moduleAttachedDef = CompletableDeferred<Unit>()
       val workspace2Nio = workspace2.toNioPath()
-      ModuleAttachProcessor().attachToProjectAsync(f.project, workspace2Nio, { _, _ -> moduleAttachedDef.complete(Unit) })
+      attachToProjectAsync(f.project, workspace2Nio, callback = { _, _ -> moduleAttachedDef.complete(Unit) })
       log.info("Waiting for the module attach callback")
       moduleAttachedDef.await()
       log.info("Waiting for the WSM update")
