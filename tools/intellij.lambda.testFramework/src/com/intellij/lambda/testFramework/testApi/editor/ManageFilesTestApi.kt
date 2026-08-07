@@ -4,8 +4,8 @@ import com.intellij.lambda.testFramework.frameworkLogger
 import com.intellij.lambda.testFramework.testApi.executeAction
 import com.intellij.lambda.testFramework.testApi.getProject
 import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileEditor.FileEditor
@@ -100,7 +100,7 @@ suspend fun waitNoOpenedFile(
   project: Project = getProject(),
   timeout: Duration = 20.seconds,
 ) {
-  waitSuspendingNotNull("No editors are opened", timeout) {
+  waitSuspending("No editors are opened", timeout) {
     project.allOpenFileEditors.isEmpty()
   }
 }

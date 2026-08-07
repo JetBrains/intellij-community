@@ -36,7 +36,12 @@ suspend fun <T : Any> waitSuspendingNotNull(
   failMessageProducer: ((T?) -> String) = { "" },
   getter: suspend () -> T?,
 ): T =
-  waitSuspending(subjectOfWaiting, timeout, delay, dynamicallyIncreaseDelay, failMessageProducer, getter) { it != null }!!
+  waitSuspending(subjectOfWaiting, timeout, delay, dynamicallyIncreaseDelay, failMessageProducer, getter) {
+    if (it is Boolean) {
+      LOG.error("Waiting for '$subjectOfWaiting' that is a non-null Boolean. Use 'waitSuspending' instead.")
+    }
+    it != null
+  }!!
 
 suspend fun waitSuspending(
   subjectOfWaiting: String,
