@@ -46,6 +46,7 @@
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.structureView.backend"/>
     <module name="intellij.platform.util.ui"/>
     <module name="kotlin.fir.frontend-independent"/>
   </dependencies>
@@ -222,5 +223,15 @@
     <codeInsight.completion.command.provider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinParameterInfoCompletionCommand" order="last"/>
     <codeInsight.completion.command.provider language="kotlin" implementationClass="com.intellij.codeInsight.completion.command.commands.InsertLiveTemplateCompletionCommandProvider" order="last"/>
     <codeInsight.completion.command.provider language="kotlin" implementationClass="org.intellij.lang.regexp.intention.ExplainRegExpCommandCompletionProvider" />
+    <!--    <codeInsight.completion.command.provider language="kotlin"-->
+    <!--                                             implementationClass="com.intellij.codeInsight.completion.command.commands.SimpleRunMarkerCommandProvider"/>-->
+    <codeInsight.completion.command.provider language="kotlin" implementationClass="com.intellij.codeInsight.completion.command.commands.DirectIntentionCommandProvider" order="last"/>
+    <!--    <codeInsight.completion.command.provider language="kotlin"-->
+    <!--                                               implementationClass="com.intellij.codeInsight.completion.command.commands.LineCommentCompletionCommandProvider"/>-->
+    <codeInsight.completion.command.provider language="kotlin"
+                                             implementationClass="com.intellij.codeInsight.completion.command.commands.PsiElementCommentByLineCompletionCommandProvider"/>
+    <codeInsight.completion.command.provider language="kotlin"
+                                             implementationClass="com.intellij.codeInsight.completion.command.commands.PsiElementCommentByBlockCompletionCommandProvider"/>
+    <codeInsight.completion.command.provider language="kotlin" implementationClass="com.intellij.platform.structureView.backend.completion.commands.ViewStructureCompletionCommandProvider" order="last"/>
   </extensions>
 </idea-plugin>

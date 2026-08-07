@@ -33,10 +33,6 @@
 
   <xi:include href="/META-INF/caches.xml"/>
 
-  <xi:include href="/META-INF/command-completion-k2.xml">
-    <xi:fallback/>
-  </xi:include>
-
   <content namespace="jetbrains">
     <module name="intellij.kotlin.base.projectModel" loading="required"/>
     <module name="intellij.kotlin.base.analysis.platform"/>

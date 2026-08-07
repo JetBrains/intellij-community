@@ -29,6 +29,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/structure-view-impl/backend"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -151,6 +152,7 @@ jvm_library(
         "//plugins/kotlin/project-configuration:project-configuration_test_lib",
         "//platform/refactoring:refactoring_test_lib",
         "//plugins/kotlin/base/indices:indices_test_lib",
+        "//platform/structure-view-impl/backend:backend_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.completion.impl` end
