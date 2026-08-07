@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.networknt.wrapper
 
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker
@@ -15,8 +14,6 @@ import tools.jackson.databind.JsonNode
 import tools.jackson.databind.node.JsonNodeFactory
 import java.math.BigDecimal
 import java.math.BigInteger
-
-private val LOG = Logger.getInstance("com.intellij.json.networknt.wrapper.PsiToJsonNodeConverter")
 
 private val UNESCAPE_JSON_FACTORY = JsonFactory()
 
@@ -124,27 +121,30 @@ private fun convertArray(arrayAdapter: JsonArrayValueAdapter, walker: JsonLikePs
   return arrayNode
 }
 
-private fun convertString(adapter: JsonValueAdapter, walker: JsonLikePsiWalker): JsonNode {
+private fun convertString(adapter: JsonValueAdapter, walker: JsonLikePsiWalker): JsonNode? {
   val raw = walker.getNodeTextForValidation(adapter.delegate)
-  val unquoted = if (raw.length >= 2 && raw.startsWith('"') && raw.endsWith('"')) {
-    raw.substring(1, raw.length - 1)
-  }
-  else if (raw.length >= 2 && raw.startsWith('\'') && raw.endsWith('\'')) {
-    raw.substring(1, raw.length - 1)
+  val isSingleQuoted = raw.length >= 2 && raw.startsWith('\'') && raw.endsWith('\'')
+  if (isSingleQuoted && !walker.allowsSingleQuotes()) return null
+  val unquoted = if (walker.requiresValueQuotes()) {
+    when {
+      raw.length >= 2 && raw.startsWith('"') && raw.endsWith('"') -> raw.substring(1, raw.length - 1)
+      raw.length >= 2 && raw.startsWith('\'') && raw.endsWith('\'') -> raw.substring(1, raw.length - 1)
+      else -> null
+    }
   }
   else {
-    raw
+    null
   }
-  val unescaped = unescapeJsonString(unquoted)
+  val unescaped = if (unquoted != null) unescapeJsonString(unquoted) else raw
   return JsonNodeFactory.instance.stringNode(unescaped)
 }
 
 private fun convertBoolean(adapter: JsonValueAdapter, walker: JsonLikePsiWalker): JsonNode {
   val text = walker.getNodeTextForValidation(adapter.delegate).trim()
-  return JsonNodeFactory.instance.booleanNode(text == "true")
+  return JsonNodeFactory.instance.booleanNode(text.equals("true", ignoreCase = true))
 }
 
-private fun convertNumber(adapter: JsonValueAdapter, walker: JsonLikePsiWalker): JsonNode {
+private fun convertNumber(adapter: JsonValueAdapter, walker: JsonLikePsiWalker): JsonNode? {
   val text = walker.getNodeTextForValidation(adapter.delegate).trim()
   return try {
     if ('.' in text || 'e' in text || 'E' in text) {
@@ -152,7 +152,7 @@ private fun convertNumber(adapter: JsonValueAdapter, walker: JsonLikePsiWalker):
       JsonNodeFactory.instance.numberNode(bd)
     }
     else {
-      val integer = BigInteger(text)
+      val integer = parseInteger(text)
       when {
         integer >= BigInteger.valueOf(Int.MIN_VALUE.toLong()) && integer <= BigInteger.valueOf(Int.MAX_VALUE.toLong()) -> {
           JsonNodeFactory.instance.numberNode(integer.toInt())
@@ -166,21 +166,38 @@ private fun convertNumber(adapter: JsonValueAdapter, walker: JsonLikePsiWalker):
       }
     }
   }
-  catch (e: NumberFormatException) {
-    LOG.error("Failed to parse number from PSI text: '$text'", e)
-    JsonNodeFactory.instance.numberNode(0)
+  catch (_: NumberFormatException) {
+    // Do not invent a numeric value for syntax extensions unsupported by Jackson
+    // (for example JSON5 Infinity/NaN in a standard JSON PSI tree).
+    null
   }
 }
 
-// Uses Jackson (same engine networknt uses to parse schemas), so values seen by the validator
-// and by us are guaranteed to match on JSON spec escapes.
-//
-// Correct for JSON PSI and YAML double-quoted scalars in the common case. Semantically wrong for:
-//   - YAML single-quoted ('it''s' → should be it's)
-//   - YAML plain / block / folded scalars with literal backslashes
-//   - YAML-extended escapes outside JSON spec (\0, \a, \e, \x..)
-// When YAML is wired into networknt.wrapper classpath, migrate to a language-aware
-// JsonValueAdapter.getStringValue() so each PSI language can plug in its own unescape rules.
+private fun parseInteger(text: String): BigInteger {
+  var digits = text
+  val negative = digits.startsWith('-')
+  if (negative || digits.startsWith('+')) {
+    digits = digits.substring(1)
+  }
+
+  val radix = when {
+    digits.startsWith("0x", ignoreCase = true) -> 16
+    digits.startsWith("0o", ignoreCase = true) -> 8
+    digits.startsWith("0b", ignoreCase = true) -> 2
+    else -> 10
+  }
+  if (radix != 10) {
+    digits = digits.substring(2)
+  }
+
+  digits = digits.replace("_", "")
+  val integer = BigInteger(digits, radix)
+  return if (negative) integer.negate() else integer
+}
+
+// Uses Jackson (the same engine networknt uses to parse schemas) for quoted JSON/JSON5 values.
+// YAML walkers provide YAMLScalar.getTextValue(), so their semantic scalar text is already decoded
+// before it reaches this helper.
 private fun unescapeJsonString(s: String): String {
   if ('\\' !in s) return s
   return try {
