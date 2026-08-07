@@ -165,6 +165,9 @@
     libraries:
       Gradle:
       - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/gradle-api/9/gradle-api-9.jar
+- name: lib/modules/intellij.gradle.backend.jar
+  contentModules:
+  - name: intellij.gradle.backend
 - name: lib/modules/intellij.gradle.completion.ex.jar
   contentModules:
   - name: intellij.gradle.completion.ex

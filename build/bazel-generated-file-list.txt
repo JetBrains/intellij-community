@@ -1201,6 +1201,7 @@ plugins/gitlab/gitlab-git
 plugins/gitlab/gitlab-yaml
 plugins/gradle
 plugins/gradle-maven
+plugins/gradle/backend
 plugins/gradle/completion
 plugins/gradle/completion/kotlin
 plugins/gradle/completion/kotlin/tests
