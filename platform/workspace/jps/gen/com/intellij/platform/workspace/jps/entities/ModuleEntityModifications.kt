@@ -24,7 +24,7 @@ interface ModuleEntityBuilder : WorkspaceEntityBuilder<ModuleEntity> {
 }
 
 internal object ModuleEntityType : EntityType<ModuleEntity, ModuleEntityBuilder>() {
-  override val entityClass: Class<ModuleEntity> get() = ModuleEntity::class.java
+  override val entityImplClass: Class<*> get() = ModuleEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = ModuleEntityImpl.Builder::class.java
   operator fun invoke(
     name: String,
@@ -85,7 +85,6 @@ var ModuleEntityBuilder.facetOrder: FacetsOrderEntityBuilder?
 @set:Internal
 var ModuleEntityBuilder.groupPath: ModuleGroupPathEntityBuilder?
   by WorkspaceEntity.extensionBuilder(ModuleGroupPathEntity::class.java)
-
 var ModuleEntityBuilder.sourceRoots: List<SourceRootEntityBuilder>
   by WorkspaceEntity.extensionBuilder(SourceRootEntity::class.java)
 

@@ -32,14 +32,12 @@ import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class JavaModuleCompilerOptionsEntityImpl(private val dataSource: JavaModuleCompilerOptionsEntityData) :
   JavaModuleCompilerOptionsEntity, WorkspaceEntityBase(dataSource) {
-
   private companion object {
     internal val MODULE_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java,
                                                                           JavaModuleCompilerOptionsEntity::class.java,
                                                                           ConnectionId.ConnectionType.ONE_TO_ONE,
                                                                           false)
     private val connections = listOf<ConnectionId>(MODULE_CONNECTION_ID)
-
   }
 
   override val module: ModuleEntity
@@ -50,7 +48,6 @@ internal class JavaModuleCompilerOptionsEntityImpl(private val dataSource: JavaM
       readField("additionalOptions")
       return dataSource.additionalOptions
     }
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -60,7 +57,6 @@ internal class JavaModuleCompilerOptionsEntityImpl(private val dataSource: JavaM
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
-
 
   internal class Builder(result: JavaModuleCompilerOptionsEntityData?) :
     ModifiableWorkspaceEntityBase<JavaModuleCompilerOptionsEntity, JavaModuleCompilerOptionsEntityData>(result),
@@ -85,7 +81,7 @@ internal class JavaModuleCompilerOptionsEntityImpl(private val dataSource: JavaM
       this.currentEntityData = null
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -127,14 +123,12 @@ internal class JavaModuleCompilerOptionsEntityImpl(private val dataSource: JavaM
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var module: ModuleEntityBuilder
       get() {
@@ -153,10 +147,8 @@ internal class JavaModuleCompilerOptionsEntityImpl(private val dataSource: JavaM
         checkModificationAllowed()
         val _diff = diff
         if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] = this
-          }
-// else you're attaching a new entity to an existing entity that is not modifiable
+          value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] = this
+          @Suppress("UNCHECKED_CAST")
           _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
@@ -166,12 +158,10 @@ internal class JavaModuleCompilerOptionsEntityImpl(private val dataSource: JavaM
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] = this
           }
-// else you're attaching a new entity to an existing entity that is not modifiable
           this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)] = value
         }
         changedProperty.add("module")
       }
-
     private val additionalOptionsUpdater: (value: List<String>) -> Unit = { value ->
 
       changedProperty.add("additionalOptions")
@@ -196,15 +186,12 @@ internal class JavaModuleCompilerOptionsEntityImpl(private val dataSource: JavaM
 
     override fun getEntityClass(): Class<JavaModuleCompilerOptionsEntity> = JavaModuleCompilerOptionsEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class JavaModuleCompilerOptionsEntityData : WorkspaceEntityData<JavaModuleCompilerOptionsEntity>() {
   lateinit var additionalOptions: MutableList<String>
-
   internal fun isAdditionalOptionsInitialized(): Boolean = ::additionalOptions.isInitialized
-
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<JavaModuleCompilerOptionsEntity> {
     val modifiable = JavaModuleCompilerOptionsEntityImpl.Builder(null)
     modifiable.diff = diff

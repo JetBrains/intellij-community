@@ -20,7 +20,7 @@ interface GradleExternalProjectEntityBuilder : WorkspaceEntityBuilder<GradleExte
 }
 
 internal object GradleExternalProjectEntityType : EntityType<GradleExternalProjectEntity, GradleExternalProjectEntityBuilder>() {
-  override val entityClass: Class<GradleExternalProjectEntity> get() = GradleExternalProjectEntity::class.java
+  override val entityImplClass: Class<*> get() = GradleExternalProjectEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = GradleExternalProjectEntityImpl.Builder::class.java
   operator fun invoke(
     gradleVersion: String,
@@ -42,7 +42,6 @@ fun MutableEntityStorage.modifyGradleExternalProjectEntity(
 
 var ExternalProjectEntityBuilder.gradleInfo: GradleExternalProjectEntityBuilder
   by WorkspaceEntity.extensionBuilder(GradleExternalProjectEntity::class.java)
-
 
 @JvmOverloads
 @JvmName("createGradleExternalProjectEntity")

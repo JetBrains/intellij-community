@@ -29,12 +29,10 @@ import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class SingleChildImpl(private val dataSource: SingleChildData) : SingleChild, WorkspaceEntityBase(dataSource) {
-
   private companion object {
     internal val PARENT_CONNECTION_ID: ConnectionId =
       ConnectionId.create(BaseTestEntity::class.java, SingleChild::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
     private val connections = listOf<ConnectionId>(PARENT_CONNECTION_ID)
-
   }
 
   override val someData: String
@@ -45,7 +43,6 @@ internal class SingleChildImpl(private val dataSource: SingleChildData) : Single
   override val parent: BaseTestEntity
     get() = snapshot.instrumentation.getParent(PARENT_CONNECTION_ID, this) as? BaseTestEntity
             ?: error("Parent parent not found for SingleChild")
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -55,7 +52,6 @@ internal class SingleChildImpl(private val dataSource: SingleChildData) : Single
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
-
 
   internal class Builder(result: SingleChildData?) : ModifiableWorkspaceEntityBase<SingleChild, SingleChildData>(result),
                                                      SingleChildBuilder {
@@ -79,7 +75,7 @@ internal class SingleChildImpl(private val dataSource: SingleChildData) : Single
       this.currentEntityData = null
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -114,14 +110,12 @@ internal class SingleChildImpl(private val dataSource: SingleChildData) : Single
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var someData: String
       get() = getEntityData().someData
@@ -146,10 +140,8 @@ internal class SingleChildImpl(private val dataSource: SingleChildData) : Single
         checkModificationAllowed()
         val _diff = diff
         if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(true, PARENT_CONNECTION_ID)] = this
-          }
-// else you're attaching a new entity to an existing entity that is not modifiable
+          value.entityLinks[EntityLink(true, PARENT_CONNECTION_ID)] = this
+          @Suppress("UNCHECKED_CAST")
           _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
@@ -159,7 +151,6 @@ internal class SingleChildImpl(private val dataSource: SingleChildData) : Single
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(true, PARENT_CONNECTION_ID)] = this
           }
-// else you're attaching a new entity to an existing entity that is not modifiable
           this.entityLinks[EntityLink(false, PARENT_CONNECTION_ID)] = value
         }
         changedProperty.add("parent")
@@ -167,15 +158,12 @@ internal class SingleChildImpl(private val dataSource: SingleChildData) : Single
 
     override fun getEntityClass(): Class<SingleChild> = SingleChild::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class SingleChildData : WorkspaceEntityData<SingleChild>() {
   lateinit var someData: String
-
   internal fun isSomeDataInitialized(): Boolean = ::someData.isInitialized
-
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<SingleChild> {
     val modifiable = SingleChildImpl.Builder(null)
     modifiable.diff = diff

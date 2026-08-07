@@ -17,7 +17,7 @@ interface StringEntityBuilder : WorkspaceEntityBuilder<StringEntity> {
 }
 
 internal object StringEntityType : EntityType<StringEntity, StringEntityBuilder>() {
-  override val entityClass: Class<StringEntity> get() = StringEntity::class.java
+  override val entityImplClass: Class<*> get() = StringEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = StringEntityImpl.Builder::class.java
   operator fun invoke(
     data: String,

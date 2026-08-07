@@ -21,7 +21,7 @@ interface ProjectModelTestEntityBuilder : WorkspaceEntityBuilder<ProjectModelTes
 }
 
 internal object ProjectModelTestEntityType : EntityType<ProjectModelTestEntity, ProjectModelTestEntityBuilder>() {
-  override val entityClass: Class<ProjectModelTestEntity> get() = ProjectModelTestEntity::class.java
+  override val entityImplClass: Class<*> get() = ProjectModelTestEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = ProjectModelTestEntityImpl.Builder::class.java
   operator fun invoke(
     info: String,

@@ -29,14 +29,12 @@ import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class JavaSourceRootPropertiesEntityImpl(private val dataSource: JavaSourceRootPropertiesEntityData) :
   JavaSourceRootPropertiesEntity, WorkspaceEntityBase(dataSource) {
-
   private companion object {
     internal val SOURCEROOT_CONNECTION_ID: ConnectionId = ConnectionId.create(SourceRootEntity::class.java,
                                                                               JavaSourceRootPropertiesEntity::class.java,
                                                                               ConnectionId.ConnectionType.ONE_TO_MANY,
                                                                               false)
     private val connections = listOf<ConnectionId>(SOURCEROOT_CONNECTION_ID)
-
   }
 
   override val sourceRoot: SourceRootEntity
@@ -52,7 +50,6 @@ internal class JavaSourceRootPropertiesEntityImpl(private val dataSource: JavaSo
       readField("packagePrefix")
       return dataSource.packagePrefix
     }
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -62,7 +59,6 @@ internal class JavaSourceRootPropertiesEntityImpl(private val dataSource: JavaSo
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
-
 
   internal class Builder(result: JavaSourceRootPropertiesEntityData?) :
     ModifiableWorkspaceEntityBase<JavaSourceRootPropertiesEntity, JavaSourceRootPropertiesEntityData>(result),
@@ -87,7 +83,7 @@ internal class JavaSourceRootPropertiesEntityImpl(private val dataSource: JavaSo
       this.currentEntityData = null
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -123,14 +119,12 @@ internal class JavaSourceRootPropertiesEntityImpl(private val dataSource: JavaSo
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var sourceRoot: SourceRootEntityBuilder
       get() {
@@ -150,11 +144,10 @@ internal class JavaSourceRootPropertiesEntityImpl(private val dataSource: JavaSo
         val _diff = diff
         if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
 // Setting backref of the list
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            val data = (value.entityLinks[EntityLink(true, SOURCEROOT_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
-            value.entityLinks[EntityLink(true, SOURCEROOT_CONNECTION_ID)] = data
-          }
-// else you're attaching a new entity to an existing entity that is not modifiable
+          @Suppress("UNCHECKED_CAST")
+          val data = (value.entityLinks[EntityLink(true, SOURCEROOT_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
+          value.entityLinks[EntityLink(true, SOURCEROOT_CONNECTION_ID)] = data
+          @Suppress("UNCHECKED_CAST")
           _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
@@ -163,15 +156,14 @@ internal class JavaSourceRootPropertiesEntityImpl(private val dataSource: JavaSo
         else {
 // Setting backref of the list
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
+            @Suppress("UNCHECKED_CAST")
             val data = (value.entityLinks[EntityLink(true, SOURCEROOT_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
             value.entityLinks[EntityLink(true, SOURCEROOT_CONNECTION_ID)] = data
           }
-// else you're attaching a new entity to an existing entity that is not modifiable
           this.entityLinks[EntityLink(false, SOURCEROOT_CONNECTION_ID)] = value
         }
         changedProperty.add("sourceRoot")
       }
-
     override var generated: Boolean
       get() = getEntityData().generated
       set(value) {
@@ -189,17 +181,13 @@ internal class JavaSourceRootPropertiesEntityImpl(private val dataSource: JavaSo
 
     override fun getEntityClass(): Class<JavaSourceRootPropertiesEntity> = JavaSourceRootPropertiesEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class JavaSourceRootPropertiesEntityData : WorkspaceEntityData<JavaSourceRootPropertiesEntity>() {
   var generated: Boolean = false
   lateinit var packagePrefix: String
-
-
   internal fun isPackagePrefixInitialized(): Boolean = ::packagePrefix.isInitialized
-
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<JavaSourceRootPropertiesEntity> {
     val modifiable = JavaSourceRootPropertiesEntityImpl.Builder(null)
     modifiable.diff = diff

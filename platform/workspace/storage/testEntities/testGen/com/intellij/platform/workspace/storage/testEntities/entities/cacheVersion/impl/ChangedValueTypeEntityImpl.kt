@@ -28,12 +28,6 @@ import com.intellij.platform.workspace.storage.testEntities.entities.cacheVersio
 internal class ChangedValueTypeEntityImpl(private val dataSource: ChangedValueTypeEntityData) : ChangedValueTypeEntity,
                                                                                                 WorkspaceEntityBase(dataSource) {
 
-  private companion object {
-
-    private val connections = listOf<ConnectionId>()
-
-  }
-
   override val type: String
     get() {
       readField("type")
@@ -49,7 +43,6 @@ internal class ChangedValueTypeEntityImpl(private val dataSource: ChangedValueTy
       readField("text")
       return dataSource.text
     }
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -57,9 +50,8 @@ internal class ChangedValueTypeEntityImpl(private val dataSource: ChangedValueTy
     }
 
   override fun connectionIdList(): List<ConnectionId> {
-    return connections
+    return emptyList()
   }
-
 
   internal class Builder(result: ChangedValueTypeEntityData?) :
     ModifiableWorkspaceEntityBase<ChangedValueTypeEntity, ChangedValueTypeEntityData>(result), ChangedValueTypeEntityBuilder {
@@ -83,7 +75,7 @@ internal class ChangedValueTypeEntityImpl(private val dataSource: ChangedValueTy
       this.currentEntityData = null
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -100,7 +92,7 @@ internal class ChangedValueTypeEntityImpl(private val dataSource: ChangedValueTy
     }
 
     override fun connectionIdList(): List<ConnectionId> {
-      return connections
+      return emptyList()
     }
 
     override fun afterModification() {
@@ -120,14 +112,12 @@ internal class ChangedValueTypeEntityImpl(private val dataSource: ChangedValueTy
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var type: String
       get() = getEntityData().type
@@ -167,7 +157,6 @@ internal class ChangedValueTypeEntityImpl(private val dataSource: ChangedValueTy
 
     override fun getEntityClass(): Class<ChangedValueTypeEntity> = ChangedValueTypeEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
@@ -175,11 +164,8 @@ internal class ChangedValueTypeEntityData : WorkspaceEntityData<ChangedValueType
   lateinit var type: String
   var someKey: Int = 0
   lateinit var text: MutableList<String>
-
   internal fun isTypeInitialized(): Boolean = ::type.isInitialized
-
   internal fun isTextInitialized(): Boolean = ::text.isInitialized
-
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<ChangedValueTypeEntity> {
     val modifiable = ChangedValueTypeEntityImpl.Builder(null)
     modifiable.diff = diff

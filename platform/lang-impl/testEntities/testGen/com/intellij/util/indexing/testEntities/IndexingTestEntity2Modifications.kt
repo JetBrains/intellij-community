@@ -20,7 +20,7 @@ interface IndexingTestEntity2Builder : WorkspaceEntityBuilder<IndexingTestEntity
 }
 
 internal object IndexingTestEntity2Type : EntityType<IndexingTestEntity2, IndexingTestEntity2Builder>() {
-  override val entityClass: Class<IndexingTestEntity2> get() = IndexingTestEntity2::class.java
+  override val entityImplClass: Class<*> get() = IndexingTestEntity2Impl::class.java
   override val entityImplBuilderClass: Class<*> get() = IndexingTestEntity2Impl.Builder::class.java
   operator fun invoke(
     roots: List<VirtualFileUrl>,

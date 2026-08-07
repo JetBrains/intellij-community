@@ -29,12 +29,10 @@ import com.intellij.platform.workspace.storage.testEntities.entities.OoParentEnt
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class OoChildEntityImpl(private val dataSource: OoChildEntityData) : OoChildEntity, WorkspaceEntityBase(dataSource) {
-
   private companion object {
     internal val PARENTENTITY_CONNECTION_ID: ConnectionId =
       ConnectionId.create(OoParentEntity::class.java, OoChildEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
     private val connections = listOf<ConnectionId>(PARENTENTITY_CONNECTION_ID)
-
   }
 
   override val childProperty: String
@@ -45,7 +43,6 @@ internal class OoChildEntityImpl(private val dataSource: OoChildEntityData) : Oo
   override val parentEntity: OoParentEntity
     get() = snapshot.instrumentation.getParent(PARENTENTITY_CONNECTION_ID, this) as? OoParentEntity
             ?: error("Parent parentEntity not found for OoChildEntity")
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -55,7 +52,6 @@ internal class OoChildEntityImpl(private val dataSource: OoChildEntityData) : Oo
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
-
 
   internal class Builder(result: OoChildEntityData?) : ModifiableWorkspaceEntityBase<OoChildEntity, OoChildEntityData>(result),
                                                        OoChildEntityBuilder {
@@ -79,7 +75,7 @@ internal class OoChildEntityImpl(private val dataSource: OoChildEntityData) : Oo
       this.currentEntityData = null
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -114,14 +110,12 @@ internal class OoChildEntityImpl(private val dataSource: OoChildEntityData) : Oo
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var childProperty: String
       get() = getEntityData().childProperty
@@ -147,10 +141,8 @@ internal class OoChildEntityImpl(private val dataSource: OoChildEntityData) : Oo
         checkModificationAllowed()
         val _diff = diff
         if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = this
-          }
-// else you're attaching a new entity to an existing entity that is not modifiable
+          value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = this
+          @Suppress("UNCHECKED_CAST")
           _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
@@ -160,7 +152,6 @@ internal class OoChildEntityImpl(private val dataSource: OoChildEntityData) : Oo
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = this
           }
-// else you're attaching a new entity to an existing entity that is not modifiable
           this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] = value
         }
         changedProperty.add("parentEntity")
@@ -168,15 +159,12 @@ internal class OoChildEntityImpl(private val dataSource: OoChildEntityData) : Oo
 
     override fun getEntityClass(): Class<OoChildEntity> = OoChildEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class OoChildEntityData : WorkspaceEntityData<OoChildEntity>() {
   lateinit var childProperty: String
-
   internal fun isChildPropertyInitialized(): Boolean = ::childProperty.isInitialized
-
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<OoChildEntity> {
     val modifiable = OoChildEntityImpl.Builder(null)
     modifiable.diff = diff

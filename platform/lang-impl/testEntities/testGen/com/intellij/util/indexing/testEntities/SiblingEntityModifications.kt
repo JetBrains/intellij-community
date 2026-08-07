@@ -18,7 +18,7 @@ interface SiblingEntityBuilder : WorkspaceEntityBuilder<SiblingEntity> {
 }
 
 internal object SiblingEntityType : EntityType<SiblingEntity, SiblingEntityBuilder>() {
-  override val entityClass: Class<SiblingEntity> get() = SiblingEntity::class.java
+  override val entityImplClass: Class<*> get() = SiblingEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = SiblingEntityImpl.Builder::class.java
   operator fun invoke(
     customSiblingProperty: String,

@@ -17,7 +17,7 @@ interface OneEntityWithSymbolicIdBuilder : WorkspaceEntityBuilder<OneEntityWithS
 }
 
 internal object OneEntityWithSymbolicIdType : EntityType<OneEntityWithSymbolicId, OneEntityWithSymbolicIdBuilder>() {
-  override val entityClass: Class<OneEntityWithSymbolicId> get() = OneEntityWithSymbolicId::class.java
+  override val entityImplClass: Class<*> get() = OneEntityWithSymbolicIdImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = OneEntityWithSymbolicIdImpl.Builder::class.java
   operator fun invoke(
     myName: String,

@@ -34,14 +34,12 @@ import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class LibraryFilesPackagingElementEntityImpl(private val dataSource: LibraryFilesPackagingElementEntityData) :
   LibraryFilesPackagingElementEntity, WorkspaceEntityBase(dataSource) {
-
   private companion object {
     internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(CompositePackagingElementEntity::class.java,
                                                                                 PackagingElementEntity::class.java,
                                                                                 ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY,
                                                                                 true)
     private val connections = listOf<ConnectionId>(PARENTENTITY_CONNECTION_ID)
-
   }
 
   override val parentEntity: CompositePackagingElementEntity?
@@ -51,7 +49,6 @@ internal class LibraryFilesPackagingElementEntityImpl(private val dataSource: Li
       readField("library")
       return dataSource.library
     }
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -61,7 +58,6 @@ internal class LibraryFilesPackagingElementEntityImpl(private val dataSource: Li
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
-
 
   internal class Builder(result: LibraryFilesPackagingElementEntityData?) :
     ModifiableWorkspaceEntityBase<LibraryFilesPackagingElementEntity, LibraryFilesPackagingElementEntityData>(result),
@@ -86,7 +82,7 @@ internal class LibraryFilesPackagingElementEntityImpl(private val dataSource: Li
       this.currentEntityData = null
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -108,14 +104,12 @@ internal class LibraryFilesPackagingElementEntityImpl(private val dataSource: Li
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var parentEntity: CompositePackagingElementEntityBuilder<out CompositePackagingElementEntity>?
       get() {
@@ -136,11 +130,10 @@ internal class LibraryFilesPackagingElementEntityImpl(private val dataSource: Li
         val _diff = diff
         if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
 // Setting backref of the list
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            val data = (value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
-            value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = data
-          }
-// else you're attaching a new entity to an existing entity that is not modifiable
+          @Suppress("UNCHECKED_CAST")
+          val data = (value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
+          value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = data
+          @Suppress("UNCHECKED_CAST")
           _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
@@ -149,34 +142,29 @@ internal class LibraryFilesPackagingElementEntityImpl(private val dataSource: Li
         else {
 // Setting backref of the list
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
+            @Suppress("UNCHECKED_CAST")
             val data = (value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
             value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = data
           }
-// else you're attaching a new entity to an existing entity that is not modifiable
           this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] = value
         }
         changedProperty.add("parentEntity")
       }
-
     override var library: LibraryId?
       get() = getEntityData().library
       set(value) {
         checkModificationAllowed()
         getEntityData(true).library = value
         changedProperty.add("library")
-
       }
 
     override fun getEntityClass(): Class<LibraryFilesPackagingElementEntity> = LibraryFilesPackagingElementEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class LibraryFilesPackagingElementEntityData : WorkspaceEntityData<LibraryFilesPackagingElementEntity>(), SoftLinkable {
   var library: LibraryId? = null
-
-
   override fun getLinks(): Set<SymbolicEntityId<*>> {
     val result = HashSet<SymbolicEntityId<*>>()
     val optionalLink_library = library
@@ -194,7 +182,6 @@ internal class LibraryFilesPackagingElementEntityData : WorkspaceEntityData<Libr
   }
 
   override fun updateLinksIndex(prev: Set<SymbolicEntityId<*>>, index: WorkspaceMutableIndex<SymbolicEntityId<*>>) {
-// TODO verify logic
     val mutablePreviousSet = HashSet(prev)
     val optionalLink_library = library
     if (optionalLink_library != null) {
@@ -223,6 +210,7 @@ internal class LibraryFilesPackagingElementEntityData : WorkspaceEntityData<Libr
     else {
       null
     }
+
     if (library_data_optional != null) {
       library = library_data_optional
     }

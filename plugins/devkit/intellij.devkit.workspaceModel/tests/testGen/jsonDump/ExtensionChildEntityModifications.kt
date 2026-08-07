@@ -21,7 +21,7 @@ interface ExtensionChildEntityBuilder : WorkspaceEntityBuilder<ExtensionChildEnt
 }
 
 internal object ExtensionChildEntityType : EntityType<ExtensionChildEntity, ExtensionChildEntityBuilder>() {
-  override val entityClass: Class<ExtensionChildEntity> get() = ExtensionChildEntity::class.java
+  override val entityImplClass: Class<*> get() = ExtensionChildEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = ExtensionChildEntityImpl.Builder::class.java
   operator fun invoke(
     extensionChildName: String,

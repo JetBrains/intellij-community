@@ -23,7 +23,7 @@ interface FacetEntityBuilder : WorkspaceEntityBuilder<FacetEntity>, ModuleSettin
 }
 
 internal object FacetEntityType : EntityType<FacetEntity, FacetEntityBuilder>() {
-  override val entityClass: Class<FacetEntity> get() = FacetEntity::class.java
+  override val entityImplClass: Class<*> get() = FacetEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = FacetEntityImpl.Builder::class.java
   operator fun invoke(
     moduleId: ModuleId,

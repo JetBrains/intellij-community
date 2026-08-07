@@ -19,7 +19,7 @@ interface NullToNotNullEntityBuilder : WorkspaceEntityBuilder<NullToNotNullEntit
 }
 
 internal object NullToNotNullEntityType : EntityType<NullToNotNullEntity, NullToNotNullEntityBuilder>() {
-  override val entityClass: Class<NullToNotNullEntity> get() = NullToNotNullEntity::class.java
+  override val entityImplClass: Class<*> get() = NullToNotNullEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = NullToNotNullEntityImpl.Builder::class.java
   operator fun invoke(
     nullString: String,

@@ -18,9 +18,8 @@ var name: String
 var isSimple: Boolean
 var parent: ChildrenCollectionFieldEntityBuilder
 }
-
 internal object SimpleEntityType : EntityType<SimpleEntity, SimpleEntityBuilder>(){
-override val entityClass: Class<SimpleEntity> get() = SimpleEntity::class.java
+override val entityImplClass: Class<*> get() = SimpleEntityImpl::class.java
 override val entityImplBuilderClass: Class<*> get() = SimpleEntityImpl.Builder::class.java
 operator fun invoke(
 version: Int,
@@ -38,12 +37,10 @@ init?.invoke(builder)
 return builder
 }
 }
-
 fun MutableEntityStorage.modifySimpleEntity(
 entity: SimpleEntity,
 modification: SimpleEntityBuilder.() -> Unit,
 ): SimpleEntity = modifyEntity(SimpleEntityBuilder::class.java, entity, modification)
-
 @JvmOverloads
 @JvmName("createSimpleEntity")
 fun SimpleEntity(

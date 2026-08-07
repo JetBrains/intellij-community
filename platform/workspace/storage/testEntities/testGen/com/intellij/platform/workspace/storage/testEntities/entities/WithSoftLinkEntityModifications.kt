@@ -17,7 +17,7 @@ interface WithSoftLinkEntityBuilder : WorkspaceEntityBuilder<WithSoftLinkEntity>
 }
 
 internal object WithSoftLinkEntityType : EntityType<WithSoftLinkEntity, WithSoftLinkEntityBuilder>() {
-  override val entityClass: Class<WithSoftLinkEntity> get() = WithSoftLinkEntity::class.java
+  override val entityImplClass: Class<*> get() = WithSoftLinkEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = WithSoftLinkEntityImpl.Builder::class.java
   operator fun invoke(
     link: NameId,

@@ -29,19 +29,16 @@ import com.intellij.platform.workspace.storage.testEntities.entities.ParentChain
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ParentChainEntityImpl(private val dataSource: ParentChainEntityData) : ParentChainEntity, WorkspaceEntityBase(dataSource) {
-
   private companion object {
     internal val ROOT_CONNECTION_ID: ConnectionId = ConnectionId.create(ParentChainEntity::class.java,
                                                                         CompositeAbstractEntity::class.java,
                                                                         ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE,
                                                                         true)
     private val connections = listOf<ConnectionId>(ROOT_CONNECTION_ID)
-
   }
 
   override val root: CompositeAbstractEntity?
     get() = snapshot.instrumentation.getOneChild(ROOT_CONNECTION_ID, this) as? CompositeAbstractEntity
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -51,7 +48,6 @@ internal class ParentChainEntityImpl(private val dataSource: ParentChainEntityDa
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
-
 
   internal class Builder(result: ParentChainEntityData?) : ModifiableWorkspaceEntityBase<ParentChainEntity, ParentChainEntityData>(result),
                                                            ParentChainEntityBuilder {
@@ -75,7 +71,7 @@ internal class ParentChainEntityImpl(private val dataSource: ParentChainEntityDa
       this.currentEntityData = null
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -96,14 +92,12 @@ internal class ParentChainEntityImpl(private val dataSource: ParentChainEntityDa
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var root: CompositeAbstractEntityBuilder<out CompositeAbstractEntity>?
       get() {
@@ -121,10 +115,8 @@ internal class ParentChainEntityImpl(private val dataSource: ParentChainEntityDa
         checkModificationAllowed()
         val _diff = diff
         if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(false, ROOT_CONNECTION_ID)] = this
-          }
-// else you're attaching a new entity to an existing entity that is not modifiable
+          value.entityLinks[EntityLink(false, ROOT_CONNECTION_ID)] = this
+          @Suppress("UNCHECKED_CAST")
           _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
@@ -134,7 +126,6 @@ internal class ParentChainEntityImpl(private val dataSource: ParentChainEntityDa
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(false, ROOT_CONNECTION_ID)] = this
           }
-// else you're attaching a new entity to an existing entity that is not modifiable
           this.entityLinks[EntityLink(true, ROOT_CONNECTION_ID)] = value
         }
         changedProperty.add("root")
@@ -142,13 +133,10 @@ internal class ParentChainEntityImpl(private val dataSource: ParentChainEntityDa
 
     override fun getEntityClass(): Class<ParentChainEntity> = ParentChainEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ParentChainEntityData : WorkspaceEntityData<ParentChainEntity>() {
-
-
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<ParentChainEntity> {
     val modifiable = ParentChainEntityImpl.Builder(null)
     modifiable.diff = diff

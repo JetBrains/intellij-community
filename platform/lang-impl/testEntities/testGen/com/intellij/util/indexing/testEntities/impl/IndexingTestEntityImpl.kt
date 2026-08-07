@@ -29,12 +29,6 @@ import com.intellij.util.indexing.testEntities.IndexingTestEntityBuilder
 internal class IndexingTestEntityImpl(private val dataSource: IndexingTestEntityData) : IndexingTestEntity,
                                                                                         WorkspaceEntityBase(dataSource) {
 
-  private companion object {
-
-    private val connections = listOf<ConnectionId>()
-
-  }
-
   override val roots: List<VirtualFileUrl>
     get() {
       readField("roots")
@@ -45,7 +39,6 @@ internal class IndexingTestEntityImpl(private val dataSource: IndexingTestEntity
       readField("excludedRoots")
       return dataSource.excludedRoots
     }
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -53,9 +46,8 @@ internal class IndexingTestEntityImpl(private val dataSource: IndexingTestEntity
     }
 
   override fun connectionIdList(): List<ConnectionId> {
-    return connections
+    return emptyList()
   }
-
 
   internal class Builder(result: IndexingTestEntityData?) :
     ModifiableWorkspaceEntityBase<IndexingTestEntity, IndexingTestEntityData>(result), IndexingTestEntityBuilder {
@@ -81,7 +73,7 @@ internal class IndexingTestEntityImpl(private val dataSource: IndexingTestEntity
       index(this, "excludedRoots", this.excludedRoots)
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -98,7 +90,7 @@ internal class IndexingTestEntityImpl(private val dataSource: IndexingTestEntity
     }
 
     override fun connectionIdList(): List<ConnectionId> {
-      return connections
+      return emptyList()
     }
 
     override fun afterModification() {
@@ -121,14 +113,12 @@ internal class IndexingTestEntityImpl(private val dataSource: IndexingTestEntity
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     private val rootsUpdater: (value: List<VirtualFileUrl>) -> Unit = { value ->
       val _diff = diff
@@ -177,17 +167,14 @@ internal class IndexingTestEntityImpl(private val dataSource: IndexingTestEntity
 
     override fun getEntityClass(): Class<IndexingTestEntity> = IndexingTestEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class IndexingTestEntityData : WorkspaceEntityData<IndexingTestEntity>() {
   lateinit var roots: MutableList<VirtualFileUrl>
   lateinit var excludedRoots: MutableList<VirtualFileUrl>
-
   internal fun isRootsInitialized(): Boolean = ::roots.isInitialized
   internal fun isExcludedRootsInitialized(): Boolean = ::excludedRoots.isInitialized
-
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<IndexingTestEntity> {
     val modifiable = IndexingTestEntityImpl.Builder(null)
     modifiable.diff = diff

@@ -29,13 +29,6 @@ import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigu
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ScriptCompilationConfigurationEntityImpl(private val dataSource: ScriptCompilationConfigurationEntityData) :
     ScriptCompilationConfigurationEntity, WorkspaceEntityBase(dataSource) {
-
-    private companion object {
-
-        private val connections = listOf<ConnectionId>()
-
-    }
-
     override val symbolicId: ScriptCompilationConfigurationId = super.symbolicId
 
     override val data: ByteArray
@@ -48,7 +41,6 @@ internal class ScriptCompilationConfigurationEntityImpl(private val dataSource: 
             readField("identity")
             return dataSource.identity
         }
-
     override val entitySource: EntitySource
         get() {
             readField("entitySource")
@@ -56,9 +48,8 @@ internal class ScriptCompilationConfigurationEntityImpl(private val dataSource: 
         }
 
     override fun connectionIdList(): List<ConnectionId> {
-        return connections
+        return emptyList()
     }
-
 
     internal class Builder(result: ScriptCompilationConfigurationEntityData?) :
         ModifiableWorkspaceEntityBase<ScriptCompilationConfigurationEntity, ScriptCompilationConfigurationEntityData>(result),
@@ -82,7 +73,7 @@ internal class ScriptCompilationConfigurationEntityImpl(private val dataSource: 
             this.currentEntityData = null
 // Process linked entities that are connected without a builder
             processLinkedEntities(builder)
-            checkInitialization() // TODO uncomment and check failed tests
+            checkInitialization()
         }
 
         private fun checkInitialization() {
@@ -99,7 +90,7 @@ internal class ScriptCompilationConfigurationEntityImpl(private val dataSource: 
         }
 
         override fun connectionIdList(): List<ConnectionId> {
-            return connections
+            return emptyList()
         }
 
         // Relabeling code, move information from dataSource to this builder
@@ -111,14 +102,12 @@ internal class ScriptCompilationConfigurationEntityImpl(private val dataSource: 
             updateChildToParentReferences(parents)
         }
 
-
         override var entitySource: EntitySource
             get() = getEntityData().entitySource
             set(value) {
                 checkModificationAllowed()
                 getEntityData(true).entitySource = value
                 changedProperty.add("entitySource")
-
             }
         override var data: ByteArray
             get() = getEntityData().data
@@ -126,7 +115,6 @@ internal class ScriptCompilationConfigurationEntityImpl(private val dataSource: 
                 checkModificationAllowed()
                 getEntityData(true).data = value
                 changedProperty.add("data")
-
             }
         override var identity: ScriptCompilationConfigurationId
             get() = getEntityData().identity
@@ -134,22 +122,18 @@ internal class ScriptCompilationConfigurationEntityImpl(private val dataSource: 
                 checkModificationAllowed()
                 getEntityData(true).identity = value
                 changedProperty.add("identity")
-
             }
 
         override fun getEntityClass(): Class<ScriptCompilationConfigurationEntity> = ScriptCompilationConfigurationEntity::class.java
     }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ScriptCompilationConfigurationEntityData : WorkspaceEntityData<ScriptCompilationConfigurationEntity>(), SoftLinkable {
     lateinit var data: ByteArray
     lateinit var identity: ScriptCompilationConfigurationId
-
     internal fun isDataInitialized(): Boolean = ::data.isInitialized
     internal fun isIdentityInitialized(): Boolean = ::identity.isInitialized
-
     override fun getLinks(): Set<SymbolicEntityId<*>> {
         val result = HashSet<SymbolicEntityId<*>>()
         result.add(identity)
@@ -161,7 +145,6 @@ internal class ScriptCompilationConfigurationEntityData : WorkspaceEntityData<Sc
     }
 
     override fun updateLinksIndex(prev: Set<SymbolicEntityId<*>>, index: WorkspaceMutableIndex<SymbolicEntityId<*>>) {
-// TODO verify logic
         val mutablePreviousSet = HashSet(prev)
         val removedItem_identity = mutablePreviousSet.remove(identity)
         if (!removedItem_identity) {

@@ -34,7 +34,6 @@ import com.intellij.platform.workspace.storage.testEntities.entities.SourceRootT
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ContentRootTestEntityImpl(private val dataSource: ContentRootTestEntityData) : ContentRootTestEntity,
                                                                                               WorkspaceEntityBase(dataSource) {
-
   private companion object {
     internal val MODULE_CONNECTION_ID: ConnectionId =
       ConnectionId.create(ModuleTestEntity::class.java, ContentRootTestEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
@@ -47,7 +46,6 @@ internal class ContentRootTestEntityImpl(private val dataSource: ContentRootTest
                                                                                ConnectionId.ConnectionType.ONE_TO_MANY,
                                                                                false)
     private val connections = listOf<ConnectionId>(MODULE_CONNECTION_ID, SOURCEROOTORDER_CONNECTION_ID, SOURCEROOTS_CONNECTION_ID)
-
   }
 
   override val module: ModuleTestEntity
@@ -56,9 +54,9 @@ internal class ContentRootTestEntityImpl(private val dataSource: ContentRootTest
   override val sourceRootOrder: SourceRootTestOrderEntity?
     get() = snapshot.instrumentation.getOneChild(SOURCEROOTORDER_CONNECTION_ID, this) as? SourceRootTestOrderEntity
   override val sourceRoots: List<SourceRootTestEntity>
+    @Suppress("UNCHECKED_CAST")
     get() = (snapshot.instrumentation.getManyChildren(SOURCEROOTS_CONNECTION_ID, this) as? Sequence<SourceRootTestEntity>)?.toList()
-            ?: error("Children sourceRoots not found for ContentRootTestEntity")
-
+            ?: error("Children list sourceRoots not found for ContentRootTestEntity")
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -68,7 +66,6 @@ internal class ContentRootTestEntityImpl(private val dataSource: ContentRootTest
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
-
 
   internal class Builder(result: ContentRootTestEntityData?) :
     ModifiableWorkspaceEntityBase<ContentRootTestEntity, ContentRootTestEntityData>(result), ContentRootTestEntityBuilder {
@@ -92,7 +89,7 @@ internal class ContentRootTestEntityImpl(private val dataSource: ContentRootTest
       this.currentEntityData = null
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -134,14 +131,12 @@ internal class ContentRootTestEntityImpl(private val dataSource: ContentRootTest
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var module: ModuleTestEntityBuilder
       get() {
@@ -161,11 +156,10 @@ internal class ContentRootTestEntityImpl(private val dataSource: ContentRootTest
         val _diff = diff
         if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
 // Setting backref of the list
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            val data = (value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
-            value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] = data
-          }
-// else you're attaching a new entity to an existing entity that is not modifiable
+          @Suppress("UNCHECKED_CAST")
+          val data = (value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
+          value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] = data
+          @Suppress("UNCHECKED_CAST")
           _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
@@ -174,15 +168,14 @@ internal class ContentRootTestEntityImpl(private val dataSource: ContentRootTest
         else {
 // Setting backref of the list
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
+            @Suppress("UNCHECKED_CAST")
             val data = (value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
             value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] = data
           }
-// else you're attaching a new entity to an existing entity that is not modifiable
           this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)] = value
         }
         changedProperty.add("module")
       }
-
     override var sourceRootOrder: SourceRootTestOrderEntityBuilder?
       get() {
         val _diff = diff
@@ -199,10 +192,8 @@ internal class ContentRootTestEntityImpl(private val dataSource: ContentRootTest
         checkModificationAllowed()
         val _diff = diff
         if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(false, SOURCEROOTORDER_CONNECTION_ID)] = this
-          }
-// else you're attaching a new entity to an existing entity that is not modifiable
+          value.entityLinks[EntityLink(false, SOURCEROOTORDER_CONNECTION_ID)] = this
+          @Suppress("UNCHECKED_CAST")
           _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
@@ -212,25 +203,25 @@ internal class ContentRootTestEntityImpl(private val dataSource: ContentRootTest
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(false, SOURCEROOTORDER_CONNECTION_ID)] = this
           }
-// else you're attaching a new entity to an existing entity that is not modifiable
           this.entityLinks[EntityLink(true, SOURCEROOTORDER_CONNECTION_ID)] = value
         }
         changedProperty.add("sourceRootOrder")
       }
 
     // List of non-abstract referenced types
-    var _sourceRoots: List<SourceRootTestEntity>? = emptyList()
     override var sourceRoots: List<SourceRootTestEntityBuilder>
       get() {
 // Getter of the list of non-abstract referenced types
         val _diff = diff
         return if (_diff != null) {
-          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(SOURCEROOTS_CONNECTION_ID, this)!!
+          @Suppress("UNCHECKED_CAST")
+          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(SOURCEROOTS_CONNECTION_ID, this)
             .toList() as List<SourceRootTestEntityBuilder>) + (this.entityLinks[EntityLink(true,
                                                                                            SOURCEROOTS_CONNECTION_ID)] as? List<SourceRootTestEntityBuilder>
                                                                ?: emptyList())
         }
         else {
+          @Suppress("UNCHECKED_CAST")
           this.entityLinks[EntityLink(true, SOURCEROOTS_CONNECTION_ID)] as? List<SourceRootTestEntityBuilder> ?: emptyList()
         }
       }
@@ -242,10 +233,8 @@ internal class ContentRootTestEntityImpl(private val dataSource: ContentRootTest
           for (item_value in value) {
             if (item_value is ModifiableWorkspaceEntityBase<*, *> && (item_value as? ModifiableWorkspaceEntityBase<*, *>)?.diff == null) {
 // Backref setup before adding to store
-              if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
-                item_value.entityLinks[EntityLink(false, SOURCEROOTS_CONNECTION_ID)] = this
-              }
-// else you're attaching a new entity to an existing entity that is not modifiable
+              item_value.entityLinks[EntityLink(false, SOURCEROOTS_CONNECTION_ID)] = this
+              @Suppress("UNCHECKED_CAST")
               _diff.addEntity(item_value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
             }
           }
@@ -256,7 +245,6 @@ internal class ContentRootTestEntityImpl(private val dataSource: ContentRootTest
             if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
               item_value.entityLinks[EntityLink(false, SOURCEROOTS_CONNECTION_ID)] = this
             }
-// else you're attaching a new entity to an existing entity that is not modifiable
           }
           this.entityLinks[EntityLink(true, SOURCEROOTS_CONNECTION_ID)] = value
         }
@@ -265,13 +253,10 @@ internal class ContentRootTestEntityImpl(private val dataSource: ContentRootTest
 
     override fun getEntityClass(): Class<ContentRootTestEntity> = ContentRootTestEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ContentRootTestEntityData : WorkspaceEntityData<ContentRootTestEntity>() {
-
-
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<ContentRootTestEntity> {
     val modifiable = ContentRootTestEntityImpl.Builder(null)
     modifiable.diff = diff

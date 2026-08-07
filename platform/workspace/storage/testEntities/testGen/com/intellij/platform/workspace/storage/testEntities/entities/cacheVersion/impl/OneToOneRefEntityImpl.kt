@@ -29,14 +29,12 @@ import com.intellij.platform.workspace.storage.testEntities.entities.cacheVersio
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class OneToOneRefEntityImpl(private val dataSource: OneToOneRefEntityData) : OneToOneRefEntity, WorkspaceEntityBase(dataSource) {
-
   private companion object {
     internal val ANOTHERENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(OneToOneRefEntity::class.java,
                                                                                  AnotherOneToOneRefEntity::class.java,
                                                                                  ConnectionId.ConnectionType.ONE_TO_ONE,
                                                                                  false)
     private val connections = listOf<ConnectionId>(ANOTHERENTITY_CONNECTION_ID)
-
   }
 
   override val version: Int
@@ -51,7 +49,6 @@ internal class OneToOneRefEntityImpl(private val dataSource: OneToOneRefEntityDa
     }
   override val anotherEntity: AnotherOneToOneRefEntity?
     get() = snapshot.instrumentation.getOneChild(ANOTHERENTITY_CONNECTION_ID, this) as? AnotherOneToOneRefEntity
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -61,7 +58,6 @@ internal class OneToOneRefEntityImpl(private val dataSource: OneToOneRefEntityDa
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
-
 
   internal class Builder(result: OneToOneRefEntityData?) : ModifiableWorkspaceEntityBase<OneToOneRefEntity, OneToOneRefEntityData>(result),
                                                            OneToOneRefEntityBuilder {
@@ -85,7 +81,7 @@ internal class OneToOneRefEntityImpl(private val dataSource: OneToOneRefEntityDa
       this.currentEntityData = null
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -111,14 +107,12 @@ internal class OneToOneRefEntityImpl(private val dataSource: OneToOneRefEntityDa
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var version: Int
       get() = getEntityData().version
@@ -150,10 +144,8 @@ internal class OneToOneRefEntityImpl(private val dataSource: OneToOneRefEntityDa
         checkModificationAllowed()
         val _diff = diff
         if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(false, ANOTHERENTITY_CONNECTION_ID)] = this
-          }
-// else you're attaching a new entity to an existing entity that is not modifiable
+          value.entityLinks[EntityLink(false, ANOTHERENTITY_CONNECTION_ID)] = this
+          @Suppress("UNCHECKED_CAST")
           _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
@@ -163,7 +155,6 @@ internal class OneToOneRefEntityImpl(private val dataSource: OneToOneRefEntityDa
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(false, ANOTHERENTITY_CONNECTION_ID)] = this
           }
-// else you're attaching a new entity to an existing entity that is not modifiable
           this.entityLinks[EntityLink(true, ANOTHERENTITY_CONNECTION_ID)] = value
         }
         changedProperty.add("anotherEntity")
@@ -171,17 +162,13 @@ internal class OneToOneRefEntityImpl(private val dataSource: OneToOneRefEntityDa
 
     override fun getEntityClass(): Class<OneToOneRefEntity> = OneToOneRefEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class OneToOneRefEntityData : WorkspaceEntityData<OneToOneRefEntity>() {
   var version: Int = 0
   lateinit var text: String
-
-
   internal fun isTextInitialized(): Boolean = ::text.isInitialized
-
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<OneToOneRefEntity> {
     val modifiable = OneToOneRefEntityImpl.Builder(null)
     modifiable.diff = diff

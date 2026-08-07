@@ -26,18 +26,11 @@ import com.intellij.platform.workspace.storage.testEntities.entities.cacheVersio
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class EnumPropsEntityImpl(private val dataSource: EnumPropsEntityData) : EnumPropsEntity, WorkspaceEntityBase(dataSource) {
 
-  private companion object {
-
-    private val connections = listOf<ConnectionId>()
-
-  }
-
   override val someEnum: EnumPropsEnum
     get() {
       readField("someEnum")
       return dataSource.someEnum
     }
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -45,9 +38,8 @@ internal class EnumPropsEntityImpl(private val dataSource: EnumPropsEntityData) 
     }
 
   override fun connectionIdList(): List<ConnectionId> {
-    return connections
+    return emptyList()
   }
-
 
   internal class Builder(result: EnumPropsEntityData?) : ModifiableWorkspaceEntityBase<EnumPropsEntity, EnumPropsEntityData>(result),
                                                          EnumPropsEntityBuilder {
@@ -71,7 +63,7 @@ internal class EnumPropsEntityImpl(private val dataSource: EnumPropsEntityData) 
       this.currentEntityData = null
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -85,7 +77,7 @@ internal class EnumPropsEntityImpl(private val dataSource: EnumPropsEntityData) 
     }
 
     override fun connectionIdList(): List<ConnectionId> {
-      return connections
+      return emptyList()
     }
 
     // Relabeling code, move information from dataSource to this builder
@@ -96,14 +88,12 @@ internal class EnumPropsEntityImpl(private val dataSource: EnumPropsEntityData) 
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var someEnum: EnumPropsEnum
       get() = getEntityData().someEnum
@@ -111,20 +101,16 @@ internal class EnumPropsEntityImpl(private val dataSource: EnumPropsEntityData) 
         checkModificationAllowed()
         getEntityData(true).someEnum = value
         changedProperty.add("someEnum")
-
       }
 
     override fun getEntityClass(): Class<EnumPropsEntity> = EnumPropsEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class EnumPropsEntityData : WorkspaceEntityData<EnumPropsEntity>() {
   lateinit var someEnum: EnumPropsEnum
-
   internal fun isSomeEnumInitialized(): Boolean = ::someEnum.isInitialized
-
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<EnumPropsEntity> {
     val modifiable = EnumPropsEntityImpl.Builder(null)
     modifiable.diff = diff

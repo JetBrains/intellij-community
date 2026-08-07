@@ -32,21 +32,17 @@ import com.intellij.python.pyproject.model.internal.workspaceBridge.PyProjectTom
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class PyProjectTomlWorkspaceEntityImpl(private val dataSource: PyProjectTomlWorkspaceEntityData) : PyProjectTomlWorkspaceEntity,
                                                                                                             WorkspaceEntityBase(dataSource) {
-
   private companion object {
     internal val MODULE_CONNECTION_ID: ConnectionId =
       ConnectionId.create(ModuleEntity::class.java, PyProjectTomlWorkspaceEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
     private val connections = listOf<ConnectionId>(MODULE_CONNECTION_ID)
-
   }
-
 
   override val participatedTools: Map<ToolId, ModuleId?>
     get() {
       readField("participatedTools")
       return dataSource.participatedTools
     }
-
   override val dirWithToml: VirtualFileUrl
     get() {
       readField("dirWithToml")
@@ -55,7 +51,6 @@ internal class PyProjectTomlWorkspaceEntityImpl(private val dataSource: PyProjec
   override val module: ModuleEntity
     get() = snapshot.instrumentation.getParent(MODULE_CONNECTION_ID, this) as? ModuleEntity
             ?: error("Parent module not found for PyProjectTomlWorkspaceEntity")
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -65,7 +60,6 @@ internal class PyProjectTomlWorkspaceEntityImpl(private val dataSource: PyProjec
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
-
 
   internal class Builder(result: PyProjectTomlWorkspaceEntityData?) :
     ModifiableWorkspaceEntityBase<PyProjectTomlWorkspaceEntity, PyProjectTomlWorkspaceEntityData>(result),
@@ -91,7 +85,7 @@ internal class PyProjectTomlWorkspaceEntityImpl(private val dataSource: PyProjec
       index(this, "dirWithToml", this.dirWithToml)
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -130,14 +124,12 @@ internal class PyProjectTomlWorkspaceEntityImpl(private val dataSource: PyProjec
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var participatedTools: Map<ToolId, ModuleId?>
       get() = getEntityData().participatedTools
@@ -172,10 +164,8 @@ internal class PyProjectTomlWorkspaceEntityImpl(private val dataSource: PyProjec
         checkModificationAllowed()
         val _diff = diff
         if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] = this
-          }
-// else you're attaching a new entity to an existing entity that is not modifiable
+          value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] = this
+          @Suppress("UNCHECKED_CAST")
           _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
@@ -185,7 +175,6 @@ internal class PyProjectTomlWorkspaceEntityImpl(private val dataSource: PyProjec
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] = this
           }
-// else you're attaching a new entity to an existing entity that is not modifiable
           this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)] = value
         }
         changedProperty.add("module")
@@ -193,17 +182,14 @@ internal class PyProjectTomlWorkspaceEntityImpl(private val dataSource: PyProjec
 
     override fun getEntityClass(): Class<PyProjectTomlWorkspaceEntity> = PyProjectTomlWorkspaceEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class PyProjectTomlWorkspaceEntityData : WorkspaceEntityData<PyProjectTomlWorkspaceEntity>() {
   lateinit var participatedTools: Map<ToolId, ModuleId?>
   lateinit var dirWithToml: VirtualFileUrl
-
   internal fun isParticipatedToolsInitialized(): Boolean = ::participatedTools.isInitialized
   internal fun isDirWithTomlInitialized(): Boolean = ::dirWithToml.isInitialized
-
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<PyProjectTomlWorkspaceEntity> {
     val modifiable = PyProjectTomlWorkspaceEntityImpl.Builder(null)
     modifiable.diff = diff

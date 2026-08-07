@@ -27,7 +27,7 @@ interface DependencySubstitutionEntityBuilder : WorkspaceEntityBuilder<Dependenc
 }
 
 internal object DependencySubstitutionEntityType : EntityType<DependencySubstitutionEntity, DependencySubstitutionEntityBuilder>() {
-  override val entityClass: Class<DependencySubstitutionEntity> get() = DependencySubstitutionEntity::class.java
+  override val entityImplClass: Class<*> get() = DependencySubstitutionEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = DependencySubstitutionEntityImpl.Builder::class.java
   operator fun invoke(
     library: LibraryId,
@@ -56,7 +56,6 @@ fun MutableEntityStorage.modifyDependencySubstitutionEntity(
 @set:Internal
 var ModuleEntityBuilder.substitutions: List<DependencySubstitutionEntityBuilder>
   by WorkspaceEntity.extensionBuilder(DependencySubstitutionEntity::class.java)
-
 
 @Internal
 @JvmOverloads

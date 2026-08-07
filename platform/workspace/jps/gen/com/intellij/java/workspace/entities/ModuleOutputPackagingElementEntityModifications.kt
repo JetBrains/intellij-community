@@ -21,7 +21,7 @@ interface ModuleOutputPackagingElementEntityBuilder : WorkspaceEntityBuilder<Mod
 
 internal object ModuleOutputPackagingElementEntityType :
   EntityType<ModuleOutputPackagingElementEntity, ModuleOutputPackagingElementEntityBuilder>() {
-  override val entityClass: Class<ModuleOutputPackagingElementEntity> get() = ModuleOutputPackagingElementEntity::class.java
+  override val entityImplClass: Class<*> get() = ModuleOutputPackagingElementEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = ModuleOutputPackagingElementEntityImpl.Builder::class.java
   operator fun invoke(
     entitySource: EntitySource,

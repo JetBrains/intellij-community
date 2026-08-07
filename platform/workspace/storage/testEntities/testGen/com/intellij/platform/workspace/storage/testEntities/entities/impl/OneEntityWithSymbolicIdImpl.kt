@@ -26,13 +26,6 @@ import com.intellij.platform.workspace.storage.testEntities.entities.OneSymbolic
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class OneEntityWithSymbolicIdImpl(private val dataSource: OneEntityWithSymbolicIdData) : OneEntityWithSymbolicId,
                                                                                                   WorkspaceEntityBase(dataSource) {
-
-  private companion object {
-
-    private val connections = listOf<ConnectionId>()
-
-  }
-
   override val symbolicId: OneSymbolicId = super.symbolicId
 
   override val myName: String
@@ -40,7 +33,6 @@ internal class OneEntityWithSymbolicIdImpl(private val dataSource: OneEntityWith
       readField("myName")
       return dataSource.myName
     }
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -48,9 +40,8 @@ internal class OneEntityWithSymbolicIdImpl(private val dataSource: OneEntityWith
     }
 
   override fun connectionIdList(): List<ConnectionId> {
-    return connections
+    return emptyList()
   }
-
 
   internal class Builder(result: OneEntityWithSymbolicIdData?) :
     ModifiableWorkspaceEntityBase<OneEntityWithSymbolicId, OneEntityWithSymbolicIdData>(result), OneEntityWithSymbolicIdBuilder {
@@ -74,7 +65,7 @@ internal class OneEntityWithSymbolicIdImpl(private val dataSource: OneEntityWith
       this.currentEntityData = null
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -88,7 +79,7 @@ internal class OneEntityWithSymbolicIdImpl(private val dataSource: OneEntityWith
     }
 
     override fun connectionIdList(): List<ConnectionId> {
-      return connections
+      return emptyList()
     }
 
     // Relabeling code, move information from dataSource to this builder
@@ -99,14 +90,12 @@ internal class OneEntityWithSymbolicIdImpl(private val dataSource: OneEntityWith
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var myName: String
       get() = getEntityData().myName
@@ -118,15 +107,12 @@ internal class OneEntityWithSymbolicIdImpl(private val dataSource: OneEntityWith
 
     override fun getEntityClass(): Class<OneEntityWithSymbolicId> = OneEntityWithSymbolicId::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class OneEntityWithSymbolicIdData : WorkspaceEntityData<OneEntityWithSymbolicId>() {
   lateinit var myName: String
-
   internal fun isMyNameInitialized(): Boolean = ::myName.isInitialized
-
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<OneEntityWithSymbolicId> {
     val modifiable = OneEntityWithSymbolicIdImpl.Builder(null)
     modifiable.diff = diff

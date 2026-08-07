@@ -30,12 +30,10 @@ import com.intellij.platform.workspace.storage.testEntities.entities.NamedEntity
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class NamedEntityImpl(private val dataSource: NamedEntityData) : NamedEntity, WorkspaceEntityBase(dataSource) {
-
   private companion object {
     internal val CHILDREN_CONNECTION_ID: ConnectionId =
       ConnectionId.create(NamedEntity::class.java, NamedChildEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
     private val connections = listOf<ConnectionId>(CHILDREN_CONNECTION_ID)
-
   }
 
   override val symbolicId: NameId = super.symbolicId
@@ -51,9 +49,9 @@ internal class NamedEntityImpl(private val dataSource: NamedEntityData) : NamedE
       return dataSource.additionalProperty
     }
   override val children: List<NamedChildEntity>
+    @Suppress("UNCHECKED_CAST")
     get() = (snapshot.instrumentation.getManyChildren(CHILDREN_CONNECTION_ID, this) as? Sequence<NamedChildEntity>)?.toList()
-            ?: error("Children children not found for NamedEntity")
-
+            ?: error("Children list children not found for NamedEntity")
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -63,7 +61,6 @@ internal class NamedEntityImpl(private val dataSource: NamedEntityData) : NamedE
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
-
 
   internal class Builder(result: NamedEntityData?) : ModifiableWorkspaceEntityBase<NamedEntity, NamedEntityData>(result),
                                                      NamedEntityBuilder {
@@ -87,7 +84,7 @@ internal class NamedEntityImpl(private val dataSource: NamedEntityData) : NamedE
       this.currentEntityData = null
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -124,14 +121,12 @@ internal class NamedEntityImpl(private val dataSource: NamedEntityData) : NamedE
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var myName: String
       get() = getEntityData().myName
@@ -149,18 +144,19 @@ internal class NamedEntityImpl(private val dataSource: NamedEntityData) : NamedE
       }
 
     // List of non-abstract referenced types
-    var _children: List<NamedChildEntity>? = emptyList()
     override var children: List<NamedChildEntityBuilder>
       get() {
 // Getter of the list of non-abstract referenced types
         val _diff = diff
         return if (_diff != null) {
-          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CHILDREN_CONNECTION_ID, this)!!
+          @Suppress("UNCHECKED_CAST")
+          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CHILDREN_CONNECTION_ID, this)
             .toList() as List<NamedChildEntityBuilder>) + (this.entityLinks[EntityLink(true,
                                                                                        CHILDREN_CONNECTION_ID)] as? List<NamedChildEntityBuilder>
                                                            ?: emptyList())
         }
         else {
+          @Suppress("UNCHECKED_CAST")
           this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as? List<NamedChildEntityBuilder> ?: emptyList()
         }
       }
@@ -172,10 +168,8 @@ internal class NamedEntityImpl(private val dataSource: NamedEntityData) : NamedE
           for (item_value in value) {
             if (item_value is ModifiableWorkspaceEntityBase<*, *> && (item_value as? ModifiableWorkspaceEntityBase<*, *>)?.diff == null) {
 // Backref setup before adding to store
-              if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
-                item_value.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)] = this
-              }
-// else you're attaching a new entity to an existing entity that is not modifiable
+              item_value.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)] = this
+              @Suppress("UNCHECKED_CAST")
               _diff.addEntity(item_value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
             }
           }
@@ -186,7 +180,6 @@ internal class NamedEntityImpl(private val dataSource: NamedEntityData) : NamedE
             if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
               item_value.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)] = this
             }
-// else you're attaching a new entity to an existing entity that is not modifiable
           }
           this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] = value
         }
@@ -195,16 +188,13 @@ internal class NamedEntityImpl(private val dataSource: NamedEntityData) : NamedE
 
     override fun getEntityClass(): Class<NamedEntity> = NamedEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class NamedEntityData : WorkspaceEntityData<NamedEntity>() {
   lateinit var myName: String
   var additionalProperty: String? = null
-
   internal fun isMyNameInitialized(): Boolean = ::myName.isInitialized
-
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<NamedEntity> {
     val modifiable = NamedEntityImpl.Builder(null)
     modifiable.diff = diff

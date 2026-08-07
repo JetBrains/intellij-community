@@ -16,9 +16,8 @@ override var entitySource: EntitySource
 override var data1: String
 var data2: String
 }
-
 internal object ParentEntityType : EntityType<ParentEntity, ParentEntityBuilder<ParentEntity>>(){
-override val entityClass: Class<ParentEntity> get() = ParentEntity::class.java
+override val entityImplClass: Class<*> get() = ParentEntityImpl::class.java
 override val entityImplBuilderClass: Class<*> get() = ParentEntityImpl.Builder::class.java
 operator fun invoke(
 data1: String,
@@ -34,7 +33,6 @@ init?.invoke(builder)
 return builder
 }
 }
-
 @JvmOverloads
 @JvmName("createParentEntity")
 fun ParentEntity(

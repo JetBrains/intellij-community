@@ -1,5 +1,4 @@
 @file:OptIn(EntityStorageInstrumentationApi::class)
-
 package com.intellij.workspaceModel.test.api.impl
 
 import com.intellij.platform.workspace.storage.ConnectionId
@@ -26,49 +25,38 @@ import com.intellij.workspaceModel.test.api.EntityWithUrlsBuilder
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class EntityWithUrlsImpl(private val dataSource: EntityWithUrlsData): EntityWithUrls, WorkspaceEntityBase(dataSource) {
-
-private companion object {
-
-private val connections = listOf<ConnectionId>()
-
-}
+internal class EntityWithUrlsImpl(private val dataSource: EntityWithUrlsData): EntityWithUrls, WorkspaceEntityBase(dataSource){
 
 override val simpleUrl: VirtualFileUrl
-get() {
+get(){
 readField("simpleUrl")
 return dataSource.simpleUrl
 }
 override val nullableUrl: VirtualFileUrl?
-get() {
+get(){
 readField("nullableUrl")
 return dataSource.nullableUrl
 }
 override val listOfUrls: List<VirtualFileUrl>
-get() {
+get(){
 readField("listOfUrls")
 return dataSource.listOfUrls
 }
 override val dataClassWithUrl: DataClassWithUrl
-get() {
+get(){
 readField("dataClassWithUrl")
 return dataSource.dataClassWithUrl
 }
-
 override val entitySource: EntitySource
-get() {
+get(){
 readField("entitySource")
 return dataSource.entitySource
 }
-
-override fun connectionIdList(): List<ConnectionId> {
-return connections
+override fun connectionIdList(): List<ConnectionId>{
+return emptyList()
 }
-
-
-internal class Builder(result: EntityWithUrlsData?): ModifiableWorkspaceEntityBase<EntityWithUrls, EntityWithUrlsData>(result), EntityWithUrlsBuilder {
+internal class Builder(result: EntityWithUrlsData?): ModifiableWorkspaceEntityBase<EntityWithUrls, EntityWithUrlsData>(result), EntityWithUrlsBuilder{
 internal constructor(): this(EntityWithUrlsData())
-
 override fun applyToBuilder(builder: MutableEntityStorage){
 if (this.diff != null){
 if (existsInBuilder(builder)){
@@ -90,9 +78,8 @@ index(this, "nullableUrl", this.nullableUrl)
 index(this, "listOfUrls", this.listOfUrls)
 // Process linked entities that are connected without a builder
 processLinkedEntities(builder)
-checkInitialization() // TODO uncomment and check failed tests
+checkInitialization()
 }
-
 private fun checkInitialization(){
 val _diff = diff
 if (!getEntityData().isEntitySourceInitialized()){
@@ -109,7 +96,7 @@ error("Field EntityWithUrls#dataClassWithUrl should be initialized")
 }
 }
 override fun connectionIdList(): List<ConnectionId>{
-return connections
+return emptyList()
 }
 override fun afterModification(){
 val collection_listOfUrls = getEntityData().listOfUrls
@@ -127,87 +114,77 @@ if (this.listOfUrls != dataSource.listOfUrls) this.listOfUrls = dataSource.listO
 if (this.dataClassWithUrl != dataSource.dataClassWithUrl) this.dataClassWithUrl = dataSource.dataClassWithUrl
 updateChildToParentReferences(parents)
 }
-
-        
 override var entitySource: EntitySource
 get() = getEntityData().entitySource
-set(value) {
+set(value){
 checkModificationAllowed()
 getEntityData(true).entitySource = value
 changedProperty.add("entitySource")
-
 }
-    override var simpleUrl: VirtualFileUrl
-    get() = getEntityData().simpleUrl
-    set(value) {
-    checkModificationAllowed()
-    getEntityData(true).simpleUrl = value
-    changedProperty.add("simpleUrl")
-    val _diff = diff
+override var simpleUrl: VirtualFileUrl
+get() = getEntityData().simpleUrl
+set(value){
+checkModificationAllowed()
+getEntityData(true).simpleUrl = value
+changedProperty.add("simpleUrl")
+val _diff = diff
 if (_diff != null) index(this, "simpleUrl", value)
-    }
-    override var nullableUrl: VirtualFileUrl?
-    get() = getEntityData().nullableUrl
-    set(value) {
-    checkModificationAllowed()
-    getEntityData(true).nullableUrl = value
-    changedProperty.add("nullableUrl")
-    val _diff = diff
+}
+override var nullableUrl: VirtualFileUrl?
+get() = getEntityData().nullableUrl
+set(value){
+checkModificationAllowed()
+getEntityData(true).nullableUrl = value
+changedProperty.add("nullableUrl")
+val _diff = diff
 if (_diff != null) index(this, "nullableUrl", value)
-    }
-        private val listOfUrlsUpdater: (value: List<VirtualFileUrl>) -> Unit = { value ->
-        val _diff = diff
+}
+private val listOfUrlsUpdater: (value: List<VirtualFileUrl>) -> Unit = { value ->
+val _diff = diff
 if (_diff != null) index(this, "listOfUrls", value)
-        changedProperty.add("listOfUrls")
-        }
-        override var listOfUrls: MutableList<VirtualFileUrl>
-        get() {
-        val collection_listOfUrls = getEntityData().listOfUrls
-        if (collection_listOfUrls !is MutableWorkspaceList) return collection_listOfUrls
-        if (diff == null || modifiable.get()) {
-        collection_listOfUrls.setModificationUpdateAction(listOfUrlsUpdater)
-        } else {
-        collection_listOfUrls.cleanModificationUpdateAction()
-        }
-        return collection_listOfUrls
-        }
-        set(value) {
-        checkModificationAllowed()
-        getEntityData(true).listOfUrls = value
-        listOfUrlsUpdater.invoke(value)
-        }
+changedProperty.add("listOfUrls")
+}
+override var listOfUrls: MutableList<VirtualFileUrl>
+get(){
+val collection_listOfUrls = getEntityData().listOfUrls
+if (collection_listOfUrls !is MutableWorkspaceList) return collection_listOfUrls
+if (diff == null || modifiable.get()) {
+collection_listOfUrls.setModificationUpdateAction(listOfUrlsUpdater)
+} else {
+collection_listOfUrls.cleanModificationUpdateAction()
+}
+return collection_listOfUrls
+}
+set(value){
+checkModificationAllowed()
+getEntityData(true).listOfUrls = value
+listOfUrlsUpdater.invoke(value)
+}
 override var dataClassWithUrl: DataClassWithUrl
 get() = getEntityData().dataClassWithUrl
-set(value) {
+set(value){
 checkModificationAllowed()
 getEntityData(true).dataClassWithUrl = value
 changedProperty.add("dataClassWithUrl")
-
 }
-
 override fun getEntityClass(): Class<EntityWithUrls> = EntityWithUrls::class.java
 }
-
 }
-
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class EntityWithUrlsData : WorkspaceEntityData<EntityWithUrls>(){
 lateinit var simpleUrl: VirtualFileUrl
 var nullableUrl: VirtualFileUrl? = null
 lateinit var listOfUrls: MutableList<VirtualFileUrl>
 lateinit var dataClassWithUrl: DataClassWithUrl
-
 internal fun isSimpleUrlInitialized(): Boolean = ::simpleUrl.isInitialized
 internal fun isListOfUrlsInitialized(): Boolean = ::listOfUrls.isInitialized
 internal fun isDataClassWithUrlInitialized(): Boolean = ::dataClassWithUrl.isInitialized
-
 override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<EntityWithUrls>{
 val modifiable = EntityWithUrlsImpl.Builder(null)
 modifiable.diff = diff
 modifiable.id = createEntityId()
 return modifiable
 }
-
 override fun createEntity(snapshot: EntityStorageInstrumentation): EntityWithUrls{
 val entityId = createEntityId()
 return snapshot.initializeEntity(entityId){
@@ -217,33 +194,27 @@ entity.id = entityId
 entity
 }
 }
-
 override fun getMetadata(): EntityMetadata{
 return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.workspaceModel.test.api.EntityWithUrls") as EntityMetadata
 }
-
 override fun clone(): EntityWithUrlsData{
 val clonedEntity = super.clone()
 clonedEntity as EntityWithUrlsData
 clonedEntity.listOfUrls = clonedEntity.listOfUrls.toMutableWorkspaceList()
 return clonedEntity
 }
-
 override fun getEntityInterface(): Class<out WorkspaceEntity>{
 return EntityWithUrls::class.java
 }
-
 override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*>{
 return EntityWithUrls(simpleUrl, listOfUrls, dataClassWithUrl, entitySource){
 this.nullableUrl = this@EntityWithUrlsData.nullableUrl
 }
 }
-
 override fun getRequiredParents(): List<Class<out WorkspaceEntity>>{
 val res = mutableListOf<Class<out WorkspaceEntity>>()
 return res
 }
-
 override fun equals(other: Any?): Boolean{
 if (other == null) return false
 if (this.javaClass != other.javaClass) return false
@@ -255,7 +226,6 @@ if (this.listOfUrls != other.listOfUrls) return false
 if (this.dataClassWithUrl != other.dataClassWithUrl) return false
 return true
 }
-
 override fun equalsIgnoringEntitySource(other: Any?): Boolean{
 if (other == null) return false
 if (this.javaClass != other.javaClass) return false
@@ -266,7 +236,6 @@ if (this.listOfUrls != other.listOfUrls) return false
 if (this.dataClassWithUrl != other.dataClassWithUrl) return false
 return true
 }
-
 override fun hashCode(): Int{
 var result = entitySource.hashCode()
 result = 31 * result + simpleUrl.hashCode()

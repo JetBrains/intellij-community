@@ -21,7 +21,7 @@ interface ContentRootTestEntityBuilder : WorkspaceEntityBuilder<ContentRootTestE
 }
 
 internal object ContentRootTestEntityType : EntityType<ContentRootTestEntity, ContentRootTestEntityBuilder>() {
-  override val entityClass: Class<ContentRootTestEntity> get() = ContentRootTestEntity::class.java
+  override val entityImplClass: Class<*> get() = ContentRootTestEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = ContentRootTestEntityImpl.Builder::class.java
   operator fun invoke(
     entitySource: EntitySource,
@@ -42,7 +42,6 @@ fun MutableEntityStorage.modifyContentRootTestEntity(
 @Parent
 var ContentRootTestEntityBuilder.projectModelTestEntity: ProjectModelTestEntityBuilder?
   by WorkspaceEntity.extensionBuilder(ProjectModelTestEntity::class.java)
-
 
 @JvmOverloads
 @JvmName("createContentRootTestEntity")

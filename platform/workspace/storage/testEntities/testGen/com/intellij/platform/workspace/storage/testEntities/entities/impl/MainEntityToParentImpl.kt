@@ -32,7 +32,6 @@ import com.intellij.platform.workspace.storage.testEntities.entities.MainEntityT
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class MainEntityToParentImpl(private val dataSource: MainEntityToParentData) : MainEntityToParent,
                                                                                         WorkspaceEntityBase(dataSource) {
-
   private companion object {
     internal val CHILD_CONNECTION_ID: ConnectionId =
       ConnectionId.create(MainEntityToParent::class.java, AttachedEntityToParent::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
@@ -41,7 +40,6 @@ internal class MainEntityToParentImpl(private val dataSource: MainEntityToParent
                                                                                        ConnectionId.ConnectionType.ONE_TO_ONE,
                                                                                        true)
     private val connections = listOf<ConnectionId>(CHILD_CONNECTION_ID, CHILDNULLABLEPARENT_CONNECTION_ID)
-
   }
 
   override val x: String
@@ -53,7 +51,6 @@ internal class MainEntityToParentImpl(private val dataSource: MainEntityToParent
     get() = snapshot.instrumentation.getOneChild(CHILD_CONNECTION_ID, this) as? AttachedEntityToParent
   override val childNullableParent: AttachedEntityToNullableParent?
     get() = snapshot.instrumentation.getOneChild(CHILDNULLABLEPARENT_CONNECTION_ID, this) as? AttachedEntityToNullableParent
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -63,7 +60,6 @@ internal class MainEntityToParentImpl(private val dataSource: MainEntityToParent
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
-
 
   internal class Builder(result: MainEntityToParentData?) :
     ModifiableWorkspaceEntityBase<MainEntityToParent, MainEntityToParentData>(result), MainEntityToParentBuilder {
@@ -87,7 +83,7 @@ internal class MainEntityToParentImpl(private val dataSource: MainEntityToParent
       this.currentEntityData = null
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -112,14 +108,12 @@ internal class MainEntityToParentImpl(private val dataSource: MainEntityToParent
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var x: String
       get() = getEntityData().x
@@ -143,10 +137,8 @@ internal class MainEntityToParentImpl(private val dataSource: MainEntityToParent
         checkModificationAllowed()
         val _diff = diff
         if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(false, CHILD_CONNECTION_ID)] = this
-          }
-// else you're attaching a new entity to an existing entity that is not modifiable
+          value.entityLinks[EntityLink(false, CHILD_CONNECTION_ID)] = this
+          @Suppress("UNCHECKED_CAST")
           _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
@@ -156,12 +148,10 @@ internal class MainEntityToParentImpl(private val dataSource: MainEntityToParent
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(false, CHILD_CONNECTION_ID)] = this
           }
-// else you're attaching a new entity to an existing entity that is not modifiable
           this.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)] = value
         }
         changedProperty.add("child")
       }
-
     override var childNullableParent: AttachedEntityToNullableParentBuilder?
       get() {
         val _diff = diff
@@ -178,10 +168,8 @@ internal class MainEntityToParentImpl(private val dataSource: MainEntityToParent
         checkModificationAllowed()
         val _diff = diff
         if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(false, CHILDNULLABLEPARENT_CONNECTION_ID)] = this
-          }
-// else you're attaching a new entity to an existing entity that is not modifiable
+          value.entityLinks[EntityLink(false, CHILDNULLABLEPARENT_CONNECTION_ID)] = this
+          @Suppress("UNCHECKED_CAST")
           _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
@@ -191,7 +179,6 @@ internal class MainEntityToParentImpl(private val dataSource: MainEntityToParent
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(false, CHILDNULLABLEPARENT_CONNECTION_ID)] = this
           }
-// else you're attaching a new entity to an existing entity that is not modifiable
           this.entityLinks[EntityLink(true, CHILDNULLABLEPARENT_CONNECTION_ID)] = value
         }
         changedProperty.add("childNullableParent")
@@ -199,15 +186,12 @@ internal class MainEntityToParentImpl(private val dataSource: MainEntityToParent
 
     override fun getEntityClass(): Class<MainEntityToParent> = MainEntityToParent::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class MainEntityToParentData : WorkspaceEntityData<MainEntityToParent>() {
   lateinit var x: String
-
   internal fun isXInitialized(): Boolean = ::x.isInitialized
-
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<MainEntityToParent> {
     val modifiable = MainEntityToParentImpl.Builder(null)
     modifiable.diff = diff

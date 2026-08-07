@@ -19,7 +19,7 @@ interface NamedEntityBuilder : WorkspaceEntityBuilder<NamedEntity> {
 }
 
 internal object NamedEntityType : EntityType<NamedEntity, NamedEntityBuilder>() {
-  override val entityClass: Class<NamedEntity> get() = NamedEntity::class.java
+  override val entityImplClass: Class<*> get() = NamedEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = NamedEntityImpl.Builder::class.java
   operator fun invoke(
     myName: String,

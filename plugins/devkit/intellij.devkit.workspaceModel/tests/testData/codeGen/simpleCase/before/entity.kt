@@ -13,3 +13,7 @@ interface SimpleEntity : WorkspaceEntity {
   val short: Short
   val byte: Byte
 }
+
+interface SimpleEntityNoMandatoryProperties : WorkspaceEntity {
+  val optionalProperty: Int?
+}

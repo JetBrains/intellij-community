@@ -25,7 +25,7 @@ interface SampleWithSymbolicIdEntityBuilder : WorkspaceEntityBuilder<SampleWithS
 }
 
 internal object SampleWithSymbolicIdEntityType : EntityType<SampleWithSymbolicIdEntity, SampleWithSymbolicIdEntityBuilder>() {
-  override val entityClass: Class<SampleWithSymbolicIdEntity> get() = SampleWithSymbolicIdEntity::class.java
+  override val entityImplClass: Class<*> get() = SampleWithSymbolicIdEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = SampleWithSymbolicIdEntityImpl.Builder::class.java
   operator fun invoke(
     booleanProperty: Boolean,

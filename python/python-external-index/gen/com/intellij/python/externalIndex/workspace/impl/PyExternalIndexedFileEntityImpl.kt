@@ -27,18 +27,11 @@ import com.intellij.python.externalIndex.workspace.PyExternalIndexedFileEntityBu
 internal class PyExternalIndexedFileEntityImpl(private val dataSource: PyExternalIndexedFileEntityData) : PyExternalIndexedFileEntity,
                                                                                                           WorkspaceEntityBase(dataSource) {
 
-  private companion object {
-
-    private val connections = listOf<ConnectionId>()
-
-  }
-
   override val file: VirtualFileUrl
     get() {
       readField("file")
       return dataSource.file
     }
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -46,9 +39,8 @@ internal class PyExternalIndexedFileEntityImpl(private val dataSource: PyExterna
     }
 
   override fun connectionIdList(): List<ConnectionId> {
-    return connections
+    return emptyList()
   }
-
 
   internal class Builder(result: PyExternalIndexedFileEntityData?) :
     ModifiableWorkspaceEntityBase<PyExternalIndexedFileEntity, PyExternalIndexedFileEntityData>(result),
@@ -74,7 +66,7 @@ internal class PyExternalIndexedFileEntityImpl(private val dataSource: PyExterna
       index(this, "file", this.file)
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -88,7 +80,7 @@ internal class PyExternalIndexedFileEntityImpl(private val dataSource: PyExterna
     }
 
     override fun connectionIdList(): List<ConnectionId> {
-      return connections
+      return emptyList()
     }
 
     // Relabeling code, move information from dataSource to this builder
@@ -99,14 +91,12 @@ internal class PyExternalIndexedFileEntityImpl(private val dataSource: PyExterna
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var file: VirtualFileUrl
       get() = getEntityData().file
@@ -120,15 +110,12 @@ internal class PyExternalIndexedFileEntityImpl(private val dataSource: PyExterna
 
     override fun getEntityClass(): Class<PyExternalIndexedFileEntity> = PyExternalIndexedFileEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class PyExternalIndexedFileEntityData : WorkspaceEntityData<PyExternalIndexedFileEntity>() {
   lateinit var file: VirtualFileUrl
-
   internal fun isFileInitialized(): Boolean = ::file.isInitialized
-
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<PyExternalIndexedFileEntity> {
     val modifiable = PyExternalIndexedFileEntityImpl.Builder(null)
     modifiable.diff = diff

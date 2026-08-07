@@ -25,12 +25,6 @@ import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntit
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class SampleEntity2Impl(private val dataSource: SampleEntity2Data) : SampleEntity2, WorkspaceEntityBase(dataSource) {
 
-  private companion object {
-
-    private val connections = listOf<ConnectionId>()
-
-  }
-
   override val data: String
     get() {
       readField("data")
@@ -46,7 +40,6 @@ internal class SampleEntity2Impl(private val dataSource: SampleEntity2Data) : Sa
       readField("optionalData")
       return dataSource.optionalData
     }
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -54,9 +47,8 @@ internal class SampleEntity2Impl(private val dataSource: SampleEntity2Data) : Sa
     }
 
   override fun connectionIdList(): List<ConnectionId> {
-    return connections
+    return emptyList()
   }
-
 
   internal class Builder(result: SampleEntity2Data?) : ModifiableWorkspaceEntityBase<SampleEntity2, SampleEntity2Data>(result),
                                                        SampleEntity2Builder {
@@ -80,7 +72,7 @@ internal class SampleEntity2Impl(private val dataSource: SampleEntity2Data) : Sa
       this.currentEntityData = null
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -94,7 +86,7 @@ internal class SampleEntity2Impl(private val dataSource: SampleEntity2Data) : Sa
     }
 
     override fun connectionIdList(): List<ConnectionId> {
-      return connections
+      return emptyList()
     }
 
     // Relabeling code, move information from dataSource to this builder
@@ -107,14 +99,12 @@ internal class SampleEntity2Impl(private val dataSource: SampleEntity2Data) : Sa
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var data: String
       get() = getEntityData().data
@@ -140,7 +130,6 @@ internal class SampleEntity2Impl(private val dataSource: SampleEntity2Data) : Sa
 
     override fun getEntityClass(): Class<SampleEntity2> = SampleEntity2::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
@@ -148,10 +137,7 @@ internal class SampleEntity2Data : WorkspaceEntityData<SampleEntity2>() {
   lateinit var data: String
   var boolData: Boolean = false
   var optionalData: String? = null
-
   internal fun isDataInitialized(): Boolean = ::data.isInitialized
-
-
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<SampleEntity2> {
     val modifiable = SampleEntity2Impl.Builder(null)
     modifiable.diff = diff

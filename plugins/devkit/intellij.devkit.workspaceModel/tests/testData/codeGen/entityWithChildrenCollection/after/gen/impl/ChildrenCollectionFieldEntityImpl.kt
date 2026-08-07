@@ -1,5 +1,4 @@
 @file:OptIn(EntityStorageInstrumentationApi::class)
-
 package com.intellij.workspaceModel.test.api.impl
 
 import com.intellij.platform.workspace.storage.ConnectionId
@@ -28,36 +27,30 @@ import com.intellij.workspaceModel.test.api.SimpleEntityBuilder
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class ChildrenCollectionFieldEntityImpl(private val dataSource: ChildrenCollectionFieldEntityData): ChildrenCollectionFieldEntity, WorkspaceEntityBase(dataSource) {
-
-private companion object {
+internal class ChildrenCollectionFieldEntityImpl(private val dataSource: ChildrenCollectionFieldEntityData): ChildrenCollectionFieldEntity, WorkspaceEntityBase(dataSource){
+private companion object{
 internal val CHILDRENENTITIESCOLLECTION_CONNECTION_ID: ConnectionId = ConnectionId.create(ChildrenCollectionFieldEntity::class.java, SimpleEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
 private val connections = listOf<ConnectionId>(CHILDRENENTITIESCOLLECTION_CONNECTION_ID)
-
 }
 
 override val name: String
-get() {
+get(){
 readField("name")
 return dataSource.name
 }
 override val childrenEntitiesCollection: List<SimpleEntity>
-get() = (snapshot.instrumentation.getManyChildren(CHILDRENENTITIESCOLLECTION_CONNECTION_ID, this) as? Sequence<SimpleEntity>)?.toList() ?: error("Children childrenEntitiesCollection not found for ChildrenCollectionFieldEntity")
-
+@Suppress("UNCHECKED_CAST")
+get() = (snapshot.instrumentation.getManyChildren(CHILDRENENTITIESCOLLECTION_CONNECTION_ID, this) as? Sequence<SimpleEntity>)?.toList() ?: error("Children list childrenEntitiesCollection not found for ChildrenCollectionFieldEntity")
 override val entitySource: EntitySource
-get() {
+get(){
 readField("entitySource")
 return dataSource.entitySource
 }
-
-override fun connectionIdList(): List<ConnectionId> {
+override fun connectionIdList(): List<ConnectionId>{
 return connections
 }
-
-
-internal class Builder(result: ChildrenCollectionFieldEntityData?): ModifiableWorkspaceEntityBase<ChildrenCollectionFieldEntity, ChildrenCollectionFieldEntityData>(result), ChildrenCollectionFieldEntityBuilder {
+internal class Builder(result: ChildrenCollectionFieldEntityData?): ModifiableWorkspaceEntityBase<ChildrenCollectionFieldEntity, ChildrenCollectionFieldEntityData>(result), ChildrenCollectionFieldEntityBuilder{
 internal constructor(): this(ChildrenCollectionFieldEntityData())
-
 override fun applyToBuilder(builder: MutableEntityStorage){
 if (this.diff != null){
 if (existsInBuilder(builder)){
@@ -76,9 +69,8 @@ this.id = getEntityData().createEntityId()
 this.currentEntityData = null
 // Process linked entities that are connected without a builder
 processLinkedEntities(builder)
-checkInitialization() // TODO uncomment and check failed tests
+checkInitialization()
 }
-
 private fun checkInitialization(){
 val _diff = diff
 if (!getEntityData().isEntitySourceInitialized()){
@@ -109,32 +101,30 @@ if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource
 if (this.name != dataSource.name) this.name = dataSource.name
 updateChildToParentReferences(parents)
 }
-
-        
 override var entitySource: EntitySource
 get() = getEntityData().entitySource
-set(value) {
+set(value){
 checkModificationAllowed()
 getEntityData(true).entitySource = value
 changedProperty.add("entitySource")
-
 }
 override var name: String
 get() = getEntityData().name
-set(value) {
+set(value){
 checkModificationAllowed()
 getEntityData(true).name = value
 changedProperty.add("name")
 }
 // List of non-abstract referenced types
-var _childrenEntitiesCollection: List<SimpleEntity>? = emptyList()
 override var childrenEntitiesCollection: List<SimpleEntityBuilder>
 get(){
 // Getter of the list of non-abstract referenced types
 val _diff = diff
 return if (_diff != null) {
-((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CHILDRENENTITIESCOLLECTION_CONNECTION_ID, this)!!.toList() as List<SimpleEntityBuilder>) + (this.entityLinks[EntityLink(true, CHILDRENENTITIESCOLLECTION_CONNECTION_ID)] as? List<SimpleEntityBuilder> ?: emptyList())
+@Suppress("UNCHECKED_CAST")
+((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CHILDRENENTITIESCOLLECTION_CONNECTION_ID, this).toList() as List<SimpleEntityBuilder>) + (this.entityLinks[EntityLink(true, CHILDRENENTITIESCOLLECTION_CONNECTION_ID)] as? List<SimpleEntityBuilder> ?: emptyList())
 } else {
+@Suppress("UNCHECKED_CAST")
 this.entityLinks[EntityLink(true, CHILDRENENTITIESCOLLECTION_CONNECTION_ID)] as? List<SimpleEntityBuilder> ?: emptyList()
 }
 }
@@ -146,10 +136,8 @@ if (_diff != null){
 for (item_value in value){
 if (item_value is ModifiableWorkspaceEntityBase<*, *> && (item_value as? ModifiableWorkspaceEntityBase<*, *>)?.diff == null){
 // Backref setup before adding to store
-if (item_value is ModifiableWorkspaceEntityBase<*, *>){
 item_value.entityLinks[EntityLink(false, CHILDRENENTITIESCOLLECTION_CONNECTION_ID)] = this
-}
-// else you're attaching a new entity to an existing entity that is not modifiable
+@Suppress("UNCHECKED_CAST")
 _diff.addEntity(item_value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
 }
 }
@@ -160,31 +148,24 @@ for (item_value in value){
 if (item_value is ModifiableWorkspaceEntityBase<*, *>){
 item_value.entityLinks[EntityLink(false, CHILDRENENTITIESCOLLECTION_CONNECTION_ID)] = this
 }
-// else you're attaching a new entity to an existing entity that is not modifiable
 }
 this.entityLinks[EntityLink(true, CHILDRENENTITIESCOLLECTION_CONNECTION_ID)] = value
 }
 changedProperty.add("childrenEntitiesCollection")
 }
-
 override fun getEntityClass(): Class<ChildrenCollectionFieldEntity> = ChildrenCollectionFieldEntity::class.java
 }
-
 }
-
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ChildrenCollectionFieldEntityData : WorkspaceEntityData<ChildrenCollectionFieldEntity>(){
 lateinit var name: String
-
 internal fun isNameInitialized(): Boolean = ::name.isInitialized
-
 override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<ChildrenCollectionFieldEntity>{
 val modifiable = ChildrenCollectionFieldEntityImpl.Builder(null)
 modifiable.diff = diff
 modifiable.id = createEntityId()
 return modifiable
 }
-
 override fun createEntity(snapshot: EntityStorageInstrumentation): ChildrenCollectionFieldEntity{
 val entityId = createEntityId()
 return snapshot.initializeEntity(entityId){
@@ -194,24 +175,19 @@ entity.id = entityId
 entity
 }
 }
-
 override fun getMetadata(): EntityMetadata{
 return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.workspaceModel.test.api.ChildrenCollectionFieldEntity") as EntityMetadata
 }
-
 override fun getEntityInterface(): Class<out WorkspaceEntity>{
 return ChildrenCollectionFieldEntity::class.java
 }
-
 override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*>{
 return ChildrenCollectionFieldEntity(name, entitySource)
 }
-
 override fun getRequiredParents(): List<Class<out WorkspaceEntity>>{
 val res = mutableListOf<Class<out WorkspaceEntity>>()
 return res
 }
-
 override fun equals(other: Any?): Boolean{
 if (other == null) return false
 if (this.javaClass != other.javaClass) return false
@@ -220,7 +196,6 @@ if (this.entitySource != other.entitySource) return false
 if (this.name != other.name) return false
 return true
 }
-
 override fun equalsIgnoringEntitySource(other: Any?): Boolean{
 if (other == null) return false
 if (this.javaClass != other.javaClass) return false
@@ -228,7 +203,6 @@ other as ChildrenCollectionFieldEntityData
 if (this.name != other.name) return false
 return true
 }
-
 override fun hashCode(): Int{
 var result = entitySource.hashCode()
 result = 31 * result + name.hashCode()

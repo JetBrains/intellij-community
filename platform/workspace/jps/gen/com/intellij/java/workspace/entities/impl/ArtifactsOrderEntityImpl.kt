@@ -27,18 +27,11 @@ import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 internal class ArtifactsOrderEntityImpl(private val dataSource: ArtifactsOrderEntityData) : ArtifactsOrderEntity,
                                                                                             WorkspaceEntityBase(dataSource) {
 
-  private companion object {
-
-    private val connections = listOf<ConnectionId>()
-
-  }
-
   override val orderOfArtifacts: List<String>
     get() {
       readField("orderOfArtifacts")
       return dataSource.orderOfArtifacts
     }
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -46,9 +39,8 @@ internal class ArtifactsOrderEntityImpl(private val dataSource: ArtifactsOrderEn
     }
 
   override fun connectionIdList(): List<ConnectionId> {
-    return connections
+    return emptyList()
   }
-
 
   internal class Builder(result: ArtifactsOrderEntityData?) :
     ModifiableWorkspaceEntityBase<ArtifactsOrderEntity, ArtifactsOrderEntityData>(result), ArtifactsOrderEntity.Builder {
@@ -72,7 +64,7 @@ internal class ArtifactsOrderEntityImpl(private val dataSource: ArtifactsOrderEn
       this.currentEntityData = null
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -86,7 +78,7 @@ internal class ArtifactsOrderEntityImpl(private val dataSource: ArtifactsOrderEn
     }
 
     override fun connectionIdList(): List<ConnectionId> {
-      return connections
+      return emptyList()
     }
 
     override fun afterModification() {
@@ -104,14 +96,12 @@ internal class ArtifactsOrderEntityImpl(private val dataSource: ArtifactsOrderEn
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     private val orderOfArtifactsUpdater: (value: List<String>) -> Unit = { value ->
 
@@ -137,15 +127,12 @@ internal class ArtifactsOrderEntityImpl(private val dataSource: ArtifactsOrderEn
 
     override fun getEntityClass(): Class<ArtifactsOrderEntity> = ArtifactsOrderEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ArtifactsOrderEntityData : WorkspaceEntityData<ArtifactsOrderEntity>() {
   lateinit var orderOfArtifacts: MutableList<String>
-
   internal fun isOrderOfArtifactsInitialized(): Boolean = ::orderOfArtifacts.isInitialized
-
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<ArtifactsOrderEntity> {
     val modifiable = ArtifactsOrderEntityImpl.Builder(null)
     modifiable.diff = diff

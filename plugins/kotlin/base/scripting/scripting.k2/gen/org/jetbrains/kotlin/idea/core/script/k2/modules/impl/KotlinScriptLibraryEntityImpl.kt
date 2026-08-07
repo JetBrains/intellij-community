@@ -31,13 +31,6 @@ import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntit
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class KotlinScriptLibraryEntityImpl(private val dataSource: KotlinScriptLibraryEntityData) : KotlinScriptLibraryEntity,
     WorkspaceEntityBase(dataSource) {
-
-    private companion object {
-
-        private val connections = listOf<ConnectionId>()
-
-    }
-
     override val symbolicId: KotlinScriptLibraryEntityId = super.symbolicId
 
     override val scope: String
@@ -56,7 +49,6 @@ internal class KotlinScriptLibraryEntityImpl(private val dataSource: KotlinScrip
             return dataSource.usedInScripts
         }
     override var sources: Set<VirtualFileUrl> = dataSource.sources
-
     override val entitySource: EntitySource
         get() {
             readField("entitySource")
@@ -64,9 +56,8 @@ internal class KotlinScriptLibraryEntityImpl(private val dataSource: KotlinScrip
         }
 
     override fun connectionIdList(): List<ConnectionId> {
-        return connections
+        return emptyList()
     }
-
 
     internal class Builder(result: KotlinScriptLibraryEntityData?) :
         ModifiableWorkspaceEntityBase<KotlinScriptLibraryEntity, KotlinScriptLibraryEntityData>(result), KotlinScriptLibraryEntityBuilder {
@@ -92,7 +83,7 @@ internal class KotlinScriptLibraryEntityImpl(private val dataSource: KotlinScrip
             index(this, "sources", this.sources)
 // Process linked entities that are connected without a builder
             processLinkedEntities(builder)
-            checkInitialization() // TODO uncomment and check failed tests
+            checkInitialization()
         }
 
         private fun checkInitialization() {
@@ -112,7 +103,7 @@ internal class KotlinScriptLibraryEntityImpl(private val dataSource: KotlinScrip
         }
 
         override fun connectionIdList(): List<ConnectionId> {
-            return connections
+            return emptyList()
         }
 
         override fun afterModification() {
@@ -141,14 +132,12 @@ internal class KotlinScriptLibraryEntityImpl(private val dataSource: KotlinScrip
             updateChildToParentReferences(parents)
         }
 
-
         override var entitySource: EntitySource
             get() = getEntityData().entitySource
             set(value) {
                 checkModificationAllowed()
                 getEntityData(true).entitySource = value
                 changedProperty.add("entitySource")
-
             }
         override var scope: String
             get() = getEntityData().scope
@@ -223,7 +212,6 @@ internal class KotlinScriptLibraryEntityImpl(private val dataSource: KotlinScrip
 
         override fun getEntityClass(): Class<KotlinScriptLibraryEntity> = KotlinScriptLibraryEntity::class.java
     }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
@@ -232,11 +220,9 @@ internal class KotlinScriptLibraryEntityData : WorkspaceEntityData<KotlinScriptL
     lateinit var classes: MutableList<VirtualFileUrl>
     lateinit var usedInScripts: MutableSet<VirtualFileUrl>
     var sources: MutableSet<VirtualFileUrl> = setOf<VirtualFileUrl>().toMutableWorkspaceSet()
-
     internal fun isScopeInitialized(): Boolean = ::scope.isInitialized
     internal fun isClassesInitialized(): Boolean = ::classes.isInitialized
     internal fun isUsedInScriptsInitialized(): Boolean = ::usedInScripts.isInitialized
-
     override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<KotlinScriptLibraryEntity> {
         val modifiable = KotlinScriptLibraryEntityImpl.Builder(null)
         modifiable.diff = diff

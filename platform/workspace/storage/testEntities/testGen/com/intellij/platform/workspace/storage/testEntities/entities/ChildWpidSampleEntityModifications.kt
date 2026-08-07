@@ -18,7 +18,7 @@ interface ChildWpidSampleEntityBuilder : WorkspaceEntityBuilder<ChildWpidSampleE
 }
 
 internal object ChildWpidSampleEntityType : EntityType<ChildWpidSampleEntity, ChildWpidSampleEntityBuilder>() {
-  override val entityClass: Class<ChildWpidSampleEntity> get() = ChildWpidSampleEntity::class.java
+  override val entityImplClass: Class<*> get() = ChildWpidSampleEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = ChildWpidSampleEntityImpl.Builder::class.java
   operator fun invoke(
     data: String,

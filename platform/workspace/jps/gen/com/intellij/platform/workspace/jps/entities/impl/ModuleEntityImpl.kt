@@ -45,14 +45,12 @@ import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ModuleEntityImpl(private val dataSource: ModuleEntityData) : ModuleEntity, WorkspaceEntityBase(dataSource) {
-
   private companion object {
     internal val CONTENTROOTS_CONNECTION_ID: ConnectionId =
       ConnectionId.create(ModuleEntity::class.java, ContentRootEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
     internal val FACETS_CONNECTION_ID: ConnectionId =
       ConnectionId.create(ModuleEntity::class.java, FacetEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
     private val connections = listOf<ConnectionId>(CONTENTROOTS_CONNECTION_ID, FACETS_CONNECTION_ID)
-
   }
 
   override val symbolicId: ModuleId = super.symbolicId
@@ -73,12 +71,13 @@ internal class ModuleEntityImpl(private val dataSource: ModuleEntityData) : Modu
       return dataSource.dependencies
     }
   override val contentRoots: List<ContentRootEntity>
+    @Suppress("UNCHECKED_CAST")
     get() = (snapshot.instrumentation.getManyChildren(CONTENTROOTS_CONNECTION_ID, this) as? Sequence<ContentRootEntity>)?.toList() ?: error(
-      "Children contentRoots not found for ModuleEntity")
+      "Children list contentRoots not found for ModuleEntity")
   override val facets: List<FacetEntity>
+    @Suppress("UNCHECKED_CAST")
     get() = (snapshot.instrumentation.getManyChildren(FACETS_CONNECTION_ID, this) as? Sequence<FacetEntity>)?.toList()
-            ?: error("Children facets not found for ModuleEntity")
-
+            ?: error("Children list facets not found for ModuleEntity")
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -88,7 +87,6 @@ internal class ModuleEntityImpl(private val dataSource: ModuleEntityData) : Modu
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
-
 
   internal class Builder(result: ModuleEntityData?) : ModifiableWorkspaceEntityBase<ModuleEntity, ModuleEntityData>(result),
                                                       ModuleEntity.Builder {
@@ -112,7 +110,7 @@ internal class ModuleEntityImpl(private val dataSource: ModuleEntityData) : Modu
       this.currentEntityData = null
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -171,14 +169,12 @@ internal class ModuleEntityImpl(private val dataSource: ModuleEntityData) : Modu
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var name: String
       get() = getEntityData().name
@@ -193,7 +189,6 @@ internal class ModuleEntityImpl(private val dataSource: ModuleEntityData) : Modu
         checkModificationAllowed()
         getEntityData(true).type = value
         changedProperty.add("type")
-
       }
     private val dependenciesUpdater: (value: List<ModuleDependencyItem>) -> Unit = { value ->
 
@@ -218,18 +213,19 @@ internal class ModuleEntityImpl(private val dataSource: ModuleEntityData) : Modu
       }
 
     // List of non-abstract referenced types
-    var _contentRoots: List<ContentRootEntity>? = emptyList()
     override var contentRoots: List<ContentRootEntityBuilder>
       get() {
 // Getter of the list of non-abstract referenced types
         val _diff = diff
         return if (_diff != null) {
-          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CONTENTROOTS_CONNECTION_ID, this)!!
+          @Suppress("UNCHECKED_CAST")
+          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CONTENTROOTS_CONNECTION_ID, this)
             .toList() as List<ContentRootEntityBuilder>) + (this.entityLinks[EntityLink(true,
                                                                                         CONTENTROOTS_CONNECTION_ID)] as? List<ContentRootEntityBuilder>
                                                             ?: emptyList())
         }
         else {
+          @Suppress("UNCHECKED_CAST")
           this.entityLinks[EntityLink(true, CONTENTROOTS_CONNECTION_ID)] as? List<ContentRootEntityBuilder> ?: emptyList()
         }
       }
@@ -241,10 +237,8 @@ internal class ModuleEntityImpl(private val dataSource: ModuleEntityData) : Modu
           for (item_value in value) {
             if (item_value is ModifiableWorkspaceEntityBase<*, *> && (item_value as? ModifiableWorkspaceEntityBase<*, *>)?.diff == null) {
 // Backref setup before adding to store
-              if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
-                item_value.entityLinks[EntityLink(false, CONTENTROOTS_CONNECTION_ID)] = this
-              }
-// else you're attaching a new entity to an existing entity that is not modifiable
+              item_value.entityLinks[EntityLink(false, CONTENTROOTS_CONNECTION_ID)] = this
+              @Suppress("UNCHECKED_CAST")
               _diff.addEntity(item_value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
             }
           }
@@ -255,7 +249,6 @@ internal class ModuleEntityImpl(private val dataSource: ModuleEntityData) : Modu
             if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
               item_value.entityLinks[EntityLink(false, CONTENTROOTS_CONNECTION_ID)] = this
             }
-// else you're attaching a new entity to an existing entity that is not modifiable
           }
           this.entityLinks[EntityLink(true, CONTENTROOTS_CONNECTION_ID)] = value
         }
@@ -263,17 +256,18 @@ internal class ModuleEntityImpl(private val dataSource: ModuleEntityData) : Modu
       }
 
     // List of non-abstract referenced types
-    var _facets: List<FacetEntity>? = emptyList()
     override var facets: List<FacetEntityBuilder>
       get() {
 // Getter of the list of non-abstract referenced types
         val _diff = diff
         return if (_diff != null) {
-          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(FACETS_CONNECTION_ID, this)!!
+          @Suppress("UNCHECKED_CAST")
+          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(FACETS_CONNECTION_ID, this)
             .toList() as List<FacetEntityBuilder>) + (this.entityLinks[EntityLink(true, FACETS_CONNECTION_ID)] as? List<FacetEntityBuilder>
                                                       ?: emptyList())
         }
         else {
+          @Suppress("UNCHECKED_CAST")
           this.entityLinks[EntityLink(true, FACETS_CONNECTION_ID)] as? List<FacetEntityBuilder> ?: emptyList()
         }
       }
@@ -285,10 +279,8 @@ internal class ModuleEntityImpl(private val dataSource: ModuleEntityData) : Modu
           for (item_value in value) {
             if (item_value is ModifiableWorkspaceEntityBase<*, *> && (item_value as? ModifiableWorkspaceEntityBase<*, *>)?.diff == null) {
 // Backref setup before adding to store
-              if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
-                item_value.entityLinks[EntityLink(false, FACETS_CONNECTION_ID)] = this
-              }
-// else you're attaching a new entity to an existing entity that is not modifiable
+              item_value.entityLinks[EntityLink(false, FACETS_CONNECTION_ID)] = this
+              @Suppress("UNCHECKED_CAST")
               _diff.addEntity(item_value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
             }
           }
@@ -299,7 +291,6 @@ internal class ModuleEntityImpl(private val dataSource: ModuleEntityData) : Modu
             if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
               item_value.entityLinks[EntityLink(false, FACETS_CONNECTION_ID)] = this
             }
-// else you're attaching a new entity to an existing entity that is not modifiable
           }
           this.entityLinks[EntityLink(true, FACETS_CONNECTION_ID)] = value
         }
@@ -308,7 +299,6 @@ internal class ModuleEntityImpl(private val dataSource: ModuleEntityData) : Modu
 
     override fun getEntityClass(): Class<ModuleEntity> = ModuleEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
@@ -316,10 +306,8 @@ internal class ModuleEntityData : WorkspaceEntityData<ModuleEntity>(), SoftLinka
   lateinit var name: String
   var type: ModuleTypeId? = null
   lateinit var dependencies: MutableList<ModuleDependencyItem>
-
   internal fun isNameInitialized(): Boolean = ::name.isInitialized
   internal fun isDependenciesInitialized(): Boolean = ::dependencies.isInitialized
-
   override fun getLinks(): Set<SymbolicEntityId<*>> {
     val result = HashSet<SymbolicEntityId<*>>()
     for (item in dependencies) {
@@ -363,7 +351,6 @@ internal class ModuleEntityData : WorkspaceEntityData<ModuleEntity>(), SoftLinka
   }
 
   override fun updateLinksIndex(prev: Set<SymbolicEntityId<*>>, index: WorkspaceMutableIndex<SymbolicEntityId<*>>) {
-// TODO verify logic
     val mutablePreviousSet = HashSet(prev)
     for (item in dependencies) {
       when (item) {
@@ -457,6 +444,7 @@ internal class ModuleEntityData : WorkspaceEntityData<ModuleEntity>(), SoftLinka
         it
       }
     }
+
     if (dependencies_data != null) {
       dependencies = dependencies_data as MutableList<ModuleDependencyItem>
     }

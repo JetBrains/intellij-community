@@ -18,7 +18,7 @@ interface SelfLinkedEntityBuilder : WorkspaceEntityBuilder<SelfLinkedEntity> {
 }
 
 internal object SelfLinkedEntityType : EntityType<SelfLinkedEntity, SelfLinkedEntityBuilder>() {
-  override val entityClass: Class<SelfLinkedEntity> get() = SelfLinkedEntity::class.java
+  override val entityImplClass: Class<*> get() = SelfLinkedEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = SelfLinkedEntityImpl.Builder::class.java
   operator fun invoke(
     entitySource: EntitySource,
@@ -38,7 +38,6 @@ fun MutableEntityStorage.modifySelfLinkedEntity(
 
 var SelfLinkedEntityBuilder.children: List<SelfLinkedEntityBuilder>
   by WorkspaceEntity.extensionBuilder(SelfLinkedEntity::class.java)
-
 
 @JvmOverloads
 @JvmName("createSelfLinkedEntity")

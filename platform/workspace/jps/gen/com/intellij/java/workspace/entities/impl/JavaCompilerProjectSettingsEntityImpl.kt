@@ -32,14 +32,12 @@ import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class JavaCompilerProjectSettingsEntityImpl(private val dataSource: JavaCompilerProjectSettingsEntityData) :
   JavaCompilerProjectSettingsEntity, WorkspaceEntityBase(dataSource) {
-
   private companion object {
     internal val PROJECTSETTINGS_CONNECTION_ID: ConnectionId = ConnectionId.create(ProjectSettingsEntity::class.java,
                                                                                    JavaCompilerProjectSettingsEntity::class.java,
                                                                                    ConnectionId.ConnectionType.ONE_TO_ONE,
                                                                                    false)
     private val connections = listOf<ConnectionId>(PROJECTSETTINGS_CONNECTION_ID)
-
   }
 
   override val projectSettings: ProjectSettingsEntity
@@ -51,15 +49,10 @@ internal class JavaCompilerProjectSettingsEntityImpl(private val dataSource: Jav
       return dataSource.additionalOptions
     }
   override var preferTargetJdkCompiler: Boolean = dataSource.preferTargetJdkCompiler
-
   override var debuggingInfo: Boolean = dataSource.debuggingInfo
-
   override var generateNoWarnings: Boolean = dataSource.generateNoWarnings
-
   override var deprecation: Boolean = dataSource.deprecation
-
   override var maximumHeapSize: Int = dataSource.maximumHeapSize
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -69,7 +62,6 @@ internal class JavaCompilerProjectSettingsEntityImpl(private val dataSource: Jav
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
-
 
   internal class Builder(result: JavaCompilerProjectSettingsEntityData?) :
     ModifiableWorkspaceEntityBase<JavaCompilerProjectSettingsEntity, JavaCompilerProjectSettingsEntityData>(result),
@@ -94,7 +86,7 @@ internal class JavaCompilerProjectSettingsEntityImpl(private val dataSource: Jav
       this.currentEntityData = null
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -142,14 +134,12 @@ internal class JavaCompilerProjectSettingsEntityImpl(private val dataSource: Jav
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var projectSettings: ProjectSettingsEntityBuilder
       get() {
@@ -169,10 +159,8 @@ internal class JavaCompilerProjectSettingsEntityImpl(private val dataSource: Jav
         checkModificationAllowed()
         val _diff = diff
         if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(true, PROJECTSETTINGS_CONNECTION_ID)] = this
-          }
-// else you're attaching a new entity to an existing entity that is not modifiable
+          value.entityLinks[EntityLink(true, PROJECTSETTINGS_CONNECTION_ID)] = this
+          @Suppress("UNCHECKED_CAST")
           _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
@@ -182,12 +170,10 @@ internal class JavaCompilerProjectSettingsEntityImpl(private val dataSource: Jav
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(true, PROJECTSETTINGS_CONNECTION_ID)] = this
           }
-// else you're attaching a new entity to an existing entity that is not modifiable
           this.entityLinks[EntityLink(false, PROJECTSETTINGS_CONNECTION_ID)] = value
         }
         changedProperty.add("projectSettings")
       }
-
     private val additionalOptionsUpdater: (value: List<String>) -> Unit = { value ->
 
       changedProperty.add("additionalOptions")
@@ -247,7 +233,6 @@ internal class JavaCompilerProjectSettingsEntityImpl(private val dataSource: Jav
 
     override fun getEntityClass(): Class<JavaCompilerProjectSettingsEntity> = JavaCompilerProjectSettingsEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
@@ -258,9 +243,7 @@ internal class JavaCompilerProjectSettingsEntityData : WorkspaceEntityData<JavaC
   var generateNoWarnings: Boolean = false
   var deprecation: Boolean = true
   var maximumHeapSize: Int = 128
-
   internal fun isAdditionalOptionsInitialized(): Boolean = ::additionalOptions.isInitialized
-
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<JavaCompilerProjectSettingsEntity> {
     val modifiable = JavaCompilerProjectSettingsEntityImpl.Builder(null)
     modifiable.diff = diff

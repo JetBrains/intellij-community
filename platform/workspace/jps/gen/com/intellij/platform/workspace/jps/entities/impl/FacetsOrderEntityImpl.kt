@@ -32,12 +32,10 @@ import org.jetbrains.annotations.ApiStatus.Internal
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class FacetsOrderEntityImpl(private val dataSource: FacetsOrderEntityData) : FacetsOrderEntity, WorkspaceEntityBase(dataSource) {
-
   private companion object {
     internal val MODULEENTITY_CONNECTION_ID: ConnectionId =
       ConnectionId.create(ModuleEntity::class.java, FacetsOrderEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
     private val connections = listOf<ConnectionId>(MODULEENTITY_CONNECTION_ID)
-
   }
 
   override val orderOfFacets: List<String>
@@ -48,7 +46,6 @@ internal class FacetsOrderEntityImpl(private val dataSource: FacetsOrderEntityDa
   override val moduleEntity: ModuleEntity
     get() = snapshot.instrumentation.getParent(MODULEENTITY_CONNECTION_ID, this) as? ModuleEntity
             ?: error("Parent moduleEntity not found for FacetsOrderEntity")
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -58,7 +55,6 @@ internal class FacetsOrderEntityImpl(private val dataSource: FacetsOrderEntityDa
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
-
 
   internal class Builder(result: FacetsOrderEntityData?) : ModifiableWorkspaceEntityBase<FacetsOrderEntity, FacetsOrderEntityData>(result),
                                                            FacetsOrderEntity.Builder {
@@ -82,7 +78,7 @@ internal class FacetsOrderEntityImpl(private val dataSource: FacetsOrderEntityDa
       this.currentEntityData = null
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -124,14 +120,12 @@ internal class FacetsOrderEntityImpl(private val dataSource: FacetsOrderEntityDa
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     private val orderOfFacetsUpdater: (value: List<String>) -> Unit = { value ->
 
@@ -171,10 +165,8 @@ internal class FacetsOrderEntityImpl(private val dataSource: FacetsOrderEntityDa
         checkModificationAllowed()
         val _diff = diff
         if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(true, MODULEENTITY_CONNECTION_ID)] = this
-          }
-// else you're attaching a new entity to an existing entity that is not modifiable
+          value.entityLinks[EntityLink(true, MODULEENTITY_CONNECTION_ID)] = this
+          @Suppress("UNCHECKED_CAST")
           _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
@@ -184,7 +176,6 @@ internal class FacetsOrderEntityImpl(private val dataSource: FacetsOrderEntityDa
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(true, MODULEENTITY_CONNECTION_ID)] = this
           }
-// else you're attaching a new entity to an existing entity that is not modifiable
           this.entityLinks[EntityLink(false, MODULEENTITY_CONNECTION_ID)] = value
         }
         changedProperty.add("moduleEntity")
@@ -192,15 +183,12 @@ internal class FacetsOrderEntityImpl(private val dataSource: FacetsOrderEntityDa
 
     override fun getEntityClass(): Class<FacetsOrderEntity> = FacetsOrderEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class FacetsOrderEntityData : WorkspaceEntityData<FacetsOrderEntity>() {
   lateinit var orderOfFacets: MutableList<String>
-
   internal fun isOrderOfFacetsInitialized(): Boolean = ::orderOfFacets.isInitialized
-
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<FacetsOrderEntity> {
     val modifiable = FacetsOrderEntityImpl.Builder(null)
     modifiable.diff = diff

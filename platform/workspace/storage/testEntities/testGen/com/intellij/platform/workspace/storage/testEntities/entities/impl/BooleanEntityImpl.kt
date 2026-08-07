@@ -25,18 +25,11 @@ import com.intellij.platform.workspace.storage.testEntities.entities.BooleanEnti
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class BooleanEntityImpl(private val dataSource: BooleanEntityData) : BooleanEntity, WorkspaceEntityBase(dataSource) {
 
-  private companion object {
-
-    private val connections = listOf<ConnectionId>()
-
-  }
-
   override val data: Boolean
     get() {
       readField("data")
       return dataSource.data
     }
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -44,9 +37,8 @@ internal class BooleanEntityImpl(private val dataSource: BooleanEntityData) : Bo
     }
 
   override fun connectionIdList(): List<ConnectionId> {
-    return connections
+    return emptyList()
   }
-
 
   internal class Builder(result: BooleanEntityData?) : ModifiableWorkspaceEntityBase<BooleanEntity, BooleanEntityData>(result),
                                                        BooleanEntityBuilder {
@@ -70,7 +62,7 @@ internal class BooleanEntityImpl(private val dataSource: BooleanEntityData) : Bo
       this.currentEntityData = null
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -81,7 +73,7 @@ internal class BooleanEntityImpl(private val dataSource: BooleanEntityData) : Bo
     }
 
     override fun connectionIdList(): List<ConnectionId> {
-      return connections
+      return emptyList()
     }
 
     // Relabeling code, move information from dataSource to this builder
@@ -92,14 +84,12 @@ internal class BooleanEntityImpl(private val dataSource: BooleanEntityData) : Bo
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var data: Boolean
       get() = getEntityData().data
@@ -111,14 +101,11 @@ internal class BooleanEntityImpl(private val dataSource: BooleanEntityData) : Bo
 
     override fun getEntityClass(): Class<BooleanEntity> = BooleanEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class BooleanEntityData : WorkspaceEntityData<BooleanEntity>() {
   var data: Boolean = false
-
-
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<BooleanEntity> {
     val modifiable = BooleanEntityImpl.Builder(null)
     modifiable.diff = diff

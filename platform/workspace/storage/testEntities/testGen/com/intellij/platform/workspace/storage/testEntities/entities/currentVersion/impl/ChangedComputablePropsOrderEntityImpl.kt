@@ -28,13 +28,6 @@ import com.intellij.platform.workspace.storage.testEntities.entities.currentVers
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ChangedComputablePropsOrderEntityImpl(private val dataSource: ChangedComputablePropsOrderEntityData) :
   ChangedComputablePropsOrderEntity, WorkspaceEntityBase(dataSource) {
-
-  private companion object {
-
-    private val connections = listOf<ConnectionId>()
-
-  }
-
   override val symbolicId: ChangedComputablePropsOrderEntityId = super.symbolicId
 
   override val someKey: Int
@@ -52,7 +45,6 @@ internal class ChangedComputablePropsOrderEntityImpl(private val dataSource: Cha
       readField("value")
       return dataSource.value
     }
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -60,9 +52,8 @@ internal class ChangedComputablePropsOrderEntityImpl(private val dataSource: Cha
     }
 
   override fun connectionIdList(): List<ConnectionId> {
-    return connections
+    return emptyList()
   }
-
 
   internal class Builder(result: ChangedComputablePropsOrderEntityData?) :
     ModifiableWorkspaceEntityBase<ChangedComputablePropsOrderEntity, ChangedComputablePropsOrderEntityData>(result),
@@ -87,7 +78,7 @@ internal class ChangedComputablePropsOrderEntityImpl(private val dataSource: Cha
       this.currentEntityData = null
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -101,7 +92,7 @@ internal class ChangedComputablePropsOrderEntityImpl(private val dataSource: Cha
     }
 
     override fun connectionIdList(): List<ConnectionId> {
-      return connections
+      return emptyList()
     }
 
     override fun afterModification() {
@@ -121,14 +112,12 @@ internal class ChangedComputablePropsOrderEntityImpl(private val dataSource: Cha
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var someKey: Int
       get() = getEntityData().someKey
@@ -168,7 +157,6 @@ internal class ChangedComputablePropsOrderEntityImpl(private val dataSource: Cha
 
     override fun getEntityClass(): Class<ChangedComputablePropsOrderEntity> = ChangedComputablePropsOrderEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
@@ -176,11 +164,7 @@ internal class ChangedComputablePropsOrderEntityData : WorkspaceEntityData<Chang
   var someKey: Int = 0
   lateinit var names: MutableList<String>
   var value: Int = 0
-
-
   internal fun isNamesInitialized(): Boolean = ::names.isInitialized
-
-
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<ChangedComputablePropsOrderEntity> {
     val modifiable = ChangedComputablePropsOrderEntityImpl.Builder(null)
     modifiable.diff = diff

@@ -18,7 +18,7 @@ interface SingleChildBuilder : WorkspaceEntityBuilder<SingleChild> {
 }
 
 internal object SingleChildType : EntityType<SingleChild, SingleChildBuilder>() {
-  override val entityClass: Class<SingleChild> get() = SingleChild::class.java
+  override val entityImplClass: Class<*> get() = SingleChildImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = SingleChildImpl.Builder::class.java
   operator fun invoke(
     someData: String,

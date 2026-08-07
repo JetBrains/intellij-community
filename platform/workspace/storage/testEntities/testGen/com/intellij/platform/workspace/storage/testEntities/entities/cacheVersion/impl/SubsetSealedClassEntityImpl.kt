@@ -27,18 +27,11 @@ import com.intellij.platform.workspace.storage.testEntities.entities.cacheVersio
 internal class SubsetSealedClassEntityImpl(private val dataSource: SubsetSealedClassEntityData) : SubsetSealedClassEntity,
                                                                                                   WorkspaceEntityBase(dataSource) {
 
-  private companion object {
-
-    private val connections = listOf<ConnectionId>()
-
-  }
-
   override val someData: SubsetSealedClass
     get() {
       readField("someData")
       return dataSource.someData
     }
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -46,9 +39,8 @@ internal class SubsetSealedClassEntityImpl(private val dataSource: SubsetSealedC
     }
 
   override fun connectionIdList(): List<ConnectionId> {
-    return connections
+    return emptyList()
   }
-
 
   internal class Builder(result: SubsetSealedClassEntityData?) :
     ModifiableWorkspaceEntityBase<SubsetSealedClassEntity, SubsetSealedClassEntityData>(result), SubsetSealedClassEntityBuilder {
@@ -72,7 +64,7 @@ internal class SubsetSealedClassEntityImpl(private val dataSource: SubsetSealedC
       this.currentEntityData = null
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -86,7 +78,7 @@ internal class SubsetSealedClassEntityImpl(private val dataSource: SubsetSealedC
     }
 
     override fun connectionIdList(): List<ConnectionId> {
-      return connections
+      return emptyList()
     }
 
     // Relabeling code, move information from dataSource to this builder
@@ -97,14 +89,12 @@ internal class SubsetSealedClassEntityImpl(private val dataSource: SubsetSealedC
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var someData: SubsetSealedClass
       get() = getEntityData().someData
@@ -112,20 +102,16 @@ internal class SubsetSealedClassEntityImpl(private val dataSource: SubsetSealedC
         checkModificationAllowed()
         getEntityData(true).someData = value
         changedProperty.add("someData")
-
       }
 
     override fun getEntityClass(): Class<SubsetSealedClassEntity> = SubsetSealedClassEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class SubsetSealedClassEntityData : WorkspaceEntityData<SubsetSealedClassEntity>() {
   lateinit var someData: SubsetSealedClass
-
   internal fun isSomeDataInitialized(): Boolean = ::someData.isInitialized
-
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<SubsetSealedClassEntity> {
     val modifiable = SubsetSealedClassEntityImpl.Builder(null)
     modifiable.diff = diff

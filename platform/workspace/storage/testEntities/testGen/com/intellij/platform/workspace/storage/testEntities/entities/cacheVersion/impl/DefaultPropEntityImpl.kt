@@ -27,12 +27,6 @@ import com.intellij.platform.workspace.storage.testEntities.entities.cacheVersio
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class DefaultPropEntityImpl(private val dataSource: DefaultPropEntityData) : DefaultPropEntity, WorkspaceEntityBase(dataSource) {
 
-  private companion object {
-
-    private val connections = listOf<ConnectionId>()
-
-  }
-
   override val someString: String
     get() {
       readField("someString")
@@ -44,7 +38,6 @@ internal class DefaultPropEntityImpl(private val dataSource: DefaultPropEntityDa
       return dataSource.someList
     }
   override var constInt: Int = dataSource.constInt
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -52,9 +45,8 @@ internal class DefaultPropEntityImpl(private val dataSource: DefaultPropEntityDa
     }
 
   override fun connectionIdList(): List<ConnectionId> {
-    return connections
+    return emptyList()
   }
-
 
   internal class Builder(result: DefaultPropEntityData?) : ModifiableWorkspaceEntityBase<DefaultPropEntity, DefaultPropEntityData>(result),
                                                            DefaultPropEntityBuilder {
@@ -78,7 +70,7 @@ internal class DefaultPropEntityImpl(private val dataSource: DefaultPropEntityDa
       this.currentEntityData = null
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -95,7 +87,7 @@ internal class DefaultPropEntityImpl(private val dataSource: DefaultPropEntityDa
     }
 
     override fun connectionIdList(): List<ConnectionId> {
-      return connections
+      return emptyList()
     }
 
     override fun afterModification() {
@@ -115,14 +107,12 @@ internal class DefaultPropEntityImpl(private val dataSource: DefaultPropEntityDa
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var someString: String
       get() = getEntityData().someString
@@ -162,7 +152,6 @@ internal class DefaultPropEntityImpl(private val dataSource: DefaultPropEntityDa
 
     override fun getEntityClass(): Class<DefaultPropEntity> = DefaultPropEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
@@ -170,10 +159,8 @@ internal class DefaultPropEntityData : WorkspaceEntityData<DefaultPropEntity>() 
   lateinit var someString: String
   lateinit var someList: MutableList<Int>
   var constInt: Int = 9
-
   internal fun isSomeStringInitialized(): Boolean = ::someString.isInitialized
   internal fun isSomeListInitialized(): Boolean = ::someList.isInitialized
-
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<DefaultPropEntity> {
     val modifiable = DefaultPropEntityImpl.Builder(null)
     modifiable.diff = diff

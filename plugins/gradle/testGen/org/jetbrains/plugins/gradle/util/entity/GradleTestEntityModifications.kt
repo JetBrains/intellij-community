@@ -18,7 +18,7 @@ interface GradleTestEntityBuilder : WorkspaceEntityBuilder<GradleTestEntity> {
 }
 
 internal object GradleTestEntityType : EntityType<GradleTestEntity, GradleTestEntityBuilder>() {
-  override val entityClass: Class<GradleTestEntity> get() = GradleTestEntity::class.java
+  override val entityImplClass: Class<*> get() = GradleTestEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = GradleTestEntityImpl.Builder::class.java
   operator fun invoke(
     phase: GradleSyncPhase,

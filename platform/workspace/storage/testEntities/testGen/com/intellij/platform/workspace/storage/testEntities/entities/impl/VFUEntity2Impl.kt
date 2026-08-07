@@ -28,12 +28,6 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class VFUEntity2Impl(private val dataSource: VFUEntity2Data) : VFUEntity2, WorkspaceEntityBase(dataSource) {
 
-  private companion object {
-
-    private val connections = listOf<ConnectionId>()
-
-  }
-
   override val data: String
     get() {
       readField("data")
@@ -54,7 +48,6 @@ internal class VFUEntity2Impl(private val dataSource: VFUEntity2Data) : VFUEntit
       readField("notNullRoots")
       return dataSource.notNullRoots
     }
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -62,9 +55,8 @@ internal class VFUEntity2Impl(private val dataSource: VFUEntity2Data) : VFUEntit
     }
 
   override fun connectionIdList(): List<ConnectionId> {
-    return connections
+    return emptyList()
   }
-
 
   internal class Builder(result: VFUEntity2Data?) : ModifiableWorkspaceEntityBase<VFUEntity2, VFUEntity2Data>(result), VFUEntity2Builder {
     internal constructor() : this(VFUEntity2Data())
@@ -90,7 +82,7 @@ internal class VFUEntity2Impl(private val dataSource: VFUEntity2Data) : VFUEntit
       index(this, "notNullRoots", this.notNullRoots)
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -110,7 +102,7 @@ internal class VFUEntity2Impl(private val dataSource: VFUEntity2Data) : VFUEntit
     }
 
     override fun connectionIdList(): List<ConnectionId> {
-      return connections
+      return emptyList()
     }
 
     override fun afterModification() {
@@ -131,14 +123,12 @@ internal class VFUEntity2Impl(private val dataSource: VFUEntity2Data) : VFUEntit
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var data: String
       get() = getEntityData().data
@@ -190,7 +180,6 @@ internal class VFUEntity2Impl(private val dataSource: VFUEntity2Data) : VFUEntit
 
     override fun getEntityClass(): Class<VFUEntity2> = VFUEntity2::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
@@ -199,11 +188,9 @@ internal class VFUEntity2Data : WorkspaceEntityData<VFUEntity2>() {
   var filePath: VirtualFileUrl? = null
   lateinit var directoryPath: VirtualFileUrl
   lateinit var notNullRoots: MutableList<VirtualFileUrl>
-
   internal fun isDataInitialized(): Boolean = ::data.isInitialized
   internal fun isDirectoryPathInitialized(): Boolean = ::directoryPath.isInitialized
   internal fun isNotNullRootsInitialized(): Boolean = ::notNullRoots.isInitialized
-
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<VFUEntity2> {
     val modifiable = VFUEntity2Impl.Builder(null)
     modifiable.diff = diff

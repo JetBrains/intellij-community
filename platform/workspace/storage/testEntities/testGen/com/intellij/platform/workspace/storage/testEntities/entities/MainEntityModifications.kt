@@ -18,7 +18,7 @@ interface MainEntityBuilder : WorkspaceEntityBuilder<MainEntity> {
 }
 
 internal object MainEntityType : EntityType<MainEntity, MainEntityBuilder>() {
-  override val entityClass: Class<MainEntity> get() = MainEntity::class.java
+  override val entityImplClass: Class<*> get() = MainEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = MainEntityImpl.Builder::class.java
   operator fun invoke(
     x: String,
@@ -40,7 +40,6 @@ fun MutableEntityStorage.modifyMainEntity(
 
 var MainEntityBuilder.child: AttachedEntityBuilder?
   by WorkspaceEntity.extensionBuilder(AttachedEntity::class.java)
-
 
 @JvmOverloads
 @JvmName("createMainEntity")

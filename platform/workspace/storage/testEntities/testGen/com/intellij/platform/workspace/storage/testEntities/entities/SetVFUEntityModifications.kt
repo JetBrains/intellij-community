@@ -20,7 +20,7 @@ interface SetVFUEntityBuilder : WorkspaceEntityBuilder<SetVFUEntity> {
 }
 
 internal object SetVFUEntityType : EntityType<SetVFUEntity, SetVFUEntityBuilder>() {
-  override val entityClass: Class<SetVFUEntity> get() = SetVFUEntity::class.java
+  override val entityImplClass: Class<*> get() = SetVFUEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = SetVFUEntityImpl.Builder::class.java
   operator fun invoke(
     data: String,

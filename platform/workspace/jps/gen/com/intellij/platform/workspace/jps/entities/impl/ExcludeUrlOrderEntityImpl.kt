@@ -34,12 +34,10 @@ import org.jetbrains.annotations.ApiStatus.Internal
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ExcludeUrlOrderEntityImpl(private val dataSource: ExcludeUrlOrderEntityData) : ExcludeUrlOrderEntity,
                                                                                               WorkspaceEntityBase(dataSource) {
-
   private companion object {
     internal val CONTENTROOT_CONNECTION_ID: ConnectionId =
       ConnectionId.create(ContentRootEntity::class.java, ExcludeUrlOrderEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
     private val connections = listOf<ConnectionId>(CONTENTROOT_CONNECTION_ID)
-
   }
 
   override val order: List<VirtualFileUrl>
@@ -50,7 +48,6 @@ internal class ExcludeUrlOrderEntityImpl(private val dataSource: ExcludeUrlOrder
   override val contentRoot: ContentRootEntity
     get() = snapshot.instrumentation.getParent(CONTENTROOT_CONNECTION_ID, this) as? ContentRootEntity
             ?: error("Parent contentRoot not found for ExcludeUrlOrderEntity")
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -60,7 +57,6 @@ internal class ExcludeUrlOrderEntityImpl(private val dataSource: ExcludeUrlOrder
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
-
 
   internal class Builder(result: ExcludeUrlOrderEntityData?) :
     ModifiableWorkspaceEntityBase<ExcludeUrlOrderEntity, ExcludeUrlOrderEntityData>(result), ExcludeUrlOrderEntity.Builder {
@@ -85,7 +81,7 @@ internal class ExcludeUrlOrderEntityImpl(private val dataSource: ExcludeUrlOrder
       index(this, "order", this.order)
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -127,14 +123,12 @@ internal class ExcludeUrlOrderEntityImpl(private val dataSource: ExcludeUrlOrder
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     private val orderUpdater: (value: List<VirtualFileUrl>) -> Unit = { value ->
       val _diff = diff
@@ -175,10 +169,8 @@ internal class ExcludeUrlOrderEntityImpl(private val dataSource: ExcludeUrlOrder
         checkModificationAllowed()
         val _diff = diff
         if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(true, CONTENTROOT_CONNECTION_ID)] = this
-          }
-// else you're attaching a new entity to an existing entity that is not modifiable
+          value.entityLinks[EntityLink(true, CONTENTROOT_CONNECTION_ID)] = this
+          @Suppress("UNCHECKED_CAST")
           _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
@@ -188,7 +180,6 @@ internal class ExcludeUrlOrderEntityImpl(private val dataSource: ExcludeUrlOrder
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(true, CONTENTROOT_CONNECTION_ID)] = this
           }
-// else you're attaching a new entity to an existing entity that is not modifiable
           this.entityLinks[EntityLink(false, CONTENTROOT_CONNECTION_ID)] = value
         }
         changedProperty.add("contentRoot")
@@ -196,15 +187,12 @@ internal class ExcludeUrlOrderEntityImpl(private val dataSource: ExcludeUrlOrder
 
     override fun getEntityClass(): Class<ExcludeUrlOrderEntity> = ExcludeUrlOrderEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ExcludeUrlOrderEntityData : WorkspaceEntityData<ExcludeUrlOrderEntity>() {
   lateinit var order: MutableList<VirtualFileUrl>
-
   internal fun isOrderInitialized(): Boolean = ::order.isInitialized
-
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<ExcludeUrlOrderEntity> {
     val modifiable = ExcludeUrlOrderEntityImpl.Builder(null)
     modifiable.diff = diff

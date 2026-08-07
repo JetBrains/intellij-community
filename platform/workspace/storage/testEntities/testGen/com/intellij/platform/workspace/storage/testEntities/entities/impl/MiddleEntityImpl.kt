@@ -30,12 +30,10 @@ import com.intellij.platform.workspace.storage.testEntities.entities.MiddleEntit
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class MiddleEntityImpl(private val dataSource: MiddleEntityData) : MiddleEntity, WorkspaceEntityBase(dataSource) {
-
   private companion object {
     internal val PARENTENTITY_CONNECTION_ID: ConnectionId =
       ConnectionId.create(CompositeBaseEntity::class.java, BaseEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY, true)
     private val connections = listOf<ConnectionId>(PARENTENTITY_CONNECTION_ID)
-
   }
 
   override val parentEntity: CompositeBaseEntity?
@@ -45,7 +43,6 @@ internal class MiddleEntityImpl(private val dataSource: MiddleEntityData) : Midd
       readField("property")
       return dataSource.property
     }
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -55,7 +52,6 @@ internal class MiddleEntityImpl(private val dataSource: MiddleEntityData) : Midd
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
-
 
   internal class Builder(result: MiddleEntityData?) : ModifiableWorkspaceEntityBase<MiddleEntity, MiddleEntityData>(result),
                                                       MiddleEntityBuilder {
@@ -79,7 +75,7 @@ internal class MiddleEntityImpl(private val dataSource: MiddleEntityData) : Midd
       this.currentEntityData = null
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -104,14 +100,12 @@ internal class MiddleEntityImpl(private val dataSource: MiddleEntityData) : Midd
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var parentEntity: CompositeBaseEntityBuilder<out CompositeBaseEntity>?
       get() {
@@ -130,11 +124,10 @@ internal class MiddleEntityImpl(private val dataSource: MiddleEntityData) : Midd
         val _diff = diff
         if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
 // Setting backref of the list
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            val data = (value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
-            value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = data
-          }
-// else you're attaching a new entity to an existing entity that is not modifiable
+          @Suppress("UNCHECKED_CAST")
+          val data = (value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
+          value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = data
+          @Suppress("UNCHECKED_CAST")
           _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
@@ -143,15 +136,14 @@ internal class MiddleEntityImpl(private val dataSource: MiddleEntityData) : Midd
         else {
 // Setting backref of the list
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
+            @Suppress("UNCHECKED_CAST")
             val data = (value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
             value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = data
           }
-// else you're attaching a new entity to an existing entity that is not modifiable
           this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] = value
         }
         changedProperty.add("parentEntity")
       }
-
     override var property: String
       get() = getEntityData().property
       set(value) {
@@ -162,15 +154,12 @@ internal class MiddleEntityImpl(private val dataSource: MiddleEntityData) : Midd
 
     override fun getEntityClass(): Class<MiddleEntity> = MiddleEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class MiddleEntityData : WorkspaceEntityData<MiddleEntity>() {
   lateinit var property: String
-
   internal fun isPropertyInitialized(): Boolean = ::property.isInitialized
-
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<MiddleEntity> {
     val modifiable = MiddleEntityImpl.Builder(null)
     modifiable.diff = diff

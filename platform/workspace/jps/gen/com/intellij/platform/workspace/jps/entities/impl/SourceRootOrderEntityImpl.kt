@@ -34,12 +34,10 @@ import org.jetbrains.annotations.ApiStatus.Internal
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class SourceRootOrderEntityImpl(private val dataSource: SourceRootOrderEntityData) : SourceRootOrderEntity,
                                                                                               WorkspaceEntityBase(dataSource) {
-
   private companion object {
     internal val CONTENTROOTENTITY_CONNECTION_ID: ConnectionId =
       ConnectionId.create(ContentRootEntity::class.java, SourceRootOrderEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
     private val connections = listOf<ConnectionId>(CONTENTROOTENTITY_CONNECTION_ID)
-
   }
 
   override val orderOfSourceRoots: List<VirtualFileUrl>
@@ -50,7 +48,6 @@ internal class SourceRootOrderEntityImpl(private val dataSource: SourceRootOrder
   override val contentRootEntity: ContentRootEntity
     get() = snapshot.instrumentation.getParent(CONTENTROOTENTITY_CONNECTION_ID, this) as? ContentRootEntity
             ?: error("Parent contentRootEntity not found for SourceRootOrderEntity")
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -60,7 +57,6 @@ internal class SourceRootOrderEntityImpl(private val dataSource: SourceRootOrder
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
-
 
   internal class Builder(result: SourceRootOrderEntityData?) :
     ModifiableWorkspaceEntityBase<SourceRootOrderEntity, SourceRootOrderEntityData>(result), SourceRootOrderEntity.Builder {
@@ -85,7 +81,7 @@ internal class SourceRootOrderEntityImpl(private val dataSource: SourceRootOrder
       index(this, "orderOfSourceRoots", this.orderOfSourceRoots)
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -127,14 +123,12 @@ internal class SourceRootOrderEntityImpl(private val dataSource: SourceRootOrder
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     private val orderOfSourceRootsUpdater: (value: List<VirtualFileUrl>) -> Unit = { value ->
       val _diff = diff
@@ -176,10 +170,8 @@ internal class SourceRootOrderEntityImpl(private val dataSource: SourceRootOrder
         checkModificationAllowed()
         val _diff = diff
         if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(true, CONTENTROOTENTITY_CONNECTION_ID)] = this
-          }
-// else you're attaching a new entity to an existing entity that is not modifiable
+          value.entityLinks[EntityLink(true, CONTENTROOTENTITY_CONNECTION_ID)] = this
+          @Suppress("UNCHECKED_CAST")
           _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
@@ -189,7 +181,6 @@ internal class SourceRootOrderEntityImpl(private val dataSource: SourceRootOrder
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(true, CONTENTROOTENTITY_CONNECTION_ID)] = this
           }
-// else you're attaching a new entity to an existing entity that is not modifiable
           this.entityLinks[EntityLink(false, CONTENTROOTENTITY_CONNECTION_ID)] = value
         }
         changedProperty.add("contentRootEntity")
@@ -197,15 +188,12 @@ internal class SourceRootOrderEntityImpl(private val dataSource: SourceRootOrder
 
     override fun getEntityClass(): Class<SourceRootOrderEntity> = SourceRootOrderEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class SourceRootOrderEntityData : WorkspaceEntityData<SourceRootOrderEntity>() {
   lateinit var orderOfSourceRoots: MutableList<VirtualFileUrl>
-
   internal fun isOrderOfSourceRootsInitialized(): Boolean = ::orderOfSourceRoots.isInitialized
-
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<SourceRootOrderEntity> {
     val modifiable = SourceRootOrderEntityImpl.Builder(null)
     modifiable.diff = diff

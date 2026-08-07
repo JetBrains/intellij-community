@@ -16,9 +16,8 @@ var version: Int
 var name: String
 var isSimple: Boolean
 }
-
 internal object InternalEntityType : EntityType<InternalEntity, InternalEntityBuilder>(){
-override val entityClass: Class<InternalEntity> get() = InternalEntity::class.java
+override val entityImplClass: Class<*> get() = InternalEntityImpl::class.java
 override val entityImplBuilderClass: Class<*> get() = InternalEntityImpl.Builder::class.java
 operator fun invoke(
 version: Int,
@@ -36,12 +35,10 @@ init?.invoke(builder)
 return builder
 }
 }
-
 internal fun MutableEntityStorage.modifyInternalEntity(
 entity: InternalEntity,
 modification: InternalEntityBuilder.() -> Unit,
 ): InternalEntity = modifyEntity(InternalEntityBuilder::class.java, entity, modification)
-
 @JvmOverloads
 @JvmName("createInternalEntity")
 internal fun InternalEntity(

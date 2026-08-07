@@ -27,18 +27,11 @@ import com.intellij.platform.workspace.storage.testEntities.entities.currentVers
 internal class SimpleObjectsEntityImpl(private val dataSource: SimpleObjectsEntityData) : SimpleObjectsEntity,
                                                                                           WorkspaceEntityBase(dataSource) {
 
-  private companion object {
-
-    private val connections = listOf<ConnectionId>()
-
-  }
-
   override val someData: SimpleObjectsSealedClass
     get() {
       readField("someData")
       return dataSource.someData
     }
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -46,9 +39,8 @@ internal class SimpleObjectsEntityImpl(private val dataSource: SimpleObjectsEnti
     }
 
   override fun connectionIdList(): List<ConnectionId> {
-    return connections
+    return emptyList()
   }
-
 
   internal class Builder(result: SimpleObjectsEntityData?) :
     ModifiableWorkspaceEntityBase<SimpleObjectsEntity, SimpleObjectsEntityData>(result), SimpleObjectsEntityBuilder {
@@ -72,7 +64,7 @@ internal class SimpleObjectsEntityImpl(private val dataSource: SimpleObjectsEnti
       this.currentEntityData = null
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -86,7 +78,7 @@ internal class SimpleObjectsEntityImpl(private val dataSource: SimpleObjectsEnti
     }
 
     override fun connectionIdList(): List<ConnectionId> {
-      return connections
+      return emptyList()
     }
 
     // Relabeling code, move information from dataSource to this builder
@@ -97,14 +89,12 @@ internal class SimpleObjectsEntityImpl(private val dataSource: SimpleObjectsEnti
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var someData: SimpleObjectsSealedClass
       get() = getEntityData().someData
@@ -112,20 +102,16 @@ internal class SimpleObjectsEntityImpl(private val dataSource: SimpleObjectsEnti
         checkModificationAllowed()
         getEntityData(true).someData = value
         changedProperty.add("someData")
-
       }
 
     override fun getEntityClass(): Class<SimpleObjectsEntity> = SimpleObjectsEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class SimpleObjectsEntityData : WorkspaceEntityData<SimpleObjectsEntity>() {
   lateinit var someData: SimpleObjectsSealedClass
-
   internal fun isSomeDataInitialized(): Boolean = ::someData.isInitialized
-
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<SimpleObjectsEntity> {
     val modifiable = SimpleObjectsEntityImpl.Builder(null)
     modifiable.diff = diff

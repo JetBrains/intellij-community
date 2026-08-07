@@ -26,12 +26,6 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class KeyPropEntityImpl(private val dataSource: KeyPropEntityData) : KeyPropEntity, WorkspaceEntityBase(dataSource) {
 
-  private companion object {
-
-    private val connections = listOf<ConnectionId>()
-
-  }
-
   override val someInt: Int
     get() {
       readField("someInt")
@@ -47,7 +41,6 @@ internal class KeyPropEntityImpl(private val dataSource: KeyPropEntityData) : Ke
       readField("url")
       return dataSource.url
     }
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -55,9 +48,8 @@ internal class KeyPropEntityImpl(private val dataSource: KeyPropEntityData) : Ke
     }
 
   override fun connectionIdList(): List<ConnectionId> {
-    return connections
+    return emptyList()
   }
-
 
   internal class Builder(result: KeyPropEntityData?) : ModifiableWorkspaceEntityBase<KeyPropEntity, KeyPropEntityData>(result),
                                                        KeyPropEntityBuilder {
@@ -82,7 +74,7 @@ internal class KeyPropEntityImpl(private val dataSource: KeyPropEntityData) : Ke
       index(this, "url", this.url)
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -99,7 +91,7 @@ internal class KeyPropEntityImpl(private val dataSource: KeyPropEntityData) : Ke
     }
 
     override fun connectionIdList(): List<ConnectionId> {
-      return connections
+      return emptyList()
     }
 
     // Relabeling code, move information from dataSource to this builder
@@ -112,14 +104,12 @@ internal class KeyPropEntityImpl(private val dataSource: KeyPropEntityData) : Ke
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var someInt: Int
       get() = getEntityData().someInt
@@ -147,7 +137,6 @@ internal class KeyPropEntityImpl(private val dataSource: KeyPropEntityData) : Ke
 
     override fun getEntityClass(): Class<KeyPropEntity> = KeyPropEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
@@ -155,11 +144,8 @@ internal class KeyPropEntityData : WorkspaceEntityData<KeyPropEntity>() {
   var someInt: Int = 0
   lateinit var text: String
   lateinit var url: VirtualFileUrl
-
-
   internal fun isTextInitialized(): Boolean = ::text.isInitialized
   internal fun isUrlInitialized(): Boolean = ::url.isInitialized
-
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<KeyPropEntity> {
     val modifiable = KeyPropEntityImpl.Builder(null)
     modifiable.diff = diff

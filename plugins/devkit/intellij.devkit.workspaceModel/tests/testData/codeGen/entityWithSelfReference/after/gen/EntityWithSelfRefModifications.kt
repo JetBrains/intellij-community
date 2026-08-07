@@ -17,9 +17,8 @@ var name: String
 var parentRef: EntityWithSelfRefBuilder?
 var children: List<EntityWithSelfRefBuilder>
 }
-
 internal object EntityWithSelfRefType : EntityType<EntityWithSelfRef, EntityWithSelfRefBuilder>(){
-override val entityClass: Class<EntityWithSelfRef> get() = EntityWithSelfRef::class.java
+override val entityImplClass: Class<*> get() = EntityWithSelfRefImpl::class.java
 override val entityImplBuilderClass: Class<*> get() = EntityWithSelfRefImpl.Builder::class.java
 operator fun invoke(
 name: String,
@@ -33,12 +32,10 @@ init?.invoke(builder)
 return builder
 }
 }
-
 fun MutableEntityStorage.modifyEntityWithSelfRef(
 entity: EntityWithSelfRef,
 modification: EntityWithSelfRefBuilder.() -> Unit,
 ): EntityWithSelfRef = modifyEntity(EntityWithSelfRefBuilder::class.java, entity, modification)
-
 @JvmOverloads
 @JvmName("createEntityWithSelfRef")
 fun EntityWithSelfRef(

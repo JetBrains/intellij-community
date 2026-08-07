@@ -18,7 +18,7 @@ interface OneToManyRefEntityBuilder : WorkspaceEntityBuilder<OneToManyRefEntity>
 }
 
 internal object OneToManyRefEntityType : EntityType<OneToManyRefEntity, OneToManyRefEntityBuilder>() {
-  override val entityClass: Class<OneToManyRefEntity> get() = OneToManyRefEntity::class.java
+  override val entityImplClass: Class<*> get() = OneToManyRefEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = OneToManyRefEntityImpl.Builder::class.java
   operator fun invoke(
     someData: OneToManyRefDataClass,

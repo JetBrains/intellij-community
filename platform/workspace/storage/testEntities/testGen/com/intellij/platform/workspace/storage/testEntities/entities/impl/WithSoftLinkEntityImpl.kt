@@ -30,18 +30,11 @@ import com.intellij.platform.workspace.storage.testEntities.entities.WithSoftLin
 internal class WithSoftLinkEntityImpl(private val dataSource: WithSoftLinkEntityData) : WithSoftLinkEntity,
                                                                                         WorkspaceEntityBase(dataSource) {
 
-  private companion object {
-
-    private val connections = listOf<ConnectionId>()
-
-  }
-
   override val link: NameId
     get() {
       readField("link")
       return dataSource.link
     }
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -49,9 +42,8 @@ internal class WithSoftLinkEntityImpl(private val dataSource: WithSoftLinkEntity
     }
 
   override fun connectionIdList(): List<ConnectionId> {
-    return connections
+    return emptyList()
   }
-
 
   internal class Builder(result: WithSoftLinkEntityData?) :
     ModifiableWorkspaceEntityBase<WithSoftLinkEntity, WithSoftLinkEntityData>(result), WithSoftLinkEntityBuilder {
@@ -75,7 +67,7 @@ internal class WithSoftLinkEntityImpl(private val dataSource: WithSoftLinkEntity
       this.currentEntityData = null
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -89,7 +81,7 @@ internal class WithSoftLinkEntityImpl(private val dataSource: WithSoftLinkEntity
     }
 
     override fun connectionIdList(): List<ConnectionId> {
-      return connections
+      return emptyList()
     }
 
     // Relabeling code, move information from dataSource to this builder
@@ -100,14 +92,12 @@ internal class WithSoftLinkEntityImpl(private val dataSource: WithSoftLinkEntity
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var link: NameId
       get() = getEntityData().link
@@ -115,20 +105,16 @@ internal class WithSoftLinkEntityImpl(private val dataSource: WithSoftLinkEntity
         checkModificationAllowed()
         getEntityData(true).link = value
         changedProperty.add("link")
-
       }
 
     override fun getEntityClass(): Class<WithSoftLinkEntity> = WithSoftLinkEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class WithSoftLinkEntityData : WorkspaceEntityData<WithSoftLinkEntity>(), SoftLinkable {
   lateinit var link: NameId
-
   internal fun isLinkInitialized(): Boolean = ::link.isInitialized
-
   override fun getLinks(): Set<SymbolicEntityId<*>> {
     val result = HashSet<SymbolicEntityId<*>>()
     result.add(link)
@@ -140,7 +126,6 @@ internal class WithSoftLinkEntityData : WorkspaceEntityData<WithSoftLinkEntity>(
   }
 
   override fun updateLinksIndex(prev: Set<SymbolicEntityId<*>>, index: WorkspaceMutableIndex<SymbolicEntityId<*>>) {
-// TODO verify logic
     val mutablePreviousSet = HashSet(prev)
     val removedItem_link = mutablePreviousSet.remove(link)
     if (!removedItem_link) {

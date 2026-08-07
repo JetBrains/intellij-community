@@ -33,7 +33,6 @@ import com.intellij.platform.workspace.storage.testEntities.entities.RightEntity
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class RightEntityImpl(private val dataSource: RightEntityData) : RightEntity, WorkspaceEntityBase(dataSource) {
-
   private companion object {
     internal val PARENTENTITY_CONNECTION_ID: ConnectionId =
       ConnectionId.create(CompositeBaseEntity::class.java, BaseEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY, true)
@@ -44,17 +43,16 @@ internal class RightEntityImpl(private val dataSource: RightEntityData) : RightE
                                                                           ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE,
                                                                           true)
     private val connections = listOf<ConnectionId>(PARENTENTITY_CONNECTION_ID, CHILDREN_CONNECTION_ID, PARENT_CONNECTION_ID)
-
   }
 
   override val parentEntity: CompositeBaseEntity?
     get() = snapshot.instrumentation.getParent(PARENTENTITY_CONNECTION_ID, this) as? CompositeBaseEntity
   override val children: List<BaseEntity>
+    @Suppress("UNCHECKED_CAST")
     get() = (snapshot.instrumentation.getManyChildren(CHILDREN_CONNECTION_ID, this) as? Sequence<BaseEntity>)?.toList()
-            ?: error("Children children not found for CompositeBaseEntity")
+            ?: error("Children list children not found for CompositeBaseEntity")
   override val parent: HeadAbstractionEntity?
     get() = snapshot.instrumentation.getParent(PARENT_CONNECTION_ID, this) as? HeadAbstractionEntity
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -64,7 +62,6 @@ internal class RightEntityImpl(private val dataSource: RightEntityData) : RightE
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
-
 
   internal class Builder(result: RightEntityData?) : ModifiableWorkspaceEntityBase<RightEntity, RightEntityData>(result),
                                                      RightEntityBuilder {
@@ -88,7 +85,7 @@ internal class RightEntityImpl(private val dataSource: RightEntityData) : RightE
       this.currentEntityData = null
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -120,14 +117,12 @@ internal class RightEntityImpl(private val dataSource: RightEntityData) : RightE
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var parentEntity: CompositeBaseEntityBuilder<out CompositeBaseEntity>?
       get() {
@@ -146,11 +141,10 @@ internal class RightEntityImpl(private val dataSource: RightEntityData) : RightE
         val _diff = diff
         if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
 // Setting backref of the list
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            val data = (value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
-            value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = data
-          }
-// else you're attaching a new entity to an existing entity that is not modifiable
+          @Suppress("UNCHECKED_CAST")
+          val data = (value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
+          value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = data
+          @Suppress("UNCHECKED_CAST")
           _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
@@ -159,15 +153,14 @@ internal class RightEntityImpl(private val dataSource: RightEntityData) : RightE
         else {
 // Setting backref of the list
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
+            @Suppress("UNCHECKED_CAST")
             val data = (value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
             value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = data
           }
-// else you're attaching a new entity to an existing entity that is not modifiable
           this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] = value
         }
         changedProperty.add("parentEntity")
       }
-
     override var children: List<BaseEntityBuilder<out BaseEntity>>
       get() {
         val _diff = diff
@@ -178,6 +171,7 @@ internal class RightEntityImpl(private val dataSource: RightEntityData) : RightE
                                                                      ?: emptyList())
         }
         else {
+          @Suppress("UNCHECKED_CAST")
           this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as List<BaseEntityBuilder<out BaseEntity>> ?: emptyList()
         }
       }
@@ -189,10 +183,8 @@ internal class RightEntityImpl(private val dataSource: RightEntityData) : RightE
           for (item_value in value) {
             if (item_value is ModifiableWorkspaceEntityBase<*, *> && (item_value as? ModifiableWorkspaceEntityBase<*, *>)?.diff == null) {
 // Backref setup before adding to store an abstract entity
-              if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
-                item_value.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)] = this
-              }
-// else you're attaching a new entity to an existing entity that is not modifiable
+              item_value.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)] = this
+              @Suppress("UNCHECKED_CAST")
               _diff.addEntity(item_value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
             }
           }
@@ -203,13 +195,11 @@ internal class RightEntityImpl(private val dataSource: RightEntityData) : RightE
             if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
               item_value.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)] = this
             }
-// else you're attaching a new entity to an existing entity that is not modifiable
           }
           this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] = value
         }
         changedProperty.add("children")
       }
-
     override var parent: HeadAbstractionEntityBuilder?
       get() {
         val _diff = diff
@@ -225,10 +215,8 @@ internal class RightEntityImpl(private val dataSource: RightEntityData) : RightE
         checkModificationAllowed()
         val _diff = diff
         if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(true, PARENT_CONNECTION_ID)] = this
-          }
-// else you're attaching a new entity to an existing entity that is not modifiable
+          value.entityLinks[EntityLink(true, PARENT_CONNECTION_ID)] = this
+          @Suppress("UNCHECKED_CAST")
           _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
@@ -238,7 +226,6 @@ internal class RightEntityImpl(private val dataSource: RightEntityData) : RightE
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(true, PARENT_CONNECTION_ID)] = this
           }
-// else you're attaching a new entity to an existing entity that is not modifiable
           this.entityLinks[EntityLink(false, PARENT_CONNECTION_ID)] = value
         }
         changedProperty.add("parent")
@@ -246,13 +233,10 @@ internal class RightEntityImpl(private val dataSource: RightEntityData) : RightE
 
     override fun getEntityClass(): Class<RightEntity> = RightEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class RightEntityData : WorkspaceEntityData<RightEntity>() {
-
-
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<RightEntity> {
     val modifiable = RightEntityImpl.Builder(null)
     modifiable.diff = diff

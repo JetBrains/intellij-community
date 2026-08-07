@@ -7,3 +7,7 @@ interface SimpleEntity : WorkspaceEntity {
   val name: String
   val isSimple: Boolean
 }
+
+interface SimpleEntityNoMandatoryProperties : WorkspaceEntity {
+  val optionalProperty: Int?
+}

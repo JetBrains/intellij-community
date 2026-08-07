@@ -26,21 +26,13 @@ import com.intellij.platform.workspace.storage.testEntities.entities.FinalFields
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class FinalFieldsEntityImpl(private val dataSource: FinalFieldsEntityData) : FinalFieldsEntity, WorkspaceEntityBase(dataSource) {
 
-  private companion object {
-
-    private val connections = listOf<ConnectionId>()
-
-  }
-
   override val descriptor: AnotherDataClass
     get() {
       readField("descriptor")
       return dataSource.descriptor
     }
   override var description: String = dataSource.description
-
   override var anotherVersion: Int = dataSource.anotherVersion
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -48,9 +40,8 @@ internal class FinalFieldsEntityImpl(private val dataSource: FinalFieldsEntityDa
     }
 
   override fun connectionIdList(): List<ConnectionId> {
-    return connections
+    return emptyList()
   }
-
 
   internal class Builder(result: FinalFieldsEntityData?) : ModifiableWorkspaceEntityBase<FinalFieldsEntity, FinalFieldsEntityData>(result),
                                                            FinalFieldsEntityBuilder {
@@ -74,7 +65,7 @@ internal class FinalFieldsEntityImpl(private val dataSource: FinalFieldsEntityDa
       this.currentEntityData = null
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -88,7 +79,7 @@ internal class FinalFieldsEntityImpl(private val dataSource: FinalFieldsEntityDa
     }
 
     override fun connectionIdList(): List<ConnectionId> {
-      return connections
+      return emptyList()
     }
 
     // Relabeling code, move information from dataSource to this builder
@@ -101,14 +92,12 @@ internal class FinalFieldsEntityImpl(private val dataSource: FinalFieldsEntityDa
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var descriptor: AnotherDataClass
       get() = getEntityData().descriptor
@@ -116,7 +105,6 @@ internal class FinalFieldsEntityImpl(private val dataSource: FinalFieldsEntityDa
         checkModificationAllowed()
         getEntityData(true).descriptor = value
         changedProperty.add("descriptor")
-
       }
     override var description: String
       get() = getEntityData().description
@@ -135,7 +123,6 @@ internal class FinalFieldsEntityImpl(private val dataSource: FinalFieldsEntityDa
 
     override fun getEntityClass(): Class<FinalFieldsEntity> = FinalFieldsEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
@@ -143,9 +130,7 @@ internal class FinalFieldsEntityData : WorkspaceEntityData<FinalFieldsEntity>() 
   lateinit var descriptor: AnotherDataClass
   var description: String = "Default description"
   var anotherVersion: Int = 0
-
   internal fun isDescriptorInitialized(): Boolean = ::descriptor.isInitialized
-
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<FinalFieldsEntity> {
     val modifiable = FinalFieldsEntityImpl.Builder(null)
     modifiable.diff = diff

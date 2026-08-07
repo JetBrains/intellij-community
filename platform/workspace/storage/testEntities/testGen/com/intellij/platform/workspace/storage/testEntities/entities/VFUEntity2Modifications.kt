@@ -22,7 +22,7 @@ interface VFUEntity2Builder : WorkspaceEntityBuilder<VFUEntity2> {
 }
 
 internal object VFUEntity2Type : EntityType<VFUEntity2, VFUEntity2Builder>() {
-  override val entityClass: Class<VFUEntity2> get() = VFUEntity2::class.java
+  override val entityImplClass: Class<*> get() = VFUEntity2Impl::class.java
   override val entityImplBuilderClass: Class<*> get() = VFUEntity2Impl.Builder::class.java
   operator fun invoke(
     data: String,

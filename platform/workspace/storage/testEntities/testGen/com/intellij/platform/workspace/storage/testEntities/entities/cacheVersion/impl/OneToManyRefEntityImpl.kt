@@ -31,14 +31,12 @@ import com.intellij.platform.workspace.storage.testEntities.entities.cacheVersio
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class OneToManyRefEntityImpl(private val dataSource: OneToManyRefEntityData) : OneToManyRefEntity,
                                                                                         WorkspaceEntityBase(dataSource) {
-
   private companion object {
     internal val ANOTHERENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(OneToManyRefEntity::class.java,
                                                                                  AnotherOneToManyRefEntity::class.java,
                                                                                  ConnectionId.ConnectionType.ONE_TO_MANY,
                                                                                  false)
     private val connections = listOf<ConnectionId>(ANOTHERENTITY_CONNECTION_ID)
-
   }
 
   override val someData: OneToManyRefDataClass
@@ -47,9 +45,9 @@ internal class OneToManyRefEntityImpl(private val dataSource: OneToManyRefEntity
       return dataSource.someData
     }
   override val anotherEntity: List<AnotherOneToManyRefEntity>
+    @Suppress("UNCHECKED_CAST")
     get() = (snapshot.instrumentation.getManyChildren(ANOTHERENTITY_CONNECTION_ID, this) as? Sequence<AnotherOneToManyRefEntity>)?.toList()
-            ?: error("Children anotherEntity not found for OneToManyRefEntity")
-
+            ?: error("Children list anotherEntity not found for OneToManyRefEntity")
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -59,7 +57,6 @@ internal class OneToManyRefEntityImpl(private val dataSource: OneToManyRefEntity
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
-
 
   internal class Builder(result: OneToManyRefEntityData?) :
     ModifiableWorkspaceEntityBase<OneToManyRefEntity, OneToManyRefEntityData>(result), OneToManyRefEntityBuilder {
@@ -83,7 +80,7 @@ internal class OneToManyRefEntityImpl(private val dataSource: OneToManyRefEntity
       this.currentEntityData = null
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -119,14 +116,12 @@ internal class OneToManyRefEntityImpl(private val dataSource: OneToManyRefEntity
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var someData: OneToManyRefDataClass
       get() = getEntityData().someData
@@ -134,22 +129,22 @@ internal class OneToManyRefEntityImpl(private val dataSource: OneToManyRefEntity
         checkModificationAllowed()
         getEntityData(true).someData = value
         changedProperty.add("someData")
-
       }
 
     // List of non-abstract referenced types
-    var _anotherEntity: List<AnotherOneToManyRefEntity>? = emptyList()
     override var anotherEntity: List<AnotherOneToManyRefEntityBuilder>
       get() {
 // Getter of the list of non-abstract referenced types
         val _diff = diff
         return if (_diff != null) {
-          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(ANOTHERENTITY_CONNECTION_ID, this)!!
+          @Suppress("UNCHECKED_CAST")
+          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(ANOTHERENTITY_CONNECTION_ID, this)
             .toList() as List<AnotherOneToManyRefEntityBuilder>) + (this.entityLinks[EntityLink(true,
                                                                                                 ANOTHERENTITY_CONNECTION_ID)] as? List<AnotherOneToManyRefEntityBuilder>
                                                                     ?: emptyList())
         }
         else {
+          @Suppress("UNCHECKED_CAST")
           this.entityLinks[EntityLink(true, ANOTHERENTITY_CONNECTION_ID)] as? List<AnotherOneToManyRefEntityBuilder> ?: emptyList()
         }
       }
@@ -161,10 +156,8 @@ internal class OneToManyRefEntityImpl(private val dataSource: OneToManyRefEntity
           for (item_value in value) {
             if (item_value is ModifiableWorkspaceEntityBase<*, *> && (item_value as? ModifiableWorkspaceEntityBase<*, *>)?.diff == null) {
 // Backref setup before adding to store
-              if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
-                item_value.entityLinks[EntityLink(false, ANOTHERENTITY_CONNECTION_ID)] = this
-              }
-// else you're attaching a new entity to an existing entity that is not modifiable
+              item_value.entityLinks[EntityLink(false, ANOTHERENTITY_CONNECTION_ID)] = this
+              @Suppress("UNCHECKED_CAST")
               _diff.addEntity(item_value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
             }
           }
@@ -175,7 +168,6 @@ internal class OneToManyRefEntityImpl(private val dataSource: OneToManyRefEntity
             if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
               item_value.entityLinks[EntityLink(false, ANOTHERENTITY_CONNECTION_ID)] = this
             }
-// else you're attaching a new entity to an existing entity that is not modifiable
           }
           this.entityLinks[EntityLink(true, ANOTHERENTITY_CONNECTION_ID)] = value
         }
@@ -184,15 +176,12 @@ internal class OneToManyRefEntityImpl(private val dataSource: OneToManyRefEntity
 
     override fun getEntityClass(): Class<OneToManyRefEntity> = OneToManyRefEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class OneToManyRefEntityData : WorkspaceEntityData<OneToManyRefEntity>() {
   lateinit var someData: OneToManyRefDataClass
-
   internal fun isSomeDataInitialized(): Boolean = ::someData.isInitialized
-
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<OneToManyRefEntity> {
     val modifiable = OneToManyRefEntityImpl.Builder(null)
     modifiable.diff = diff

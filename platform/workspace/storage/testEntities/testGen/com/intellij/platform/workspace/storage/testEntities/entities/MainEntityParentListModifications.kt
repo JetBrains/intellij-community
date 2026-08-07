@@ -18,7 +18,7 @@ interface MainEntityParentListBuilder : WorkspaceEntityBuilder<MainEntityParentL
 }
 
 internal object MainEntityParentListType : EntityType<MainEntityParentList, MainEntityParentListBuilder>() {
-  override val entityClass: Class<MainEntityParentList> get() = MainEntityParentList::class.java
+  override val entityImplClass: Class<*> get() = MainEntityParentListImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = MainEntityParentListImpl.Builder::class.java
   operator fun invoke(
     x: String,

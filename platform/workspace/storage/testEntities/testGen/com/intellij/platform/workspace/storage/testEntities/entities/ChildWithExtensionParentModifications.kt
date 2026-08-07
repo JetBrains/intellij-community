@@ -19,7 +19,7 @@ interface ChildWithExtensionParentBuilder : WorkspaceEntityBuilder<ChildWithExte
 }
 
 internal object ChildWithExtensionParentType : EntityType<ChildWithExtensionParent, ChildWithExtensionParentBuilder>() {
-  override val entityClass: Class<ChildWithExtensionParent> get() = ChildWithExtensionParent::class.java
+  override val entityImplClass: Class<*> get() = ChildWithExtensionParentImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = ChildWithExtensionParentImpl.Builder::class.java
   operator fun invoke(
     data: String,
@@ -42,7 +42,6 @@ fun MutableEntityStorage.modifyChildWithExtensionParent(
 @Parent
 var ChildWithExtensionParentBuilder.parent: AbstractParentEntityBuilder<out AbstractParentEntity>?
   by WorkspaceEntity.extensionBuilder(AbstractParentEntity::class.java)
-
 
 @JvmOverloads
 @JvmName("createChildWithExtensionParent")

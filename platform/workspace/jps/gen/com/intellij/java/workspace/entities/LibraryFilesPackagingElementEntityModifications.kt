@@ -21,7 +21,7 @@ interface LibraryFilesPackagingElementEntityBuilder : WorkspaceEntityBuilder<Lib
 
 internal object LibraryFilesPackagingElementEntityType :
   EntityType<LibraryFilesPackagingElementEntity, LibraryFilesPackagingElementEntityBuilder>() {
-  override val entityClass: Class<LibraryFilesPackagingElementEntity> get() = LibraryFilesPackagingElementEntity::class.java
+  override val entityImplClass: Class<*> get() = LibraryFilesPackagingElementEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = LibraryFilesPackagingElementEntityImpl.Builder::class.java
   operator fun invoke(
     entitySource: EntitySource,

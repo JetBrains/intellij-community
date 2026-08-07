@@ -34,7 +34,6 @@ import org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations.Kotli
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class KotlinForwardDeclarationsWorkspaceEntityImpl(private val dataSource: KotlinForwardDeclarationsWorkspaceEntityData) :
     KotlinForwardDeclarationsWorkspaceEntity, WorkspaceEntityBase(dataSource) {
-
     private companion object {
         internal val LIBRARY_CONNECTION_ID: ConnectionId = ConnectionId.create(
             LibraryEntity::class.java,
@@ -43,7 +42,6 @@ internal class KotlinForwardDeclarationsWorkspaceEntityImpl(private val dataSour
             false
         )
         private val connections = listOf<ConnectionId>(LIBRARY_CONNECTION_ID)
-
     }
 
     override val forwardDeclarationRoots: Set<VirtualFileUrl>
@@ -54,7 +52,6 @@ internal class KotlinForwardDeclarationsWorkspaceEntityImpl(private val dataSour
     override val library: LibraryEntity
         get() = snapshot.instrumentation.getParent(LIBRARY_CONNECTION_ID, this) as? LibraryEntity
             ?: error("Parent library not found for KotlinForwardDeclarationsWorkspaceEntity")
-
     override val entitySource: EntitySource
         get() {
             readField("entitySource")
@@ -64,7 +61,6 @@ internal class KotlinForwardDeclarationsWorkspaceEntityImpl(private val dataSour
     override fun connectionIdList(): List<ConnectionId> {
         return connections
     }
-
 
     internal class Builder(result: KotlinForwardDeclarationsWorkspaceEntityData?) :
         ModifiableWorkspaceEntityBase<KotlinForwardDeclarationsWorkspaceEntity, KotlinForwardDeclarationsWorkspaceEntityData>(result),
@@ -89,7 +85,7 @@ internal class KotlinForwardDeclarationsWorkspaceEntityImpl(private val dataSour
             index(this, "forwardDeclarationRoots", this.forwardDeclarationRoots)
 // Process linked entities that are connected without a builder
             processLinkedEntities(builder)
-            checkInitialization() // TODO uncomment and check failed tests
+            checkInitialization()
         }
 
         private fun checkInitialization() {
@@ -131,14 +127,12 @@ internal class KotlinForwardDeclarationsWorkspaceEntityImpl(private val dataSour
             updateChildToParentReferences(parents)
         }
 
-
         override var entitySource: EntitySource
             get() = getEntityData().entitySource
             set(value) {
                 checkModificationAllowed()
                 getEntityData(true).entitySource = value
                 changedProperty.add("entitySource")
-
             }
         private val forwardDeclarationRootsUpdater: (value: Set<VirtualFileUrl>) -> Unit = { value ->
             val _diff = diff
@@ -177,10 +171,8 @@ internal class KotlinForwardDeclarationsWorkspaceEntityImpl(private val dataSour
                 checkModificationAllowed()
                 val _diff = diff
                 if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
-                    if (value is ModifiableWorkspaceEntityBase<*, *>) {
-                        value.entityLinks[EntityLink(true, LIBRARY_CONNECTION_ID)] = this
-                    }
-// else you're attaching a new entity to an existing entity that is not modifiable
+                    value.entityLinks[EntityLink(true, LIBRARY_CONNECTION_ID)] = this
+                    @Suppress("UNCHECKED_CAST")
                     _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
                 }
                 if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
@@ -189,7 +181,6 @@ internal class KotlinForwardDeclarationsWorkspaceEntityImpl(private val dataSour
                     if (value is ModifiableWorkspaceEntityBase<*, *>) {
                         value.entityLinks[EntityLink(true, LIBRARY_CONNECTION_ID)] = this
                     }
-// else you're attaching a new entity to an existing entity that is not modifiable
                     this.entityLinks[EntityLink(false, LIBRARY_CONNECTION_ID)] = value
                 }
                 changedProperty.add("library")
@@ -198,15 +189,12 @@ internal class KotlinForwardDeclarationsWorkspaceEntityImpl(private val dataSour
         override fun getEntityClass(): Class<KotlinForwardDeclarationsWorkspaceEntity> =
             KotlinForwardDeclarationsWorkspaceEntity::class.java
     }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class KotlinForwardDeclarationsWorkspaceEntityData : WorkspaceEntityData<KotlinForwardDeclarationsWorkspaceEntity>() {
     lateinit var forwardDeclarationRoots: MutableSet<VirtualFileUrl>
-
     internal fun isForwardDeclarationRootsInitialized(): Boolean = ::forwardDeclarationRoots.isInitialized
-
     override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<KotlinForwardDeclarationsWorkspaceEntity> {
         val modifiable = KotlinForwardDeclarationsWorkspaceEntityImpl.Builder(null)
         modifiable.diff = diff

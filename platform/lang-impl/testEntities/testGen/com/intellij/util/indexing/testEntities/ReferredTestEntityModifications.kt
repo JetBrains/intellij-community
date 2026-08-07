@@ -19,7 +19,7 @@ interface ReferredTestEntityBuilder : WorkspaceEntityBuilder<ReferredTestEntity>
 }
 
 internal object ReferredTestEntityType : EntityType<ReferredTestEntity, ReferredTestEntityBuilder>() {
-  override val entityClass: Class<ReferredTestEntity> get() = ReferredTestEntity::class.java
+  override val entityImplClass: Class<*> get() = ReferredTestEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = ReferredTestEntityImpl.Builder::class.java
   operator fun invoke(
     name: String,

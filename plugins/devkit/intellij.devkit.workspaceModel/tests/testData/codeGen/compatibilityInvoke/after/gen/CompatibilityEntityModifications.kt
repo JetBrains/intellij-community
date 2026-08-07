@@ -16,9 +16,8 @@ var version: Int
 var name: String
 var isSimple: Boolean
 }
-
 internal object CompatibilityEntityType : EntityType<CompatibilityEntity, CompatibilityEntityBuilder>(){
-override val entityClass: Class<CompatibilityEntity> get() = CompatibilityEntity::class.java
+override val entityImplClass: Class<*> get() = CompatibilityEntityImpl::class.java
 override val entityImplBuilderClass: Class<*> get() = CompatibilityEntityImpl.Builder::class.java
 operator fun invoke(
 version: Int,
@@ -52,12 +51,10 @@ init?.invoke(builder)
 return builder
 }
 }
-
 fun MutableEntityStorage.modifyCompatibilityEntity(
 entity: CompatibilityEntity,
 modification: CompatibilityEntityBuilder.() -> Unit,
 ): CompatibilityEntity = modifyEntity(CompatibilityEntityBuilder::class.java, entity, modification)
-
 @JvmOverloads
 @JvmName("createCompatibilityEntity")
 fun CompatibilityEntity(

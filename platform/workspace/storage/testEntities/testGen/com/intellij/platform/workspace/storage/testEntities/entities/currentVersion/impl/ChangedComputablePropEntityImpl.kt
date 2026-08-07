@@ -26,13 +26,6 @@ import com.intellij.platform.workspace.storage.testEntities.entities.currentVers
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ChangedComputablePropEntityImpl(private val dataSource: ChangedComputablePropEntityData) : ChangedComputablePropEntity,
                                                                                                           WorkspaceEntityBase(dataSource) {
-
-  private companion object {
-
-    private val connections = listOf<ConnectionId>()
-
-  }
-
   override val symbolicId: ChangedComputablePropEntityId = super.symbolicId
 
   override val text: String
@@ -40,7 +33,6 @@ internal class ChangedComputablePropEntityImpl(private val dataSource: ChangedCo
       readField("text")
       return dataSource.text
     }
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -48,9 +40,8 @@ internal class ChangedComputablePropEntityImpl(private val dataSource: ChangedCo
     }
 
   override fun connectionIdList(): List<ConnectionId> {
-    return connections
+    return emptyList()
   }
-
 
   internal class Builder(result: ChangedComputablePropEntityData?) :
     ModifiableWorkspaceEntityBase<ChangedComputablePropEntity, ChangedComputablePropEntityData>(result),
@@ -75,7 +66,7 @@ internal class ChangedComputablePropEntityImpl(private val dataSource: ChangedCo
       this.currentEntityData = null
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -89,7 +80,7 @@ internal class ChangedComputablePropEntityImpl(private val dataSource: ChangedCo
     }
 
     override fun connectionIdList(): List<ConnectionId> {
-      return connections
+      return emptyList()
     }
 
     // Relabeling code, move information from dataSource to this builder
@@ -100,14 +91,12 @@ internal class ChangedComputablePropEntityImpl(private val dataSource: ChangedCo
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var text: String
       get() = getEntityData().text
@@ -119,15 +108,12 @@ internal class ChangedComputablePropEntityImpl(private val dataSource: ChangedCo
 
     override fun getEntityClass(): Class<ChangedComputablePropEntity> = ChangedComputablePropEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ChangedComputablePropEntityData : WorkspaceEntityData<ChangedComputablePropEntity>() {
   lateinit var text: String
-
   internal fun isTextInitialized(): Boolean = ::text.isInitialized
-
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<ChangedComputablePropEntity> {
     val modifiable = ChangedComputablePropEntityImpl.Builder(null)
     modifiable.diff = diff

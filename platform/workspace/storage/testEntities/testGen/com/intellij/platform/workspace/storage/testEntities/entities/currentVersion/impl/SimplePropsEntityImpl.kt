@@ -29,12 +29,6 @@ import com.intellij.platform.workspace.storage.testEntities.entities.currentVers
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class SimplePropsEntityImpl(private val dataSource: SimplePropsEntityData) : SimplePropsEntity, WorkspaceEntityBase(dataSource) {
 
-  private companion object {
-
-    private val connections = listOf<ConnectionId>()
-
-  }
-
   override val text: String
     get() {
       readField("text")
@@ -50,19 +44,16 @@ internal class SimplePropsEntityImpl(private val dataSource: SimplePropsEntityDa
       readField("set")
       return dataSource.set
     }
-
   override val map: Map<Set<String>, List<String>>
     get() {
       readField("map")
       return dataSource.map
     }
-
   override val bool: Boolean
     get() {
       readField("bool")
       return dataSource.bool
     }
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -70,9 +61,8 @@ internal class SimplePropsEntityImpl(private val dataSource: SimplePropsEntityDa
     }
 
   override fun connectionIdList(): List<ConnectionId> {
-    return connections
+    return emptyList()
   }
-
 
   internal class Builder(result: SimplePropsEntityData?) : ModifiableWorkspaceEntityBase<SimplePropsEntity, SimplePropsEntityData>(result),
                                                            SimplePropsEntityBuilder {
@@ -96,7 +86,7 @@ internal class SimplePropsEntityImpl(private val dataSource: SimplePropsEntityDa
       this.currentEntityData = null
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -119,7 +109,7 @@ internal class SimplePropsEntityImpl(private val dataSource: SimplePropsEntityDa
     }
 
     override fun connectionIdList(): List<ConnectionId> {
-      return connections
+      return emptyList()
     }
 
     override fun afterModification() {
@@ -145,14 +135,12 @@ internal class SimplePropsEntityImpl(private val dataSource: SimplePropsEntityDa
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var text: String
       get() = getEntityData().text
@@ -220,7 +208,6 @@ internal class SimplePropsEntityImpl(private val dataSource: SimplePropsEntityDa
 
     override fun getEntityClass(): Class<SimplePropsEntity> = SimplePropsEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
@@ -230,13 +217,10 @@ internal class SimplePropsEntityData : WorkspaceEntityData<SimplePropsEntity>() 
   lateinit var set: MutableSet<List<String>>
   lateinit var map: Map<Set<String>, List<String>>
   var bool: Boolean = false
-
   internal fun isTextInitialized(): Boolean = ::text.isInitialized
   internal fun isListInitialized(): Boolean = ::list.isInitialized
   internal fun isSetInitialized(): Boolean = ::set.isInitialized
   internal fun isMapInitialized(): Boolean = ::map.isInitialized
-
-
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<SimplePropsEntity> {
     val modifiable = SimplePropsEntityImpl.Builder(null)
     modifiable.diff = diff

@@ -21,7 +21,7 @@ interface FacetsOrderEntityBuilder : WorkspaceEntityBuilder<FacetsOrderEntity> {
 }
 
 internal object FacetsOrderEntityType : EntityType<FacetsOrderEntity, FacetsOrderEntityBuilder>() {
-  override val entityClass: Class<FacetsOrderEntity> get() = FacetsOrderEntity::class.java
+  override val entityImplClass: Class<*> get() = FacetsOrderEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = FacetsOrderEntityImpl.Builder::class.java
   operator fun invoke(
     orderOfFacets: List<String>,

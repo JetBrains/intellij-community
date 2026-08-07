@@ -1,5 +1,4 @@
 @file:OptIn(EntityStorageInstrumentationApi::class)
-
 package com.intellij.workspaceModel.test.api.impl
 
 import com.intellij.platform.workspace.storage.ConnectionId
@@ -23,39 +22,28 @@ import com.intellij.workspaceModel.test.api.EntityWithKeyFieldBuilder
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class EntityWithKeyFieldImpl(private val dataSource: EntityWithKeyFieldData): EntityWithKeyField, WorkspaceEntityBase(dataSource) {
-
-private companion object {
-
-private val connections = listOf<ConnectionId>()
-
-}
+internal class EntityWithKeyFieldImpl(private val dataSource: EntityWithKeyFieldData): EntityWithKeyField, WorkspaceEntityBase(dataSource){
 
 override val keyField: String
-get() {
+get(){
 readField("keyField")
 return dataSource.keyField
 }
 override val notKeyField: String
-get() {
+get(){
 readField("notKeyField")
 return dataSource.notKeyField
 }
-
 override val entitySource: EntitySource
-get() {
+get(){
 readField("entitySource")
 return dataSource.entitySource
 }
-
-override fun connectionIdList(): List<ConnectionId> {
-return connections
+override fun connectionIdList(): List<ConnectionId>{
+return emptyList()
 }
-
-
-internal class Builder(result: EntityWithKeyFieldData?): ModifiableWorkspaceEntityBase<EntityWithKeyField, EntityWithKeyFieldData>(result), EntityWithKeyFieldBuilder {
+internal class Builder(result: EntityWithKeyFieldData?): ModifiableWorkspaceEntityBase<EntityWithKeyField, EntityWithKeyFieldData>(result), EntityWithKeyFieldBuilder{
 internal constructor(): this(EntityWithKeyFieldData())
-
 override fun applyToBuilder(builder: MutableEntityStorage){
 if (this.diff != null){
 if (existsInBuilder(builder)){
@@ -74,9 +62,8 @@ this.id = getEntityData().createEntityId()
 this.currentEntityData = null
 // Process linked entities that are connected without a builder
 processLinkedEntities(builder)
-checkInitialization() // TODO uncomment and check failed tests
+checkInitialization()
 }
-
 private fun checkInitialization(){
 val _diff = diff
 if (!getEntityData().isEntitySourceInitialized()){
@@ -90,7 +77,7 @@ error("Field EntityWithKeyField#notKeyField should be initialized")
 }
 }
 override fun connectionIdList(): List<ConnectionId>{
-return connections
+return emptyList()
 }
 // Relabeling code, move information from dataSource to this builder
 override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?){
@@ -100,51 +87,42 @@ if (this.keyField != dataSource.keyField) this.keyField = dataSource.keyField
 if (this.notKeyField != dataSource.notKeyField) this.notKeyField = dataSource.notKeyField
 updateChildToParentReferences(parents)
 }
-
-        
 override var entitySource: EntitySource
 get() = getEntityData().entitySource
-set(value) {
+set(value){
 checkModificationAllowed()
 getEntityData(true).entitySource = value
 changedProperty.add("entitySource")
-
 }
 override var keyField: String
 get() = getEntityData().keyField
-set(value) {
+set(value){
 checkModificationAllowed()
 getEntityData(true).keyField = value
 changedProperty.add("keyField")
 }
 override var notKeyField: String
 get() = getEntityData().notKeyField
-set(value) {
+set(value){
 checkModificationAllowed()
 getEntityData(true).notKeyField = value
 changedProperty.add("notKeyField")
 }
-
 override fun getEntityClass(): Class<EntityWithKeyField> = EntityWithKeyField::class.java
 }
-
 }
-
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class EntityWithKeyFieldData : WorkspaceEntityData<EntityWithKeyField>(){
 lateinit var keyField: String
 lateinit var notKeyField: String
-
 internal fun isKeyFieldInitialized(): Boolean = ::keyField.isInitialized
 internal fun isNotKeyFieldInitialized(): Boolean = ::notKeyField.isInitialized
-
 override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<EntityWithKeyField>{
 val modifiable = EntityWithKeyFieldImpl.Builder(null)
 modifiable.diff = diff
 modifiable.id = createEntityId()
 return modifiable
 }
-
 override fun createEntity(snapshot: EntityStorageInstrumentation): EntityWithKeyField{
 val entityId = createEntityId()
 return snapshot.initializeEntity(entityId){
@@ -154,24 +132,19 @@ entity.id = entityId
 entity
 }
 }
-
 override fun getMetadata(): EntityMetadata{
 return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.workspaceModel.test.api.EntityWithKeyField") as EntityMetadata
 }
-
 override fun getEntityInterface(): Class<out WorkspaceEntity>{
 return EntityWithKeyField::class.java
 }
-
 override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*>{
 return EntityWithKeyField(keyField, notKeyField, entitySource)
 }
-
 override fun getRequiredParents(): List<Class<out WorkspaceEntity>>{
 val res = mutableListOf<Class<out WorkspaceEntity>>()
 return res
 }
-
 override fun equals(other: Any?): Boolean{
 if (other == null) return false
 if (this.javaClass != other.javaClass) return false
@@ -181,7 +154,6 @@ if (this.keyField != other.keyField) return false
 if (this.notKeyField != other.notKeyField) return false
 return true
 }
-
 override fun equalsIgnoringEntitySource(other: Any?): Boolean{
 if (other == null) return false
 if (this.javaClass != other.javaClass) return false
@@ -190,7 +162,6 @@ if (this.keyField != other.keyField) return false
 if (this.notKeyField != other.notKeyField) return false
 return true
 }
-
 override fun hashCode(): Int{
 var result = entitySource.hashCode()
 result = 31 * result + keyField.hashCode()

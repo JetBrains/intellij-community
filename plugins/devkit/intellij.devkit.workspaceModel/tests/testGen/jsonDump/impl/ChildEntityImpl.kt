@@ -29,12 +29,10 @@ import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ChildEntityImpl(private val dataSource: ChildEntityData) : ChildEntity, WorkspaceEntityBase(dataSource) {
-
   private companion object {
     internal val PARENT_CONNECTION_ID: ConnectionId =
       ConnectionId.create(BaseTestEntity::class.java, ChildEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
     private val connections = listOf<ConnectionId>(PARENT_CONNECTION_ID)
-
   }
 
   override val childName: String
@@ -45,7 +43,6 @@ internal class ChildEntityImpl(private val dataSource: ChildEntityData) : ChildE
   override val parent: BaseTestEntity
     get() = snapshot.instrumentation.getParent(PARENT_CONNECTION_ID, this) as? BaseTestEntity
             ?: error("Parent parent not found for ChildEntity")
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -55,7 +52,6 @@ internal class ChildEntityImpl(private val dataSource: ChildEntityData) : ChildE
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
-
 
   internal class Builder(result: ChildEntityData?) : ModifiableWorkspaceEntityBase<ChildEntity, ChildEntityData>(result),
                                                      ChildEntityBuilder {
@@ -79,7 +75,7 @@ internal class ChildEntityImpl(private val dataSource: ChildEntityData) : ChildE
       this.currentEntityData = null
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -114,14 +110,12 @@ internal class ChildEntityImpl(private val dataSource: ChildEntityData) : ChildE
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var childName: String
       get() = getEntityData().childName
@@ -147,11 +141,10 @@ internal class ChildEntityImpl(private val dataSource: ChildEntityData) : ChildE
         val _diff = diff
         if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
 // Setting backref of the list
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            val data = (value.entityLinks[EntityLink(true, PARENT_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
-            value.entityLinks[EntityLink(true, PARENT_CONNECTION_ID)] = data
-          }
-// else you're attaching a new entity to an existing entity that is not modifiable
+          @Suppress("UNCHECKED_CAST")
+          val data = (value.entityLinks[EntityLink(true, PARENT_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
+          value.entityLinks[EntityLink(true, PARENT_CONNECTION_ID)] = data
+          @Suppress("UNCHECKED_CAST")
           _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
@@ -160,10 +153,10 @@ internal class ChildEntityImpl(private val dataSource: ChildEntityData) : ChildE
         else {
 // Setting backref of the list
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
+            @Suppress("UNCHECKED_CAST")
             val data = (value.entityLinks[EntityLink(true, PARENT_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
             value.entityLinks[EntityLink(true, PARENT_CONNECTION_ID)] = data
           }
-// else you're attaching a new entity to an existing entity that is not modifiable
           this.entityLinks[EntityLink(false, PARENT_CONNECTION_ID)] = value
         }
         changedProperty.add("parent")
@@ -171,15 +164,12 @@ internal class ChildEntityImpl(private val dataSource: ChildEntityData) : ChildE
 
     override fun getEntityClass(): Class<ChildEntity> = ChildEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ChildEntityData : WorkspaceEntityData<ChildEntity>() {
   lateinit var childName: String
-
   internal fun isChildNameInitialized(): Boolean = ::childName.isInitialized
-
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<ChildEntity> {
     val modifiable = ChildEntityImpl.Builder(null)
     modifiable.diff = diff

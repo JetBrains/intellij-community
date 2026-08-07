@@ -22,7 +22,7 @@ interface SourceRootEntityBuilder : WorkspaceEntityBuilder<SourceRootEntity> {
 }
 
 internal object SourceRootEntityType : EntityType<SourceRootEntity, SourceRootEntityBuilder>() {
-  override val entityClass: Class<SourceRootEntity> get() = SourceRootEntity::class.java
+  override val entityImplClass: Class<*> get() = SourceRootEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = SourceRootEntityImpl.Builder::class.java
   operator fun invoke(
     url: VirtualFileUrl,

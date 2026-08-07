@@ -29,18 +29,11 @@ import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 internal class ProjectSettingsEntityImpl(private val dataSource: ProjectSettingsEntityData) : ProjectSettingsEntity,
                                                                                               WorkspaceEntityBase(dataSource) {
 
-  private companion object {
-
-    private val connections = listOf<ConnectionId>()
-
-  }
-
   override val projectSdk: SdkId?
     get() {
       readField("projectSdk")
       return dataSource.projectSdk
     }
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -48,9 +41,8 @@ internal class ProjectSettingsEntityImpl(private val dataSource: ProjectSettings
     }
 
   override fun connectionIdList(): List<ConnectionId> {
-    return connections
+    return emptyList()
   }
-
 
   internal class Builder(result: ProjectSettingsEntityData?) :
     ModifiableWorkspaceEntityBase<ProjectSettingsEntity, ProjectSettingsEntityData>(result), ProjectSettingsEntity.Builder {
@@ -74,7 +66,7 @@ internal class ProjectSettingsEntityImpl(private val dataSource: ProjectSettings
       this.currentEntityData = null
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -85,7 +77,7 @@ internal class ProjectSettingsEntityImpl(private val dataSource: ProjectSettings
     }
 
     override fun connectionIdList(): List<ConnectionId> {
-      return connections
+      return emptyList()
     }
 
     // Relabeling code, move information from dataSource to this builder
@@ -96,14 +88,12 @@ internal class ProjectSettingsEntityImpl(private val dataSource: ProjectSettings
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var projectSdk: SdkId?
       get() = getEntityData().projectSdk
@@ -111,19 +101,15 @@ internal class ProjectSettingsEntityImpl(private val dataSource: ProjectSettings
         checkModificationAllowed()
         getEntityData(true).projectSdk = value
         changedProperty.add("projectSdk")
-
       }
 
     override fun getEntityClass(): Class<ProjectSettingsEntity> = ProjectSettingsEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ProjectSettingsEntityData : WorkspaceEntityData<ProjectSettingsEntity>(), SoftLinkable {
   var projectSdk: SdkId? = null
-
-
   override fun getLinks(): Set<SymbolicEntityId<*>> {
     val result = HashSet<SymbolicEntityId<*>>()
     val optionalLink_projectSdk = projectSdk
@@ -141,7 +127,6 @@ internal class ProjectSettingsEntityData : WorkspaceEntityData<ProjectSettingsEn
   }
 
   override fun updateLinksIndex(prev: Set<SymbolicEntityId<*>>, index: WorkspaceMutableIndex<SymbolicEntityId<*>>) {
-// TODO verify logic
     val mutablePreviousSet = HashSet(prev)
     val optionalLink_projectSdk = projectSdk
     if (optionalLink_projectSdk != null) {
@@ -170,6 +155,7 @@ internal class ProjectSettingsEntityData : WorkspaceEntityData<ProjectSettingsEn
     else {
       null
     }
+
     if (projectSdk_data_optional != null) {
       projectSdk = projectSdk_data_optional
     }

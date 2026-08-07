@@ -18,7 +18,7 @@ interface KeyChildBuilder : WorkspaceEntityBuilder<KeyChild> {
 }
 
 internal object KeyChildType : EntityType<KeyChild, KeyChildBuilder>() {
-  override val entityClass: Class<KeyChild> get() = KeyChild::class.java
+  override val entityImplClass: Class<*> get() = KeyChildImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = KeyChildImpl.Builder::class.java
   operator fun invoke(
     data: String,

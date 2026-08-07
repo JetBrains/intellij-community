@@ -17,7 +17,7 @@ interface ChainedParentEntityBuilder : WorkspaceEntityBuilder<ChainedParentEntit
 }
 
 internal object ChainedParentEntityType : EntityType<ChainedParentEntity, ChainedParentEntityBuilder>() {
-  override val entityClass: Class<ChainedParentEntity> get() = ChainedParentEntity::class.java
+  override val entityImplClass: Class<*> get() = ChainedParentEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = ChainedParentEntityImpl.Builder::class.java
   operator fun invoke(
     entitySource: EntitySource,

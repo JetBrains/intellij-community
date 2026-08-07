@@ -24,7 +24,7 @@ interface SdkEntityBuilder : WorkspaceEntityBuilder<SdkEntity> {
 }
 
 internal object SdkEntityType : EntityType<SdkEntity, SdkEntityBuilder>() {
-  override val entityClass: Class<SdkEntity> get() = SdkEntity::class.java
+  override val entityImplClass: Class<*> get() = SdkEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = SdkEntityImpl.Builder::class.java
   operator fun invoke(
     name: String,

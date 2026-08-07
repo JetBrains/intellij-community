@@ -17,7 +17,7 @@ interface PlaceholderEntityBuilder : WorkspaceEntityBuilder<PlaceholderEntity> {
 }
 
 internal object PlaceholderEntityType : EntityType<PlaceholderEntity, PlaceholderEntityBuilder>() {
-  override val entityClass: Class<PlaceholderEntity> get() = PlaceholderEntity::class.java
+  override val entityImplClass: Class<*> get() = PlaceholderEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = PlaceholderEntityImpl.Builder::class.java
   operator fun invoke(
     myId: String,

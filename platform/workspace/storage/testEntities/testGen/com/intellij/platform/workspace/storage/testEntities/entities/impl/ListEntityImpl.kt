@@ -27,18 +27,11 @@ import com.intellij.platform.workspace.storage.testEntities.entities.ListEntityB
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ListEntityImpl(private val dataSource: ListEntityData) : ListEntity, WorkspaceEntityBase(dataSource) {
 
-  private companion object {
-
-    private val connections = listOf<ConnectionId>()
-
-  }
-
   override val data: List<String>
     get() {
       readField("data")
       return dataSource.data
     }
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -46,9 +39,8 @@ internal class ListEntityImpl(private val dataSource: ListEntityData) : ListEnti
     }
 
   override fun connectionIdList(): List<ConnectionId> {
-    return connections
+    return emptyList()
   }
-
 
   internal class Builder(result: ListEntityData?) : ModifiableWorkspaceEntityBase<ListEntity, ListEntityData>(result), ListEntityBuilder {
     internal constructor() : this(ListEntityData())
@@ -71,7 +63,7 @@ internal class ListEntityImpl(private val dataSource: ListEntityData) : ListEnti
       this.currentEntityData = null
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -85,7 +77,7 @@ internal class ListEntityImpl(private val dataSource: ListEntityData) : ListEnti
     }
 
     override fun connectionIdList(): List<ConnectionId> {
-      return connections
+      return emptyList()
     }
 
     override fun afterModification() {
@@ -103,14 +95,12 @@ internal class ListEntityImpl(private val dataSource: ListEntityData) : ListEnti
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     private val dataUpdater: (value: List<String>) -> Unit = { value ->
 
@@ -136,15 +126,12 @@ internal class ListEntityImpl(private val dataSource: ListEntityData) : ListEnti
 
     override fun getEntityClass(): Class<ListEntity> = ListEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ListEntityData : WorkspaceEntityData<ListEntity>() {
   lateinit var data: MutableList<String>
-
   internal fun isDataInitialized(): Boolean = ::data.isInitialized
-
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<ListEntity> {
     val modifiable = ListEntityImpl.Builder(null)
     modifiable.diff = diff

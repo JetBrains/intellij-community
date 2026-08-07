@@ -33,13 +33,6 @@ import com.intellij.util.indexing.testEntities.WithReferenceTestEntityId
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class WithReferenceTestEntityImpl(private val dataSource: WithReferenceTestEntityData) : WithReferenceTestEntity,
                                                                                                   WorkspaceEntityBase(dataSource) {
-
-  private companion object {
-
-    private val connections = listOf<ConnectionId>()
-
-  }
-
   override val symbolicId: WithReferenceTestEntityId = super.symbolicId
 
   override val name: String
@@ -52,7 +45,6 @@ internal class WithReferenceTestEntityImpl(private val dataSource: WithReference
       readField("references")
       return dataSource.references
     }
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -60,9 +52,8 @@ internal class WithReferenceTestEntityImpl(private val dataSource: WithReference
     }
 
   override fun connectionIdList(): List<ConnectionId> {
-    return connections
+    return emptyList()
   }
-
 
   internal class Builder(result: WithReferenceTestEntityData?) :
     ModifiableWorkspaceEntityBase<WithReferenceTestEntity, WithReferenceTestEntityData>(result), WithReferenceTestEntityBuilder {
@@ -86,7 +77,7 @@ internal class WithReferenceTestEntityImpl(private val dataSource: WithReference
       this.currentEntityData = null
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -103,7 +94,7 @@ internal class WithReferenceTestEntityImpl(private val dataSource: WithReference
     }
 
     override fun connectionIdList(): List<ConnectionId> {
-      return connections
+      return emptyList()
     }
 
     override fun afterModification() {
@@ -122,14 +113,12 @@ internal class WithReferenceTestEntityImpl(private val dataSource: WithReference
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var name: String
       get() = getEntityData().name
@@ -162,17 +151,14 @@ internal class WithReferenceTestEntityImpl(private val dataSource: WithReference
 
     override fun getEntityClass(): Class<WithReferenceTestEntity> = WithReferenceTestEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class WithReferenceTestEntityData : WorkspaceEntityData<WithReferenceTestEntity>(), SoftLinkable {
   lateinit var name: String
   lateinit var references: MutableList<DependencyItem>
-
   internal fun isNameInitialized(): Boolean = ::name.isInitialized
   internal fun isReferencesInitialized(): Boolean = ::references.isInitialized
-
   override fun getLinks(): Set<SymbolicEntityId<*>> {
     val result = HashSet<SymbolicEntityId<*>>()
     for (item in references) {
@@ -188,7 +174,6 @@ internal class WithReferenceTestEntityData : WorkspaceEntityData<WithReferenceTe
   }
 
   override fun updateLinksIndex(prev: Set<SymbolicEntityId<*>>, index: WorkspaceMutableIndex<SymbolicEntityId<*>>) {
-// TODO verify logic
     val mutablePreviousSet = HashSet(prev)
     for (item in references) {
       val removedItem_item_reference = mutablePreviousSet.remove(item.reference)
@@ -222,6 +207,7 @@ internal class WithReferenceTestEntityData : WorkspaceEntityData<WithReferenceTe
         it
       }
     }
+
     if (references_data != null) {
       references = references_data as MutableList<DependencyItem>
     }

@@ -31,14 +31,12 @@ import com.intellij.platform.workspace.storage.testEntities.entities.ParentNameI
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ParentEntityWithSymbolicIdImpl(private val dataSource: ParentEntityWithSymbolicIdData) : ParentEntityWithSymbolicId,
                                                                                                         WorkspaceEntityBase(dataSource) {
-
   private companion object {
     internal val CHILDREN_CONNECTION_ID: ConnectionId = ConnectionId.create(ParentEntityWithSymbolicId::class.java,
                                                                             ChildEntityWithSymbolicId::class.java,
                                                                             ConnectionId.ConnectionType.ONE_TO_MANY,
                                                                             false)
     private val connections = listOf<ConnectionId>(CHILDREN_CONNECTION_ID)
-
   }
 
   override val symbolicId: ParentNameId = super.symbolicId
@@ -49,9 +47,9 @@ internal class ParentEntityWithSymbolicIdImpl(private val dataSource: ParentEnti
       return dataSource.myName
     }
   override val children: List<ChildEntityWithSymbolicId>
+    @Suppress("UNCHECKED_CAST")
     get() = (snapshot.instrumentation.getManyChildren(CHILDREN_CONNECTION_ID, this) as? Sequence<ChildEntityWithSymbolicId>)?.toList()
-            ?: error("Children children not found for ParentEntityWithSymbolicId")
-
+            ?: error("Children list children not found for ParentEntityWithSymbolicId")
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -61,7 +59,6 @@ internal class ParentEntityWithSymbolicIdImpl(private val dataSource: ParentEnti
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
-
 
   internal class Builder(result: ParentEntityWithSymbolicIdData?) :
     ModifiableWorkspaceEntityBase<ParentEntityWithSymbolicId, ParentEntityWithSymbolicIdData>(result), ParentEntityWithSymbolicIdBuilder {
@@ -85,7 +82,7 @@ internal class ParentEntityWithSymbolicIdImpl(private val dataSource: ParentEnti
       this.currentEntityData = null
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -121,14 +118,12 @@ internal class ParentEntityWithSymbolicIdImpl(private val dataSource: ParentEnti
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var myName: String
       get() = getEntityData().myName
@@ -139,18 +134,19 @@ internal class ParentEntityWithSymbolicIdImpl(private val dataSource: ParentEnti
       }
 
     // List of non-abstract referenced types
-    var _children: List<ChildEntityWithSymbolicId>? = emptyList()
     override var children: List<ChildEntityWithSymbolicIdBuilder>
       get() {
 // Getter of the list of non-abstract referenced types
         val _diff = diff
         return if (_diff != null) {
-          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CHILDREN_CONNECTION_ID, this)!!
+          @Suppress("UNCHECKED_CAST")
+          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CHILDREN_CONNECTION_ID, this)
             .toList() as List<ChildEntityWithSymbolicIdBuilder>) + (this.entityLinks[EntityLink(true,
                                                                                                 CHILDREN_CONNECTION_ID)] as? List<ChildEntityWithSymbolicIdBuilder>
                                                                     ?: emptyList())
         }
         else {
+          @Suppress("UNCHECKED_CAST")
           this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as? List<ChildEntityWithSymbolicIdBuilder> ?: emptyList()
         }
       }
@@ -162,10 +158,8 @@ internal class ParentEntityWithSymbolicIdImpl(private val dataSource: ParentEnti
           for (item_value in value) {
             if (item_value is ModifiableWorkspaceEntityBase<*, *> && (item_value as? ModifiableWorkspaceEntityBase<*, *>)?.diff == null) {
 // Backref setup before adding to store
-              if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
-                item_value.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)] = this
-              }
-// else you're attaching a new entity to an existing entity that is not modifiable
+              item_value.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)] = this
+              @Suppress("UNCHECKED_CAST")
               _diff.addEntity(item_value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
             }
           }
@@ -176,7 +170,6 @@ internal class ParentEntityWithSymbolicIdImpl(private val dataSource: ParentEnti
             if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
               item_value.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)] = this
             }
-// else you're attaching a new entity to an existing entity that is not modifiable
           }
           this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] = value
         }
@@ -185,15 +178,12 @@ internal class ParentEntityWithSymbolicIdImpl(private val dataSource: ParentEnti
 
     override fun getEntityClass(): Class<ParentEntityWithSymbolicId> = ParentEntityWithSymbolicId::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ParentEntityWithSymbolicIdData : WorkspaceEntityData<ParentEntityWithSymbolicId>() {
   lateinit var myName: String
-
   internal fun isMyNameInitialized(): Boolean = ::myName.isInitialized
-
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<ParentEntityWithSymbolicId> {
     val modifiable = ParentEntityWithSymbolicIdImpl.Builder(null)
     modifiable.diff = diff

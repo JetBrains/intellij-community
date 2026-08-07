@@ -28,12 +28,6 @@ import com.intellij.platform.workspace.storage.testEntities.entities.cacheVersio
 internal class ComputablePropEntityImpl(private val dataSource: ComputablePropEntityData) : ComputablePropEntity,
                                                                                             WorkspaceEntityBase(dataSource) {
 
-  private companion object {
-
-    private val connections = listOf<ConnectionId>()
-
-  }
-
   override val list: List<Map<List<Int?>, String>>
     get() {
       readField("list")
@@ -44,7 +38,6 @@ internal class ComputablePropEntityImpl(private val dataSource: ComputablePropEn
       readField("value")
       return dataSource.value
     }
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -52,9 +45,8 @@ internal class ComputablePropEntityImpl(private val dataSource: ComputablePropEn
     }
 
   override fun connectionIdList(): List<ConnectionId> {
-    return connections
+    return emptyList()
   }
-
 
   internal class Builder(result: ComputablePropEntityData?) :
     ModifiableWorkspaceEntityBase<ComputablePropEntity, ComputablePropEntityData>(result), ComputablePropEntityBuilder {
@@ -78,7 +70,7 @@ internal class ComputablePropEntityImpl(private val dataSource: ComputablePropEn
       this.currentEntityData = null
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -92,7 +84,7 @@ internal class ComputablePropEntityImpl(private val dataSource: ComputablePropEn
     }
 
     override fun connectionIdList(): List<ConnectionId> {
-      return connections
+      return emptyList()
     }
 
     override fun afterModification() {
@@ -111,14 +103,12 @@ internal class ComputablePropEntityImpl(private val dataSource: ComputablePropEn
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     private val listUpdater: (value: List<Map<List<Int?>, String>>) -> Unit = { value ->
 
@@ -151,17 +141,13 @@ internal class ComputablePropEntityImpl(private val dataSource: ComputablePropEn
 
     override fun getEntityClass(): Class<ComputablePropEntity> = ComputablePropEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ComputablePropEntityData : WorkspaceEntityData<ComputablePropEntity>() {
   lateinit var list: MutableList<Map<List<Int?>, String>>
   var value: Int = 0
-
   internal fun isListInitialized(): Boolean = ::list.isInitialized
-
-
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<ComputablePropEntity> {
     val modifiable = ComputablePropEntityImpl.Builder(null)
     modifiable.diff = diff

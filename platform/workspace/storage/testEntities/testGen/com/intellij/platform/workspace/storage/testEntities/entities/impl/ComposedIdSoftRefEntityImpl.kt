@@ -30,13 +30,6 @@ import com.intellij.platform.workspace.storage.testEntities.entities.NameId
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ComposedIdSoftRefEntityImpl(private val dataSource: ComposedIdSoftRefEntityData) : ComposedIdSoftRefEntity,
                                                                                                   WorkspaceEntityBase(dataSource) {
-
-  private companion object {
-
-    private val connections = listOf<ConnectionId>()
-
-  }
-
   override val symbolicId: ComposedId = super.symbolicId
 
   override val myName: String
@@ -49,7 +42,6 @@ internal class ComposedIdSoftRefEntityImpl(private val dataSource: ComposedIdSof
       readField("link")
       return dataSource.link
     }
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -57,9 +49,8 @@ internal class ComposedIdSoftRefEntityImpl(private val dataSource: ComposedIdSof
     }
 
   override fun connectionIdList(): List<ConnectionId> {
-    return connections
+    return emptyList()
   }
-
 
   internal class Builder(result: ComposedIdSoftRefEntityData?) :
     ModifiableWorkspaceEntityBase<ComposedIdSoftRefEntity, ComposedIdSoftRefEntityData>(result), ComposedIdSoftRefEntityBuilder {
@@ -83,7 +74,7 @@ internal class ComposedIdSoftRefEntityImpl(private val dataSource: ComposedIdSof
       this.currentEntityData = null
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -100,7 +91,7 @@ internal class ComposedIdSoftRefEntityImpl(private val dataSource: ComposedIdSof
     }
 
     override fun connectionIdList(): List<ConnectionId> {
-      return connections
+      return emptyList()
     }
 
     // Relabeling code, move information from dataSource to this builder
@@ -112,14 +103,12 @@ internal class ComposedIdSoftRefEntityImpl(private val dataSource: ComposedIdSof
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var myName: String
       get() = getEntityData().myName
@@ -134,22 +123,18 @@ internal class ComposedIdSoftRefEntityImpl(private val dataSource: ComposedIdSof
         checkModificationAllowed()
         getEntityData(true).link = value
         changedProperty.add("link")
-
       }
 
     override fun getEntityClass(): Class<ComposedIdSoftRefEntity> = ComposedIdSoftRefEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ComposedIdSoftRefEntityData : WorkspaceEntityData<ComposedIdSoftRefEntity>(), SoftLinkable {
   lateinit var myName: String
   lateinit var link: NameId
-
   internal fun isMyNameInitialized(): Boolean = ::myName.isInitialized
   internal fun isLinkInitialized(): Boolean = ::link.isInitialized
-
   override fun getLinks(): Set<SymbolicEntityId<*>> {
     val result = HashSet<SymbolicEntityId<*>>()
     result.add(link)
@@ -161,7 +146,6 @@ internal class ComposedIdSoftRefEntityData : WorkspaceEntityData<ComposedIdSoftR
   }
 
   override fun updateLinksIndex(prev: Set<SymbolicEntityId<*>>, index: WorkspaceMutableIndex<SymbolicEntityId<*>>) {
-// TODO verify logic
     val mutablePreviousSet = HashSet(prev)
     val removedItem_link = mutablePreviousSet.remove(link)
     if (!removedItem_link) {

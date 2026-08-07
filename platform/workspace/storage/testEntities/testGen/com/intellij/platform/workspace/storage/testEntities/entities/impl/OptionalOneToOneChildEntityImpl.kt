@@ -30,14 +30,12 @@ import com.intellij.platform.workspace.storage.testEntities.entities.OptionalOne
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class OptionalOneToOneChildEntityImpl(private val dataSource: OptionalOneToOneChildEntityData) : OptionalOneToOneChildEntity,
                                                                                                           WorkspaceEntityBase(dataSource) {
-
   private companion object {
     internal val PARENT_CONNECTION_ID: ConnectionId = ConnectionId.create(OptionalOneToOneParentEntity::class.java,
                                                                           OptionalOneToOneChildEntity::class.java,
                                                                           ConnectionId.ConnectionType.ONE_TO_ONE,
                                                                           true)
     private val connections = listOf<ConnectionId>(PARENT_CONNECTION_ID)
-
   }
 
   override val data: String
@@ -47,7 +45,6 @@ internal class OptionalOneToOneChildEntityImpl(private val dataSource: OptionalO
     }
   override val parent: OptionalOneToOneParentEntity?
     get() = snapshot.instrumentation.getParent(PARENT_CONNECTION_ID, this) as? OptionalOneToOneParentEntity
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -57,7 +54,6 @@ internal class OptionalOneToOneChildEntityImpl(private val dataSource: OptionalO
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
-
 
   internal class Builder(result: OptionalOneToOneChildEntityData?) :
     ModifiableWorkspaceEntityBase<OptionalOneToOneChildEntity, OptionalOneToOneChildEntityData>(result),
@@ -82,7 +78,7 @@ internal class OptionalOneToOneChildEntityImpl(private val dataSource: OptionalO
       this.currentEntityData = null
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -107,14 +103,12 @@ internal class OptionalOneToOneChildEntityImpl(private val dataSource: OptionalO
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var data: String
       get() = getEntityData().data
@@ -139,10 +133,8 @@ internal class OptionalOneToOneChildEntityImpl(private val dataSource: OptionalO
         checkModificationAllowed()
         val _diff = diff
         if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(true, PARENT_CONNECTION_ID)] = this
-          }
-// else you're attaching a new entity to an existing entity that is not modifiable
+          value.entityLinks[EntityLink(true, PARENT_CONNECTION_ID)] = this
+          @Suppress("UNCHECKED_CAST")
           _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
@@ -152,7 +144,6 @@ internal class OptionalOneToOneChildEntityImpl(private val dataSource: OptionalO
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(true, PARENT_CONNECTION_ID)] = this
           }
-// else you're attaching a new entity to an existing entity that is not modifiable
           this.entityLinks[EntityLink(false, PARENT_CONNECTION_ID)] = value
         }
         changedProperty.add("parent")
@@ -160,15 +151,12 @@ internal class OptionalOneToOneChildEntityImpl(private val dataSource: OptionalO
 
     override fun getEntityClass(): Class<OptionalOneToOneChildEntity> = OptionalOneToOneChildEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class OptionalOneToOneChildEntityData : WorkspaceEntityData<OptionalOneToOneChildEntity>() {
   lateinit var data: String
-
   internal fun isDataInitialized(): Boolean = ::data.isInitialized
-
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<OptionalOneToOneChildEntity> {
     val modifiable = OptionalOneToOneChildEntityImpl.Builder(null)
     modifiable.diff = diff

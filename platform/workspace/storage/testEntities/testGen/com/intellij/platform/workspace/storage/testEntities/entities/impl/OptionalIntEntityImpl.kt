@@ -25,18 +25,11 @@ import com.intellij.platform.workspace.storage.testEntities.entities.OptionalInt
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class OptionalIntEntityImpl(private val dataSource: OptionalIntEntityData) : OptionalIntEntity, WorkspaceEntityBase(dataSource) {
 
-  private companion object {
-
-    private val connections = listOf<ConnectionId>()
-
-  }
-
   override val data: Int?
     get() {
       readField("data")
       return dataSource.data
     }
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -44,9 +37,8 @@ internal class OptionalIntEntityImpl(private val dataSource: OptionalIntEntityDa
     }
 
   override fun connectionIdList(): List<ConnectionId> {
-    return connections
+    return emptyList()
   }
-
 
   internal class Builder(result: OptionalIntEntityData?) : ModifiableWorkspaceEntityBase<OptionalIntEntity, OptionalIntEntityData>(result),
                                                            OptionalIntEntityBuilder {
@@ -70,7 +62,7 @@ internal class OptionalIntEntityImpl(private val dataSource: OptionalIntEntityDa
       this.currentEntityData = null
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -81,7 +73,7 @@ internal class OptionalIntEntityImpl(private val dataSource: OptionalIntEntityDa
     }
 
     override fun connectionIdList(): List<ConnectionId> {
-      return connections
+      return emptyList()
     }
 
     // Relabeling code, move information from dataSource to this builder
@@ -92,14 +84,12 @@ internal class OptionalIntEntityImpl(private val dataSource: OptionalIntEntityDa
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var data: Int??
       get() = getEntityData().data
@@ -111,14 +101,11 @@ internal class OptionalIntEntityImpl(private val dataSource: OptionalIntEntityDa
 
     override fun getEntityClass(): Class<OptionalIntEntity> = OptionalIntEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class OptionalIntEntityData : WorkspaceEntityData<OptionalIntEntity>() {
   var data: Int? = null
-
-
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<OptionalIntEntity> {
     val modifiable = OptionalIntEntityImpl.Builder(null)
     modifiable.diff = diff

@@ -27,13 +27,6 @@ import com.intellij.util.indexing.testEntities.ReferredTestEntityId
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ReferredTestEntityImpl(private val dataSource: ReferredTestEntityData) : ReferredTestEntity,
                                                                                         WorkspaceEntityBase(dataSource) {
-
-  private companion object {
-
-    private val connections = listOf<ConnectionId>()
-
-  }
-
   override val symbolicId: ReferredTestEntityId = super.symbolicId
 
   override val name: String
@@ -46,7 +39,6 @@ internal class ReferredTestEntityImpl(private val dataSource: ReferredTestEntity
       readField("file")
       return dataSource.file
     }
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -54,9 +46,8 @@ internal class ReferredTestEntityImpl(private val dataSource: ReferredTestEntity
     }
 
   override fun connectionIdList(): List<ConnectionId> {
-    return connections
+    return emptyList()
   }
-
 
   internal class Builder(result: ReferredTestEntityData?) :
     ModifiableWorkspaceEntityBase<ReferredTestEntity, ReferredTestEntityData>(result), ReferredTestEntityBuilder {
@@ -81,7 +72,7 @@ internal class ReferredTestEntityImpl(private val dataSource: ReferredTestEntity
       index(this, "file", this.file)
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -98,7 +89,7 @@ internal class ReferredTestEntityImpl(private val dataSource: ReferredTestEntity
     }
 
     override fun connectionIdList(): List<ConnectionId> {
-      return connections
+      return emptyList()
     }
 
     // Relabeling code, move information from dataSource to this builder
@@ -110,14 +101,12 @@ internal class ReferredTestEntityImpl(private val dataSource: ReferredTestEntity
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var name: String
       get() = getEntityData().name
@@ -138,17 +127,14 @@ internal class ReferredTestEntityImpl(private val dataSource: ReferredTestEntity
 
     override fun getEntityClass(): Class<ReferredTestEntity> = ReferredTestEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ReferredTestEntityData : WorkspaceEntityData<ReferredTestEntity>() {
   lateinit var name: String
   lateinit var file: VirtualFileUrl
-
   internal fun isNameInitialized(): Boolean = ::name.isInitialized
   internal fun isFileInitialized(): Boolean = ::file.isInitialized
-
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<ReferredTestEntity> {
     val modifiable = ReferredTestEntityImpl.Builder(null)
     modifiable.diff = diff

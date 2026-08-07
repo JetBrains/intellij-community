@@ -26,12 +26,6 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class VFUEntityImpl(private val dataSource: VFUEntityData) : VFUEntity, WorkspaceEntityBase(dataSource) {
 
-  private companion object {
-
-    private val connections = listOf<ConnectionId>()
-
-  }
-
   override val data: String
     get() {
       readField("data")
@@ -42,7 +36,6 @@ internal class VFUEntityImpl(private val dataSource: VFUEntityData) : VFUEntity,
       readField("fileProperty")
       return dataSource.fileProperty
     }
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -50,9 +43,8 @@ internal class VFUEntityImpl(private val dataSource: VFUEntityData) : VFUEntity,
     }
 
   override fun connectionIdList(): List<ConnectionId> {
-    return connections
+    return emptyList()
   }
-
 
   internal class Builder(result: VFUEntityData?) : ModifiableWorkspaceEntityBase<VFUEntity, VFUEntityData>(result), VFUEntityBuilder {
     internal constructor() : this(VFUEntityData())
@@ -76,7 +68,7 @@ internal class VFUEntityImpl(private val dataSource: VFUEntityData) : VFUEntity,
       index(this, "fileProperty", this.fileProperty)
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -93,7 +85,7 @@ internal class VFUEntityImpl(private val dataSource: VFUEntityData) : VFUEntity,
     }
 
     override fun connectionIdList(): List<ConnectionId> {
-      return connections
+      return emptyList()
     }
 
     // Relabeling code, move information from dataSource to this builder
@@ -105,14 +97,12 @@ internal class VFUEntityImpl(private val dataSource: VFUEntityData) : VFUEntity,
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var data: String
       get() = getEntityData().data
@@ -133,17 +123,14 @@ internal class VFUEntityImpl(private val dataSource: VFUEntityData) : VFUEntity,
 
     override fun getEntityClass(): Class<VFUEntity> = VFUEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class VFUEntityData : WorkspaceEntityData<VFUEntity>() {
   lateinit var data: String
   lateinit var fileProperty: VirtualFileUrl
-
   internal fun isDataInitialized(): Boolean = ::data.isInitialized
   internal fun isFilePropertyInitialized(): Boolean = ::fileProperty.isInitialized
-
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<VFUEntity> {
     val modifiable = VFUEntityImpl.Builder(null)
     modifiable.diff = diff

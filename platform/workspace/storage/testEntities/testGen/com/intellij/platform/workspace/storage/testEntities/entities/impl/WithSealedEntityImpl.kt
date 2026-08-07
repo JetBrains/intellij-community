@@ -29,12 +29,6 @@ import com.intellij.platform.workspace.storage.testEntities.entities.WithSealedE
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class WithSealedEntityImpl(private val dataSource: WithSealedEntityData) : WithSealedEntity, WorkspaceEntityBase(dataSource) {
 
-  private companion object {
-
-    private val connections = listOf<ConnectionId>()
-
-  }
-
   override val classes: List<MySealedClass>
     get() {
       readField("classes")
@@ -45,7 +39,6 @@ internal class WithSealedEntityImpl(private val dataSource: WithSealedEntityData
       readField("interfaces")
       return dataSource.interfaces
     }
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -53,9 +46,8 @@ internal class WithSealedEntityImpl(private val dataSource: WithSealedEntityData
     }
 
   override fun connectionIdList(): List<ConnectionId> {
-    return connections
+    return emptyList()
   }
-
 
   internal class Builder(result: WithSealedEntityData?) : ModifiableWorkspaceEntityBase<WithSealedEntity, WithSealedEntityData>(result),
                                                           WithSealedEntityBuilder {
@@ -79,7 +71,7 @@ internal class WithSealedEntityImpl(private val dataSource: WithSealedEntityData
       this.currentEntityData = null
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -96,7 +88,7 @@ internal class WithSealedEntityImpl(private val dataSource: WithSealedEntityData
     }
 
     override fun connectionIdList(): List<ConnectionId> {
-      return connections
+      return emptyList()
     }
 
     override fun afterModification() {
@@ -119,14 +111,12 @@ internal class WithSealedEntityImpl(private val dataSource: WithSealedEntityData
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     private val classesUpdater: (value: List<MySealedClass>) -> Unit = { value ->
 
@@ -173,17 +163,14 @@ internal class WithSealedEntityImpl(private val dataSource: WithSealedEntityData
 
     override fun getEntityClass(): Class<WithSealedEntity> = WithSealedEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class WithSealedEntityData : WorkspaceEntityData<WithSealedEntity>() {
   lateinit var classes: MutableList<MySealedClass>
   lateinit var interfaces: MutableList<MySealedInterface>
-
   internal fun isClassesInitialized(): Boolean = ::classes.isInitialized
   internal fun isInterfacesInitialized(): Boolean = ::interfaces.isInitialized
-
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<WithSealedEntity> {
     val modifiable = WithSealedEntityImpl.Builder(null)
     modifiable.diff = diff

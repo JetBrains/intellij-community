@@ -19,7 +19,7 @@ interface ArtifactPropertiesEntityBuilder : WorkspaceEntityBuilder<ArtifactPrope
 }
 
 internal object ArtifactPropertiesEntityType : EntityType<ArtifactPropertiesEntity, ArtifactPropertiesEntityBuilder>() {
-  override val entityClass: Class<ArtifactPropertiesEntity> get() = ArtifactPropertiesEntity::class.java
+  override val entityImplClass: Class<*> get() = ArtifactPropertiesEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = ArtifactPropertiesEntityImpl.Builder::class.java
   operator fun invoke(
     providerType: String,

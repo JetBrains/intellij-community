@@ -31,12 +31,10 @@ import org.jetbrains.annotations.ApiStatus.Internal
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class LibraryPropertiesEntityImpl(private val dataSource: LibraryPropertiesEntityData) : LibraryPropertiesEntity,
                                                                                                   WorkspaceEntityBase(dataSource) {
-
   private companion object {
     internal val LIBRARY_CONNECTION_ID: ConnectionId =
       ConnectionId.create(LibraryEntity::class.java, LibraryPropertiesEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
     private val connections = listOf<ConnectionId>(LIBRARY_CONNECTION_ID)
-
   }
 
   override val propertiesXmlTag: String?
@@ -47,7 +45,6 @@ internal class LibraryPropertiesEntityImpl(private val dataSource: LibraryProper
   override val library: LibraryEntity
     get() = snapshot.instrumentation.getParent(LIBRARY_CONNECTION_ID, this) as? LibraryEntity
             ?: error("Parent library not found for LibraryPropertiesEntity")
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -57,7 +54,6 @@ internal class LibraryPropertiesEntityImpl(private val dataSource: LibraryProper
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
-
 
   internal class Builder(result: LibraryPropertiesEntityData?) :
     ModifiableWorkspaceEntityBase<LibraryPropertiesEntity, LibraryPropertiesEntityData>(result), LibraryPropertiesEntity.Builder {
@@ -81,7 +77,7 @@ internal class LibraryPropertiesEntityImpl(private val dataSource: LibraryProper
       this.currentEntityData = null
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -113,14 +109,12 @@ internal class LibraryPropertiesEntityImpl(private val dataSource: LibraryProper
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var propertiesXmlTag: String?
       get() = getEntityData().propertiesXmlTag
@@ -146,10 +140,8 @@ internal class LibraryPropertiesEntityImpl(private val dataSource: LibraryProper
         checkModificationAllowed()
         val _diff = diff
         if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(true, LIBRARY_CONNECTION_ID)] = this
-          }
-// else you're attaching a new entity to an existing entity that is not modifiable
+          value.entityLinks[EntityLink(true, LIBRARY_CONNECTION_ID)] = this
+          @Suppress("UNCHECKED_CAST")
           _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
@@ -159,7 +151,6 @@ internal class LibraryPropertiesEntityImpl(private val dataSource: LibraryProper
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(true, LIBRARY_CONNECTION_ID)] = this
           }
-// else you're attaching a new entity to an existing entity that is not modifiable
           this.entityLinks[EntityLink(false, LIBRARY_CONNECTION_ID)] = value
         }
         changedProperty.add("library")
@@ -167,14 +158,11 @@ internal class LibraryPropertiesEntityImpl(private val dataSource: LibraryProper
 
     override fun getEntityClass(): Class<LibraryPropertiesEntity> = LibraryPropertiesEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class LibraryPropertiesEntityData : WorkspaceEntityData<LibraryPropertiesEntity>() {
   var propertiesXmlTag: String? = null
-
-
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<LibraryPropertiesEntity> {
     val modifiable = LibraryPropertiesEntityImpl.Builder(null)
     modifiable.diff = diff

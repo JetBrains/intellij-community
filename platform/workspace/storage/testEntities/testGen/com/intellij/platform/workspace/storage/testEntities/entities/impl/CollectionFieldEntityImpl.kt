@@ -30,12 +30,6 @@ import com.intellij.platform.workspace.storage.testEntities.entities.CollectionF
 internal class CollectionFieldEntityImpl(private val dataSource: CollectionFieldEntityData) : CollectionFieldEntity,
                                                                                               WorkspaceEntityBase(dataSource) {
 
-  private companion object {
-
-    private val connections = listOf<ConnectionId>()
-
-  }
-
   override val versions: Set<Int>
     get() {
       readField("versions")
@@ -46,7 +40,6 @@ internal class CollectionFieldEntityImpl(private val dataSource: CollectionField
       readField("names")
       return dataSource.names
     }
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -54,9 +47,8 @@ internal class CollectionFieldEntityImpl(private val dataSource: CollectionField
     }
 
   override fun connectionIdList(): List<ConnectionId> {
-    return connections
+    return emptyList()
   }
-
 
   internal class Builder(result: CollectionFieldEntityData?) :
     ModifiableWorkspaceEntityBase<CollectionFieldEntity, CollectionFieldEntityData>(result), CollectionFieldEntityBuilder {
@@ -80,7 +72,7 @@ internal class CollectionFieldEntityImpl(private val dataSource: CollectionField
       this.currentEntityData = null
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -97,7 +89,7 @@ internal class CollectionFieldEntityImpl(private val dataSource: CollectionField
     }
 
     override fun connectionIdList(): List<ConnectionId> {
-      return connections
+      return emptyList()
     }
 
     override fun afterModification() {
@@ -120,14 +112,12 @@ internal class CollectionFieldEntityImpl(private val dataSource: CollectionField
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     private val versionsUpdater: (value: Set<Int>) -> Unit = { value ->
 
@@ -174,17 +164,14 @@ internal class CollectionFieldEntityImpl(private val dataSource: CollectionField
 
     override fun getEntityClass(): Class<CollectionFieldEntity> = CollectionFieldEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class CollectionFieldEntityData : WorkspaceEntityData<CollectionFieldEntity>() {
   lateinit var versions: MutableSet<Int>
   lateinit var names: MutableList<String>
-
   internal fun isVersionsInitialized(): Boolean = ::versions.isInitialized
   internal fun isNamesInitialized(): Boolean = ::names.isInitialized
-
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<CollectionFieldEntity> {
     val modifiable = CollectionFieldEntityImpl.Builder(null)
     modifiable.diff = diff

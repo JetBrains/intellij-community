@@ -23,7 +23,7 @@ interface KotlinScriptLibraryEntityBuilder : WorkspaceEntityBuilder<KotlinScript
 }
 
 internal object KotlinScriptLibraryEntityType : EntityType<KotlinScriptLibraryEntity, KotlinScriptLibraryEntityBuilder>() {
-    override val entityClass: Class<KotlinScriptLibraryEntity> get() = KotlinScriptLibraryEntity::class.java
+    override val entityImplClass: Class<*> get() = KotlinScriptLibraryEntityImpl::class.java
     override val entityImplBuilderClass: Class<*> get() = KotlinScriptLibraryEntityImpl.Builder::class.java
     operator fun invoke(
         scope: String,

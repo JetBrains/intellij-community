@@ -30,12 +30,10 @@ import com.intellij.platform.workspace.storage.testEntities.entities.ModuleTestE
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class FacetTestEntityImpl(private val dataSource: FacetTestEntityData) : FacetTestEntity, WorkspaceEntityBase(dataSource) {
-
   private companion object {
     internal val MODULE_CONNECTION_ID: ConnectionId =
       ConnectionId.create(ModuleTestEntity::class.java, FacetTestEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
     private val connections = listOf<ConnectionId>(MODULE_CONNECTION_ID)
-
   }
 
   override val symbolicId: FacetTestEntitySymbolicId = super.symbolicId
@@ -53,7 +51,6 @@ internal class FacetTestEntityImpl(private val dataSource: FacetTestEntityData) 
   override val module: ModuleTestEntity
     get() = snapshot.instrumentation.getParent(MODULE_CONNECTION_ID, this) as? ModuleTestEntity
             ?: error("Parent module not found for FacetTestEntity")
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -63,7 +60,6 @@ internal class FacetTestEntityImpl(private val dataSource: FacetTestEntityData) 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
-
 
   internal class Builder(result: FacetTestEntityData?) : ModifiableWorkspaceEntityBase<FacetTestEntity, FacetTestEntityData>(result),
                                                          FacetTestEntityBuilder {
@@ -87,7 +83,7 @@ internal class FacetTestEntityImpl(private val dataSource: FacetTestEntityData) 
       this.currentEntityData = null
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -126,14 +122,12 @@ internal class FacetTestEntityImpl(private val dataSource: FacetTestEntityData) 
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var data: String
       get() = getEntityData().data
@@ -167,11 +161,10 @@ internal class FacetTestEntityImpl(private val dataSource: FacetTestEntityData) 
         val _diff = diff
         if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
 // Setting backref of the list
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            val data = (value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
-            value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] = data
-          }
-// else you're attaching a new entity to an existing entity that is not modifiable
+          @Suppress("UNCHECKED_CAST")
+          val data = (value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
+          value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] = data
+          @Suppress("UNCHECKED_CAST")
           _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
@@ -180,10 +173,10 @@ internal class FacetTestEntityImpl(private val dataSource: FacetTestEntityData) 
         else {
 // Setting backref of the list
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
+            @Suppress("UNCHECKED_CAST")
             val data = (value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
             value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] = data
           }
-// else you're attaching a new entity to an existing entity that is not modifiable
           this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)] = value
         }
         changedProperty.add("module")
@@ -191,17 +184,14 @@ internal class FacetTestEntityImpl(private val dataSource: FacetTestEntityData) 
 
     override fun getEntityClass(): Class<FacetTestEntity> = FacetTestEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class FacetTestEntityData : WorkspaceEntityData<FacetTestEntity>() {
   lateinit var data: String
   lateinit var moreData: String
-
   internal fun isDataInitialized(): Boolean = ::data.isInitialized
   internal fun isMoreDataInitialized(): Boolean = ::moreData.isInitialized
-
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<FacetTestEntity> {
     val modifiable = FacetTestEntityImpl.Builder(null)
     modifiable.diff = diff

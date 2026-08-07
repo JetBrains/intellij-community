@@ -28,13 +28,6 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class SdkEntityImpl(private val dataSource: SdkEntityData) : SdkEntity, WorkspaceEntityBase(dataSource) {
-
-  private companion object {
-
-    private val connections = listOf<ConnectionId>()
-
-  }
-
   override val symbolicId: SdkId = super.symbolicId
 
   override val name: String
@@ -67,7 +60,6 @@ internal class SdkEntityImpl(private val dataSource: SdkEntityData) : SdkEntity,
       readField("additionalData")
       return dataSource.additionalData
     }
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -75,9 +67,8 @@ internal class SdkEntityImpl(private val dataSource: SdkEntityData) : SdkEntity,
     }
 
   override fun connectionIdList(): List<ConnectionId> {
-    return connections
+    return emptyList()
   }
-
 
   internal class Builder(result: SdkEntityData?) : ModifiableWorkspaceEntityBase<SdkEntity, SdkEntityData>(result), SdkEntity.Builder {
     internal constructor() : this(SdkEntityData())
@@ -102,7 +93,7 @@ internal class SdkEntityImpl(private val dataSource: SdkEntityData) : SdkEntity,
       indexSdkRoots(roots)
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -125,7 +116,7 @@ internal class SdkEntityImpl(private val dataSource: SdkEntityData) : SdkEntity,
     }
 
     override fun connectionIdList(): List<ConnectionId> {
-      return connections
+      return emptyList()
     }
 
     override fun afterModification() {
@@ -153,14 +144,12 @@ internal class SdkEntityImpl(private val dataSource: SdkEntityData) : SdkEntity,
       index(this, "roots", sdkRootList)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var name: String
       get() = getEntityData().name
@@ -226,7 +215,6 @@ internal class SdkEntityImpl(private val dataSource: SdkEntityData) : SdkEntity,
 
     override fun getEntityClass(): Class<SdkEntity> = SdkEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
@@ -237,12 +225,10 @@ internal class SdkEntityData : WorkspaceEntityData<SdkEntity>() {
   var homePath: VirtualFileUrl? = null
   lateinit var roots: MutableList<SdkRoot>
   lateinit var additionalData: String
-
   internal fun isNameInitialized(): Boolean = ::name.isInitialized
   internal fun isTypeInitialized(): Boolean = ::type.isInitialized
   internal fun isRootsInitialized(): Boolean = ::roots.isInitialized
   internal fun isAdditionalDataInitialized(): Boolean = ::additionalData.isInitialized
-
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<SdkEntity> {
     val modifiable = SdkEntityImpl.Builder(null)
     modifiable.diff = diff

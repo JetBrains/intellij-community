@@ -28,12 +28,6 @@ import com.intellij.platform.workspace.storage.testEntities.entities.cacheVersio
 internal class NotNullToNullEntityImpl(private val dataSource: NotNullToNullEntityData) : NotNullToNullEntity,
                                                                                           WorkspaceEntityBase(dataSource) {
 
-  private companion object {
-
-    private val connections = listOf<ConnectionId>()
-
-  }
-
   override val nullInt: Int?
     get() {
       readField("nullInt")
@@ -49,7 +43,6 @@ internal class NotNullToNullEntityImpl(private val dataSource: NotNullToNullEnti
       readField("notNullList")
       return dataSource.notNullList
     }
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -57,9 +50,8 @@ internal class NotNullToNullEntityImpl(private val dataSource: NotNullToNullEnti
     }
 
   override fun connectionIdList(): List<ConnectionId> {
-    return connections
+    return emptyList()
   }
-
 
   internal class Builder(result: NotNullToNullEntityData?) :
     ModifiableWorkspaceEntityBase<NotNullToNullEntity, NotNullToNullEntityData>(result), NotNullToNullEntityBuilder {
@@ -83,7 +75,7 @@ internal class NotNullToNullEntityImpl(private val dataSource: NotNullToNullEnti
       this.currentEntityData = null
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -100,7 +92,7 @@ internal class NotNullToNullEntityImpl(private val dataSource: NotNullToNullEnti
     }
 
     override fun connectionIdList(): List<ConnectionId> {
-      return connections
+      return emptyList()
     }
 
     override fun afterModification() {
@@ -120,14 +112,12 @@ internal class NotNullToNullEntityImpl(private val dataSource: NotNullToNullEnti
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var nullInt: Int??
       get() = getEntityData().nullInt
@@ -167,7 +157,6 @@ internal class NotNullToNullEntityImpl(private val dataSource: NotNullToNullEnti
 
     override fun getEntityClass(): Class<NotNullToNullEntity> = NotNullToNullEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
@@ -175,10 +164,8 @@ internal class NotNullToNullEntityData : WorkspaceEntityData<NotNullToNullEntity
   var nullInt: Int? = null
   lateinit var notNullString: String
   lateinit var notNullList: MutableList<Int>
-
   internal fun isNotNullStringInitialized(): Boolean = ::notNullString.isInitialized
   internal fun isNotNullListInitialized(): Boolean = ::notNullList.isInitialized
-
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<NotNullToNullEntity> {
     val modifiable = NotNullToNullEntityImpl.Builder(null)
     modifiable.diff = diff

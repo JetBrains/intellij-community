@@ -18,7 +18,7 @@ interface SourceEntityBuilder : WorkspaceEntityBuilder<SourceEntity> {
 }
 
 internal object SourceEntityType : EntityType<SourceEntity, SourceEntityBuilder>() {
-  override val entityClass: Class<SourceEntity> get() = SourceEntity::class.java
+  override val entityImplClass: Class<*> get() = SourceEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = SourceEntityImpl.Builder::class.java
   operator fun invoke(
     data: String,

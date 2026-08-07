@@ -20,7 +20,7 @@ interface DefaultPropEntityBuilder : WorkspaceEntityBuilder<DefaultPropEntity> {
 }
 
 internal object DefaultPropEntityType : EntityType<DefaultPropEntity, DefaultPropEntityBuilder>() {
-  override val entityClass: Class<DefaultPropEntity> get() = DefaultPropEntity::class.java
+  override val entityImplClass: Class<*> get() = DefaultPropEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = DefaultPropEntityImpl.Builder::class.java
   operator fun invoke(
     someString: String,

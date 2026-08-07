@@ -27,12 +27,6 @@ import com.intellij.platform.workspace.storage.testEntities.entities.currentVers
 internal class SimpleSealedClassEntityImpl(private val dataSource: SimpleSealedClassEntityData) : SimpleSealedClassEntity,
                                                                                                   WorkspaceEntityBase(dataSource) {
 
-  private companion object {
-
-    private val connections = listOf<ConnectionId>()
-
-  }
-
   override val text: String
     get() {
       readField("text")
@@ -43,7 +37,6 @@ internal class SimpleSealedClassEntityImpl(private val dataSource: SimpleSealedC
       readField("someData")
       return dataSource.someData
     }
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -51,9 +44,8 @@ internal class SimpleSealedClassEntityImpl(private val dataSource: SimpleSealedC
     }
 
   override fun connectionIdList(): List<ConnectionId> {
-    return connections
+    return emptyList()
   }
-
 
   internal class Builder(result: SimpleSealedClassEntityData?) :
     ModifiableWorkspaceEntityBase<SimpleSealedClassEntity, SimpleSealedClassEntityData>(result), SimpleSealedClassEntityBuilder {
@@ -77,7 +69,7 @@ internal class SimpleSealedClassEntityImpl(private val dataSource: SimpleSealedC
       this.currentEntityData = null
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -94,7 +86,7 @@ internal class SimpleSealedClassEntityImpl(private val dataSource: SimpleSealedC
     }
 
     override fun connectionIdList(): List<ConnectionId> {
-      return connections
+      return emptyList()
     }
 
     // Relabeling code, move information from dataSource to this builder
@@ -106,14 +98,12 @@ internal class SimpleSealedClassEntityImpl(private val dataSource: SimpleSealedC
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var text: String
       get() = getEntityData().text
@@ -128,22 +118,18 @@ internal class SimpleSealedClassEntityImpl(private val dataSource: SimpleSealedC
         checkModificationAllowed()
         getEntityData(true).someData = value
         changedProperty.add("someData")
-
       }
 
     override fun getEntityClass(): Class<SimpleSealedClassEntity> = SimpleSealedClassEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class SimpleSealedClassEntityData : WorkspaceEntityData<SimpleSealedClassEntity>() {
   lateinit var text: String
   lateinit var someData: SimpleSealedClass
-
   internal fun isTextInitialized(): Boolean = ::text.isInitialized
   internal fun isSomeDataInitialized(): Boolean = ::someData.isInitialized
-
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<SimpleSealedClassEntity> {
     val modifiable = SimpleSealedClassEntityImpl.Builder(null)
     modifiable.diff = diff

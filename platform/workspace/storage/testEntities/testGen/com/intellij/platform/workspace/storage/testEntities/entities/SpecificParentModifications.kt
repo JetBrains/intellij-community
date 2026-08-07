@@ -18,7 +18,7 @@ interface SpecificParentBuilder : WorkspaceEntityBuilder<SpecificParent>, Abstra
 }
 
 internal object SpecificParentType : EntityType<SpecificParent, SpecificParentBuilder>() {
-  override val entityClass: Class<SpecificParent> get() = SpecificParent::class.java
+  override val entityImplClass: Class<*> get() = SpecificParentImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = SpecificParentImpl.Builder::class.java
   operator fun invoke(
     data: String,

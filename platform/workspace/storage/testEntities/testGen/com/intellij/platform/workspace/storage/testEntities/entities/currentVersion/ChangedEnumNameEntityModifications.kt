@@ -17,7 +17,7 @@ interface ChangedEnumNameEntityBuilder : WorkspaceEntityBuilder<ChangedEnumNameE
 }
 
 internal object ChangedEnumNameEntityType : EntityType<ChangedEnumNameEntity, ChangedEnumNameEntityBuilder>() {
-  override val entityClass: Class<ChangedEnumNameEntity> get() = ChangedEnumNameEntity::class.java
+  override val entityImplClass: Class<*> get() = ChangedEnumNameEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = ChangedEnumNameEntityImpl.Builder::class.java
   operator fun invoke(
     someEnum: ChangedEnumNameEnum,

@@ -1,5 +1,4 @@
 @file:OptIn(EntityStorageInstrumentationApi::class)
-
 package com.intellij.workspaceModel.test.api.impl
 
 import com.intellij.platform.workspace.storage.*
@@ -15,71 +14,58 @@ import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.workspaceModel.test.api.BaseDataClass
 import com.intellij.workspaceModel.test.api.ChildEntity
 import com.intellij.workspaceModel.test.api.ChildEntityBuilder
-import com.intellij.workspaceModel.test.api.DerivedDataClass
-import com.intellij.workspaceModel.test.api.DerivedDerivedDataClass
 import com.intellij.workspaceModel.test.api.SimpleId
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class ChildEntityImpl(private val dataSource: ChildEntityData): ChildEntity, WorkspaceEntityBase(dataSource) {
-
-private companion object {
-
-private val connections = listOf<ConnectionId>()
-
-}
+internal class ChildEntityImpl(private val dataSource: ChildEntityData): ChildEntity, WorkspaceEntityBase(dataSource){
 
 override val name: String
-get() {
+get(){
 readField("name")
 return dataSource.name
 }
 override val moduleId: SimpleId
-get() {
+get(){
 readField("moduleId")
 return dataSource.moduleId
 }
 override val aBaseEntityProperty: String
-get() {
+get(){
 readField("aBaseEntityProperty")
 return dataSource.aBaseEntityProperty
 }
 override val dBaseEntityProperty: String
-get() {
+get(){
 readField("dBaseEntityProperty")
 return dataSource.dBaseEntityProperty
 }
 override val bBaseEntityProperty: String
-get() {
+get(){
 readField("bBaseEntityProperty")
 return dataSource.bBaseEntityProperty
 }
 override val sealedDataClassProperty: BaseDataClass
-get() {
+get(){
 readField("sealedDataClassProperty")
 return dataSource.sealedDataClassProperty
 }
 override val cChildEntityProperty: String
-get() {
+get(){
 readField("cChildEntityProperty")
 return dataSource.cChildEntityProperty
 }
-
 override val entitySource: EntitySource
-get() {
+get(){
 readField("entitySource")
 return dataSource.entitySource
 }
-
-override fun connectionIdList(): List<ConnectionId> {
-return connections
+override fun connectionIdList(): List<ConnectionId>{
+return emptyList()
 }
-
-
-internal class Builder(result: ChildEntityData?): ModifiableWorkspaceEntityBase<ChildEntity, ChildEntityData>(result), ChildEntityBuilder {
+internal class Builder(result: ChildEntityData?): ModifiableWorkspaceEntityBase<ChildEntity, ChildEntityData>(result), ChildEntityBuilder{
 internal constructor(): this(ChildEntityData())
-
 override fun applyToBuilder(builder: MutableEntityStorage){
 if (this.diff != null){
 if (existsInBuilder(builder)){
@@ -98,9 +84,8 @@ this.id = getEntityData().createEntityId()
 this.currentEntityData = null
 // Process linked entities that are connected without a builder
 processLinkedEntities(builder)
-checkInitialization() // TODO uncomment and check failed tests
+checkInitialization()
 }
-
 private fun checkInitialization(){
 val _diff = diff
 if (!getEntityData().isEntitySourceInitialized()){
@@ -129,7 +114,7 @@ error("Field ChildEntity#cChildEntityProperty should be initialized")
 }
 }
 override fun connectionIdList(): List<ConnectionId>{
-return connections
+return emptyList()
 }
 // Relabeling code, move information from dataSource to this builder
 override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?){
@@ -144,73 +129,65 @@ if (this.sealedDataClassProperty != dataSource.sealedDataClassProperty) this.sea
 if (this.cChildEntityProperty != dataSource.cChildEntityProperty) this.cChildEntityProperty = dataSource.cChildEntityProperty
 updateChildToParentReferences(parents)
 }
-
-        
 override var entitySource: EntitySource
 get() = getEntityData().entitySource
-set(value) {
+set(value){
 checkModificationAllowed()
 getEntityData(true).entitySource = value
 changedProperty.add("entitySource")
-
 }
 override var name: String
 get() = getEntityData().name
-set(value) {
+set(value){
 checkModificationAllowed()
 getEntityData(true).name = value
 changedProperty.add("name")
 }
 override var moduleId: SimpleId
 get() = getEntityData().moduleId
-set(value) {
+set(value){
 checkModificationAllowed()
 getEntityData(true).moduleId = value
 changedProperty.add("moduleId")
-
 }
 override var aBaseEntityProperty: String
 get() = getEntityData().aBaseEntityProperty
-set(value) {
+set(value){
 checkModificationAllowed()
 getEntityData(true).aBaseEntityProperty = value
 changedProperty.add("aBaseEntityProperty")
 }
 override var dBaseEntityProperty: String
 get() = getEntityData().dBaseEntityProperty
-set(value) {
+set(value){
 checkModificationAllowed()
 getEntityData(true).dBaseEntityProperty = value
 changedProperty.add("dBaseEntityProperty")
 }
 override var bBaseEntityProperty: String
 get() = getEntityData().bBaseEntityProperty
-set(value) {
+set(value){
 checkModificationAllowed()
 getEntityData(true).bBaseEntityProperty = value
 changedProperty.add("bBaseEntityProperty")
 }
 override var sealedDataClassProperty: BaseDataClass
 get() = getEntityData().sealedDataClassProperty
-set(value) {
+set(value){
 checkModificationAllowed()
 getEntityData(true).sealedDataClassProperty = value
 changedProperty.add("sealedDataClassProperty")
-
 }
 override var cChildEntityProperty: String
 get() = getEntityData().cChildEntityProperty
-set(value) {
+set(value){
 checkModificationAllowed()
 getEntityData(true).cChildEntityProperty = value
 changedProperty.add("cChildEntityProperty")
 }
-
 override fun getEntityClass(): Class<ChildEntity> = ChildEntity::class.java
 }
-
 }
-
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ChildEntityData : WorkspaceEntityData<ChildEntity>(), SoftLinkable{
 lateinit var name: String
@@ -220,7 +197,6 @@ lateinit var dBaseEntityProperty: String
 lateinit var bBaseEntityProperty: String
 lateinit var sealedDataClassProperty: BaseDataClass
 lateinit var cChildEntityProperty: String
-
 internal fun isNameInitialized(): Boolean = ::name.isInitialized
 internal fun isModuleIdInitialized(): Boolean = ::moduleId.isInitialized
 internal fun isABaseEntityPropertyInitialized(): Boolean = ::aBaseEntityProperty.isInitialized
@@ -228,51 +204,19 @@ internal fun isDBaseEntityPropertyInitialized(): Boolean = ::dBaseEntityProperty
 internal fun isBBaseEntityPropertyInitialized(): Boolean = ::bBaseEntityProperty.isInitialized
 internal fun isSealedDataClassPropertyInitialized(): Boolean = ::sealedDataClassProperty.isInitialized
 internal fun isCChildEntityPropertyInitialized(): Boolean = ::cChildEntityProperty.isInitialized
-
 override fun getLinks(): Set<SymbolicEntityId<*>>{
 val result = HashSet<SymbolicEntityId<*>>()
 result.add(moduleId)
-val _sealedDataClassProperty = sealedDataClassProperty
-when (_sealedDataClassProperty){
-is DerivedDataClass -> {
-val __sealedDataClassProperty = _sealedDataClassProperty
-when (__sealedDataClassProperty){
-is DerivedDerivedDataClass -> {
-}
-}
-}
-}
 return result
 }
 override fun index(index: WorkspaceMutableIndex<SymbolicEntityId<*>>){
 index.index(this, moduleId)
-val _sealedDataClassProperty = sealedDataClassProperty
-when (_sealedDataClassProperty){
-is DerivedDataClass -> {
-val __sealedDataClassProperty = _sealedDataClassProperty
-when (__sealedDataClassProperty){
-is DerivedDerivedDataClass -> {
-}
-}
-}
-}
 }
 override fun updateLinksIndex(prev: Set<SymbolicEntityId<*>>, index: WorkspaceMutableIndex<SymbolicEntityId<*>>){
-// TODO verify logic
 val mutablePreviousSet = HashSet(prev)
 val removedItem_moduleId = mutablePreviousSet.remove(moduleId)
 if (!removedItem_moduleId){
 index.index(this, moduleId)
-}
-val _sealedDataClassProperty = sealedDataClassProperty
-when (_sealedDataClassProperty){
-is DerivedDataClass -> {
-val __sealedDataClassProperty = _sealedDataClassProperty
-when (__sealedDataClassProperty){
-is DerivedDerivedDataClass -> {
-}
-}
-}
 }
 for (removed in mutablePreviousSet){
 index.remove(this, removed)
@@ -290,21 +234,6 @@ null
 if (moduleId_data != null){
 moduleId = moduleId_data
 }
-val _sealedDataClassProperty = sealedDataClassProperty
-val res_sealedDataClassProperty = when (_sealedDataClassProperty){
-is DerivedDataClass -> {
-val __sealedDataClassProperty = _sealedDataClassProperty
-val res__sealedDataClassProperty = when (__sealedDataClassProperty){
-is DerivedDerivedDataClass -> {
-__sealedDataClassProperty
-}
-}
-res__sealedDataClassProperty
-}
-}
-if (res_sealedDataClassProperty != null){
-sealedDataClassProperty = res_sealedDataClassProperty
-}
 return changed
 }
 override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<ChildEntity>{
@@ -313,7 +242,6 @@ modifiable.diff = diff
 modifiable.id = createEntityId()
 return modifiable
 }
-
 override fun createEntity(snapshot: EntityStorageInstrumentation): ChildEntity{
 val entityId = createEntityId()
 return snapshot.initializeEntity(entityId){
@@ -323,24 +251,19 @@ entity.id = entityId
 entity
 }
 }
-
 override fun getMetadata(): EntityMetadata{
 return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.workspaceModel.test.api.ChildEntity") as EntityMetadata
 }
-
 override fun getEntityInterface(): Class<out WorkspaceEntity>{
 return ChildEntity::class.java
 }
-
 override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*>{
 return ChildEntity(name, moduleId, aBaseEntityProperty, dBaseEntityProperty, bBaseEntityProperty, sealedDataClassProperty, cChildEntityProperty, entitySource)
 }
-
 override fun getRequiredParents(): List<Class<out WorkspaceEntity>>{
 val res = mutableListOf<Class<out WorkspaceEntity>>()
 return res
 }
-
 override fun equals(other: Any?): Boolean{
 if (other == null) return false
 if (this.javaClass != other.javaClass) return false
@@ -355,7 +278,6 @@ if (this.sealedDataClassProperty != other.sealedDataClassProperty) return false
 if (this.cChildEntityProperty != other.cChildEntityProperty) return false
 return true
 }
-
 override fun equalsIgnoringEntitySource(other: Any?): Boolean{
 if (other == null) return false
 if (this.javaClass != other.javaClass) return false
@@ -369,7 +291,6 @@ if (this.sealedDataClassProperty != other.sealedDataClassProperty) return false
 if (this.cChildEntityProperty != other.cChildEntityProperty) return false
 return true
 }
-
 override fun hashCode(): Int{
 var result = entitySource.hashCode()
 result = 31 * result + name.hashCode()

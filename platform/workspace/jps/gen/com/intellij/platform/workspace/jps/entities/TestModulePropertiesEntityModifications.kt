@@ -20,7 +20,7 @@ interface TestModulePropertiesEntityBuilder : WorkspaceEntityBuilder<TestModuleP
 }
 
 internal object TestModulePropertiesEntityType : EntityType<TestModulePropertiesEntity, TestModulePropertiesEntityBuilder>() {
-  override val entityClass: Class<TestModulePropertiesEntity> get() = TestModulePropertiesEntity::class.java
+  override val entityImplClass: Class<*> get() = TestModulePropertiesEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = TestModulePropertiesEntityImpl.Builder::class.java
   operator fun invoke(
     productionModuleId: ModuleId,

@@ -16,9 +16,8 @@ var version: Int
 var name: String
 var isSimple: Boolean
 }
-
 internal object NoCompatibilityEntityType : EntityType<NoCompatibilityEntity, NoCompatibilityEntityBuilder>(){
-override val entityClass: Class<NoCompatibilityEntity> get() = NoCompatibilityEntity::class.java
+override val entityImplClass: Class<*> get() = NoCompatibilityEntityImpl::class.java
 override val entityImplBuilderClass: Class<*> get() = NoCompatibilityEntityImpl.Builder::class.java
 operator fun invoke(
 version: Int,
@@ -36,12 +35,10 @@ init?.invoke(builder)
 return builder
 }
 }
-
 fun MutableEntityStorage.modifyNoCompatibilityEntity(
 entity: NoCompatibilityEntity,
 modification: NoCompatibilityEntityBuilder.() -> Unit,
 ): NoCompatibilityEntity = modifyEntity(NoCompatibilityEntityBuilder::class.java, entity, modification)
-
 @JvmOverloads
 @JvmName("createNoCompatibilityEntity")
 fun NoCompatibilityEntity(

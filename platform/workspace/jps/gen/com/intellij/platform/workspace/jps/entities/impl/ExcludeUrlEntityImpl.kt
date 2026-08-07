@@ -25,18 +25,11 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ExcludeUrlEntityImpl(private val dataSource: ExcludeUrlEntityData) : ExcludeUrlEntity, WorkspaceEntityBase(dataSource) {
 
-  private companion object {
-
-    private val connections = listOf<ConnectionId>()
-
-  }
-
   override val url: VirtualFileUrl
     get() {
       readField("url")
       return dataSource.url
     }
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -44,9 +37,8 @@ internal class ExcludeUrlEntityImpl(private val dataSource: ExcludeUrlEntityData
     }
 
   override fun connectionIdList(): List<ConnectionId> {
-    return connections
+    return emptyList()
   }
-
 
   internal class Builder(result: ExcludeUrlEntityData?) : ModifiableWorkspaceEntityBase<ExcludeUrlEntity, ExcludeUrlEntityData>(result),
                                                           ExcludeUrlEntity.Builder {
@@ -71,7 +63,7 @@ internal class ExcludeUrlEntityImpl(private val dataSource: ExcludeUrlEntityData
       index(this, "url", this.url)
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -85,7 +77,7 @@ internal class ExcludeUrlEntityImpl(private val dataSource: ExcludeUrlEntityData
     }
 
     override fun connectionIdList(): List<ConnectionId> {
-      return connections
+      return emptyList()
     }
 
     // Relabeling code, move information from dataSource to this builder
@@ -96,14 +88,12 @@ internal class ExcludeUrlEntityImpl(private val dataSource: ExcludeUrlEntityData
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var url: VirtualFileUrl
       get() = getEntityData().url
@@ -117,15 +107,12 @@ internal class ExcludeUrlEntityImpl(private val dataSource: ExcludeUrlEntityData
 
     override fun getEntityClass(): Class<ExcludeUrlEntity> = ExcludeUrlEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ExcludeUrlEntityData : WorkspaceEntityData<ExcludeUrlEntity>() {
   lateinit var url: VirtualFileUrl
-
   internal fun isUrlInitialized(): Boolean = ::url.isInitialized
-
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<ExcludeUrlEntity> {
     val modifiable = ExcludeUrlEntityImpl.Builder(null)
     modifiable.diff = diff

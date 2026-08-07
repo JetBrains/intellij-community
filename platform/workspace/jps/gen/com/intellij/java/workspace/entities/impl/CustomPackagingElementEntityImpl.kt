@@ -33,7 +33,6 @@ import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class CustomPackagingElementEntityImpl(private val dataSource: CustomPackagingElementEntityData) : CustomPackagingElementEntity,
                                                                                                             WorkspaceEntityBase(dataSource) {
-
   private companion object {
     internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(CompositePackagingElementEntity::class.java,
                                                                                 PackagingElementEntity::class.java,
@@ -48,7 +47,6 @@ internal class CustomPackagingElementEntityImpl(private val dataSource: CustomPa
                                                                             ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY,
                                                                             true)
     private val connections = listOf<ConnectionId>(PARENTENTITY_CONNECTION_ID, ARTIFACT_CONNECTION_ID, CHILDREN_CONNECTION_ID)
-
   }
 
   override val parentEntity: CompositePackagingElementEntity?
@@ -56,8 +54,9 @@ internal class CustomPackagingElementEntityImpl(private val dataSource: CustomPa
   override val artifact: ArtifactEntity?
     get() = snapshot.instrumentation.getParent(ARTIFACT_CONNECTION_ID, this) as? ArtifactEntity
   override val children: List<PackagingElementEntity>
+    @Suppress("UNCHECKED_CAST")
     get() = (snapshot.instrumentation.getManyChildren(CHILDREN_CONNECTION_ID, this) as? Sequence<PackagingElementEntity>)?.toList()
-            ?: error("Children children not found for CompositePackagingElementEntity")
+            ?: error("Children list children not found for CompositePackagingElementEntity")
   override val typeId: String
     get() {
       readField("typeId")
@@ -68,7 +67,6 @@ internal class CustomPackagingElementEntityImpl(private val dataSource: CustomPa
       readField("propertiesXmlTag")
       return dataSource.propertiesXmlTag
     }
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -78,7 +76,6 @@ internal class CustomPackagingElementEntityImpl(private val dataSource: CustomPa
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
-
 
   internal class Builder(result: CustomPackagingElementEntityData?) :
     ModifiableWorkspaceEntityBase<CustomPackagingElementEntity, CustomPackagingElementEntityData>(result),
@@ -103,7 +100,7 @@ internal class CustomPackagingElementEntityImpl(private val dataSource: CustomPa
       this.currentEntityData = null
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -143,14 +140,12 @@ internal class CustomPackagingElementEntityImpl(private val dataSource: CustomPa
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var parentEntity: CompositePackagingElementEntityBuilder<out CompositePackagingElementEntity>?
       get() {
@@ -171,11 +166,10 @@ internal class CustomPackagingElementEntityImpl(private val dataSource: CustomPa
         val _diff = diff
         if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
 // Setting backref of the list
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            val data = (value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
-            value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = data
-          }
-// else you're attaching a new entity to an existing entity that is not modifiable
+          @Suppress("UNCHECKED_CAST")
+          val data = (value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
+          value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = data
+          @Suppress("UNCHECKED_CAST")
           _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
@@ -184,15 +178,14 @@ internal class CustomPackagingElementEntityImpl(private val dataSource: CustomPa
         else {
 // Setting backref of the list
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
+            @Suppress("UNCHECKED_CAST")
             val data = (value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
             value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = data
           }
-// else you're attaching a new entity to an existing entity that is not modifiable
           this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] = value
         }
         changedProperty.add("parentEntity")
       }
-
     override var artifact: ArtifactEntityBuilder?
       get() {
         val _diff = diff
@@ -208,10 +201,8 @@ internal class CustomPackagingElementEntityImpl(private val dataSource: CustomPa
         checkModificationAllowed()
         val _diff = diff
         if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(true, ARTIFACT_CONNECTION_ID)] = this
-          }
-// else you're attaching a new entity to an existing entity that is not modifiable
+          value.entityLinks[EntityLink(true, ARTIFACT_CONNECTION_ID)] = this
+          @Suppress("UNCHECKED_CAST")
           _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
@@ -221,12 +212,10 @@ internal class CustomPackagingElementEntityImpl(private val dataSource: CustomPa
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(true, ARTIFACT_CONNECTION_ID)] = this
           }
-// else you're attaching a new entity to an existing entity that is not modifiable
           this.entityLinks[EntityLink(false, ARTIFACT_CONNECTION_ID)] = value
         }
         changedProperty.add("artifact")
       }
-
     override var children: List<PackagingElementEntityBuilder<out PackagingElementEntity>>
       get() {
         val _diff = diff
@@ -237,6 +226,7 @@ internal class CustomPackagingElementEntityImpl(private val dataSource: CustomPa
                                                                                              ?: emptyList())
         }
         else {
+          @Suppress("UNCHECKED_CAST")
           this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as List<PackagingElementEntityBuilder<out PackagingElementEntity>>
           ?: emptyList()
         }
@@ -249,10 +239,8 @@ internal class CustomPackagingElementEntityImpl(private val dataSource: CustomPa
           for (item_value in value) {
             if (item_value is ModifiableWorkspaceEntityBase<*, *> && (item_value as? ModifiableWorkspaceEntityBase<*, *>)?.diff == null) {
 // Backref setup before adding to store an abstract entity
-              if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
-                item_value.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)] = this
-              }
-// else you're attaching a new entity to an existing entity that is not modifiable
+              item_value.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)] = this
+              @Suppress("UNCHECKED_CAST")
               _diff.addEntity(item_value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
             }
           }
@@ -263,13 +251,11 @@ internal class CustomPackagingElementEntityImpl(private val dataSource: CustomPa
             if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
               item_value.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)] = this
             }
-// else you're attaching a new entity to an existing entity that is not modifiable
           }
           this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] = value
         }
         changedProperty.add("children")
       }
-
     override var typeId: String
       get() = getEntityData().typeId
       set(value) {
@@ -287,17 +273,14 @@ internal class CustomPackagingElementEntityImpl(private val dataSource: CustomPa
 
     override fun getEntityClass(): Class<CustomPackagingElementEntity> = CustomPackagingElementEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class CustomPackagingElementEntityData : WorkspaceEntityData<CustomPackagingElementEntity>() {
   lateinit var typeId: String
   lateinit var propertiesXmlTag: String
-
   internal fun isTypeIdInitialized(): Boolean = ::typeId.isInitialized
   internal fun isPropertiesXmlTagInitialized(): Boolean = ::propertiesXmlTag.isInitialized
-
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<CustomPackagingElementEntity> {
     val modifiable = CustomPackagingElementEntityImpl.Builder(null)
     modifiable.diff = diff

@@ -33,26 +33,22 @@ import org.jetbrains.idea.eclipse.config.EclipseProjectPropertiesEntityBuilder
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class EclipseProjectPropertiesEntityImpl(private val dataSource: EclipseProjectPropertiesEntityData) :
   EclipseProjectPropertiesEntity, WorkspaceEntityBase(dataSource) {
-
   private companion object {
     internal val MODULE_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java,
                                                                           EclipseProjectPropertiesEntity::class.java,
                                                                           ConnectionId.ConnectionType.ONE_TO_ONE,
                                                                           false)
     private val connections = listOf<ConnectionId>(MODULE_CONNECTION_ID)
-
   }
 
   override val module: ModuleEntity
     get() = snapshot.instrumentation.getParent(MODULE_CONNECTION_ID, this) as? ModuleEntity
             ?: error("Parent module not found for EclipseProjectPropertiesEntity")
-
   override val variablePaths: Map<String, String>
     get() {
       readField("variablePaths")
       return dataSource.variablePaths
     }
-
   override val eclipseUrls: List<VirtualFileUrl>
     get() {
       readField("eclipseUrls")
@@ -78,13 +74,11 @@ internal class EclipseProjectPropertiesEntityImpl(private val dataSource: Eclips
       readField("expectedModuleSourcePlace")
       return dataSource.expectedModuleSourcePlace
     }
-
   override val srcPlace: Map<String, Int>
     get() {
       readField("srcPlace")
       return dataSource.srcPlace
     }
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -94,7 +88,6 @@ internal class EclipseProjectPropertiesEntityImpl(private val dataSource: Eclips
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
-
 
   internal class Builder(result: EclipseProjectPropertiesEntityData?) :
     ModifiableWorkspaceEntityBase<EclipseProjectPropertiesEntity, EclipseProjectPropertiesEntityData>(result),
@@ -120,7 +113,7 @@ internal class EclipseProjectPropertiesEntityImpl(private val dataSource: Eclips
       index(this, "eclipseUrls", this.eclipseUrls)
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -189,14 +182,12 @@ internal class EclipseProjectPropertiesEntityImpl(private val dataSource: Eclips
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var module: ModuleEntityBuilder
       get() {
@@ -215,10 +206,8 @@ internal class EclipseProjectPropertiesEntityImpl(private val dataSource: Eclips
         checkModificationAllowed()
         val _diff = diff
         if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] = this
-          }
-// else you're attaching a new entity to an existing entity that is not modifiable
+          value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] = this
+          @Suppress("UNCHECKED_CAST")
           _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
@@ -228,12 +217,10 @@ internal class EclipseProjectPropertiesEntityImpl(private val dataSource: Eclips
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] = this
           }
-// else you're attaching a new entity to an existing entity that is not modifiable
           this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)] = value
         }
         changedProperty.add("module")
       }
-
     override var variablePaths: Map<String, String>
       get() = getEntityData().variablePaths
       set(value) {
@@ -329,7 +316,6 @@ internal class EclipseProjectPropertiesEntityImpl(private val dataSource: Eclips
 
     override fun getEntityClass(): Class<EclipseProjectPropertiesEntity> = EclipseProjectPropertiesEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
@@ -341,15 +327,11 @@ internal class EclipseProjectPropertiesEntityData : WorkspaceEntityData<EclipseP
   var forceConfigureJdk: Boolean = false
   var expectedModuleSourcePlace: Int = 0
   lateinit var srcPlace: Map<String, Int>
-
   internal fun isVariablePathsInitialized(): Boolean = ::variablePaths.isInitialized
   internal fun isEclipseUrlsInitialized(): Boolean = ::eclipseUrls.isInitialized
   internal fun isUnknownConsInitialized(): Boolean = ::unknownCons.isInitialized
   internal fun isKnownConsInitialized(): Boolean = ::knownCons.isInitialized
-
-
   internal fun isSrcPlaceInitialized(): Boolean = ::srcPlace.isInitialized
-
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<EclipseProjectPropertiesEntity> {
     val modifiable = EclipseProjectPropertiesEntityImpl.Builder(null)
     modifiable.diff = diff

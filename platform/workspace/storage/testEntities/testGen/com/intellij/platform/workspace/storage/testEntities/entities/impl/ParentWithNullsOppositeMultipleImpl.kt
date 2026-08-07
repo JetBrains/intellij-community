@@ -26,18 +26,11 @@ import com.intellij.platform.workspace.storage.testEntities.entities.ParentWithN
 internal class ParentWithNullsOppositeMultipleImpl(private val dataSource: ParentWithNullsOppositeMultipleData) :
   ParentWithNullsOppositeMultiple, WorkspaceEntityBase(dataSource) {
 
-  private companion object {
-
-    private val connections = listOf<ConnectionId>()
-
-  }
-
   override val parentData: String
     get() {
       readField("parentData")
       return dataSource.parentData
     }
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -45,9 +38,8 @@ internal class ParentWithNullsOppositeMultipleImpl(private val dataSource: Paren
     }
 
   override fun connectionIdList(): List<ConnectionId> {
-    return connections
+    return emptyList()
   }
-
 
   internal class Builder(result: ParentWithNullsOppositeMultipleData?) :
     ModifiableWorkspaceEntityBase<ParentWithNullsOppositeMultiple, ParentWithNullsOppositeMultipleData>(result),
@@ -72,7 +64,7 @@ internal class ParentWithNullsOppositeMultipleImpl(private val dataSource: Paren
       this.currentEntityData = null
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -86,7 +78,7 @@ internal class ParentWithNullsOppositeMultipleImpl(private val dataSource: Paren
     }
 
     override fun connectionIdList(): List<ConnectionId> {
-      return connections
+      return emptyList()
     }
 
     // Relabeling code, move information from dataSource to this builder
@@ -97,14 +89,12 @@ internal class ParentWithNullsOppositeMultipleImpl(private val dataSource: Paren
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var parentData: String
       get() = getEntityData().parentData
@@ -116,15 +106,12 @@ internal class ParentWithNullsOppositeMultipleImpl(private val dataSource: Paren
 
     override fun getEntityClass(): Class<ParentWithNullsOppositeMultiple> = ParentWithNullsOppositeMultiple::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ParentWithNullsOppositeMultipleData : WorkspaceEntityData<ParentWithNullsOppositeMultiple>() {
   lateinit var parentData: String
-
   internal fun isParentDataInitialized(): Boolean = ::parentData.isInitialized
-
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<ParentWithNullsOppositeMultiple> {
     val modifiable = ParentWithNullsOppositeMultipleImpl.Builder(null)
     modifiable.diff = diff

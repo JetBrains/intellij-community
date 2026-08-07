@@ -12,9 +12,7 @@ import com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata
 @OptIn(WorkspaceEntityInternalApi::class)
 internal object MetadataStorageImpl : MetadataStorageBase() {
   override fun initializeMetadata() {
-
     var typeMetadata: StorageTypeMetadata
-
     typeMetadata =
       FinalClassMetadata.ObjectMetadata(fqName = "com.intellij.python.externalIndex.workspace.PyExternalIndexedFileEntitySource",
                                         properties = listOf(OwnPropertyMetadata(isComputable = false,
@@ -26,9 +24,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                                                   typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")),
                                                                                 withDefault = false)),
                                         supertypes = listOf("com.intellij.platform.workspace.storage.EntitySource"))
-
     addMetadata(typeMetadata)
-
     typeMetadata = EntityMetadata(fqName = "com.intellij.python.externalIndex.workspace.PyExternalIndexedFileEntity",
                                   entityDataFqName = "com.intellij.python.externalIndex.workspace.impl.PyExternalIndexedFileEntityData",
                                   supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity"),
@@ -50,7 +46,6 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                                           withDefault = false)),
                                   extProperties = listOf(),
                                   isAbstract = false)
-
     addMetadata(typeMetadata)
   }
 

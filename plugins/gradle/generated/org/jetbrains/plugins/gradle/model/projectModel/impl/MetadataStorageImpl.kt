@@ -17,9 +17,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
   override fun initializeMetadata() {
     val primitiveTypeIntNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "Int")
     val primitiveTypeStringNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "String")
-
     var typeMetadata: StorageTypeMetadata
-
     typeMetadata = FinalClassMetadata.ClassMetadata(fqName = "org.jetbrains.plugins.gradle.model.projectModel.GradleBuildEntityId",
                                                     properties = listOf(OwnPropertyMetadata(isComputable = false,
                                                                                             isKey = false,
@@ -74,9 +72,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                                                                 fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")),
                                                                                             withDefault = false)),
                                                     supertypes = listOf("com.intellij.platform.workspace.storage.SymbolicEntityId"))
-
     addMetadata(typeMetadata)
-
     typeMetadata = FinalClassMetadata.ClassMetadata(fqName = "org.jetbrains.plugins.gradle.model.projectModel.GradleProjectEntityId",
                                                     properties = listOf(OwnPropertyMetadata(isComputable = false,
                                                                                             isKey = false,
@@ -165,9 +161,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                                                             valueType = primitiveTypeStringNotNullable,
                                                                                             withDefault = false)),
                                                     supertypes = listOf("com.intellij.platform.workspace.storage.SymbolicEntityId"))
-
     addMetadata(typeMetadata)
-
     typeMetadata =
       FinalClassMetadata.ClassMetadata(fqName = "org.jetbrains.plugins.gradle.service.syncAction.impl.bridge.ModuleToGradleProjectConnector\$GradleBridgeModuleEntitySource",
                                        properties = listOf(OwnPropertyMetadata(isComputable = false,
@@ -179,9 +173,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                                                  typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")),
                                                                                withDefault = false)),
                                        supertypes = listOf("com.intellij.platform.workspace.storage.EntitySource"))
-
     addMetadata(typeMetadata)
-
     typeMetadata =
       FinalClassMetadata.ClassMetadata(fqName = "org.jetbrains.plugins.gradle.service.syncAction.impl.bridge.SyntheticEntitySourceMarker\$DataServiceEntitySource",
                                        properties = listOf(OwnPropertyMetadata(isComputable = false,
@@ -331,9 +323,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                                                withDefault = false)),
                                        supertypes = listOf("com.intellij.platform.workspace.storage.EntitySource",
                                                            "org.jetbrains.plugins.gradle.service.syncAction.GradleEntitySource"))
-
     addMetadata(typeMetadata)
-
     typeMetadata =
       FinalClassMetadata.ClassMetadata(fqName = "org.jetbrains.plugins.gradle.service.syncAction.impl.contributors.GradleVersionCatalogSyncContributor\$GradleVersionCatalogEntitySource",
                                        properties = listOf(OwnPropertyMetadata(isComputable = false,
@@ -483,9 +473,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                                                withDefault = false)),
                                        supertypes = listOf("com.intellij.platform.workspace.storage.EntitySource",
                                                            "org.jetbrains.plugins.gradle.service.syncAction.GradleEntitySource"))
-
     addMetadata(typeMetadata)
-
     typeMetadata =
       FinalClassMetadata.ClassMetadata(fqName = "org.jetbrains.plugins.gradle.service.syncAction.impl.contributors.GradleContentRootSyncContributor\$GradleContentRootEntitySource",
                                        properties = listOf(OwnPropertyMetadata(isComputable = false,
@@ -636,9 +624,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                        supertypes = listOf("com.intellij.platform.workspace.storage.EntitySource",
                                                            "org.jetbrains.plugins.gradle.service.syncAction.GradleEntitySource",
                                                            "org.jetbrains.plugins.gradle.service.syncAction.impl.bridge.GradleBridgeEntitySource"))
-
     addMetadata(typeMetadata)
-
     typeMetadata =
       FinalClassMetadata.ClassMetadata(fqName = "org.jetbrains.plugins.gradle.service.syncAction.impl.contributors.GradleContentRootSyncContributor\$GradleProjectModelEntitySource",
                                        properties = listOf(OwnPropertyMetadata(isComputable = false,
@@ -788,9 +774,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                                                withDefault = false)),
                                        supertypes = listOf("com.intellij.platform.workspace.storage.EntitySource",
                                                            "org.jetbrains.plugins.gradle.service.syncAction.GradleEntitySource"))
-
     addMetadata(typeMetadata)
-
     typeMetadata =
       FinalClassMetadata.ClassMetadata(fqName = "org.jetbrains.plugins.gradle.service.syncAction.impl.contributors.GradleProjectRootSyncContributor\$GradleProjectRootEntitySource",
                                        properties = listOf(OwnPropertyMetadata(isComputable = false,
@@ -941,9 +925,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                        supertypes = listOf("com.intellij.platform.workspace.storage.EntitySource",
                                                            "org.jetbrains.plugins.gradle.service.syncAction.GradleEntitySource",
                                                            "org.jetbrains.plugins.gradle.service.syncAction.impl.bridge.GradleBridgeEntitySource"))
-
     addMetadata(typeMetadata)
-
     typeMetadata = EntityMetadata(fqName = "org.jetbrains.plugins.gradle.model.projectModel.GradleBuildEntity",
                                   entityDataFqName = "org.jetbrains.plugins.gradle.model.projectModel.impl.GradleBuildEntityData",
                                   supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity",
@@ -1099,9 +1081,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                                                                                            isNullable = false),
                                                                              withDefault = false)),
                                   isAbstract = false)
-
     addMetadata(typeMetadata)
-
     typeMetadata = EntityMetadata(fqName = "org.jetbrains.plugins.gradle.model.projectModel.GradleExternalProjectEntity",
                                   entityDataFqName = "org.jetbrains.plugins.gradle.model.projectModel.impl.GradleExternalProjectEntityData",
                                   supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity"),
@@ -1138,9 +1118,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                                                                                            isNullable = false),
                                                                              withDefault = false)),
                                   isAbstract = false)
-
     addMetadata(typeMetadata)
-
     typeMetadata = EntityMetadata(fqName = "org.jetbrains.plugins.gradle.model.projectModel.GradleModuleEntity",
                                   entityDataFqName = "org.jetbrains.plugins.gradle.model.projectModel.impl.GradleModuleEntityData",
                                   supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity"),
@@ -1274,9 +1252,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                                                                                            isNullable = true),
                                                                              withDefault = false)),
                                   isAbstract = false)
-
     addMetadata(typeMetadata)
-
     typeMetadata = EntityMetadata(fqName = "org.jetbrains.plugins.gradle.model.projectModel.GradleProjectEntity",
                                   entityDataFqName = "org.jetbrains.plugins.gradle.model.projectModel.impl.GradleProjectEntityData",
                                   supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity",
@@ -1504,9 +1480,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                                           withDefault = false)),
                                   extProperties = listOf(),
                                   isAbstract = false)
-
     addMetadata(typeMetadata)
-
     typeMetadata = EntityMetadata(fqName = "org.jetbrains.plugins.gradle.model.versionCatalogs.GradleVersionCatalogEntity",
                                   entityDataFqName = "org.jetbrains.plugins.gradle.model.versionCatalogs.impl.GradleVersionCatalogEntityData",
                                   supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity"),
@@ -1551,22 +1525,21 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                                                                                            isNullable = false),
                                                                              withDefault = false)),
                                   isAbstract = false)
-
     addMetadata(typeMetadata)
   }
 
   override fun initializeMetadataHash() {
     addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.model.projectModel.GradleBuildEntity", metadataHash = 1853164449)
-    addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.model.projectModel.GradleExternalProjectEntity", metadataHash = -2026182677)
-    addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.model.projectModel.GradleModuleEntity", metadataHash = 418255750)
-    addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.model.projectModel.GradleProjectEntity", metadataHash = 650134225)
-    addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.model.versionCatalogs.GradleVersionCatalogEntity", metadataHash = -1616609179)
     addMetadataHash(typeFqn = "com.intellij.platform.externalSystem.impl.workspaceModel.ExternalProjectEntityId",
                     metadataHash = -1650256201)
     addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.model.projectModel.GradleBuildEntityId", metadataHash = 843983143)
+    addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.model.projectModel.GradleExternalProjectEntity", metadataHash = -2026182677)
+    addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.model.projectModel.GradleModuleEntity", metadataHash = 418255750)
     addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.model.projectModel.GradleProjectEntityId", metadataHash = -443877510)
+    addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.model.projectModel.GradleProjectEntity", metadataHash = 650134225)
+    addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.model.versionCatalogs.GradleVersionCatalogEntity", metadataHash = -1616609179)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.SymbolicEntityId", metadataHash = -1894859879)
-    addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.EntitySource", metadataHash = -1471524737)
+    addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.EntitySource", metadataHash = 1637225356)
     addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.service.syncAction.GradleEntitySource", metadataHash = -565169080)
     addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.service.syncAction.impl.bridge.GradleBridgeEntitySource",
                     metadataHash = 1645182578)

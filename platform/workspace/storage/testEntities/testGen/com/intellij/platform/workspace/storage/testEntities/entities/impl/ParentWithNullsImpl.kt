@@ -29,12 +29,10 @@ import com.intellij.platform.workspace.storage.testEntities.entities.ParentWithN
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ParentWithNullsImpl(private val dataSource: ParentWithNullsData) : ParentWithNulls, WorkspaceEntityBase(dataSource) {
-
   private companion object {
     internal val CHILD_CONNECTION_ID: ConnectionId =
       ConnectionId.create(ParentWithNulls::class.java, ChildWithNulls::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, true)
     private val connections = listOf<ConnectionId>(CHILD_CONNECTION_ID)
-
   }
 
   override val parentData: String
@@ -44,7 +42,6 @@ internal class ParentWithNullsImpl(private val dataSource: ParentWithNullsData) 
     }
   override val child: ChildWithNulls?
     get() = snapshot.instrumentation.getOneChild(CHILD_CONNECTION_ID, this) as? ChildWithNulls
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -54,7 +51,6 @@ internal class ParentWithNullsImpl(private val dataSource: ParentWithNullsData) 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
-
 
   internal class Builder(result: ParentWithNullsData?) : ModifiableWorkspaceEntityBase<ParentWithNulls, ParentWithNullsData>(result),
                                                          ParentWithNullsBuilder {
@@ -78,7 +74,7 @@ internal class ParentWithNullsImpl(private val dataSource: ParentWithNullsData) 
       this.currentEntityData = null
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -103,14 +99,12 @@ internal class ParentWithNullsImpl(private val dataSource: ParentWithNullsData) 
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var parentData: String
       get() = getEntityData().parentData
@@ -134,10 +128,8 @@ internal class ParentWithNullsImpl(private val dataSource: ParentWithNullsData) 
         checkModificationAllowed()
         val _diff = diff
         if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(false, CHILD_CONNECTION_ID)] = this
-          }
-// else you're attaching a new entity to an existing entity that is not modifiable
+          value.entityLinks[EntityLink(false, CHILD_CONNECTION_ID)] = this
+          @Suppress("UNCHECKED_CAST")
           _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
@@ -147,7 +139,6 @@ internal class ParentWithNullsImpl(private val dataSource: ParentWithNullsData) 
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(false, CHILD_CONNECTION_ID)] = this
           }
-// else you're attaching a new entity to an existing entity that is not modifiable
           this.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)] = value
         }
         changedProperty.add("child")
@@ -155,15 +146,12 @@ internal class ParentWithNullsImpl(private val dataSource: ParentWithNullsData) 
 
     override fun getEntityClass(): Class<ParentWithNulls> = ParentWithNulls::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ParentWithNullsData : WorkspaceEntityData<ParentWithNulls>() {
   lateinit var parentData: String
-
   internal fun isParentDataInitialized(): Boolean = ::parentData.isInitialized
-
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<ParentWithNulls> {
     val modifiable = ParentWithNullsImpl.Builder(null)
     modifiable.diff = diff

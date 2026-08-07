@@ -17,7 +17,7 @@ interface OptionalIntEntityBuilder : WorkspaceEntityBuilder<OptionalIntEntity> {
 }
 
 internal object OptionalIntEntityType : EntityType<OptionalIntEntity, OptionalIntEntityBuilder>() {
-  override val entityClass: Class<OptionalIntEntity> get() = OptionalIntEntity::class.java
+  override val entityImplClass: Class<*> get() = OptionalIntEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = OptionalIntEntityImpl.Builder::class.java
   operator fun invoke(
     entitySource: EntitySource,

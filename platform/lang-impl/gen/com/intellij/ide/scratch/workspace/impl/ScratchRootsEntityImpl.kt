@@ -29,18 +29,11 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 internal class ScratchRootsEntityImpl(private val dataSource: ScratchRootsEntityData) : ScratchRootsEntity,
                                                                                         WorkspaceEntityBase(dataSource) {
 
-  private companion object {
-
-    private val connections = listOf<ConnectionId>()
-
-  }
-
   override val roots: List<VirtualFileUrl>
     get() {
       readField("roots")
       return dataSource.roots
     }
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -48,9 +41,8 @@ internal class ScratchRootsEntityImpl(private val dataSource: ScratchRootsEntity
     }
 
   override fun connectionIdList(): List<ConnectionId> {
-    return connections
+    return emptyList()
   }
-
 
   internal class Builder(result: ScratchRootsEntityData?) :
     ModifiableWorkspaceEntityBase<ScratchRootsEntity, ScratchRootsEntityData>(result), ScratchRootsEntityBuilder {
@@ -75,7 +67,7 @@ internal class ScratchRootsEntityImpl(private val dataSource: ScratchRootsEntity
       index(this, "roots", this.roots)
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -89,7 +81,7 @@ internal class ScratchRootsEntityImpl(private val dataSource: ScratchRootsEntity
     }
 
     override fun connectionIdList(): List<ConnectionId> {
-      return connections
+      return emptyList()
     }
 
     override fun afterModification() {
@@ -107,14 +99,12 @@ internal class ScratchRootsEntityImpl(private val dataSource: ScratchRootsEntity
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     private val rootsUpdater: (value: List<VirtualFileUrl>) -> Unit = { value ->
       val _diff = diff
@@ -141,15 +131,12 @@ internal class ScratchRootsEntityImpl(private val dataSource: ScratchRootsEntity
 
     override fun getEntityClass(): Class<ScratchRootsEntity> = ScratchRootsEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ScratchRootsEntityData : WorkspaceEntityData<ScratchRootsEntity>() {
   lateinit var roots: MutableList<VirtualFileUrl>
-
   internal fun isRootsInitialized(): Boolean = ::roots.isInitialized
-
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<ScratchRootsEntity> {
     val modifiable = ScratchRootsEntityImpl.Builder(null)
     modifiable.diff = diff

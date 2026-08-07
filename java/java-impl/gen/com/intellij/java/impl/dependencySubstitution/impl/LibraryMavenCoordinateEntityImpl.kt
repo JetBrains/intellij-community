@@ -31,14 +31,12 @@ import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class LibraryMavenCoordinateEntityImpl(private val dataSource: LibraryMavenCoordinateEntityData) : LibraryMavenCoordinateEntity,
                                                                                                             WorkspaceEntityBase(dataSource) {
-
   private companion object {
     internal val LIBRARY_CONNECTION_ID: ConnectionId = ConnectionId.create(LibraryEntity::class.java,
                                                                            LibraryMavenCoordinateEntity::class.java,
                                                                            ConnectionId.ConnectionType.ONE_TO_ONE,
                                                                            false)
     private val connections = listOf<ConnectionId>(LIBRARY_CONNECTION_ID)
-
   }
 
   override val library: LibraryEntity
@@ -49,7 +47,6 @@ internal class LibraryMavenCoordinateEntityImpl(private val dataSource: LibraryM
       readField("coordinates")
       return dataSource.coordinates
     }
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -59,7 +56,6 @@ internal class LibraryMavenCoordinateEntityImpl(private val dataSource: LibraryM
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
-
 
   internal class Builder(result: LibraryMavenCoordinateEntityData?) :
     ModifiableWorkspaceEntityBase<LibraryMavenCoordinateEntity, LibraryMavenCoordinateEntityData>(result),
@@ -84,7 +80,7 @@ internal class LibraryMavenCoordinateEntityImpl(private val dataSource: LibraryM
       this.currentEntityData = null
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -119,14 +115,12 @@ internal class LibraryMavenCoordinateEntityImpl(private val dataSource: LibraryM
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var library: LibraryEntityBuilder
       get() {
@@ -145,10 +139,8 @@ internal class LibraryMavenCoordinateEntityImpl(private val dataSource: LibraryM
         checkModificationAllowed()
         val _diff = diff
         if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(true, LIBRARY_CONNECTION_ID)] = this
-          }
-// else you're attaching a new entity to an existing entity that is not modifiable
+          value.entityLinks[EntityLink(true, LIBRARY_CONNECTION_ID)] = this
+          @Suppress("UNCHECKED_CAST")
           _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
@@ -158,32 +150,26 @@ internal class LibraryMavenCoordinateEntityImpl(private val dataSource: LibraryM
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(true, LIBRARY_CONNECTION_ID)] = this
           }
-// else you're attaching a new entity to an existing entity that is not modifiable
           this.entityLinks[EntityLink(false, LIBRARY_CONNECTION_ID)] = value
         }
         changedProperty.add("library")
       }
-
     override var coordinates: MavenCoordinates
       get() = getEntityData().coordinates
       set(value) {
         checkModificationAllowed()
         getEntityData(true).coordinates = value
         changedProperty.add("coordinates")
-
       }
 
     override fun getEntityClass(): Class<LibraryMavenCoordinateEntity> = LibraryMavenCoordinateEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class LibraryMavenCoordinateEntityData : WorkspaceEntityData<LibraryMavenCoordinateEntity>() {
-  public lateinit var coordinates: MavenCoordinates
-
+  lateinit var coordinates: MavenCoordinates
   internal fun isCoordinatesInitialized(): Boolean = ::coordinates.isInitialized
-
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<LibraryMavenCoordinateEntity> {
     val modifiable = LibraryMavenCoordinateEntityImpl.Builder(null)
     modifiable.diff = diff

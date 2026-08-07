@@ -30,12 +30,10 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class JavaModuleSettingsEntityImpl(private val dataSource: JavaModuleSettingsEntityData) : JavaModuleSettingsEntity,
                                                                                                     WorkspaceEntityBase(dataSource) {
-
   private companion object {
     internal val MODULE_CONNECTION_ID: ConnectionId =
       ConnectionId.create(ModuleEntity::class.java, JavaModuleSettingsEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
     private val connections = listOf<ConnectionId>(MODULE_CONNECTION_ID)
-
   }
 
   override val module: ModuleEntity
@@ -67,7 +65,6 @@ internal class JavaModuleSettingsEntityImpl(private val dataSource: JavaModuleSe
       return dataSource.languageLevelId
     }
   override var manifestAttributes: Map<String, String> = dataSource.manifestAttributes
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -77,7 +74,6 @@ internal class JavaModuleSettingsEntityImpl(private val dataSource: JavaModuleSe
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
-
 
   internal class Builder(result: JavaModuleSettingsEntityData?) :
     ModifiableWorkspaceEntityBase<JavaModuleSettingsEntity, JavaModuleSettingsEntityData>(result), JavaModuleSettingsEntity.Builder {
@@ -103,7 +99,7 @@ internal class JavaModuleSettingsEntityImpl(private val dataSource: JavaModuleSe
       index(this, "compilerOutputForTests", this.compilerOutputForTests)
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -141,14 +137,12 @@ internal class JavaModuleSettingsEntityImpl(private val dataSource: JavaModuleSe
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var module: ModuleEntityBuilder
       get() {
@@ -167,10 +161,8 @@ internal class JavaModuleSettingsEntityImpl(private val dataSource: JavaModuleSe
         checkModificationAllowed()
         val _diff = diff
         if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] = this
-          }
-// else you're attaching a new entity to an existing entity that is not modifiable
+          value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] = this
+          @Suppress("UNCHECKED_CAST")
           _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
@@ -180,12 +172,10 @@ internal class JavaModuleSettingsEntityImpl(private val dataSource: JavaModuleSe
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] = this
           }
-// else you're attaching a new entity to an existing entity that is not modifiable
           this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)] = value
         }
         changedProperty.add("module")
       }
-
     override var inheritedCompilerOutput: Boolean
       get() = getEntityData().inheritedCompilerOutput
       set(value) {
@@ -235,7 +225,6 @@ internal class JavaModuleSettingsEntityImpl(private val dataSource: JavaModuleSe
 
     override fun getEntityClass(): Class<JavaModuleSettingsEntity> = JavaModuleSettingsEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
@@ -246,8 +235,6 @@ internal class JavaModuleSettingsEntityData : WorkspaceEntityData<JavaModuleSett
   var compilerOutputForTests: VirtualFileUrl? = null
   var languageLevelId: String? = null
   var manifestAttributes: Map<String, String> = emptyMap()
-
-
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<JavaModuleSettingsEntity> {
     val modifiable = JavaModuleSettingsEntityImpl.Builder(null)
     modifiable.diff = diff

@@ -25,18 +25,11 @@ import com.intellij.platform.workspace.storage.testEntities.entities.MainEntityB
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class MainEntityImpl(private val dataSource: MainEntityData) : MainEntity, WorkspaceEntityBase(dataSource) {
 
-  private companion object {
-
-    private val connections = listOf<ConnectionId>()
-
-  }
-
   override val x: String
     get() {
       readField("x")
       return dataSource.x
     }
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -44,9 +37,8 @@ internal class MainEntityImpl(private val dataSource: MainEntityData) : MainEnti
     }
 
   override fun connectionIdList(): List<ConnectionId> {
-    return connections
+    return emptyList()
   }
-
 
   internal class Builder(result: MainEntityData?) : ModifiableWorkspaceEntityBase<MainEntity, MainEntityData>(result), MainEntityBuilder {
     internal constructor() : this(MainEntityData())
@@ -69,7 +61,7 @@ internal class MainEntityImpl(private val dataSource: MainEntityData) : MainEnti
       this.currentEntityData = null
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -83,7 +75,7 @@ internal class MainEntityImpl(private val dataSource: MainEntityData) : MainEnti
     }
 
     override fun connectionIdList(): List<ConnectionId> {
-      return connections
+      return emptyList()
     }
 
     // Relabeling code, move information from dataSource to this builder
@@ -94,14 +86,12 @@ internal class MainEntityImpl(private val dataSource: MainEntityData) : MainEnti
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var x: String
       get() = getEntityData().x
@@ -113,15 +103,12 @@ internal class MainEntityImpl(private val dataSource: MainEntityData) : MainEnti
 
     override fun getEntityClass(): Class<MainEntity> = MainEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class MainEntityData : WorkspaceEntityData<MainEntity>() {
   lateinit var x: String
-
   internal fun isXInitialized(): Boolean = ::x.isInitialized
-
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<MainEntity> {
     val modifiable = MainEntityImpl.Builder(null)
     modifiable.diff = diff

@@ -31,14 +31,12 @@ import com.intellij.platform.workspace.storage.testEntities.entities.cacheVersio
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class AnotherOneToManyRefEntityImpl(private val dataSource: AnotherOneToManyRefEntityData) : AnotherOneToManyRefEntity,
                                                                                                       WorkspaceEntityBase(dataSource) {
-
   private companion object {
     internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(OneToManyRefEntity::class.java,
                                                                                 AnotherOneToManyRefEntity::class.java,
                                                                                 ConnectionId.ConnectionType.ONE_TO_MANY,
                                                                                 false)
     private val connections = listOf<ConnectionId>(PARENTENTITY_CONNECTION_ID)
-
   }
 
   override val parentEntity: OneToManyRefEntity
@@ -54,7 +52,6 @@ internal class AnotherOneToManyRefEntityImpl(private val dataSource: AnotherOneT
       readField("someData")
       return dataSource.someData
     }
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -64,7 +61,6 @@ internal class AnotherOneToManyRefEntityImpl(private val dataSource: AnotherOneT
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
-
 
   internal class Builder(result: AnotherOneToManyRefEntityData?) :
     ModifiableWorkspaceEntityBase<AnotherOneToManyRefEntity, AnotherOneToManyRefEntityData>(result), AnotherOneToManyRefEntityBuilder {
@@ -88,7 +84,7 @@ internal class AnotherOneToManyRefEntityImpl(private val dataSource: AnotherOneT
       this.currentEntityData = null
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -124,14 +120,12 @@ internal class AnotherOneToManyRefEntityImpl(private val dataSource: AnotherOneT
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var parentEntity: OneToManyRefEntityBuilder
       get() {
@@ -151,11 +145,10 @@ internal class AnotherOneToManyRefEntityImpl(private val dataSource: AnotherOneT
         val _diff = diff
         if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
 // Setting backref of the list
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            val data = (value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
-            value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = data
-          }
-// else you're attaching a new entity to an existing entity that is not modifiable
+          @Suppress("UNCHECKED_CAST")
+          val data = (value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
+          value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = data
+          @Suppress("UNCHECKED_CAST")
           _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
@@ -164,15 +157,14 @@ internal class AnotherOneToManyRefEntityImpl(private val dataSource: AnotherOneT
         else {
 // Setting backref of the list
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
+            @Suppress("UNCHECKED_CAST")
             val data = (value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
             value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = data
           }
-// else you're attaching a new entity to an existing entity that is not modifiable
           this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] = value
         }
         changedProperty.add("parentEntity")
       }
-
     override var version: Int
       get() = getEntityData().version
       set(value) {
@@ -186,22 +178,17 @@ internal class AnotherOneToManyRefEntityImpl(private val dataSource: AnotherOneT
         checkModificationAllowed()
         getEntityData(true).someData = value
         changedProperty.add("someData")
-
       }
 
     override fun getEntityClass(): Class<AnotherOneToManyRefEntity> = AnotherOneToManyRefEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class AnotherOneToManyRefEntityData : WorkspaceEntityData<AnotherOneToManyRefEntity>() {
   var version: Int = 0
   lateinit var someData: OneToManyRefDataClass
-
-
   internal fun isSomeDataInitialized(): Boolean = ::someData.isInitialized
-
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<AnotherOneToManyRefEntity> {
     val modifiable = AnotherOneToManyRefEntityImpl.Builder(null)
     modifiable.diff = diff

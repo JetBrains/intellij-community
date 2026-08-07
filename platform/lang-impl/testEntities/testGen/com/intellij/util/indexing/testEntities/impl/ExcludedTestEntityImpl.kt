@@ -27,18 +27,11 @@ import com.intellij.util.indexing.testEntities.ExcludedTestEntityBuilder
 internal class ExcludedTestEntityImpl(private val dataSource: ExcludedTestEntityData) : ExcludedTestEntity,
                                                                                         WorkspaceEntityBase(dataSource) {
 
-  private companion object {
-
-    private val connections = listOf<ConnectionId>()
-
-  }
-
   override val root: VirtualFileUrl
     get() {
       readField("root")
       return dataSource.root
     }
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -46,9 +39,8 @@ internal class ExcludedTestEntityImpl(private val dataSource: ExcludedTestEntity
     }
 
   override fun connectionIdList(): List<ConnectionId> {
-    return connections
+    return emptyList()
   }
-
 
   internal class Builder(result: ExcludedTestEntityData?) :
     ModifiableWorkspaceEntityBase<ExcludedTestEntity, ExcludedTestEntityData>(result), ExcludedTestEntityBuilder {
@@ -73,7 +65,7 @@ internal class ExcludedTestEntityImpl(private val dataSource: ExcludedTestEntity
       index(this, "root", this.root)
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -87,7 +79,7 @@ internal class ExcludedTestEntityImpl(private val dataSource: ExcludedTestEntity
     }
 
     override fun connectionIdList(): List<ConnectionId> {
-      return connections
+      return emptyList()
     }
 
     // Relabeling code, move information from dataSource to this builder
@@ -98,14 +90,12 @@ internal class ExcludedTestEntityImpl(private val dataSource: ExcludedTestEntity
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var root: VirtualFileUrl
       get() = getEntityData().root
@@ -119,15 +109,12 @@ internal class ExcludedTestEntityImpl(private val dataSource: ExcludedTestEntity
 
     override fun getEntityClass(): Class<ExcludedTestEntity> = ExcludedTestEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ExcludedTestEntityData : WorkspaceEntityData<ExcludedTestEntity>() {
   lateinit var root: VirtualFileUrl
-
   internal fun isRootInitialized(): Boolean = ::root.isInitialized
-
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<ExcludedTestEntity> {
     val modifiable = ExcludedTestEntityImpl.Builder(null)
     modifiable.diff = diff

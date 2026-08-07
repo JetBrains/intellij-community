@@ -34,14 +34,12 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class SampleWithSymbolicIdEntityImpl(private val dataSource: SampleWithSymbolicIdEntityData) : SampleWithSymbolicIdEntity,
                                                                                                         WorkspaceEntityBase(dataSource) {
-
   private companion object {
     internal val CHILDREN_CONNECTION_ID: ConnectionId = ConnectionId.create(SampleWithSymbolicIdEntity::class.java,
                                                                             ChildWpidSampleEntity::class.java,
                                                                             ConnectionId.ConnectionType.ONE_TO_MANY,
                                                                             true)
     private val connections = listOf<ConnectionId>(CHILDREN_CONNECTION_ID)
-
   }
 
   override val symbolicId: SampleSymbolicId = super.symbolicId
@@ -61,27 +59,25 @@ internal class SampleWithSymbolicIdEntityImpl(private val dataSource: SampleWith
       readField("stringListProperty")
       return dataSource.stringListProperty
     }
-
   override val stringMapProperty: Map<String, String>
     get() {
       readField("stringMapProperty")
       return dataSource.stringMapProperty
     }
-
   override val fileProperty: VirtualFileUrl
     get() {
       readField("fileProperty")
       return dataSource.fileProperty
     }
   override val children: List<ChildWpidSampleEntity>
+    @Suppress("UNCHECKED_CAST")
     get() = (snapshot.instrumentation.getManyChildren(CHILDREN_CONNECTION_ID, this) as? Sequence<ChildWpidSampleEntity>)?.toList() ?: error(
-      "Children children not found for SampleWithSymbolicIdEntity")
+      "Children list children not found for SampleWithSymbolicIdEntity")
   override val nullableData: String?
     get() {
       readField("nullableData")
       return dataSource.nullableData
     }
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -91,7 +87,6 @@ internal class SampleWithSymbolicIdEntityImpl(private val dataSource: SampleWith
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
-
 
   internal class Builder(result: SampleWithSymbolicIdEntityData?) :
     ModifiableWorkspaceEntityBase<SampleWithSymbolicIdEntity, SampleWithSymbolicIdEntityData>(result), SampleWithSymbolicIdEntityBuilder {
@@ -116,7 +111,7 @@ internal class SampleWithSymbolicIdEntityImpl(private val dataSource: SampleWith
       index(this, "fileProperty", this.fileProperty)
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -173,14 +168,12 @@ internal class SampleWithSymbolicIdEntityImpl(private val dataSource: SampleWith
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var booleanProperty: Boolean
       get() = getEntityData().booleanProperty
@@ -235,18 +228,19 @@ internal class SampleWithSymbolicIdEntityImpl(private val dataSource: SampleWith
       }
 
     // List of non-abstract referenced types
-    var _children: List<ChildWpidSampleEntity>? = emptyList()
     override var children: List<ChildWpidSampleEntityBuilder>
       get() {
 // Getter of the list of non-abstract referenced types
         val _diff = diff
         return if (_diff != null) {
-          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CHILDREN_CONNECTION_ID, this)!!
+          @Suppress("UNCHECKED_CAST")
+          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CHILDREN_CONNECTION_ID, this)
             .toList() as List<ChildWpidSampleEntityBuilder>) + (this.entityLinks[EntityLink(true,
                                                                                             CHILDREN_CONNECTION_ID)] as? List<ChildWpidSampleEntityBuilder>
                                                                 ?: emptyList())
         }
         else {
+          @Suppress("UNCHECKED_CAST")
           this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as? List<ChildWpidSampleEntityBuilder> ?: emptyList()
         }
       }
@@ -258,10 +252,8 @@ internal class SampleWithSymbolicIdEntityImpl(private val dataSource: SampleWith
           for (item_value in value) {
             if (item_value is ModifiableWorkspaceEntityBase<*, *> && (item_value as? ModifiableWorkspaceEntityBase<*, *>)?.diff == null) {
 // Backref setup before adding to store
-              if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
-                item_value.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)] = this
-              }
-// else you're attaching a new entity to an existing entity that is not modifiable
+              item_value.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)] = this
+              @Suppress("UNCHECKED_CAST")
               _diff.addEntity(item_value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
             }
           }
@@ -272,13 +264,11 @@ internal class SampleWithSymbolicIdEntityImpl(private val dataSource: SampleWith
             if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
               item_value.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)] = this
             }
-// else you're attaching a new entity to an existing entity that is not modifiable
           }
           this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] = value
         }
         changedProperty.add("children")
       }
-
     override var nullableData: String?
       get() = getEntityData().nullableData
       set(value) {
@@ -289,7 +279,6 @@ internal class SampleWithSymbolicIdEntityImpl(private val dataSource: SampleWith
 
     override fun getEntityClass(): Class<SampleWithSymbolicIdEntity> = SampleWithSymbolicIdEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
@@ -300,13 +289,10 @@ internal class SampleWithSymbolicIdEntityData : WorkspaceEntityData<SampleWithSy
   lateinit var stringMapProperty: Map<String, String>
   lateinit var fileProperty: VirtualFileUrl
   var nullableData: String? = null
-
-
   internal fun isStringPropertyInitialized(): Boolean = ::stringProperty.isInitialized
   internal fun isStringListPropertyInitialized(): Boolean = ::stringListProperty.isInitialized
   internal fun isStringMapPropertyInitialized(): Boolean = ::stringMapProperty.isInitialized
   internal fun isFilePropertyInitialized(): Boolean = ::fileProperty.isInitialized
-
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<SampleWithSymbolicIdEntity> {
     val modifiable = SampleWithSymbolicIdEntityImpl.Builder(null)
     modifiable.diff = diff

@@ -17,7 +17,7 @@ interface BooleanEntityBuilder : WorkspaceEntityBuilder<BooleanEntity> {
 }
 
 internal object BooleanEntityType : EntityType<BooleanEntity, BooleanEntityBuilder>() {
-  override val entityClass: Class<BooleanEntity> get() = BooleanEntity::class.java
+  override val entityImplClass: Class<*> get() = BooleanEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = BooleanEntityImpl.Builder::class.java
   operator fun invoke(
     data: Boolean,

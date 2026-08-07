@@ -28,13 +28,6 @@ import org.jetbrains.annotations.ApiStatus.Internal
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ExternalProjectEntityImpl(private val dataSource: ExternalProjectEntityData) : ExternalProjectEntity,
                                                                                               WorkspaceEntityBase(dataSource) {
-
-  private companion object {
-
-    private val connections = listOf<ConnectionId>()
-
-  }
-
   override val symbolicId: ExternalProjectEntityId = super.symbolicId
 
   override val externalProjectPath: String
@@ -42,7 +35,6 @@ internal class ExternalProjectEntityImpl(private val dataSource: ExternalProject
       readField("externalProjectPath")
       return dataSource.externalProjectPath
     }
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -50,9 +42,8 @@ internal class ExternalProjectEntityImpl(private val dataSource: ExternalProject
     }
 
   override fun connectionIdList(): List<ConnectionId> {
-    return connections
+    return emptyList()
   }
-
 
   internal class Builder(result: ExternalProjectEntityData?) :
     ModifiableWorkspaceEntityBase<ExternalProjectEntity, ExternalProjectEntityData>(result), ExternalProjectEntityBuilder {
@@ -76,7 +67,7 @@ internal class ExternalProjectEntityImpl(private val dataSource: ExternalProject
       this.currentEntityData = null
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -90,7 +81,7 @@ internal class ExternalProjectEntityImpl(private val dataSource: ExternalProject
     }
 
     override fun connectionIdList(): List<ConnectionId> {
-      return connections
+      return emptyList()
     }
 
     // Relabeling code, move information from dataSource to this builder
@@ -101,14 +92,12 @@ internal class ExternalProjectEntityImpl(private val dataSource: ExternalProject
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var externalProjectPath: String
       get() = getEntityData().externalProjectPath
@@ -120,15 +109,12 @@ internal class ExternalProjectEntityImpl(private val dataSource: ExternalProject
 
     override fun getEntityClass(): Class<ExternalProjectEntity> = ExternalProjectEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ExternalProjectEntityData : WorkspaceEntityData<ExternalProjectEntity>() {
   lateinit var externalProjectPath: String
-
   internal fun isExternalProjectPathInitialized(): Boolean = ::externalProjectPath.isInitialized
-
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<ExternalProjectEntity> {
     val modifiable = ExternalProjectEntityImpl.Builder(null)
     modifiable.diff = diff

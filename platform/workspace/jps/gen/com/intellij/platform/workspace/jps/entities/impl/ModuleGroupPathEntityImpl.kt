@@ -33,12 +33,10 @@ import org.jetbrains.annotations.ApiStatus.Internal
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ModuleGroupPathEntityImpl(private val dataSource: ModuleGroupPathEntityData) : ModuleGroupPathEntity,
                                                                                               WorkspaceEntityBase(dataSource) {
-
   private companion object {
     internal val MODULE_CONNECTION_ID: ConnectionId =
       ConnectionId.create(ModuleEntity::class.java, ModuleGroupPathEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
     private val connections = listOf<ConnectionId>(MODULE_CONNECTION_ID)
-
   }
 
   override val module: ModuleEntity
@@ -49,7 +47,6 @@ internal class ModuleGroupPathEntityImpl(private val dataSource: ModuleGroupPath
       readField("path")
       return dataSource.path
     }
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -59,7 +56,6 @@ internal class ModuleGroupPathEntityImpl(private val dataSource: ModuleGroupPath
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
-
 
   internal class Builder(result: ModuleGroupPathEntityData?) :
     ModifiableWorkspaceEntityBase<ModuleGroupPathEntity, ModuleGroupPathEntityData>(result), ModuleGroupPathEntity.Builder {
@@ -83,7 +79,7 @@ internal class ModuleGroupPathEntityImpl(private val dataSource: ModuleGroupPath
       this.currentEntityData = null
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -125,14 +121,12 @@ internal class ModuleGroupPathEntityImpl(private val dataSource: ModuleGroupPath
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var module: ModuleEntityBuilder
       get() {
@@ -151,10 +145,8 @@ internal class ModuleGroupPathEntityImpl(private val dataSource: ModuleGroupPath
         checkModificationAllowed()
         val _diff = diff
         if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] = this
-          }
-// else you're attaching a new entity to an existing entity that is not modifiable
+          value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] = this
+          @Suppress("UNCHECKED_CAST")
           _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
@@ -164,12 +156,10 @@ internal class ModuleGroupPathEntityImpl(private val dataSource: ModuleGroupPath
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] = this
           }
-// else you're attaching a new entity to an existing entity that is not modifiable
           this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)] = value
         }
         changedProperty.add("module")
       }
-
     private val pathUpdater: (value: List<String>) -> Unit = { value ->
 
       changedProperty.add("path")
@@ -194,15 +184,12 @@ internal class ModuleGroupPathEntityImpl(private val dataSource: ModuleGroupPath
 
     override fun getEntityClass(): Class<ModuleGroupPathEntity> = ModuleGroupPathEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ModuleGroupPathEntityData : WorkspaceEntityData<ModuleGroupPathEntity>() {
   lateinit var path: MutableList<String>
-
   internal fun isPathInitialized(): Boolean = ::path.isInitialized
-
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<ModuleGroupPathEntity> {
     val modifiable = ModuleGroupPathEntityImpl.Builder(null)
     modifiable.diff = diff

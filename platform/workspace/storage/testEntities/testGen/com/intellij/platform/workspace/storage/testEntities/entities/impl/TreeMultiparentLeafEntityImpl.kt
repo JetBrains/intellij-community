@@ -30,7 +30,6 @@ import com.intellij.platform.workspace.storage.testEntities.entities.TreeMultipa
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class TreeMultiparentLeafEntityImpl(private val dataSource: TreeMultiparentLeafEntityData) : TreeMultiparentLeafEntity,
                                                                                                       WorkspaceEntityBase(dataSource) {
-
   private companion object {
     internal val MAINPARENT_CONNECTION_ID: ConnectionId = ConnectionId.create(TreeMultiparentRootEntity::class.java,
                                                                               TreeMultiparentLeafEntity::class.java,
@@ -45,7 +44,6 @@ internal class TreeMultiparentLeafEntityImpl(private val dataSource: TreeMultipa
                                                                             ConnectionId.ConnectionType.ONE_TO_MANY,
                                                                             true)
     private val connections = listOf<ConnectionId>(MAINPARENT_CONNECTION_ID, LEAFPARENT_CONNECTION_ID, CHILDREN_CONNECTION_ID)
-
   }
 
   override val data: String
@@ -58,9 +56,9 @@ internal class TreeMultiparentLeafEntityImpl(private val dataSource: TreeMultipa
   override val leafParent: TreeMultiparentLeafEntity?
     get() = snapshot.instrumentation.getParent(LEAFPARENT_CONNECTION_ID, this) as? TreeMultiparentLeafEntity
   override val children: List<TreeMultiparentLeafEntity>
+    @Suppress("UNCHECKED_CAST")
     get() = (snapshot.instrumentation.getManyChildren(CHILDREN_CONNECTION_ID, this) as? Sequence<TreeMultiparentLeafEntity>)?.toList()
-            ?: error("Children children not found for TreeMultiparentLeafEntity")
-
+            ?: error("Children list children not found for TreeMultiparentLeafEntity")
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -70,7 +68,6 @@ internal class TreeMultiparentLeafEntityImpl(private val dataSource: TreeMultipa
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
-
 
   internal class Builder(result: TreeMultiparentLeafEntityData?) :
     ModifiableWorkspaceEntityBase<TreeMultiparentLeafEntity, TreeMultiparentLeafEntityData>(result), TreeMultiparentLeafEntityBuilder {
@@ -94,7 +91,7 @@ internal class TreeMultiparentLeafEntityImpl(private val dataSource: TreeMultipa
       this.currentEntityData = null
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -130,14 +127,12 @@ internal class TreeMultiparentLeafEntityImpl(private val dataSource: TreeMultipa
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var data: String
       get() = getEntityData().data
@@ -163,11 +158,10 @@ internal class TreeMultiparentLeafEntityImpl(private val dataSource: TreeMultipa
         val _diff = diff
         if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
 // Setting backref of the list
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            val data = (value.entityLinks[EntityLink(true, MAINPARENT_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
-            value.entityLinks[EntityLink(true, MAINPARENT_CONNECTION_ID)] = data
-          }
-// else you're attaching a new entity to an existing entity that is not modifiable
+          @Suppress("UNCHECKED_CAST")
+          val data = (value.entityLinks[EntityLink(true, MAINPARENT_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
+          value.entityLinks[EntityLink(true, MAINPARENT_CONNECTION_ID)] = data
+          @Suppress("UNCHECKED_CAST")
           _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
@@ -176,15 +170,14 @@ internal class TreeMultiparentLeafEntityImpl(private val dataSource: TreeMultipa
         else {
 // Setting backref of the list
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
+            @Suppress("UNCHECKED_CAST")
             val data = (value.entityLinks[EntityLink(true, MAINPARENT_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
             value.entityLinks[EntityLink(true, MAINPARENT_CONNECTION_ID)] = data
           }
-// else you're attaching a new entity to an existing entity that is not modifiable
           this.entityLinks[EntityLink(false, MAINPARENT_CONNECTION_ID)] = value
         }
         changedProperty.add("mainParent")
       }
-
     override var leafParent: TreeMultiparentLeafEntityBuilder?
       get() {
         val _diff = diff
@@ -202,11 +195,10 @@ internal class TreeMultiparentLeafEntityImpl(private val dataSource: TreeMultipa
         val _diff = diff
         if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
 // Setting backref of the list
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            val data = (value.entityLinks[EntityLink(true, LEAFPARENT_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
-            value.entityLinks[EntityLink(true, LEAFPARENT_CONNECTION_ID)] = data
-          }
-// else you're attaching a new entity to an existing entity that is not modifiable
+          @Suppress("UNCHECKED_CAST")
+          val data = (value.entityLinks[EntityLink(true, LEAFPARENT_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
+          value.entityLinks[EntityLink(true, LEAFPARENT_CONNECTION_ID)] = data
+          @Suppress("UNCHECKED_CAST")
           _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
@@ -215,28 +207,29 @@ internal class TreeMultiparentLeafEntityImpl(private val dataSource: TreeMultipa
         else {
 // Setting backref of the list
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
+            @Suppress("UNCHECKED_CAST")
             val data = (value.entityLinks[EntityLink(true, LEAFPARENT_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
             value.entityLinks[EntityLink(true, LEAFPARENT_CONNECTION_ID)] = data
           }
-// else you're attaching a new entity to an existing entity that is not modifiable
           this.entityLinks[EntityLink(false, LEAFPARENT_CONNECTION_ID)] = value
         }
         changedProperty.add("leafParent")
       }
 
     // List of non-abstract referenced types
-    var _children: List<TreeMultiparentLeafEntity>? = emptyList()
     override var children: List<TreeMultiparentLeafEntityBuilder>
       get() {
 // Getter of the list of non-abstract referenced types
         val _diff = diff
         return if (_diff != null) {
-          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CHILDREN_CONNECTION_ID, this)!!
+          @Suppress("UNCHECKED_CAST")
+          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CHILDREN_CONNECTION_ID, this)
             .toList() as List<TreeMultiparentLeafEntityBuilder>) + (this.entityLinks[EntityLink(true,
                                                                                                 CHILDREN_CONNECTION_ID)] as? List<TreeMultiparentLeafEntityBuilder>
                                                                     ?: emptyList())
         }
         else {
+          @Suppress("UNCHECKED_CAST")
           this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as? List<TreeMultiparentLeafEntityBuilder> ?: emptyList()
         }
       }
@@ -248,10 +241,8 @@ internal class TreeMultiparentLeafEntityImpl(private val dataSource: TreeMultipa
           for (item_value in value) {
             if (item_value is ModifiableWorkspaceEntityBase<*, *> && (item_value as? ModifiableWorkspaceEntityBase<*, *>)?.diff == null) {
 // Backref setup before adding to store
-              if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
-                item_value.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)] = this
-              }
-// else you're attaching a new entity to an existing entity that is not modifiable
+              item_value.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)] = this
+              @Suppress("UNCHECKED_CAST")
               _diff.addEntity(item_value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
             }
           }
@@ -262,7 +253,6 @@ internal class TreeMultiparentLeafEntityImpl(private val dataSource: TreeMultipa
             if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
               item_value.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)] = this
             }
-// else you're attaching a new entity to an existing entity that is not modifiable
           }
           this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] = value
         }
@@ -271,15 +261,12 @@ internal class TreeMultiparentLeafEntityImpl(private val dataSource: TreeMultipa
 
     override fun getEntityClass(): Class<TreeMultiparentLeafEntity> = TreeMultiparentLeafEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class TreeMultiparentLeafEntityData : WorkspaceEntityData<TreeMultiparentLeafEntity>() {
   lateinit var data: String
-
   internal fun isDataInitialized(): Boolean = ::data.isInitialized
-
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<TreeMultiparentLeafEntity> {
     val modifiable = TreeMultiparentLeafEntityImpl.Builder(null)
     modifiable.diff = diff

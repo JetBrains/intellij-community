@@ -18,7 +18,7 @@ interface ChildEntityWithSymbolicIdBuilder : WorkspaceEntityBuilder<ChildEntityW
 }
 
 internal object ChildEntityWithSymbolicIdType : EntityType<ChildEntityWithSymbolicId, ChildEntityWithSymbolicIdBuilder>() {
-  override val entityClass: Class<ChildEntityWithSymbolicId> get() = ChildEntityWithSymbolicId::class.java
+  override val entityImplClass: Class<*> get() = ChildEntityWithSymbolicIdImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = ChildEntityWithSymbolicIdImpl.Builder::class.java
   operator fun invoke(
     myName: String,

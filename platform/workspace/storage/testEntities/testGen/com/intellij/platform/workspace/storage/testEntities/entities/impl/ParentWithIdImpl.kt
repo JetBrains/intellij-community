@@ -31,14 +31,12 @@ import com.intellij.platform.workspace.storage.testEntities.entities.ParentWithI
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ParentWithIdImpl(private val dataSource: ParentWithIdData) : ParentWithId, WorkspaceEntityBase(dataSource) {
-
   private companion object {
     internal val PARENT_CONNECTION_ID: ConnectionId =
       ConnectionId.create(GrandParentWithId::class.java, ParentWithId::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
     internal val CHILDREN_CONNECTION_ID: ConnectionId =
       ConnectionId.create(ParentWithId::class.java, ChildWithId::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
     private val connections = listOf<ConnectionId>(PARENT_CONNECTION_ID, CHILDREN_CONNECTION_ID)
-
   }
 
   override val symbolicId: ParentWithId.ParentId = super.symbolicId
@@ -52,9 +50,9 @@ internal class ParentWithIdImpl(private val dataSource: ParentWithIdData) : Pare
     get() = snapshot.instrumentation.getParent(PARENT_CONNECTION_ID, this) as? GrandParentWithId
             ?: error("Parent parent not found for ParentWithId")
   override val children: List<ChildWithId>
+    @Suppress("UNCHECKED_CAST")
     get() = (snapshot.instrumentation.getManyChildren(CHILDREN_CONNECTION_ID, this) as? Sequence<ChildWithId>)?.toList()
-            ?: error("Children children not found for ParentWithId")
-
+            ?: error("Children list children not found for ParentWithId")
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -64,7 +62,6 @@ internal class ParentWithIdImpl(private val dataSource: ParentWithIdData) : Pare
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
-
 
   internal class Builder(result: ParentWithIdData?) : ModifiableWorkspaceEntityBase<ParentWithId, ParentWithIdData>(result),
                                                       ParentWithIdBuilder {
@@ -88,7 +85,7 @@ internal class ParentWithIdImpl(private val dataSource: ParentWithIdData) : Pare
       this.currentEntityData = null
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -134,14 +131,12 @@ internal class ParentWithIdImpl(private val dataSource: ParentWithIdData) : Pare
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var myId: String
       get() = getEntityData().myId
@@ -168,11 +163,10 @@ internal class ParentWithIdImpl(private val dataSource: ParentWithIdData) : Pare
         val _diff = diff
         if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
 // Setting backref of the list
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            val data = (value.entityLinks[EntityLink(true, PARENT_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
-            value.entityLinks[EntityLink(true, PARENT_CONNECTION_ID)] = data
-          }
-// else you're attaching a new entity to an existing entity that is not modifiable
+          @Suppress("UNCHECKED_CAST")
+          val data = (value.entityLinks[EntityLink(true, PARENT_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
+          value.entityLinks[EntityLink(true, PARENT_CONNECTION_ID)] = data
+          @Suppress("UNCHECKED_CAST")
           _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
@@ -181,28 +175,29 @@ internal class ParentWithIdImpl(private val dataSource: ParentWithIdData) : Pare
         else {
 // Setting backref of the list
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
+            @Suppress("UNCHECKED_CAST")
             val data = (value.entityLinks[EntityLink(true, PARENT_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
             value.entityLinks[EntityLink(true, PARENT_CONNECTION_ID)] = data
           }
-// else you're attaching a new entity to an existing entity that is not modifiable
           this.entityLinks[EntityLink(false, PARENT_CONNECTION_ID)] = value
         }
         changedProperty.add("parent")
       }
 
     // List of non-abstract referenced types
-    var _children: List<ChildWithId>? = emptyList()
     override var children: List<ChildWithIdBuilder>
       get() {
 // Getter of the list of non-abstract referenced types
         val _diff = diff
         return if (_diff != null) {
-          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CHILDREN_CONNECTION_ID, this)!!
+          @Suppress("UNCHECKED_CAST")
+          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CHILDREN_CONNECTION_ID, this)
             .toList() as List<ChildWithIdBuilder>) + (this.entityLinks[EntityLink(true,
                                                                                   CHILDREN_CONNECTION_ID)] as? List<ChildWithIdBuilder>
                                                       ?: emptyList())
         }
         else {
+          @Suppress("UNCHECKED_CAST")
           this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as? List<ChildWithIdBuilder> ?: emptyList()
         }
       }
@@ -214,10 +209,8 @@ internal class ParentWithIdImpl(private val dataSource: ParentWithIdData) : Pare
           for (item_value in value) {
             if (item_value is ModifiableWorkspaceEntityBase<*, *> && (item_value as? ModifiableWorkspaceEntityBase<*, *>)?.diff == null) {
 // Backref setup before adding to store
-              if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
-                item_value.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)] = this
-              }
-// else you're attaching a new entity to an existing entity that is not modifiable
+              item_value.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)] = this
+              @Suppress("UNCHECKED_CAST")
               _diff.addEntity(item_value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
             }
           }
@@ -228,7 +221,6 @@ internal class ParentWithIdImpl(private val dataSource: ParentWithIdData) : Pare
             if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
               item_value.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)] = this
             }
-// else you're attaching a new entity to an existing entity that is not modifiable
           }
           this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] = value
         }
@@ -237,15 +229,12 @@ internal class ParentWithIdImpl(private val dataSource: ParentWithIdData) : Pare
 
     override fun getEntityClass(): Class<ParentWithId> = ParentWithId::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ParentWithIdData : WorkspaceEntityData<ParentWithId>() {
   lateinit var myId: String
-
   internal fun isMyIdInitialized(): Boolean = ::myId.isInitialized
-
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<ParentWithId> {
     val modifiable = ParentWithIdImpl.Builder(null)
     modifiable.diff = diff

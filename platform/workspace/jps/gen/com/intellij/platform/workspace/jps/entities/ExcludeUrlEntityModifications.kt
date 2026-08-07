@@ -20,7 +20,7 @@ interface ExcludeUrlEntityBuilder : WorkspaceEntityBuilder<ExcludeUrlEntity> {
 }
 
 internal object ExcludeUrlEntityType : EntityType<ExcludeUrlEntity, ExcludeUrlEntityBuilder>() {
-  override val entityClass: Class<ExcludeUrlEntity> get() = ExcludeUrlEntity::class.java
+  override val entityImplClass: Class<*> get() = ExcludeUrlEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = ExcludeUrlEntityImpl.Builder::class.java
   operator fun invoke(
     url: VirtualFileUrl,

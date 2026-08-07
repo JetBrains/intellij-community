@@ -28,12 +28,6 @@ import com.intellij.workspaceModel.test.api.SimpleEntityBuilder
 internal class SimpleEntityImpl(private val dataSource: SimpleEntityData) : SimpleEntity,
     WorkspaceEntityBase(dataSource) {
 
-    private companion object {
-
-        private val connections = listOf<ConnectionId>()
-
-    }
-
     override val version: Int
         get() {
             readField("version")
@@ -54,7 +48,6 @@ internal class SimpleEntityImpl(private val dataSource: SimpleEntityData) : Simp
             readField("imported")
             return dataSource.imported
         }
-
     override val entitySource: EntitySource
         get() {
             readField("entitySource")
@@ -62,9 +55,8 @@ internal class SimpleEntityImpl(private val dataSource: SimpleEntityData) : Simp
         }
 
     override fun connectionIdList(): List<ConnectionId> {
-        return connections
+        return emptyList()
     }
-
 
     internal class Builder(result: SimpleEntityData?) :
         ModifiableWorkspaceEntityBase<SimpleEntity, SimpleEntityData>(result), SimpleEntityBuilder {
@@ -87,7 +79,7 @@ internal class SimpleEntityImpl(private val dataSource: SimpleEntityData) : Simp
             this.currentEntityData = null
 // Process linked entities that are connected without a builder
             processLinkedEntities(builder)
-            checkInitialization() // TODO uncomment and check failed tests
+            checkInitialization()
         }
 
         private fun checkInitialization() {
@@ -104,7 +96,7 @@ internal class SimpleEntityImpl(private val dataSource: SimpleEntityData) : Simp
         }
 
         override fun connectionIdList(): List<ConnectionId> {
-            return connections
+            return emptyList()
         }
 
         // Relabeling code, move information from dataSource to this builder
@@ -118,14 +110,12 @@ internal class SimpleEntityImpl(private val dataSource: SimpleEntityData) : Simp
             updateChildToParentReferences(parents)
         }
 
-
         override var entitySource: EntitySource
             get() = getEntityData().entitySource
             set(value) {
                 checkModificationAllowed()
                 getEntityData(true).entitySource = value
                 changedProperty.add("entitySource")
-
             }
         override var version: Int
             get() = getEntityData().version
@@ -154,12 +144,10 @@ internal class SimpleEntityImpl(private val dataSource: SimpleEntityData) : Simp
                 checkModificationAllowed()
                 getEntityData(true).imported = value
                 changedProperty.add("imported")
-
             }
 
         override fun getEntityClass(): Class<SimpleEntity> = SimpleEntity::class.java
     }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
@@ -168,12 +156,8 @@ internal class SimpleEntityData : WorkspaceEntityData<SimpleEntity>() {
     lateinit var name: String
     var isSimple: Boolean = false
     lateinit var imported: ClassToImport
-
-
     internal fun isNameInitialized(): Boolean = ::name.isInitialized
-
     internal fun isImportedInitialized(): Boolean = ::imported.isInitialized
-
     override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<SimpleEntity> {
         val modifiable = SimpleEntityImpl.Builder(null)
         modifiable.diff = diff

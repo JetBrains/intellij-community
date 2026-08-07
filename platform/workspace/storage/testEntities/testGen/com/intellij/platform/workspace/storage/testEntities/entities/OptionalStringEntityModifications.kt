@@ -17,7 +17,7 @@ interface OptionalStringEntityBuilder : WorkspaceEntityBuilder<OptionalStringEnt
 }
 
 internal object OptionalStringEntityType : EntityType<OptionalStringEntity, OptionalStringEntityBuilder>() {
-  override val entityClass: Class<OptionalStringEntity> get() = OptionalStringEntity::class.java
+  override val entityImplClass: Class<*> get() = OptionalStringEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = OptionalStringEntityImpl.Builder::class.java
   operator fun invoke(
     entitySource: EntitySource,

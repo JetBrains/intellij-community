@@ -19,7 +19,7 @@ interface SpecificChildWithLinkToParentEntityBuilder : WorkspaceEntityBuilder<Sp
 
 internal object SpecificChildWithLinkToParentEntityType :
   EntityType<SpecificChildWithLinkToParentEntity, SpecificChildWithLinkToParentEntityBuilder>() {
-  override val entityClass: Class<SpecificChildWithLinkToParentEntity> get() = SpecificChildWithLinkToParentEntity::class.java
+  override val entityImplClass: Class<*> get() = SpecificChildWithLinkToParentEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = SpecificChildWithLinkToParentEntityImpl.Builder::class.java
   operator fun invoke(
     data: String,

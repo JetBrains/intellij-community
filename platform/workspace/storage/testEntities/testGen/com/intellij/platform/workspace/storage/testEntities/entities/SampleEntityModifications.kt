@@ -27,7 +27,7 @@ interface SampleEntityBuilder : WorkspaceEntityBuilder<SampleEntity> {
 }
 
 internal object SampleEntityType : EntityType<SampleEntity, SampleEntityBuilder>() {
-  override val entityClass: Class<SampleEntity> get() = SampleEntity::class.java
+  override val entityImplClass: Class<*> get() = SampleEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = SampleEntityImpl.Builder::class.java
   operator fun invoke(
     booleanProperty: Boolean,

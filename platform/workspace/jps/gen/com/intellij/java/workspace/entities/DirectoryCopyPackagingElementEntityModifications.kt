@@ -21,7 +21,7 @@ interface DirectoryCopyPackagingElementEntityBuilder : WorkspaceEntityBuilder<Di
 
 internal object DirectoryCopyPackagingElementEntityType :
   EntityType<DirectoryCopyPackagingElementEntity, DirectoryCopyPackagingElementEntityBuilder>() {
-  override val entityClass: Class<DirectoryCopyPackagingElementEntity> get() = DirectoryCopyPackagingElementEntity::class.java
+  override val entityImplClass: Class<*> get() = DirectoryCopyPackagingElementEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = DirectoryCopyPackagingElementEntityImpl.Builder::class.java
   operator fun invoke(
     filePath: VirtualFileUrl,

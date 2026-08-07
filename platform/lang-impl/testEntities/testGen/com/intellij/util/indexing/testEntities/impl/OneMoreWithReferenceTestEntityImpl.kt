@@ -33,18 +33,11 @@ import com.intellij.util.indexing.testEntities.ReferredTestEntityId
 internal class OneMoreWithReferenceTestEntityImpl(private val dataSource: OneMoreWithReferenceTestEntityData) :
   OneMoreWithReferenceTestEntity, WorkspaceEntityBase(dataSource) {
 
-  private companion object {
-
-    private val connections = listOf<ConnectionId>()
-
-  }
-
   override val references: List<DependencyItem>
     get() {
       readField("references")
       return dataSource.references
     }
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -52,9 +45,8 @@ internal class OneMoreWithReferenceTestEntityImpl(private val dataSource: OneMor
     }
 
   override fun connectionIdList(): List<ConnectionId> {
-    return connections
+    return emptyList()
   }
-
 
   internal class Builder(result: OneMoreWithReferenceTestEntityData?) :
     ModifiableWorkspaceEntityBase<OneMoreWithReferenceTestEntity, OneMoreWithReferenceTestEntityData>(result),
@@ -79,7 +71,7 @@ internal class OneMoreWithReferenceTestEntityImpl(private val dataSource: OneMor
       this.currentEntityData = null
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -93,7 +85,7 @@ internal class OneMoreWithReferenceTestEntityImpl(private val dataSource: OneMor
     }
 
     override fun connectionIdList(): List<ConnectionId> {
-      return connections
+      return emptyList()
     }
 
     override fun afterModification() {
@@ -111,14 +103,12 @@ internal class OneMoreWithReferenceTestEntityImpl(private val dataSource: OneMor
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     private val referencesUpdater: (value: List<DependencyItem>) -> Unit = { value ->
 
@@ -144,15 +134,12 @@ internal class OneMoreWithReferenceTestEntityImpl(private val dataSource: OneMor
 
     override fun getEntityClass(): Class<OneMoreWithReferenceTestEntity> = OneMoreWithReferenceTestEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class OneMoreWithReferenceTestEntityData : WorkspaceEntityData<OneMoreWithReferenceTestEntity>(), SoftLinkable {
   lateinit var references: MutableList<DependencyItem>
-
   internal fun isReferencesInitialized(): Boolean = ::references.isInitialized
-
   override fun getLinks(): Set<SymbolicEntityId<*>> {
     val result = HashSet<SymbolicEntityId<*>>()
     for (item in references) {
@@ -168,7 +155,6 @@ internal class OneMoreWithReferenceTestEntityData : WorkspaceEntityData<OneMoreW
   }
 
   override fun updateLinksIndex(prev: Set<SymbolicEntityId<*>>, index: WorkspaceMutableIndex<SymbolicEntityId<*>>) {
-// TODO verify logic
     val mutablePreviousSet = HashSet(prev)
     for (item in references) {
       val removedItem_item_reference = mutablePreviousSet.remove(item.reference)
@@ -202,6 +188,7 @@ internal class OneMoreWithReferenceTestEntityData : WorkspaceEntityData<OneMoreW
         it
       }
     }
+
     if (references_data != null) {
       references = references_data as MutableList<DependencyItem>
     }

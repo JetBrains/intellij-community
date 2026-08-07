@@ -18,7 +18,7 @@ interface SimpleChildAbstractEntityBuilder : WorkspaceEntityBuilder<SimpleChildA
 }
 
 internal object SimpleChildAbstractEntityType : EntityType<SimpleChildAbstractEntity, SimpleChildAbstractEntityBuilder>() {
-  override val entityClass: Class<SimpleChildAbstractEntity> get() = SimpleChildAbstractEntity::class.java
+  override val entityImplClass: Class<*> get() = SimpleChildAbstractEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = SimpleChildAbstractEntityImpl.Builder::class.java
   operator fun invoke(
     entitySource: EntitySource,

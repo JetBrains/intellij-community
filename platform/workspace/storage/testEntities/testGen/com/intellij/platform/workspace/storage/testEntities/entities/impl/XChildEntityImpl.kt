@@ -32,14 +32,12 @@ import com.intellij.platform.workspace.storage.testEntities.entities.XParentEnti
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class XChildEntityImpl(private val dataSource: XChildEntityData) : XChildEntity, WorkspaceEntityBase(dataSource) {
-
   private companion object {
     internal val PARENTENTITY_CONNECTION_ID: ConnectionId =
       ConnectionId.create(XParentEntity::class.java, XChildEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
     internal val CHILDCHILD_CONNECTION_ID: ConnectionId =
       ConnectionId.create(XChildEntity::class.java, XChildChildEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
     private val connections = listOf<ConnectionId>(PARENTENTITY_CONNECTION_ID, CHILDCHILD_CONNECTION_ID)
-
   }
 
   override val childProperty: String
@@ -56,9 +54,9 @@ internal class XChildEntityImpl(private val dataSource: XChildEntityData) : XChi
     get() = snapshot.instrumentation.getParent(PARENTENTITY_CONNECTION_ID, this) as? XParentEntity
             ?: error("Parent parentEntity not found for XChildEntity")
   override val childChild: List<XChildChildEntity>
+    @Suppress("UNCHECKED_CAST")
     get() = (snapshot.instrumentation.getManyChildren(CHILDCHILD_CONNECTION_ID, this) as? Sequence<XChildChildEntity>)?.toList()
-            ?: error("Children childChild not found for XChildEntity")
-
+            ?: error("Children list childChild not found for XChildEntity")
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -68,7 +66,6 @@ internal class XChildEntityImpl(private val dataSource: XChildEntityData) : XChi
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
-
 
   internal class Builder(result: XChildEntityData?) : ModifiableWorkspaceEntityBase<XChildEntity, XChildEntityData>(result),
                                                       XChildEntityBuilder {
@@ -92,7 +89,7 @@ internal class XChildEntityImpl(private val dataSource: XChildEntityData) : XChi
       this.currentEntityData = null
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -139,14 +136,12 @@ internal class XChildEntityImpl(private val dataSource: XChildEntityData) : XChi
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var childProperty: String
       get() = getEntityData().childProperty
@@ -161,7 +156,6 @@ internal class XChildEntityImpl(private val dataSource: XChildEntityData) : XChi
         checkModificationAllowed()
         getEntityData(true).dataClass = value
         changedProperty.add("dataClass")
-
       }
     override var parentEntity: XParentEntityBuilder
       get() {
@@ -181,11 +175,10 @@ internal class XChildEntityImpl(private val dataSource: XChildEntityData) : XChi
         val _diff = diff
         if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
 // Setting backref of the list
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            val data = (value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
-            value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = data
-          }
-// else you're attaching a new entity to an existing entity that is not modifiable
+          @Suppress("UNCHECKED_CAST")
+          val data = (value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
+          value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = data
+          @Suppress("UNCHECKED_CAST")
           _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
@@ -194,28 +187,29 @@ internal class XChildEntityImpl(private val dataSource: XChildEntityData) : XChi
         else {
 // Setting backref of the list
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
+            @Suppress("UNCHECKED_CAST")
             val data = (value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
             value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = data
           }
-// else you're attaching a new entity to an existing entity that is not modifiable
           this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] = value
         }
         changedProperty.add("parentEntity")
       }
 
     // List of non-abstract referenced types
-    var _childChild: List<XChildChildEntity>? = emptyList()
     override var childChild: List<XChildChildEntityBuilder>
       get() {
 // Getter of the list of non-abstract referenced types
         val _diff = diff
         return if (_diff != null) {
-          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CHILDCHILD_CONNECTION_ID, this)!!
+          @Suppress("UNCHECKED_CAST")
+          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CHILDCHILD_CONNECTION_ID, this)
             .toList() as List<XChildChildEntityBuilder>) + (this.entityLinks[EntityLink(true,
                                                                                         CHILDCHILD_CONNECTION_ID)] as? List<XChildChildEntityBuilder>
                                                             ?: emptyList())
         }
         else {
+          @Suppress("UNCHECKED_CAST")
           this.entityLinks[EntityLink(true, CHILDCHILD_CONNECTION_ID)] as? List<XChildChildEntityBuilder> ?: emptyList()
         }
       }
@@ -227,10 +221,8 @@ internal class XChildEntityImpl(private val dataSource: XChildEntityData) : XChi
           for (item_value in value) {
             if (item_value is ModifiableWorkspaceEntityBase<*, *> && (item_value as? ModifiableWorkspaceEntityBase<*, *>)?.diff == null) {
 // Backref setup before adding to store
-              if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
-                item_value.entityLinks[EntityLink(false, CHILDCHILD_CONNECTION_ID)] = this
-              }
-// else you're attaching a new entity to an existing entity that is not modifiable
+              item_value.entityLinks[EntityLink(false, CHILDCHILD_CONNECTION_ID)] = this
+              @Suppress("UNCHECKED_CAST")
               _diff.addEntity(item_value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
             }
           }
@@ -241,7 +233,6 @@ internal class XChildEntityImpl(private val dataSource: XChildEntityData) : XChi
             if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
               item_value.entityLinks[EntityLink(false, CHILDCHILD_CONNECTION_ID)] = this
             }
-// else you're attaching a new entity to an existing entity that is not modifiable
           }
           this.entityLinks[EntityLink(true, CHILDCHILD_CONNECTION_ID)] = value
         }
@@ -250,16 +241,13 @@ internal class XChildEntityImpl(private val dataSource: XChildEntityData) : XChi
 
     override fun getEntityClass(): Class<XChildEntity> = XChildEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class XChildEntityData : WorkspaceEntityData<XChildEntity>() {
   lateinit var childProperty: String
   var dataClass: DataClassX? = null
-
   internal fun isChildPropertyInitialized(): Boolean = ::childProperty.isInitialized
-
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<XChildEntity> {
     val modifiable = XChildEntityImpl.Builder(null)
     modifiable.diff = diff

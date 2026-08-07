@@ -24,13 +24,6 @@ import com.intellij.platform.workspace.storage.testEntities.entities.GrandParent
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class GrandParentWithIdImpl(private val dataSource: GrandParentWithIdData) : GrandParentWithId, WorkspaceEntityBase(dataSource) {
-
-  private companion object {
-
-    private val connections = listOf<ConnectionId>()
-
-  }
-
   override val symbolicId: GrandParentWithId.GrandParentId = super.symbolicId
 
   override val myId: String
@@ -38,7 +31,6 @@ internal class GrandParentWithIdImpl(private val dataSource: GrandParentWithIdDa
       readField("myId")
       return dataSource.myId
     }
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -46,9 +38,8 @@ internal class GrandParentWithIdImpl(private val dataSource: GrandParentWithIdDa
     }
 
   override fun connectionIdList(): List<ConnectionId> {
-    return connections
+    return emptyList()
   }
-
 
   internal class Builder(result: GrandParentWithIdData?) : ModifiableWorkspaceEntityBase<GrandParentWithId, GrandParentWithIdData>(result),
                                                            GrandParentWithIdBuilder {
@@ -72,7 +63,7 @@ internal class GrandParentWithIdImpl(private val dataSource: GrandParentWithIdDa
       this.currentEntityData = null
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -86,7 +77,7 @@ internal class GrandParentWithIdImpl(private val dataSource: GrandParentWithIdDa
     }
 
     override fun connectionIdList(): List<ConnectionId> {
-      return connections
+      return emptyList()
     }
 
     // Relabeling code, move information from dataSource to this builder
@@ -97,14 +88,12 @@ internal class GrandParentWithIdImpl(private val dataSource: GrandParentWithIdDa
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var myId: String
       get() = getEntityData().myId
@@ -116,15 +105,12 @@ internal class GrandParentWithIdImpl(private val dataSource: GrandParentWithIdDa
 
     override fun getEntityClass(): Class<GrandParentWithId> = GrandParentWithId::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class GrandParentWithIdData : WorkspaceEntityData<GrandParentWithId>() {
   lateinit var myId: String
-
   internal fun isMyIdInitialized(): Boolean = ::myId.isInitialized
-
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<GrandParentWithId> {
     val modifiable = GrandParentWithIdImpl.Builder(null)
     modifiable.diff = diff

@@ -18,7 +18,7 @@ interface OoChildWithNullableParentEntityBuilder : WorkspaceEntityBuilder<OoChil
 
 internal object OoChildWithNullableParentEntityType :
   EntityType<OoChildWithNullableParentEntity, OoChildWithNullableParentEntityBuilder>() {
-  override val entityClass: Class<OoChildWithNullableParentEntity> get() = OoChildWithNullableParentEntity::class.java
+  override val entityImplClass: Class<*> get() = OoChildWithNullableParentEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = OoChildWithNullableParentEntityImpl.Builder::class.java
   operator fun invoke(
     entitySource: EntitySource,

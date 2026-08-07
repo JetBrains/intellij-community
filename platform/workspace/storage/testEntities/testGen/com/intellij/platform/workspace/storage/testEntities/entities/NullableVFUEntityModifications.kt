@@ -19,7 +19,7 @@ interface NullableVFUEntityBuilder : WorkspaceEntityBuilder<NullableVFUEntity> {
 }
 
 internal object NullableVFUEntityType : EntityType<NullableVFUEntity, NullableVFUEntityBuilder>() {
-  override val entityClass: Class<NullableVFUEntity> get() = NullableVFUEntity::class.java
+  override val entityImplClass: Class<*> get() = NullableVFUEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = NullableVFUEntityImpl.Builder::class.java
   operator fun invoke(
     data: String,

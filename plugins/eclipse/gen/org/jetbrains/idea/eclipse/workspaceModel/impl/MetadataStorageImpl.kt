@@ -20,9 +20,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
     val primitiveTypeMapNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "Map")
     val primitiveTypeListNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "List")
     val primitiveTypeBooleanNotNullable = ValueTypeMetadata.SimpleType.PrimitiveType(isNullable = false, type = "Boolean")
-
     var typeMetadata: StorageTypeMetadata
-
     typeMetadata = FinalClassMetadata.ClassMetadata(fqName = "org.jetbrains.idea.eclipse.config.EclipseProjectFile",
                                                     properties = listOf(OwnPropertyMetadata(isComputable = false,
                                                                                             isKey = false,
@@ -276,9 +274,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                                                             withDefault = false)),
                                                     supertypes = listOf("com.intellij.platform.workspace.jps.JpsFileDependentEntitySource",
                                                                         "com.intellij.platform.workspace.storage.EntitySource"))
-
     addMetadata(typeMetadata)
-
     typeMetadata = EntityMetadata(fqName = "org.jetbrains.idea.eclipse.config.EclipseProjectPropertiesEntity",
                                   entityDataFqName = "org.jetbrains.idea.eclipse.config.impl.EclipseProjectPropertiesEntityData",
                                   supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity"),
@@ -365,7 +361,6 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                                                                                            isNullable = true),
                                                                              withDefault = false)),
                                   isAbstract = false)
-
     addMetadata(typeMetadata)
   }
 

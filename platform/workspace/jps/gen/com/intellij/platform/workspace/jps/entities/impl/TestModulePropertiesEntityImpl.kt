@@ -35,12 +35,10 @@ import org.jetbrains.annotations.ApiStatus.Internal
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class TestModulePropertiesEntityImpl(private val dataSource: TestModulePropertiesEntityData) : TestModulePropertiesEntity,
                                                                                                         WorkspaceEntityBase(dataSource) {
-
   private companion object {
     internal val MODULE_CONNECTION_ID: ConnectionId =
       ConnectionId.create(ModuleEntity::class.java, TestModulePropertiesEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
     private val connections = listOf<ConnectionId>(MODULE_CONNECTION_ID)
-
   }
 
   override val module: ModuleEntity
@@ -51,7 +49,6 @@ internal class TestModulePropertiesEntityImpl(private val dataSource: TestModule
       readField("productionModuleId")
       return dataSource.productionModuleId
     }
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -61,7 +58,6 @@ internal class TestModulePropertiesEntityImpl(private val dataSource: TestModule
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
-
 
   internal class Builder(result: TestModulePropertiesEntityData?) :
     ModifiableWorkspaceEntityBase<TestModulePropertiesEntity, TestModulePropertiesEntityData>(result), TestModulePropertiesEntity.Builder {
@@ -85,7 +81,7 @@ internal class TestModulePropertiesEntityImpl(private val dataSource: TestModule
       this.currentEntityData = null
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -120,14 +116,12 @@ internal class TestModulePropertiesEntityImpl(private val dataSource: TestModule
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var module: ModuleEntityBuilder
       get() {
@@ -146,10 +140,8 @@ internal class TestModulePropertiesEntityImpl(private val dataSource: TestModule
         checkModificationAllowed()
         val _diff = diff
         if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] = this
-          }
-// else you're attaching a new entity to an existing entity that is not modifiable
+          value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] = this
+          @Suppress("UNCHECKED_CAST")
           _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
@@ -159,32 +151,26 @@ internal class TestModulePropertiesEntityImpl(private val dataSource: TestModule
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] = this
           }
-// else you're attaching a new entity to an existing entity that is not modifiable
           this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)] = value
         }
         changedProperty.add("module")
       }
-
     override var productionModuleId: ModuleId
       get() = getEntityData().productionModuleId
       set(value) {
         checkModificationAllowed()
         getEntityData(true).productionModuleId = value
         changedProperty.add("productionModuleId")
-
       }
 
     override fun getEntityClass(): Class<TestModulePropertiesEntity> = TestModulePropertiesEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class TestModulePropertiesEntityData : WorkspaceEntityData<TestModulePropertiesEntity>(), SoftLinkable {
   lateinit var productionModuleId: ModuleId
-
   internal fun isProductionModuleIdInitialized(): Boolean = ::productionModuleId.isInitialized
-
   override fun getLinks(): Set<SymbolicEntityId<*>> {
     val result = HashSet<SymbolicEntityId<*>>()
     result.add(productionModuleId)
@@ -196,7 +182,6 @@ internal class TestModulePropertiesEntityData : WorkspaceEntityData<TestModulePr
   }
 
   override fun updateLinksIndex(prev: Set<SymbolicEntityId<*>>, index: WorkspaceMutableIndex<SymbolicEntityId<*>>) {
-// TODO verify logic
     val mutablePreviousSet = HashSet(prev)
     val removedItem_productionModuleId = mutablePreviousSet.remove(productionModuleId)
     if (!removedItem_productionModuleId) {

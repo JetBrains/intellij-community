@@ -33,12 +33,10 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ExtensionChildEntityImpl(private val dataSource: ExtensionChildEntityData) : ExtensionChildEntity,
                                                                                             WorkspaceEntityBase(dataSource) {
-
   private companion object {
     internal val PARENT_CONNECTION_ID: ConnectionId =
       ConnectionId.create(BaseTestEntity::class.java, ExtensionChildEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
     private val connections = listOf<ConnectionId>(PARENT_CONNECTION_ID)
-
   }
 
   override val extensionChildName: String
@@ -54,7 +52,6 @@ internal class ExtensionChildEntityImpl(private val dataSource: ExtensionChildEn
       readField("listOfUrls")
       return dataSource.listOfUrls
     }
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -64,7 +61,6 @@ internal class ExtensionChildEntityImpl(private val dataSource: ExtensionChildEn
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
-
 
   internal class Builder(result: ExtensionChildEntityData?) :
     ModifiableWorkspaceEntityBase<ExtensionChildEntity, ExtensionChildEntityData>(result), ExtensionChildEntityBuilder {
@@ -89,7 +85,7 @@ internal class ExtensionChildEntityImpl(private val dataSource: ExtensionChildEn
       index(this, "listOfUrls", this.listOfUrls)
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -135,14 +131,12 @@ internal class ExtensionChildEntityImpl(private val dataSource: ExtensionChildEn
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var extensionChildName: String
       get() = getEntityData().extensionChildName
@@ -169,11 +163,10 @@ internal class ExtensionChildEntityImpl(private val dataSource: ExtensionChildEn
         val _diff = diff
         if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
 // Setting backref of the list
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            val data = (value.entityLinks[EntityLink(true, PARENT_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
-            value.entityLinks[EntityLink(true, PARENT_CONNECTION_ID)] = data
-          }
-// else you're attaching a new entity to an existing entity that is not modifiable
+          @Suppress("UNCHECKED_CAST")
+          val data = (value.entityLinks[EntityLink(true, PARENT_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
+          value.entityLinks[EntityLink(true, PARENT_CONNECTION_ID)] = data
+          @Suppress("UNCHECKED_CAST")
           _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
@@ -182,15 +175,14 @@ internal class ExtensionChildEntityImpl(private val dataSource: ExtensionChildEn
         else {
 // Setting backref of the list
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
+            @Suppress("UNCHECKED_CAST")
             val data = (value.entityLinks[EntityLink(true, PARENT_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
             value.entityLinks[EntityLink(true, PARENT_CONNECTION_ID)] = data
           }
-// else you're attaching a new entity to an existing entity that is not modifiable
           this.entityLinks[EntityLink(false, PARENT_CONNECTION_ID)] = value
         }
         changedProperty.add("parent")
       }
-
     private val listOfUrlsUpdater: (value: List<VirtualFileUrl>) -> Unit = { value ->
       val _diff = diff
       if (_diff != null) index(this, "listOfUrls", value)
@@ -216,17 +208,14 @@ internal class ExtensionChildEntityImpl(private val dataSource: ExtensionChildEn
 
     override fun getEntityClass(): Class<ExtensionChildEntity> = ExtensionChildEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ExtensionChildEntityData : WorkspaceEntityData<ExtensionChildEntity>() {
   lateinit var extensionChildName: String
   lateinit var listOfUrls: MutableList<VirtualFileUrl>
-
   internal fun isExtensionChildNameInitialized(): Boolean = ::extensionChildName.isInitialized
   internal fun isListOfUrlsInitialized(): Boolean = ::listOfUrls.isInitialized
-
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<ExtensionChildEntity> {
     val modifiable = ExtensionChildEntityImpl.Builder(null)
     modifiable.diff = diff

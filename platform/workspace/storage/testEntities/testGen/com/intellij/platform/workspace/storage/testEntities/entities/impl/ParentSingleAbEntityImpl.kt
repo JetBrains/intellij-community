@@ -30,19 +30,16 @@ import com.intellij.platform.workspace.storage.testEntities.entities.ParentSingl
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ParentSingleAbEntityImpl(private val dataSource: ParentSingleAbEntityData) : ParentSingleAbEntity,
                                                                                             WorkspaceEntityBase(dataSource) {
-
   private companion object {
     internal val CHILD_CONNECTION_ID: ConnectionId = ConnectionId.create(ParentSingleAbEntity::class.java,
                                                                          ChildSingleAbstractBaseEntity::class.java,
                                                                          ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE,
                                                                          false)
     private val connections = listOf<ConnectionId>(CHILD_CONNECTION_ID)
-
   }
 
   override val child: ChildSingleAbstractBaseEntity?
     get() = snapshot.instrumentation.getOneChild(CHILD_CONNECTION_ID, this) as? ChildSingleAbstractBaseEntity
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -52,7 +49,6 @@ internal class ParentSingleAbEntityImpl(private val dataSource: ParentSingleAbEn
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
-
 
   internal class Builder(result: ParentSingleAbEntityData?) :
     ModifiableWorkspaceEntityBase<ParentSingleAbEntity, ParentSingleAbEntityData>(result), ParentSingleAbEntityBuilder {
@@ -76,7 +72,7 @@ internal class ParentSingleAbEntityImpl(private val dataSource: ParentSingleAbEn
       this.currentEntityData = null
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -97,14 +93,12 @@ internal class ParentSingleAbEntityImpl(private val dataSource: ParentSingleAbEn
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var child: ChildSingleAbstractBaseEntityBuilder<out ChildSingleAbstractBaseEntity>?
       get() {
@@ -124,10 +118,8 @@ internal class ParentSingleAbEntityImpl(private val dataSource: ParentSingleAbEn
         checkModificationAllowed()
         val _diff = diff
         if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(false, CHILD_CONNECTION_ID)] = this
-          }
-// else you're attaching a new entity to an existing entity that is not modifiable
+          value.entityLinks[EntityLink(false, CHILD_CONNECTION_ID)] = this
+          @Suppress("UNCHECKED_CAST")
           _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
@@ -137,7 +129,6 @@ internal class ParentSingleAbEntityImpl(private val dataSource: ParentSingleAbEn
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
             value.entityLinks[EntityLink(false, CHILD_CONNECTION_ID)] = this
           }
-// else you're attaching a new entity to an existing entity that is not modifiable
           this.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)] = value
         }
         changedProperty.add("child")
@@ -145,13 +136,10 @@ internal class ParentSingleAbEntityImpl(private val dataSource: ParentSingleAbEn
 
     override fun getEntityClass(): Class<ParentSingleAbEntity> = ParentSingleAbEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ParentSingleAbEntityData : WorkspaceEntityData<ParentSingleAbEntity>() {
-
-
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<ParentSingleAbEntity> {
     val modifiable = ParentSingleAbEntityImpl.Builder(null)
     modifiable.diff = diff

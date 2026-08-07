@@ -28,18 +28,11 @@ import org.jetbrains.idea.maven.importing.workspaceModel.MavenProjectsTreeSettin
 internal class MavenProjectsTreeSettingsEntityImpl(private val dataSource: MavenProjectsTreeSettingsEntityData) :
   MavenProjectsTreeSettingsEntity, WorkspaceEntityBase(dataSource) {
 
-  private companion object {
-
-    private val connections = listOf<ConnectionId>()
-
-  }
-
   override val importedFilePaths: List<String>
     get() {
       readField("importedFilePaths")
       return dataSource.importedFilePaths
     }
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -47,9 +40,8 @@ internal class MavenProjectsTreeSettingsEntityImpl(private val dataSource: Maven
     }
 
   override fun connectionIdList(): List<ConnectionId> {
-    return connections
+    return emptyList()
   }
-
 
   internal class Builder(result: MavenProjectsTreeSettingsEntityData?) :
     ModifiableWorkspaceEntityBase<MavenProjectsTreeSettingsEntity, MavenProjectsTreeSettingsEntityData>(result),
@@ -74,7 +66,7 @@ internal class MavenProjectsTreeSettingsEntityImpl(private val dataSource: Maven
       this.currentEntityData = null
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -88,7 +80,7 @@ internal class MavenProjectsTreeSettingsEntityImpl(private val dataSource: Maven
     }
 
     override fun connectionIdList(): List<ConnectionId> {
-      return connections
+      return emptyList()
     }
 
     override fun afterModification() {
@@ -106,14 +98,12 @@ internal class MavenProjectsTreeSettingsEntityImpl(private val dataSource: Maven
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     private val importedFilePathsUpdater: (value: List<String>) -> Unit = { value ->
 
@@ -139,15 +129,12 @@ internal class MavenProjectsTreeSettingsEntityImpl(private val dataSource: Maven
 
     override fun getEntityClass(): Class<MavenProjectsTreeSettingsEntity> = MavenProjectsTreeSettingsEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class MavenProjectsTreeSettingsEntityData : WorkspaceEntityData<MavenProjectsTreeSettingsEntity>() {
   lateinit var importedFilePaths: MutableList<String>
-
   internal fun isImportedFilePathsInitialized(): Boolean = ::importedFilePaths.isInitialized
-
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<MavenProjectsTreeSettingsEntity> {
     val modifiable = MavenProjectsTreeSettingsEntityImpl.Builder(null)
     modifiable.diff = diff

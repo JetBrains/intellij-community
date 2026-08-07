@@ -31,14 +31,12 @@ import org.jetbrains.plugins.gradle.model.versionCatalogs.GradleVersionCatalogEn
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class GradleVersionCatalogEntityImpl(private val dataSource: GradleVersionCatalogEntityData) : GradleVersionCatalogEntity,
                                                                                                         WorkspaceEntityBase(dataSource) {
-
   private companion object {
     internal val BUILD_CONNECTION_ID: ConnectionId = ConnectionId.create(GradleBuildEntity::class.java,
                                                                          GradleVersionCatalogEntity::class.java,
                                                                          ConnectionId.ConnectionType.ONE_TO_MANY,
                                                                          false)
     private val connections = listOf<ConnectionId>(BUILD_CONNECTION_ID)
-
   }
 
   override val name: String
@@ -54,7 +52,6 @@ internal class GradleVersionCatalogEntityImpl(private val dataSource: GradleVers
   override val build: GradleBuildEntity
     get() = snapshot.instrumentation.getParent(BUILD_CONNECTION_ID, this) as? GradleBuildEntity
             ?: error("Parent build not found for GradleVersionCatalogEntity")
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -64,7 +61,6 @@ internal class GradleVersionCatalogEntityImpl(private val dataSource: GradleVers
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
-
 
   internal class Builder(result: GradleVersionCatalogEntityData?) :
     ModifiableWorkspaceEntityBase<GradleVersionCatalogEntity, GradleVersionCatalogEntityData>(result), GradleVersionCatalogEntityBuilder {
@@ -89,7 +85,7 @@ internal class GradleVersionCatalogEntityImpl(private val dataSource: GradleVers
       index(this, "url", this.url)
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -128,14 +124,12 @@ internal class GradleVersionCatalogEntityImpl(private val dataSource: GradleVers
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var name: String
       get() = getEntityData().name
@@ -171,11 +165,10 @@ internal class GradleVersionCatalogEntityImpl(private val dataSource: GradleVers
         val _diff = diff
         if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
 // Setting backref of the list
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            val data = (value.entityLinks[EntityLink(true, BUILD_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
-            value.entityLinks[EntityLink(true, BUILD_CONNECTION_ID)] = data
-          }
-// else you're attaching a new entity to an existing entity that is not modifiable
+          @Suppress("UNCHECKED_CAST")
+          val data = (value.entityLinks[EntityLink(true, BUILD_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
+          value.entityLinks[EntityLink(true, BUILD_CONNECTION_ID)] = data
+          @Suppress("UNCHECKED_CAST")
           _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
@@ -184,10 +177,10 @@ internal class GradleVersionCatalogEntityImpl(private val dataSource: GradleVers
         else {
 // Setting backref of the list
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
+            @Suppress("UNCHECKED_CAST")
             val data = (value.entityLinks[EntityLink(true, BUILD_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
             value.entityLinks[EntityLink(true, BUILD_CONNECTION_ID)] = data
           }
-// else you're attaching a new entity to an existing entity that is not modifiable
           this.entityLinks[EntityLink(false, BUILD_CONNECTION_ID)] = value
         }
         changedProperty.add("build")
@@ -195,17 +188,14 @@ internal class GradleVersionCatalogEntityImpl(private val dataSource: GradleVers
 
     override fun getEntityClass(): Class<GradleVersionCatalogEntity> = GradleVersionCatalogEntity::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class GradleVersionCatalogEntityData : WorkspaceEntityData<GradleVersionCatalogEntity>() {
   lateinit var name: String
   lateinit var url: VirtualFileUrl
-
   internal fun isNameInitialized(): Boolean = ::name.isInitialized
   internal fun isUrlInitialized(): Boolean = ::url.isInitialized
-
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<GradleVersionCatalogEntity> {
     val modifiable = GradleVersionCatalogEntityImpl.Builder(null)
     modifiable.diff = diff

@@ -25,7 +25,7 @@ interface BaseTestEntityBuilder : WorkspaceEntityBuilder<BaseTestEntity> {
 }
 
 internal object BaseTestEntityType : EntityType<BaseTestEntity, BaseTestEntityBuilder>() {
-  override val entityClass: Class<BaseTestEntity> get() = BaseTestEntity::class.java
+  override val entityImplClass: Class<*> get() = BaseTestEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = BaseTestEntityImpl.Builder::class.java
   operator fun invoke(
     name: String,
@@ -53,7 +53,6 @@ fun MutableEntityStorage.modifyBaseTestEntity(
 
 var BaseTestEntityBuilder.extensionChildren: List<ExtensionChildEntityBuilder>
   by WorkspaceEntity.extensionBuilder(ExtensionChildEntity::class.java)
-
 
 @JvmOverloads
 @JvmName("createBaseTestEntity")

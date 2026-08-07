@@ -26,18 +26,11 @@ import com.intellij.platform.workspace.storage.testEntities.entities.ChildWithEx
 internal class ChildWithExtensionParentImpl(private val dataSource: ChildWithExtensionParentData) : ChildWithExtensionParent,
                                                                                                     WorkspaceEntityBase(dataSource) {
 
-  private companion object {
-
-    private val connections = listOf<ConnectionId>()
-
-  }
-
   override val data: String
     get() {
       readField("data")
       return dataSource.data
     }
-
   override val entitySource: EntitySource
     get() {
       readField("entitySource")
@@ -45,9 +38,8 @@ internal class ChildWithExtensionParentImpl(private val dataSource: ChildWithExt
     }
 
   override fun connectionIdList(): List<ConnectionId> {
-    return connections
+    return emptyList()
   }
-
 
   internal class Builder(result: ChildWithExtensionParentData?) :
     ModifiableWorkspaceEntityBase<ChildWithExtensionParent, ChildWithExtensionParentData>(result), ChildWithExtensionParentBuilder {
@@ -71,7 +63,7 @@ internal class ChildWithExtensionParentImpl(private val dataSource: ChildWithExt
       this.currentEntityData = null
 // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
-      checkInitialization() // TODO uncomment and check failed tests
+      checkInitialization()
     }
 
     private fun checkInitialization() {
@@ -85,7 +77,7 @@ internal class ChildWithExtensionParentImpl(private val dataSource: ChildWithExt
     }
 
     override fun connectionIdList(): List<ConnectionId> {
-      return connections
+      return emptyList()
     }
 
     // Relabeling code, move information from dataSource to this builder
@@ -96,14 +88,12 @@ internal class ChildWithExtensionParentImpl(private val dataSource: ChildWithExt
       updateChildToParentReferences(parents)
     }
 
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData(true).entitySource = value
         changedProperty.add("entitySource")
-
       }
     override var data: String
       get() = getEntityData().data
@@ -115,15 +105,12 @@ internal class ChildWithExtensionParentImpl(private val dataSource: ChildWithExt
 
     override fun getEntityClass(): Class<ChildWithExtensionParent> = ChildWithExtensionParent::class.java
   }
-
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ChildWithExtensionParentData : WorkspaceEntityData<ChildWithExtensionParent>() {
   lateinit var data: String
-
   internal fun isDataInitialized(): Boolean = ::data.isInitialized
-
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<ChildWithExtensionParent> {
     val modifiable = ChildWithExtensionParentImpl.Builder(null)
     modifiable.diff = diff
