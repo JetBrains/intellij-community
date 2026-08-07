@@ -21,7 +21,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//libraries/jna",
     ],
 )
@@ -39,6 +39,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":updater",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//libraries/jna:jna_test_lib",
         "//libraries/junit5",
         "//libraries/junit5:junit5_test_lib",
@@ -87,7 +88,8 @@ jvm_library(
     runtime_deps = [":tools-updater-tests"],
     deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//libraries/jna",
         "//libraries/jna:jna_test_lib",
         "//libraries/junit5",

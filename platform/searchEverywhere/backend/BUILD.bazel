@@ -31,7 +31,7 @@ jvm_library(
     deps = [
         # do not sort,
         "//platform/searchEverywhere/shared:searchEverywhere",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/coroutines/core",
         "//platform/kernel/shared:kernel",
@@ -72,6 +72,7 @@ jvm_library(
         # do not sort,
         ":backend",
         "//platform/searchEverywhere/shared:searchEverywhere_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//platform/kernel/shared:kernel_test_lib",
         "//platform/kernel/rpc.backend:rpc.backend_test_lib",
@@ -139,7 +140,8 @@ jvm_library(
     runtime_deps = [":backend-tests"],
     deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "@lib//:kotlin-stdlib",
         "//libraries/junit5",
         "//libraries/junit5:junit5_test_lib",

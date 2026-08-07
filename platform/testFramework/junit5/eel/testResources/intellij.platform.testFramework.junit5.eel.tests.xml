@@ -3,6 +3,7 @@
   <dependencies>
     <module name="intellij.libraries.junit5.pioneer"/>
     <module name="intellij.libraries.commons.compress"/>
+    <module name="intellij.libraries.jetbrains.annotations"/>
     <module name="intellij.libraries.junit5"/>
     <module name="intellij.libraries.junit5.jupiter"/>
     <module name="intellij.libraries.junit5.params"/>

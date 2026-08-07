@@ -19,7 +19,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//libraries/kotlinx/coroutines/core",
         "@lib//:kotlin-stdlib",
         "//platform/eel-provider",
@@ -54,6 +54,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":eel-tcp",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//platform/eel-provider:eel-provider_test_lib",
         "//platform/eel:eel_test_lib",

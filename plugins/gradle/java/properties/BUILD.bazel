@@ -20,7 +20,7 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//plugins/properties/properties-psi-api:psi",
         "//plugins/properties/properties-psi-impl:backend-psi",
         "//plugins/gradle/java",
@@ -47,6 +47,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":properties",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//plugins/properties/properties-psi-api:psi_test_lib",
         "//plugins/properties/properties-psi-impl:backend-psi_test_lib",
         "//plugins/gradle/java:java_test_lib",

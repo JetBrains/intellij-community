@@ -19,7 +19,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "@lib//:kotlin-stdlib",
         "//platform/util-rt",
     ],
@@ -37,6 +37,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":vcs-log-graph",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/util-rt:util-rt_test_lib",
     ],
 )

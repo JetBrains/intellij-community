@@ -2,6 +2,7 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.codeowners.monorepo.resolver"/>
+    <module name="intellij.libraries.jetbrains.annotations"/>
     <module name="intellij.libraries.teamcity.service.messages"/>
   </dependencies>
   <!-- endregion -->

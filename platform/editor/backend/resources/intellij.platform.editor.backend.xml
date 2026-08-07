@@ -3,6 +3,7 @@
   <dependencies>
     <module name="intellij.platform.backend"/>
     <module name="fleet.rhizomedb"/>
+    <module name="intellij.libraries.jetbrains.annotations"/>
     <module name="intellij.libraries.kotlinx.coroutines.core"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.editor"/>

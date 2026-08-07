@@ -10,7 +10,7 @@ jvm_library(
     ),
     module_name = "intellij.webp.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = ["@lib//:jetbrains-annotations"],
+    runtime_deps = ["//libraries/jetbrains/annotations"],
 )
 
 jvm_library(
@@ -29,7 +29,8 @@ jvm_library(
     runtime_deps = [":tests"],
     deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//plugins/webp",
         "//plugins/webp:webp_test_lib",
         "//platform/util",

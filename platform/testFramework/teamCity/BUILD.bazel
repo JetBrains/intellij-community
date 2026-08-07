@@ -20,7 +20,7 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//libraries/teamcity/service-messages:libraries-teamcity-service-messages",
         "//.ownership/monorepo-resolver:codeowners-monorepo-resolver",
     ],
@@ -38,6 +38,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":teamCity",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//libraries/teamcity/service-messages:libraries-teamcity-service-messages_test_lib",
         "//.ownership/monorepo-resolver:codeowners-monorepo-resolver_test_lib",
     ],

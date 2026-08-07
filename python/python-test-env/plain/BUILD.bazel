@@ -12,7 +12,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//python/python-test-env/core",
         "//python/openapi:community",
         "//python/python-venv:venv",
@@ -53,7 +53,8 @@ jvm_library(
     ],
     deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//python/python-test-env/core",
         "//python/python-test-env/core:core_test_lib",
         "//python/openapi:community",

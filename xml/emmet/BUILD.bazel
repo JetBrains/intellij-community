@@ -145,7 +145,7 @@ jvm_library(
     deps = [
         # do not sort,
         "//platform/kernel/shared:kernel",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "@lib//:kotlin-stdlib-provided",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//platform/kernel/rpc",
@@ -190,6 +190,7 @@ jvm_library(
         # do not sort,
         ":emmet",
         "//platform/kernel/shared:kernel_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/core-api:core",
         "//platform/core-api:core_test_lib",
         "//platform/analysis-impl",

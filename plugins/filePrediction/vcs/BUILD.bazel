@@ -24,7 +24,7 @@ jvm_library(
         "//platform/util",
         "//plugins/filePrediction",
         "@lib//:kotlin-stdlib",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
     ],
 )
 
@@ -44,6 +44,7 @@ jvm_library(
         "//platform/vcs-api:vcs_test_lib",
         "//platform/util:util_test_lib",
         "//plugins/filePrediction:filePrediction_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
     ],
 )
 ### auto-generated section `build intellij.filePrediction.vcs` end

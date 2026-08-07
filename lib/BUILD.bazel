@@ -6713,28 +6713,6 @@ jvm_import(
 )
 
 copy_file(
-    name = "org.jetbrains/annotations-26.0.2.jar_copy",
-    src = "@org_jetbrains-annotations-26_0_2_http//file",
-    out = "org.jetbrains/annotations-26.0.2.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "jetbrains-annotations",
-    jar = "@org_jetbrains-annotations-26_0_2_http//file",
-    source_jar = "@org_jetbrains-annotations-26_0_2-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-java_library(
-    name = "jetbrains-annotations-provided",
-    neverlink = True,
-    visibility = ["//visibility:public"],
-    exports = [":jetbrains-annotations"],
-)
-
-copy_file(
     name = "org.jetbrains.compose.components/components-ui-tooling-preview-desktop-1.9.0.jar_copy",
     src = "@org_jetbrains_compose_components-components-ui-tooling-preview-desktop-1_9_0_http//file",
     out = "org.jetbrains.compose.components/components-ui-tooling-preview-desktop-1.9.0.jar",
@@ -11649,6 +11627,21 @@ jvm_import(
     name = "libraries-jediterm-ui-jediterm-ui",
     jar = "@org_jetbrains_jediterm-jediterm-ui-3_74_http//file",
     source_jar = "@org_jetbrains_jediterm-jediterm-ui-3_74-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "org.jetbrains/annotations-26.0.2.jar_copy",
+    src = "@org_jetbrains-annotations-26_0_2_http//file",
+    out = "org.jetbrains/annotations-26.0.2.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-jetbrains-annotations-jetbrains-annotations",
+    jar = "@org_jetbrains-annotations-26_0_2_http//file",
+    source_jar = "@org_jetbrains-annotations-26_0_2-sources_http//file",
     visibility = ["//visibility:public"],
 )
 

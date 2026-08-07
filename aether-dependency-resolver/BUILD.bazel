@@ -21,7 +21,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//libraries/http-client",
         "//libraries/commons/logging",
         "@lib//:slf4j-api",
@@ -51,6 +51,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":aether-dependency-resolver",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//libraries/http-client:http-client_test_lib",
         "//libraries/commons/logging:logging_test_lib",
         "//platform/testFramework",
@@ -104,7 +105,8 @@ jvm_library(
     runtime_deps = [":java-aetherDependencyResolver-tests"],
     deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//libraries/http-client",
         "//libraries/http-client:http-client_test_lib",
         "//libraries/commons/logging",

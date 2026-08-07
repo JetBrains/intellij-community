@@ -75,7 +75,7 @@
     <orderEntry type="module" module-name="intellij.python.community.services.shared" />
     <orderEntry type="module" module-name="intellij.python.community.impl.pipenv" />
     <orderEntry type="module" module-name="intellij.python.venv" />
-    <orderEntry type="library" name="jetbrains-annotations" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jetbrains.annotations" />
     <orderEntry type="module" module-name="intellij.python.pyproject" />
     <orderEntry type="module" module-name="intellij.python.hatch" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />

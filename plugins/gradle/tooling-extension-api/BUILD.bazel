@@ -38,7 +38,7 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//platform/external-system-rt:externalSystem-rt",
         "//platform/util-rt",
         "@lib//:gradle",
@@ -60,6 +60,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":toolingExtension",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/external-system-rt:externalSystem-rt_test_lib",
         "//platform/util-rt:util-rt_test_lib",
         "//libraries/groovy",

@@ -3,6 +3,7 @@
   <dependencies>
     <module name="intellij.libraries.jbr"/>
     <module name="intellij.libraries.jcef"/>
+    <module name="intellij.libraries.jetbrains.annotations"/>
     <module name="intellij.libraries.jna"/>
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.core"/>

@@ -8,7 +8,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" scope="PROVIDED" name="jetbrains-annotations" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jetbrains.annotations" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.platform.backend" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.platform.core" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.platform.util" scope="PROVIDED" />

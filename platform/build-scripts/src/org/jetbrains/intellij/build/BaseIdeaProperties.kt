@@ -62,7 +62,7 @@ val CE_CLASS_VERSIONS: Map<String, String> = mapOf(
   "" to "25",
   "lib/idea_rt.jar" to "1.8",
   "lib/forms_rt.jar" to "1.8",
-  "lib/annotations.jar" to "1.8",
+  "lib/intellij.libraries.jetbrains.annotations.jar" to "1.8",
   "lib/util_rt.jar" to "1.8",
   "lib/util-8.jar" to "1.8",
   "lib/external-system-rt.jar" to "1.8",
@@ -90,9 +90,6 @@ fun configurePropertiesForAllEditionsOfIntelliJIdea(properties: JetBrainsProduct
 
     //todo currently intellij.platform.testFramework included into idea.jar depends on this jar so it cannot be moved to java plugin
     layout.withModule("intellij.java.rt", "idea_rt.jar")
-    // for compatibility with user projects which refer to IDEA_HOME/lib/annotations.jar
-    layout.withProjectLibrary("jetbrains-annotations", "annotations.jar")
-
     layout.withoutProjectLibrary("Ant")
     // there is a patched version of the org.gradle.api.JavaVersion class placed into the Gradle plugin classpath as "rt" jar
     // to avoid class linkage conflicts "Gradle" library is placed into the 'lib' directory of the Gradle plugin layout so we need to exclude it from the platform layout explicitly

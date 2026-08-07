@@ -30,7 +30,7 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//python/python-poetry/common",
         "//python/openapi:community",
         "//python/python-pyproject:pyproject",
@@ -58,6 +58,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":backend",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//python/python-poetry/common:common_test_lib",
         "//python/openapi:community_test_lib",
         "//python/python-pyproject:pyproject_test_lib",

@@ -36,7 +36,7 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//libraries/kotlinx/coroutines/core",
         "//platform/util/annotations",
     ],
@@ -55,6 +55,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":eel",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//platform/util/annotations:annotations_test_lib",
     ],

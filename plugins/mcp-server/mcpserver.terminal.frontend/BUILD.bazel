@@ -19,7 +19,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "@lib//:kotlin-stdlib",
         "//plugins/mcp-server:mcpserver",
         "//plugins/mcp-server/mcpserver.frontend",
@@ -51,6 +51,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":mcpserver.terminal.frontend",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//plugins/mcp-server:mcpserver_test_lib",
         "//plugins/mcp-server/mcpserver.frontend:mcpserver.frontend_test_lib",
         "//platform/core-api:core_test_lib",

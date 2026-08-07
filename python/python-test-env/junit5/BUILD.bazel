@@ -25,7 +25,7 @@ jvm_library(
     exports = ["//python/python-test-env/core"],
     runtime_deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//python/python-test-env/core",
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/coroutines/core",
@@ -69,7 +69,8 @@ jvm_library(
     runtime_deps = [":junit5"],
     deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//python/python-test-env/core",
         "//python/python-test-env/core:core_test_lib",
         "@lib//:kotlin-stdlib",

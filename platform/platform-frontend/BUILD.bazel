@@ -20,7 +20,7 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//platform/platform-impl:ide-impl",
     ],
 )
@@ -37,6 +37,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":frontend",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
     ],
 )

@@ -20,7 +20,7 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//platform/util",
         "//platform/extensions",
         "//platform/statistics",
@@ -39,6 +39,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":ext",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/util:util_test_lib",
         "//platform/extensions:extensions_test_lib",
         "//platform/statistics:statistics_test_lib",

@@ -4,6 +4,7 @@
     <module name="intellij.gradle"/>
     <module name="intellij.gradle.java"/>
     <plugin id="com.jetbrains.performancePlugin"/>
+    <module name="intellij.libraries.jetbrains.annotations"/>
     <module name="intellij.libraries.kotlinx.coroutines.core"/>
     <module name="intellij.maven"/>
     <module name="intellij.maven.performanceTesting"/>

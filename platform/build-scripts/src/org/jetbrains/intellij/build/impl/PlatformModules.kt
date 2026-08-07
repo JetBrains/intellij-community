@@ -26,17 +26,11 @@ import org.jetbrains.jps.model.module.JpsModuleDependency
 import org.jetbrains.jps.model.module.JpsModuleReference
 import java.util.SortedSet
 
-@Suppress("RemoveRedundantQualifierName")
-private val PLATFORM_CUSTOM_PACK_MODE: Map<String, LibraryPackMode> = java.util.Map.of(
-  "jetbrains-annotations", LibraryPackMode.STANDALONE_SEPARATE_WITHOUT_VERSION_NAME,
-)
-
 // These project libraries must be converted to content modules and removed from the allowlist.
 private val IMPLICIT_PROJECT_LIBRARY_ALLOWLIST: Set<String> = java.util.Set.of(
   "Log4J",
   "XMLUnit Core",
   "java-diff-utils",
-  "jetbrains-annotations",
   "jetCheck",
   "kotlin-stdlib",
   "opentest4j",
@@ -288,7 +282,7 @@ internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedS
       .addOrGet(
         ProjectLibraryData(
           libraryName = libName,
-          packMode = PLATFORM_CUSTOM_PACK_MODE.getOrDefault(libName, LibraryPackMode.MERGED),
+          packMode = LibraryPackMode.MERGED,
           reason = "<- ${module.name}",
           owner = null,
         )
@@ -396,9 +390,8 @@ internal fun computeProjectLibsUsedByPlugins(enabledPluginModules: Set<String>, 
           continue
         }
 
-        val packMode = PLATFORM_CUSTOM_PACK_MODE.getOrDefault(libName, LibraryPackMode.MERGED)
         // TODO: owner is null in this case? Since it is loaded by platform
-        result.addOrGet(ProjectLibraryData(libraryName = libName, packMode = packMode, reason = "<- $moduleName", owner = null))
+        result.addOrGet(ProjectLibraryData(libraryName = libName, packMode = LibraryPackMode.MERGED, reason = "<- $moduleName", owner = null))
           .dependentModules
           .computeIfAbsent(plugin.directoryName) { mutableListOf() }
           .add(moduleName)

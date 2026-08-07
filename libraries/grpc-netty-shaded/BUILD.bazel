@@ -22,7 +22,7 @@ jvm_library(
         # do not sort,
         "@lib//:libraries-grpc-netty-shaded-grpc-netty-shaded",
         "@lib//:kotlin-stdlib",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//libraries/grpc",
     ],
 )
@@ -40,6 +40,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":grpc-netty-shaded",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//libraries/grpc:grpc_test_lib",
     ],
 )

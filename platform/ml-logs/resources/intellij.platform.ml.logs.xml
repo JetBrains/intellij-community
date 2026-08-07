@@ -1,8 +1,9 @@
 <idea-plugin visibility="internal" package="com.intellij.platform.ml.logs">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.platform.backend"/>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.libraries.jetbrains.annotations"/>
     <module name="intellij.platform.statistics"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
 </idea-plugin>

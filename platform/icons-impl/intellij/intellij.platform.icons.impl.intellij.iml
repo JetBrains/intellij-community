@@ -42,6 +42,6 @@
     <orderEntry type="module" module-name="intellij.platform.core.impl" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.platform.ide.core" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" scope="PROVIDED" />
-    <orderEntry type="library" name="jetbrains-annotations" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jetbrains.annotations" />
   </component>
 </module>

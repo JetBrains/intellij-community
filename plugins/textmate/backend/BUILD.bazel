@@ -7,6 +7,11 @@ jvm_provided_library(
 )
 
 jvm_provided_library(
+    name = "libraries_jetbrains_annotations_provided",
+    lib = "//libraries/jetbrains/annotations",
+)
+
+jvm_provided_library(
     name = "spellchecker_provided",
     lib = "//spellchecker",
 )
@@ -74,12 +79,12 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations-provided",
         "@lib//:kotlin-stdlib-provided",
         "//platform/ide-core",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//platform/util:util-ui",
         ":plugins_textmate_common_provided",
+        ":libraries_jetbrains_annotations_provided",
         ":spellchecker_provided",
         ":platform_core_provided",
         ":platform_lang-impl_provided",
@@ -107,7 +112,8 @@ jvm_library(
         ":backend",
         "//plugins/textmate/common",
         "//plugins/textmate/common:common_test_lib",
-        "@lib//:jetbrains-annotations-provided",
+        "//libraries/jetbrains/annotations",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "@lib//:kotlin-stdlib-provided",
         "//spellchecker",
         "//spellchecker:spellchecker_test_lib",

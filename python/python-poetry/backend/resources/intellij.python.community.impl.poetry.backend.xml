@@ -3,6 +3,7 @@
   <dependencies>
     <module name="intellij.python.sdk.backend"/>
     <module name="intellij.platform.backend"/>
+    <module name="intellij.libraries.jetbrains.annotations"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.python.community"/>

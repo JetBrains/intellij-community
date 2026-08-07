@@ -30,7 +30,7 @@ jvm_library(
         "//platform/core-api:core",
         "//platform/dvcs-impl:vcs-dvcs-impl",
         "@lib//:kotlin-stdlib",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
     ],
 )
 
@@ -55,6 +55,7 @@ jvm_library(
         "//plugins/terminal/completion:completion_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/dvcs-impl:vcs-dvcs-impl_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//libraries/junit5",
         "//libraries/junit5:junit5_test_lib",
         "//platform/testFramework",
@@ -132,7 +133,8 @@ jvm_library(
         "//platform/dvcs-impl:vcs-dvcs-impl",
         "//platform/dvcs-impl:vcs-dvcs-impl_test_lib",
         "@lib//:kotlin-stdlib",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//libraries/junit5",
         "//libraries/junit5:junit5_test_lib",
         "//platform/testFramework",

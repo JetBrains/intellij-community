@@ -42,7 +42,7 @@ jvm_library(
         "@lib//:slf4j-api",
         "@lib//:fleet-jetbrains-intellij-platform-util-zip-squashed",
         "@lib//:fleet-jetbrains-intellij-idea-community-build-zip",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
     ],
 )
 
@@ -63,6 +63,7 @@ jvm_library(
         "//fleet/codecache:codecache_test_lib",
         "//fleet/build/platform:platform_test_lib",
         "//fleet/build/fs:fs_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
     ],
 )
 ### auto-generated section `build fleet.build.codecache` end

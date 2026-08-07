@@ -32,7 +32,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "@lib//:kotlin-stdlib",
         "//java/java-indexing-api:indexing",
         "//platform/analysis-api:analysis",
@@ -101,6 +101,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":kotlin-codeInsight-shared",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//java/java-indexing-api:indexing_test_lib",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/code-style-api:codeStyle_test_lib",

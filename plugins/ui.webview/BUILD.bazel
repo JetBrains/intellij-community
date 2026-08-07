@@ -52,7 +52,7 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//libraries/kotlin/reflect",
         "//libraries/kotlinx/coroutines/core",
         "//libraries/kotlinx/serialization/core",
@@ -81,6 +81,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":ui.webview",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//libraries/kotlin/reflect:reflect_test_lib",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//libraries/kotlinx/serialization/core:core_test_lib",

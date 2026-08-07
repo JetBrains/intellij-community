@@ -27,7 +27,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "@lib//:kotlin-stdlib",
         "//libraries/pty4j",
         "//platform/core-api:core",
@@ -63,6 +63,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":ide-impl-wsl",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//libraries/pty4j:pty4j_test_lib",
         "//platform/core-api:core_test_lib",
         "//libraries/caffeine:caffeine_test_lib",

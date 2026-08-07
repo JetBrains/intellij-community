@@ -1,6 +1,7 @@
 <idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.libraries.jetbrains.annotations"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.python.community"/>
@@ -10,8 +11,8 @@
     <module name="intellij.python.parser"/>
     <module name="intellij.python.psi.impl"/>
     <module name="intellij.python.sdk.backend"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
 
   <extensionPoints>
     <extensionPoint qualifiedName="Pythonid.interpreterProvider"

@@ -13,7 +13,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         "//python/python-test-env/core",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/coroutines/core",
         "//platform/util",
@@ -51,7 +51,8 @@ jvm_library(
         # do not sort,
         "//python/python-test-env/core",
         "//python/python-test-env/core:core_test_lib",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/coroutines/core",
         "//libraries/kotlinx/coroutines/core:core_test_lib",

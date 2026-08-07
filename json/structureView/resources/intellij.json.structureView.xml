@@ -3,6 +3,7 @@
   <dependencies>
     <module name="intellij.json"/>
     <module name="intellij.json.backend"/>
+    <module name="intellij.libraries.jetbrains.annotations"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.editor.ui"/>
     <module name="intellij.platform.lang"/>

@@ -1,7 +1,8 @@
 <idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.python.community.execService"/>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.libraries.jetbrains.annotations"/>
     <module name="intellij.libraries.kotlinx.coroutines.core"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.projectModel"/>
@@ -12,8 +13,8 @@
     <module name="intellij.python.psi.impl"/>
     <module name="intellij.python.sdk.backend"/>
     <module name="intellij.python.venv"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij">
     <postStartupActivity implementation="com.intellij.python.community.services.systemPython.impl.SystemPythonInitialLoader"/>

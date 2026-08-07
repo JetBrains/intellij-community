@@ -22,7 +22,7 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//platform/core-api:core",
         "//platform/util",
         "//python/common",
@@ -43,6 +43,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":common",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/util:util_test_lib",
         "//python/common:common_test_lib",

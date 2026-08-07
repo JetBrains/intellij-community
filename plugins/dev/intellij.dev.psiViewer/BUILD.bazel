@@ -19,7 +19,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//platform/editor-ui-api:editor-ui",
         "//platform/indexing-api:indexing",
         "//jps/model-api:model",
@@ -58,6 +58,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":psiViewer",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/editor-ui-api:editor-ui_test_lib",
         "//platform/indexing-api:indexing_test_lib",
         "//jps/model-api:model_test_lib",

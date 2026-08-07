@@ -28,7 +28,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//platform/util/base",
         "//platform/util/base/multiplatform",
         "//platform/util-rt",
@@ -48,6 +48,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":text-matching",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/util/base:base_test_lib",
         "//platform/util/base/multiplatform:multiplatform_test_lib",
         "//platform/util-rt:util-rt_test_lib",
@@ -101,7 +102,8 @@ jvm_library(
     runtime_deps = [":text-matching-tests"],
     deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/util/base",
         "//platform/util/base:base_test_lib",
         "//platform/util/base/multiplatform",

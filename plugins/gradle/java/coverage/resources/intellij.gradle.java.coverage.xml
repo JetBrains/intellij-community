@@ -3,6 +3,7 @@
   <dependencies>
     <plugin id="Coverage"/>
     <module name="intellij.gradle"/>
+    <module name="intellij.libraries.jetbrains.annotations"/>
     <module name="intellij.platform.execution"/>
     <module name="intellij.platform.externalSystem.impl"/>
     <module name="intellij.platform.ide.core"/>

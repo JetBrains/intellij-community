@@ -35,7 +35,7 @@ jvm_library(
         "//libraries/asm",
         "//libraries/jgoodies/forms",
         "//java/compiler/instrumentation-util",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
     ],
 )
 
@@ -64,6 +64,7 @@ jvm_library(
         "//java/compiler/instrumentation-util:instrumentation-util_test_lib",
         "//platform/util",
         "//platform/util:util_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//libraries/junit4",
         "//libraries/junit4:junit4_test_lib",
     ],
@@ -129,7 +130,8 @@ jvm_library(
         "//platform/util:util_test_lib",
         "//platform/util/multiplatform",
         "//platform/util/multiplatform:multiplatform_test_lib",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//libraries/junit5",
         "//libraries/junit5:junit5_test_lib",
     ],

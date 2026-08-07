@@ -16,7 +16,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//platform/util/rt-java8",
     ],
 )
@@ -34,6 +34,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":zip",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/util/rt-java8:rt-java8_test_lib",
     ],
 )

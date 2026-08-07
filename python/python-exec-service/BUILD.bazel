@@ -37,7 +37,7 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//python/openapi:community",
         "//platform/eel-provider",
         "//platform/util",
@@ -74,6 +74,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":community-execService",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//python/openapi:community_test_lib",
         "//platform/eel-provider:eel-provider_test_lib",
         "//platform/util:util_test_lib",
@@ -162,7 +163,8 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//python/openapi:community",
         "//python/openapi:community_test_lib",
         "//platform/eel-provider",

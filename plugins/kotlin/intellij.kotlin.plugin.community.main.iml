@@ -11,7 +11,7 @@
     <orderEntry type="module" module-name="intellij.kotlin.base.indices" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.navigation" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.base.compilerConfiguration" exported="" />
-    <orderEntry type="library" exported="" name="jetbrains-annotations" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jetbrains.annotations" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.base.psi" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.base.kdoc" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.base.projectModel" exported="" />

@@ -86,6 +86,7 @@ suspend fun buildCommunityStandaloneJpsBuilder(
   layout.withModule("intellij.platform.jps.build.javac.rt", "jps-builders-6.jar")
   layout.withModuleLibrary("netty-codec-protobuf", "intellij.libraries.netty.codec.protobuf", "")
   layout.withModuleLibrary("jna", "intellij.libraries.jna", "")
+  layout.withModuleLibrary("jetbrains-annotations", "intellij.libraries.jetbrains.annotations", "")
 
   // layout of groovy jars must be consistent with GroovyBuilder.getGroovyRtRoots method
   layout.withModule("intellij.libraries.groovy", "groovy.jar")
@@ -110,7 +111,6 @@ suspend fun buildCommunityStandaloneJpsBuilder(
     "Log4J",
     "Eclipse",
     "slf4j-api",
-    "jetbrains-annotations",
     "jps-javac-extension",
     "kotlin-stdlib",
     "kotlinx-coroutines-core",

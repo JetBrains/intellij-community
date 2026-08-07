@@ -15,7 +15,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//platform/external-process-auth-helper/rt",
     ],
 )
@@ -32,6 +32,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":rt",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/external-process-auth-helper/rt:rt_test_lib",
     ],
 )

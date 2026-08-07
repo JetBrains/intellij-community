@@ -19,7 +19,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "@lib//:kotlin-stdlib",
         "//platform/kernel/shared:kernel",
         "//platform/problemsView/shared",
@@ -59,6 +59,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":frontend",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/kernel/shared:kernel_test_lib",
         "//platform/problemsView/shared:shared_test_lib",
         "//platform/problemsView/ui:ui_test_lib",

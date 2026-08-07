@@ -78,7 +78,7 @@ jvm_library(
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/coroutines/core",
         "//libraries/kotlinx/serialization/core",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         ":platform_core-ui_provided",
         ":platform_icons-api_provided",
         ":platform_icons-api_rendering_provided",
@@ -135,6 +135,7 @@ jvm_library(
         "//platform/ide-core:ide-core_test_lib",
         "//platform/platform-impl:ide-impl",
         "//platform/platform-impl:ide-impl_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.icons.impl.intellij` end

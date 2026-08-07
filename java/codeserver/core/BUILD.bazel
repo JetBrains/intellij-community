@@ -20,7 +20,7 @@ jvm_library(
     runtime_deps = ["//platform/backend"],
     deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//libraries/stream",
         "//platform/core-api:core",
         "//platform/core-impl",
@@ -53,6 +53,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":core",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//libraries/stream:stream_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/core-impl:core-impl_test_lib",

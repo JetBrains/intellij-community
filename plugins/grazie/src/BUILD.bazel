@@ -31,7 +31,7 @@ jvm_library(
         # do not sort,
         "//libraries/jna",
         "//libraries/guava",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//libraries/commons/lang3",
     ],
     deps = [
@@ -166,6 +166,7 @@ jvm_library(
         "//libraries/guava:guava_test_lib",
         "//platform/platform-api:ide_test_lib",
         "//platform/statistics:statistics_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//libraries/fastutil:fastutil_test_lib",
         "//platform/util-class-loader:util-classLoader_test_lib",
         "//libraries/javax/activation:activation_test_lib",

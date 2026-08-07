@@ -36,7 +36,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "@lib//:kotlin-stdlib",
         "//fleet/rpc",
         "//fleet/util/core",
@@ -98,6 +98,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":ui",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//fleet/rpc:rpc_test_lib",
         "//fleet/util/core:core_test_lib",
         "//libraries/jackson/jackson:jackson_test_lib",
@@ -200,7 +201,8 @@ jvm_library(
     ],
     deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "@lib//:kotlin-stdlib",
         "//fleet/rpc",
         "//fleet/rpc:rpc_test_lib",

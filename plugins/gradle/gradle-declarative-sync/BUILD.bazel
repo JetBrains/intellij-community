@@ -23,7 +23,7 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//plugins/gradle",
         "//platform/core-api:core",
         "//platform/external-system-impl:externalSystem-impl",
@@ -51,6 +51,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":declarativeSync",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//plugins/gradle:gradle_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/external-system-impl:externalSystem-impl_test_lib",

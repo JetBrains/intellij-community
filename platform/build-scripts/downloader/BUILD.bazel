@@ -25,7 +25,7 @@ jvm_library(
     runtime_deps = ["//libraries/commons/lang3"],
     deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//libraries/commons/compress",
         "//libraries/teamcity/service-messages:libraries-teamcity-service-messages",
         "//libraries/commons/io",
@@ -52,6 +52,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":downloader",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//libraries/commons/compress:compress_test_lib",
         "//libraries/commons/lang3:lang3_test_lib",
         "//libraries/teamcity/service-messages:libraries-teamcity-service-messages_test_lib",

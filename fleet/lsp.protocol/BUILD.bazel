@@ -59,7 +59,7 @@ jvm_library(
         "@lib//:kotlinx-serialization-core",
         "@lib//:kotlinx-serialization-json",
         "//fleet/util/core",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "@lib//:kotlinx-io-core",
     ],
 )
@@ -78,6 +78,7 @@ jvm_library(
         # do not sort,
         ":lsp.protocol",
         "//fleet/util/core:core_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
     ],
 )
 ### auto-generated section `build fleet.lsp.protocol` end

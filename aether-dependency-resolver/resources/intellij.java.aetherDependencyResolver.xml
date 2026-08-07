@@ -5,6 +5,7 @@
     <module name="intellij.libraries.commons.lang3"/>
     <module name="intellij.libraries.commons.logging"/>
     <module name="intellij.libraries.http.client"/>
+    <module name="intellij.libraries.jetbrains.annotations"/>
     <module name="intellij.libraries.maven.resolver.provider"/>
     <module name="intellij.libraries.plexus.utils"/>
   </dependencies>

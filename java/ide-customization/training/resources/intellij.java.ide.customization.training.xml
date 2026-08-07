@@ -1,13 +1,14 @@
 <idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <plugin id="training"/>
     <module name="intellij.java.featuresTrainer"/>
+    <module name="intellij.libraries.jetbrains.annotations"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.ide"/>
     <module name="intellij.platform.util.ui"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij">
     <startPagePromoter id="JavaOnboardingTourPromoter" implementation="com.intellij.java.ide.customization.training.JavaOnboardingTourPromoter"/>

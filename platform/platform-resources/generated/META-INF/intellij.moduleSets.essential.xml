@@ -32,6 +32,7 @@
 
     <!-- region direct modules -->
     <module name="intellij.libraries.java.compatibility" loading="embedded"/>
+    <module name="intellij.libraries.jetbrains.annotations" loading="embedded"/>
     <module name="intellij.libraries.kotlin.reflect" loading="embedded"/>
     <module name="intellij.libraries.kotlinx.io" loading="embedded"/>
     <module name="intellij.libraries.kotlinx.serialization.cbor" loading="embedded"/>

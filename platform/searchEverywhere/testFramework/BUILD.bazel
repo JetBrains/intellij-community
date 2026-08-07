@@ -28,7 +28,7 @@ jvm_library(
         "//platform/searchEverywhere/shared:searchEverywhere",
         "//platform/searchEverywhere/backend",
         "//platform/searchEverywhere/frontend",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/coroutines/core",
     ],
@@ -58,6 +58,7 @@ jvm_library(
         "//platform/searchEverywhere/shared:searchEverywhere_test_lib",
         "//platform/searchEverywhere/backend:backend_test_lib",
         "//platform/searchEverywhere/frontend:frontend_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
     ],
 )

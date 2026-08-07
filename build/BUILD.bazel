@@ -282,7 +282,7 @@ jvm_library(
     deps = [
         # do not sort,
         "@community//build:build-javac-rt",
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "@lib//:kotlin-metadata",
         "//libraries/caffeine",
         "//libraries/asm",
@@ -306,6 +306,7 @@ jvm_library(
         # do not sort,
         ":dependency-graph",
         "@community//build:build-javac-rt_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//libraries/caffeine:caffeine_test_lib",
         "//libraries/asm:asm_test_lib",
         "//libraries/hash4j:hash4j_test_lib",
@@ -334,7 +335,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//libraries/javax/annotation",
         "@lib//:jps-javac-extension",
         "//libraries/protobuf",
@@ -357,6 +358,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":build-javac-rt",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//libraries/javax/annotation:annotation_test_lib",
         "//libraries/protobuf:protobuf_test_lib",
         "//libraries/netty/codec-protobuf:libraries-netty-codec-protobuf_test_lib",

@@ -20,7 +20,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
-        "@lib//:jetbrains-annotations",
+        "//libraries/jetbrains/annotations",
         "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
         "@lib//:gradle-provided",
     ],
@@ -39,6 +39,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":gradle-tooling",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//plugins/gradle/tooling-extension-impl:toolingExtension-impl_test_lib",
         "@lib//:gradle-provided",
     ],

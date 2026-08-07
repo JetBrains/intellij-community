@@ -148,7 +148,7 @@ class PatternInstrumenterTest {
     val testName = testName.methodName.capitalize()
     val testFile = IdeaTestUtil.findSourceFile(testDir + testName)
     val classesDir = tempDir.newDirectory("out")
-    val rootPaths = IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("jetbrains-annotations")
+    val rootPaths = IntelliJProjectConfiguration.getModuleLibrary("intellij.libraries.jetbrains.annotations", "jetbrains-annotations").classesPaths
     IdeaTestUtil.compileFile(testFile, classesDir, "-cp", rootPaths.joinToString(File.pathSeparator))
 
     val finder = InstrumentationClassFinder((listOf(classesDir.toURI().toURL()) +

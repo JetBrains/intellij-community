@@ -1,6 +1,7 @@
 <idea-plugin visibility="internal" package="com.intellij.codeInsight.inline.completion">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
+    <module name="intellij.libraries.jetbrains.annotations"/>
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.codeStyle"/>
     <module name="intellij.platform.core"/>

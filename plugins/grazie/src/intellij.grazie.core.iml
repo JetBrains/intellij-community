@@ -563,7 +563,7 @@
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="intellij.platform.statistics" />
-    <orderEntry type="library" scope="RUNTIME" name="jetbrains-annotations" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jetbrains.annotations" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.fastutil" />
     <orderEntry type="module" module-name="intellij.platform.util.classLoader" />
     <orderEntry type="module-library">

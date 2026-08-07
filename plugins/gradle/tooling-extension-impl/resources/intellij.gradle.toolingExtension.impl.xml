@@ -7,6 +7,7 @@
     <module name="intellij.libraries.gson"/>
     <module name="intellij.libraries.guava"/>
     <module name="intellij.libraries.ion"/>
+    <module name="intellij.libraries.jetbrains.annotations"/>
     <module name="intellij.libraries.kryo5"/>
     <module name="intellij.libraries.opentelemetry"/>
   </dependencies>

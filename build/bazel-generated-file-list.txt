@@ -475,6 +475,7 @@ libraries/jcef
 libraries/jcip
 libraries/jediterm-core
 libraries/jediterm-ui
+libraries/jetbrains/annotations
 libraries/jettison
 libraries/jgit-ssh
 libraries/jgoodies/common
