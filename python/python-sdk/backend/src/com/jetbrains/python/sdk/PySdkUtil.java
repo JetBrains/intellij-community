@@ -216,7 +216,11 @@ public final class PySdkUtil {
       return Collections.emptyMap();
     }
     final Map<String, String> environment = activateVirtualEnv(sdkHome);
-    sdk.putUserData(ENVIRONMENT_KEY, environment);
+    // Do not cache a failed/empty read (e.g. a timed-out conda activation): caching it would poison every
+    // later launch of this interpreter for the whole session. Retry on the next launch instead (PY-91371).
+    if (!environment.isEmpty()) {
+      sdk.putUserData(ENVIRONMENT_KEY, environment);
+    }
     return environment;
   }
 

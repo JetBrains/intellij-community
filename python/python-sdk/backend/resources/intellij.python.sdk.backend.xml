@@ -67,6 +67,10 @@
     <applicationService serviceImplementation="com.jetbrains.python.sdk.PySdkSettings"/>
     <applicationSettings service="com.jetbrains.python.sdk.PySdkSettings"/>
     <applicationSettings service="com.jetbrains.python.packaging.PyCondaPackageService"/>
+    <registryKey key="python.activate.env.reader.timeout.ms"
+                 defaultValue="60000"
+                 restartRequired="false"
+                 description="Timeout (ms) for reading a Python interpreter's activation environment (e.g. conda activate). Increase it if slow conda activation times out and the launched process is missing environment variables."/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.platform">
