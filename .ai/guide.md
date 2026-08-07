@@ -15,7 +15,7 @@ To regenerate, run `node community/.ai/render-guides.mjs`.
 
 ## Workspace Isolation
 
-Never create ad hoc Git worktrees or clones for this repository, and never install a workspace manager automatically. Before any workspace-isolation action, read and follow [Workspace Isolation](./workspace-isolation.md).
+Do not create ad hoc Git worktrees or clones, or install a workspace manager, on your own initiative. Before any workspace-isolation action, read and follow [Workspace Isolation](./workspace-isolation.md), which also covers the explicit-request exception.
 
 {{PARTIAL:module-specific}}
 

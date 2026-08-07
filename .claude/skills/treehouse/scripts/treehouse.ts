@@ -127,7 +127,7 @@ function failUsage(message: string): never {
 function nativeFailure(operation: string, result: SpawnResult, details?: unknown): CliError {
   const unavailable = result.exitCode === 127;
   const message = unavailable
-    ? "Treehouse is unavailable. Do not install it or fall back to another workspace mechanism."
+    ? "Treehouse is unavailable. Do not install it or fall back to another workspace mechanism on your own initiative; if the user explicitly asked for a Git worktree for this task, use one instead."
     : `Treehouse ${operation} failed${result.stderr.trim() ? `: ${result.stderr.trim()}` : "."}`;
   return new CliError(message, unavailable ? 127 : result.exitCode || 1, {
     ...(typeof details === "object" && details !== null ? details : {}),
