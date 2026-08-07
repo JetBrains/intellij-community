@@ -28,8 +28,8 @@ final class RangeMarkerStorageImpl implements RangeMarkerStorage {
   private static final Logger LOG = Logger.getInstance(RangeMarkerStorageImpl.class);
   private static final List<RangeMarker> GUARDED_IN_PROGRESS = new ArrayList<>(0);
 
-  private final RangeMarkerTree<RangeMarkerEx> myRangeMarkers;
-  private final RangeMarkerTree<RangeMarkerEx> myPersistentRangeMarkers;
+  private final @NotNull RangeMarkerTree<RangeMarkerEx> myRangeMarkers;
+  private final @NotNull RangeMarkerTree<RangeMarkerEx> myPersistentRangeMarkers;
   private final AtomicReference<List<RangeMarker>> myCachedGuardedBlocks;
 
   RangeMarkerStorageImpl(@NotNull DocumentEventDispatcher dispatcher) {
@@ -167,7 +167,7 @@ final class RangeMarkerStorageImpl implements RangeMarkerStorage {
     return Collections.unmodifiableList(blocks);
   }
 
-  private RangeMarkerTree<RangeMarkerEx> treeFor(@NotNull RangeMarkerEx rangeMarker) {
+  private @NotNull RangeMarkerTree<RangeMarkerEx> treeFor(@NotNull RangeMarkerEx rangeMarker) {
     return (rangeMarker instanceof PersistentRangeMarker) ? myPersistentRangeMarkers : myRangeMarkers;
   }
 

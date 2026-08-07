@@ -24,6 +24,7 @@ interface RangeMarkerStorage {
     surviveOnExternalChange: Boolean,
   ): RangeMarkerEx
 
+  @ApiStatus.Internal
   fun registerRangeMarker(
     rangeMarker: RangeMarkerEx,
     startOffset: Int,
