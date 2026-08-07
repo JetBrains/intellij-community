@@ -59,7 +59,10 @@ import com.jetbrains.python.inspections.PyArgumentListInspection
 import com.jetbrains.python.inspections.PyAssertTypeInspection
 import com.jetbrains.python.inspections.PyCallingNonCallableInspection
 import com.jetbrains.python.inspections.PyClassVarInspection
+import com.jetbrains.python.inspections.PyAttrsDataclassInspection
 import com.jetbrains.python.inspections.PyDataclassInspection
+import com.jetbrains.python.inspections.PyDataclassTransformInspection
+import com.jetbrains.python.inspections.PyStdlibDataclassInspection
 import com.jetbrains.python.inspections.PyDunderSlotsInspection
 import com.jetbrains.python.inspections.PyEnumInspection
 import com.jetbrains.python.inspections.PyFinalInspection
@@ -211,6 +214,9 @@ abstract class PyCodeInsightTestCase {
     PyCallingNonCallableInspection::class.java,
     PyClassVarInspection::class.java,
     PyDataclassInspection::class.java,
+    PyStdlibDataclassInspection::class.java,
+    PyAttrsDataclassInspection::class.java,
+    PyDataclassTransformInspection::class.java,
     PyDunderSlotsInspection::class.java,
     PyEnumInspection::class.java,
     PyFinalInspection::class.java,

@@ -1,12 +1,23 @@
 /*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2026 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.jetbrains.python.psi.stubs;
 
+import com.jetbrains.python.codeInsight.PyDataclassParameters;
 import com.jetbrains.python.psi.impl.stubs.CustomTargetExpressionStub;
+import com.jetbrains.python.psi.impl.stubs.PyDataclassMetadata;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public interface PyDataclassFieldStub extends CustomTargetExpressionStub, PydanticFieldConfig {
+
+public interface PyDataclassFieldStub extends CustomTargetExpressionStub {
+
+  /**
+   * @return name of the dataclass framework that declared this field, i.e.
+   * {@link PyDataclassParameters.Type#getName()} of the provider that built
+   * this stub. Matches {@link PyDataclassStub#getType()} of the owning class.
+   */
+  @NotNull String getType();
 
   /**
    * @return true if default value is specified, false otherwise.
@@ -33,4 +44,11 @@ public interface PyDataclassFieldStub extends CustomTargetExpressionStub, Pydant
   @Nullable Boolean kwOnly();
 
   @Nullable String getAlias();
+
+  /**
+   * Opaque per-field payload written by the framework that built this stub, or {@code null} when it persisted nothing.
+   * For built-in dataclass/attrs/transform fields this is always {@code null}. Decode it with
+   * {@link PyDataclassMetadata#decode}, after checking {@link #getType()} names your framework.
+   */
+  @Nullable PyDataclassMetadata getMetadata();
 }

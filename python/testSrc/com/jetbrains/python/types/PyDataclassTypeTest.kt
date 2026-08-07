@@ -7,7 +7,10 @@ import com.jetbrains.python.allure.Components
 import com.intellij.idea.TestFor
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
 import com.jetbrains.python.inspections.PyArgumentListInspection
+import com.jetbrains.python.inspections.PyAttrsDataclassInspection
 import com.jetbrains.python.inspections.PyDataclassInspection
+import com.jetbrains.python.inspections.PyDataclassTransformInspection
+import com.jetbrains.python.inspections.PyStdlibDataclassInspection
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
@@ -27,6 +30,9 @@ class PyDataclassTypeTest : PyCodeInsightTestCase() {
       disableInspections = setOf(
         PyArgumentListInspection::class.java,
         PyDataclassInspection::class.java,
+        PyStdlibDataclassInspection::class.java,
+        PyAttrsDataclassInspection::class.java,
+        PyDataclassTransformInspection::class.java,
       )
     )
 

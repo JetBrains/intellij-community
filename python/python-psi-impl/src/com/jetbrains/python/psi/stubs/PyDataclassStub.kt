@@ -1,13 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.jetbrains.python.psi.stubs;
+package com.jetbrains.python.psi.stubs
 
-import com.intellij.psi.util.QualifiedName;
-import com.jetbrains.python.codeInsight.PyDataclassesKt;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.impl.stubs.PyCustomClassStub;
-import com.jetbrains.python.psi.types.TypeEvalContext;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.psi.util.QualifiedName
+import com.jetbrains.python.psi.impl.stubs.PyCustomClassStub
+import com.jetbrains.python.psi.impl.stubs.PyDataclassMetadata
 
 /**
  * Represents dataclass-related properties directly available in a class definition, i.e. not considering its ancestor classes,
@@ -17,70 +12,74 @@ import org.jetbrains.annotations.Nullable;
  * later during analysis after checking other possible sources.
  * <p>
  * To get a complete "merged" set of properties use {@link PyDataclassesKt#parseDataclassParameters(PyClass, TypeEvalContext)}.
- *
- * @see PyDataclassesKt#parseDataclassParameters(PyClass, TypeEvalContext)
  */
-public interface PyDataclassStub extends PyCustomClassStub, PydanticConfigFlags {
+interface PyDataclassStub : PyCustomClassStub {
 
   /**
    * @return library used to determine dataclass.
    */
-  @NotNull
-  String getType();
+  val type: String
 
-  @Nullable QualifiedName decoratorName();
+  fun decoratorName(): QualifiedName?
 
   /**
    * @return value of `init` parameter or
    * its default value if it is not specified or could not be evaluated.
    */
-  @Nullable Boolean initValue();
+  fun initValue(): Boolean?
 
   /**
    * @return value of `repr` parameter or
    * its default value if it is not specified or could not be evaluated.
    */
-  @Nullable Boolean reprValue();
+  fun reprValue(): Boolean?
 
   /**
    * @return value of `eq` (std) or `cmp` (attrs) parameter or
    * its default value if it is not specified or could not be evaluated.
    */
-  @Nullable Boolean eqValue();
+  fun eqValue(): Boolean?
 
   /**
    * @return value of `order` (std) or `cmp` (attrs) parameter or
    * its default value if it is not specified or could not be evaluated.
    */
-  @Nullable Boolean orderValue();
+  fun orderValue(): Boolean?
 
   /**
    * @return value of `unsafe_hash` (std) or `hash` (attrs) parameter or
    * its default value if it is not specified or could not be evaluated.
    */
-  @Nullable Boolean unsafeHashValue();
+  fun unsafeHashValue(): Boolean?
 
   /**
    * @return value of `frozen` parameter or
    * its default value if it is not specified or could not be evaluated.
    */
-  @Nullable Boolean frozenValue();
+  fun frozenValue(): Boolean?
 
   /**
    * @return value of `matchArgs` parameter or
    * its default value if it is not specified or could not be evaluated.
    */
-  @Nullable Boolean matchArgsValue();
+  fun matchArgsValue(): Boolean?
 
   /**
-   * @return value of `kw_only` (attrs) parameter or
+   * @return value of `kw_only` parameter or
    * its default value if it is not specified or could not be evaluated.
    */
-  @Nullable Boolean kwOnly();
+  fun kwOnly(): Boolean?
 
   /**
    * @return value of `slots` parameter or
    * its default value if it is not specified or could not be evaluated.
    */
-  @Nullable Boolean slotsValue();
+  fun slotsValue(): Boolean?
+
+  /**
+   * Opaque per-class payload written by the framework that built this stub, or `null` when it persisted nothing.
+   * For built-in dataclass/attrs/transform classes this is always `null`. Decode it with [PyDataclassMetadata.decode],
+   * after checking [type] names your framework.
+   */
+  val metadata: PyDataclassMetadata?
 }

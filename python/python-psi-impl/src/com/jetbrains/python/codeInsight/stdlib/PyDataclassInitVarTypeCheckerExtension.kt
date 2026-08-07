@@ -1,6 +1,5 @@
 package com.jetbrains.python.codeInsight.stdlib
 
-import com.jetbrains.python.codeInsight.PyDataclassNames
 import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.PyTypeChecker

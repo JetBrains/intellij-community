@@ -8,7 +8,6 @@ import com.jetbrains.python.allure.Subsystems;
 import com.google.common.collect.ImmutableRangeSet;
 import com.google.common.collect.Range;
 import com.google.common.collect.RangeSet;
-import com.intellij.idea.TestFor;
 import com.intellij.lang.FileASTNode;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
@@ -97,6 +96,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
+
+import static org.junit.Assert.assertNotEquals;
 
 @TestDataPath("$CONTENT_ROOT/../testData/stubs/")
 @Subsystems.CodeInsight
@@ -1213,6 +1214,25 @@ public class PyStubsTest extends PyTestCase {
     assertNotParsed(file);
   }
 
+  public void testDataclassStubKinds() {
+    final PyFile file = getTestFile();
+
+    final PyDataclassStub stdlib = file.findTopLevelClass("StdlibModel").getStub().getCustomStub(PyDataclassStub.class);
+    assertNotNull(stdlib);
+    assertEquals("STD", stdlib.getType());
+
+    final PyDataclassStub attrs = file.findTopLevelClass("AttrsModel").getStub().getCustomStub(PyDataclassStub.class);
+    assertNotNull(attrs);
+    assertEquals("ATTRS", attrs.getType());
+
+    final PyDataclassStub transform = file.findTopLevelClass("TransformModel").getStub().getCustomStub(PyDataclassStub.class);
+    assertNotNull(transform);
+    assertNotEquals("PYDANTIC", transform.getType());
+    assertEquals("DATACLASS_TRANSFORM", transform.getType());
+
+    assertNotParsed(file);
+  }
+
   // PY-62608
   public void testTypeParameterListInFunctionDeclaration() {
     PyFile file = getTestFile();
@@ -1280,32 +1300,6 @@ public class PyStubsTest extends PyTestCase {
     assertFalse(dataclassFieldStub.initValue());
     assertFalse(dataclassFieldStub.kwOnly());
     assertEquals(dataclassFieldStub.getAlias(), "alias");
-    assertNotParsed(file);
-  }
-
-  // PY-78911
-  public void testPydanticFieldSpecifierPositionalDefault() {
-    myFixture.copyDirectoryToProject("pydantic", "pydantic");
-    PyFile file = getTestFile();
-    @Nullable PyClass pydanticModel = file.findTopLevelClass("Model");
-    assertNotNull(pydanticModel);
-    @Nullable PyTargetExpression attribute = pydanticModel.findClassAttribute("a", false, TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile()));
-    assertNotNull(attribute);
-    PyDataclassFieldStub pydanticFieldStub = attribute.getStub().getCustomStub(PyDataclassFieldStub.class);
-    assertNotNull(pydanticFieldStub);
-    assertTrue(pydanticFieldStub.hasDefault());
-  }
-
-  @TestFor(issues = "PY-89012")
-  public void testPydanticValidateByNameAndAliasOnClass() {
-    myFixture.copyDirectoryToProject("pydantic", "pydantic");
-    PyFile file = getTestFile();
-    @Nullable PyClass pydanticModel = file.findTopLevelClass("Model");
-    assertNotNull(pydanticModel);
-    PyDataclassStub pydanticStub = pydanticModel.getStub().getCustomStub(PyDataclassStub.class);
-    assertNotNull(pydanticStub);
-    assertTrue(pydanticStub.getValidateByName());
-    assertFalse(pydanticStub.getValidateByAlias());
     assertNotParsed(file);
   }
 
@@ -1403,73 +1397,6 @@ public class PyStubsTest extends PyTestCase {
     assertNull(customStub.unsafeHashValue());
     assertTrue(customStub.frozenValue());
     assertNull(customStub.kwOnly());
-    assertNotParsed(file);
-  }
-
-  @TestFor(issues = "PY-89012")
-  public void testPydanticFieldInsideAnnotatedStub() {
-    myFixture.copyDirectoryToProject("pydantic", "pydantic");
-    final PyFile file = getTestFile();
-    final PyClass cls = file.findTopLevelClass("Model");
-    PyDataclassFieldStub fieldStub = cls.findClassAttribute("b", false, null)
-      .getStub()
-      .getCustomStub(PyDataclassFieldStub.class);
-    assertNotNull(fieldStub);
-    assertTrue(fieldStub.hasDefault());
-    assertEquals("B", fieldStub.getAlias());
-    assertNotParsed(file);
-  }
-
-  @TestFor(issues = "PY-90526")
-  public void testPydanticFieldDefaultAssignedOutsideAnnotatedStub() {
-    myFixture.copyDirectoryToProject("pydantic", "pydantic");
-    final PyFile file = getTestFile();
-    final PyClass cls = file.findTopLevelClass("Model");
-    PyDataclassFieldStub fieldStub = cls.findClassAttribute("b", false, null)
-      .getStub()
-      .getCustomStub(PyDataclassFieldStub.class);
-    assertNotNull(fieldStub);
-    assertTrue(fieldStub.hasDefault());
-    assertEquals("B", fieldStub.getAlias());
-    assertNotParsed(file);
-  }
-
-  @TestFor(issues = "PY-88897")
-  public void testPydanticDecoratorConfigImportedFromAnotherFileDoesNotCauseUnstubbing() {
-    myFixture.copyDirectoryToProject("pydantic", "pydantic");
-    final PyFile modelFile = getTestFile(getTestName(true) + "/model.py");
-    final PyFile configFile = getTestFile(getTestName(true) + "/config.py");
-    @Nullable PyClass modelClass = modelFile.findTopLevelClass("Model");
-    assertNotNull(modelClass);
-    PyDataclassStub stub = modelClass.getStub().getCustomStub(PyDataclassStub.class);
-    assertNotNull(stub);
-    assertNull(stub.getPopulateByName());
-    assertNotParsed(modelFile);
-    assertNotParsed(configFile);
-  }
-
-  @TestFor(issues = "PY-88897")
-  public void testPydanticDecoratorConfigDoesNotCauseUnstubbing() {
-    myFixture.copyDirectoryToProject("pydantic", "pydantic");
-    PyFile file = getTestFile();
-    @Nullable PyClass modelClass = file.findTopLevelClass("Model");
-    assertNotNull(modelClass);
-    PyDataclassStub stub = modelClass.getStub().getCustomStub(PyDataclassStub.class);
-    assertNotNull(stub);
-    assertTrue(stub.getPopulateByName());
-    assertNotParsed(file);
-  }
-
-  @TestFor(issues = "PY-89183")
-  public void testPydanticFieldValidationAlias() {
-    myFixture.copyDirectoryToProject("pydantic", "pydantic");
-    final PyFile file = getTestFile();
-    final PyClass cls = file.findTopLevelClass("Model");
-    PyDataclassFieldStub fieldStub = cls.findClassAttribute("b", false, null)
-      .getStub()
-      .getCustomStub(PyDataclassFieldStub.class);
-    assertNotNull(fieldStub);
-    assertNotEmpty(fieldStub.validationAliases());
     assertNotParsed(file);
   }
 
