@@ -21,6 +21,7 @@ import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.impl.finishEmptyEditorStartupBeforeProjectView
+import com.intellij.openapi.project.impl.presentProjectViewOnStartup
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.LightVirtualFile
@@ -927,6 +928,32 @@ internal class EditorEmptyTextPainterTest {
         "Project view opened",
       )
     }
+  }
+
+  @Test
+  fun startupProjectViewIsShownWithoutActivationWhenTheEditorKeepsFocus() {
+    val events = mutableListOf<String>()
+
+    presentProjectViewOnStartup(
+      focusProjectView = false,
+      showProjectView = { events.add("shown") },
+      activateProjectView = { events.add("activated") },
+    )
+
+    assertThat(events).containsExactly("shown")
+  }
+
+  @Test
+  fun startupProjectViewIsActivatedWhenItTakesFocus() {
+    val events = mutableListOf<String>()
+
+    presentProjectViewOnStartup(
+      focusProjectView = true,
+      showProjectView = { events.add("shown") },
+      activateProjectView = { events.add("activated") },
+    )
+
+    assertThat(events).containsExactly("activated")
   }
 
   @Test
