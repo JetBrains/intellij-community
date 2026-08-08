@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.ToolWindowManager
@@ -165,20 +166,22 @@ internal class ToolWindowEditorTabDockContainer private constructor(
      */
     @JvmStatic
     fun install(project: Project, toolWindowId: String, decorator: InternalDecorator) {
-      if (decorator.getClientProperty(INSTALLED_PROPERTY) == true) return
-      decorator.putClientProperty(INSTALLED_PROPERTY, true)
+      ApplicationManager.getApplication().invokeLater {
+        if (decorator.getClientProperty(INSTALLED_PROPERTY) == true) return@invokeLater
+        decorator.putClientProperty(INSTALLED_PROPERTY, true)
 
-      decorator.launchOnShow("ToolWindowDockContainer") {
-        val container = ToolWindowEditorTabDockContainer(project, toolWindowId, decorator)
-        val disposable = Disposer.newDisposable("ToolWindowDockContainer")
-        DockManager.getInstance(project).register(container, disposable)
+        decorator.launchOnShow("ToolWindowDockContainer") {
+          val container = ToolWindowEditorTabDockContainer(project, toolWindowId, decorator)
+          val disposable = Disposer.newDisposable("ToolWindowDockContainer")
+          DockManager.getInstance(project).register(container, disposable)
 
-        try {
-          awaitCancellation()
-        }
-        finally {
-          // Dispose on EDT as well because registering/unregistering the dock container is not thread-safe.
-          Disposer.dispose(disposable)
+          try {
+            awaitCancellation()
+          }
+          finally {
+            // Dispose on EDT as well because registering/unregistering the dock container is not thread-safe.
+            Disposer.dispose(disposable)
+          }
         }
       }
     }
