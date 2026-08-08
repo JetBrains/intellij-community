@@ -18,7 +18,6 @@ import org.jetbrains.kotlin.idea.core.script.v1.scriptingInfoLog
 import org.jetbrains.kotlin.idea.core.script.v1.scriptingWarnLog
 import org.jetbrains.kotlin.scripting.definitions.ScriptCompilationConfigurationFromLegacyTemplate
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
-import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
 import org.jetbrains.kotlin.scripting.definitions.ScriptEvaluationConfigurationFromHostConfiguration
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import java.io.File
@@ -51,7 +50,7 @@ fun loadDefinitionsFromTemplates(
     val classpath = adjustClasspath(templateClasspath + additionalResolverClasspath)
     scriptingInfoLog("Loading script definitions: classes=$templateClassNames, classpath=$classpath")
 
-    val baseLoader = ScriptDefinitionsSource::class.java.classLoader
+    val baseLoader = ScriptDefinition::class.java.classLoader
     val loader = if (classpath.isEmpty()) baseLoader
     else UrlClassLoader.build().files(classpath).parent(baseLoader).get()
 

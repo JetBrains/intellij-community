@@ -24,8 +24,8 @@
   <!-- endregion -->
   <extensionPoints>
     <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.scriptDefinitionsSource"
-            interface="org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource"
+            qualifiedName="org.jetbrains.kotlin.scriptDefinitionsProvider"
+            interface="kotlin.script.experimental.intellij.ScriptDefinitionsProvider"
             area="IDEA_PROJECT"
             dynamic="true"/>
 
@@ -64,9 +64,6 @@
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
-    <scriptDefinitionsSource
-            id="BridgeScriptDefinitionsContributor"
-            implementation="org.jetbrains.kotlin.idea.core.script.shared.definition.BridgeScriptDefinitionsContributor"/>
     <idea.base.platforms.targetPlatformDetector
             implementation="org.jetbrains.kotlin.idea.core.script.v1.ScriptingTargetPlatformDetector"/>
   </extensions>

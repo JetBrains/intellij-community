@@ -35,10 +35,10 @@ class DefinitionFromDependenciesProviderTest : AbstractDefinitionFromDependencie
         runTest("testData/script/templatesFromDependencies/inJar/")
 
         val provider = DefinitionFromDependenciesProvider(project)
-        val firstFqns = provider.getDefinitionClasses().toList()
-        val firstClasspath = provider.getDefinitionsClassPath().toList()
-        val secondFqns = provider.getDefinitionClasses().toList()
-        val secondClasspath = provider.getDefinitionsClassPath().toList()
+        val firstFqns = provider.definitionClasses()
+        val firstClasspath = provider.getTemplateClasspath()
+        val secondFqns = provider.definitionClasses()
+        val secondClasspath = provider.getTemplateClasspath()
 
         assertEquals("Repeated discovery on unchanged project state must return equal FQNs", firstFqns, secondFqns)
         assertEquals("Repeated discovery on unchanged project state must return equal classpath", firstClasspath, secondClasspath)

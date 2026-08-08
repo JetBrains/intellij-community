@@ -4,15 +4,15 @@ package org.jetbrains.kotlin.idea.core.script.k2.definitions
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.registerExtension
-import org.jetbrains.kotlin.idea.core.script.shared.SCRIPT_DEFINITIONS_SOURCES
 import org.jetbrains.kotlin.idea.core.script.shared.definition.kotlinScriptDefinitionInlayHint
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
-import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
 import kotlin.script.experimental.api.KotlinType
 import kotlin.script.experimental.api.fileExtension
 import kotlin.script.experimental.api.ide
+import kotlin.script.experimental.host.ScriptDefinition
+import kotlin.script.experimental.host.ScriptingHostConfiguration
 import kotlin.script.experimental.host.createScriptDefinitionFromTemplate
+import kotlin.script.experimental.intellij.ScriptDefinitionsProvider
 import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
 import kotlin.script.templates.standard.ScriptTemplateWithArgs
 
@@ -49,7 +49,7 @@ class KotlinScriptDefinitionCodeVisionProviderTest : KotlinLightCodeInsightFixtu
     }
 
     private fun registerCustomDefinition() {
-        val (compilationConfiguration, evaluationConfiguration) = createScriptDefinitionFromTemplate(
+        val customDefinition = createScriptDefinitionFromTemplate(
             KotlinType(ScriptTemplateWithArgs::class),
             defaultJvmScriptingHostConfiguration,
             compilation = {
@@ -57,15 +57,18 @@ class KotlinScriptDefinitionCodeVisionProviderTest : KotlinLightCodeInsightFixtu
                 ide.kotlinScriptDefinitionInlayHint { "Custom Hint" }
             }
         )
-        val customDefinition = ScriptDefinition.FromConfigurations(
-            defaultJvmScriptingHostConfiguration,
-            compilationConfiguration,
-            evaluationConfiguration
-        )
 
-        project.registerExtension(SCRIPT_DEFINITIONS_SOURCES, object : ScriptDefinitionsSource {
-            override val definitions: Sequence<ScriptDefinition> = sequenceOf(customDefinition)
-        }, testRootDisposable)
+        project.registerExtension(
+            ScriptDefinitionsProvider.EP_NAME,
+            object : ScriptDefinitionsProvider {
+                override val id: String = "KotlinScriptDefinitionCodeVisionProviderTest"
+                override fun provideDefinitions(
+                    baseHostConfiguration: ScriptingHostConfiguration,
+                    loadedScriptDefinitions: List<ScriptDefinition>,
+                ): Iterable<ScriptDefinition> = listOf(customDefinition)
+            },
+            testRootDisposable,
+        )
 
         ScriptDefinitionsModificationTracker.getInstance(project).incModificationCount()
     }

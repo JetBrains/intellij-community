@@ -43,7 +43,7 @@
   <!-- endregion -->
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
-    <scriptDefinitionsSource implementation="org.jetbrains.kotlin.idea.jvm.k2.scratch.KotlinScratchDefinitionSource"/>
+    <scriptDefinitionsProvider implementation="org.jetbrains.kotlin.idea.jvm.k2.scratch.KotlinScratchDefinitionProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">

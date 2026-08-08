@@ -90,7 +90,7 @@
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <kotlinScriptFilter implementation="org.jetbrains.kotlin.gradle.scripting.k2.GradleKotlinScriptProcessingFilter"/>
-    <scriptDefinitionsSource implementation="org.jetbrains.kotlin.gradle.scripting.k2.definition.GradleScriptDefinitionsSource"/>
+    <scriptDefinitionsProvider implementation="org.jetbrains.kotlin.gradle.scripting.k2.definition.GradleScriptDefinitionsProvider"/>
     <codeinsight.quickfix.registrar implementation="org.jetbrains.kotlin.gradle.scripting.k2.fixes.KotlinGradlePropertyMethodCallQuickFixRegistrar"/>
   </extensions>
 

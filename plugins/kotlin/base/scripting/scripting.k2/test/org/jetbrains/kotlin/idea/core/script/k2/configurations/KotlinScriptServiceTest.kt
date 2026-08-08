@@ -9,11 +9,11 @@ import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.idea.core.script.k2.definitions.ScriptDefinitionsModificationTracker
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntity
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntityProvider
-import org.jetbrains.kotlin.idea.core.script.shared.SCRIPT_DEFINITIONS_SOURCES
+import kotlin.script.experimental.intellij.ScriptDefinitionsProvider
 import org.jetbrains.kotlin.idea.core.script.v1.ScriptDependenciesModificationTracker
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
-import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
+import kotlin.script.experimental.host.ScriptDefinition
+import kotlin.script.experimental.host.ScriptingHostConfiguration
 import java.io.File
 import kotlin.script.experimental.api.KotlinType
 import kotlin.script.experimental.api.ResultWithDiagnostics
@@ -197,9 +197,8 @@ class KotlinScriptServiceTest : KotlinLightCodeInsightFixtureTestCase() {
         )
     }
 
-    @Suppress("DEPRECATION") // ScriptDefinitionsSource is the registration path used by the script test fixtures (KT-82551).
     private fun registerCircularImportScriptDefinition() {
-        val (compilationConfiguration, evaluationConfiguration) = createScriptDefinitionFromTemplate(
+        val definition = createScriptDefinitionFromTemplate(
             KotlinType(ScriptTemplateWithArgs::class),
             defaultJvmScriptingHostConfiguration,
             compilation = {
@@ -211,16 +210,14 @@ class KotlinScriptServiceTest : KotlinLightCodeInsightFixtureTestCase() {
             },
         )
 
-        val definition = ScriptDefinition.FromConfigurations(
-            defaultJvmScriptingHostConfiguration,
-            compilationConfiguration,
-            evaluationConfiguration,
-        )
-
         project.registerExtension(
-            SCRIPT_DEFINITIONS_SOURCES,
-            object : ScriptDefinitionsSource {
-                override val definitions: Sequence<ScriptDefinition> = sequenceOf(definition)
+            ScriptDefinitionsProvider.EP_NAME,
+            object : ScriptDefinitionsProvider {
+                override val id: String = "KotlinScriptServiceTest"
+                override fun provideDefinitions(
+                    baseHostConfiguration: ScriptingHostConfiguration,
+                    loadedScriptDefinitions: List<ScriptDefinition>,
+                ): Iterable<ScriptDefinition> = listOf(definition)
             },
             testRootDisposable,
         )

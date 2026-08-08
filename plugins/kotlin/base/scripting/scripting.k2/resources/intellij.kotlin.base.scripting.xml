@@ -144,18 +144,14 @@
             implementation="org.jetbrains.kotlin.idea.core.script.k2.structureView.KotlinScriptStructureViewFactoryExtension"
             order="first"/>
 
-    <scriptDefinitionsSource
-            implementation="org.jetbrains.kotlin.idea.core.script.k2.definitions.MainKtsScriptDefinitionSource"/>
+    <scriptDefinitionsProvider
+            implementation="org.jetbrains.kotlin.idea.core.script.k2.definitions.MainKtsScriptDefinitionsProvider"/>
 
     <scriptAfterRunCallbackProvider
             implementation="org.jetbrains.kotlin.idea.core.script.k2.MainKtsAfterRunCallbackProvider"/>
 
     <scriptAdditionalIdeaDependenciesProvider implementation="org.jetbrains.kotlin.idea.core.script.k2.dependencies.ModuleScriptAdditionalIdeaDependenciesProvider"/>
 
-    <scriptDefinitionsSource
-            id="StandardScriptDefinitionContributor"
-            order="last"
-            implementation="org.jetbrains.kotlin.idea.core.script.k2.definitions.BundledScriptDefinitionSource"/>
     <scriptDefinitionsProvider implementation="org.jetbrains.kotlin.idea.core.script.k2.definitions.DefinitionFromDependenciesProvider"/>
   </extensions>
 

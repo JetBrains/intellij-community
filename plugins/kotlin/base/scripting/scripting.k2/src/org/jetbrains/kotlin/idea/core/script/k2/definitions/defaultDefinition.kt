@@ -7,12 +7,7 @@ import org.jetbrains.kotlin.idea.core.script.shared.definition.BundledScriptDefi
 import org.jetbrains.kotlin.idea.core.script.shared.definition.getBundledScriptDefinition
 import org.jetbrains.kotlin.idea.core.script.shared.definition.kotlinScriptTemplate
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
-import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
 import kotlin.script.experimental.api.with
-
-class BundledScriptDefinitionSource(val project: Project) : ScriptDefinitionsSource {
-    override val definitions: Sequence<ScriptDefinition> = sequenceOf(project.defaultDefinition)
-}
 
 internal val Project.defaultDefinition: ScriptDefinition
     get() {

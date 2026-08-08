@@ -1,9 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("IO_FILE_USAGE") // the deprecated getDefinitionsClassPath is kept as a File API on purpose
 
 package kotlin.script.experimental.intellij
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import java.io.File
+import java.nio.file.Path
 import kotlin.script.experimental.host.ScriptDefinition
 import kotlin.script.experimental.host.ScriptingHostConfiguration
 
@@ -13,8 +15,8 @@ import kotlin.script.experimental.host.ScriptingHostConfiguration
  * The scripting infrastructure will load this extension point on project instantiation, and then collect all definitions
  * provided by the extension point, combining 3 ways, depending on the data returned from the interface members:
  *  - for all FQNs of classes returned from the [getDefinitionClasses] function, it will load the class with the classpath from
- *    the [getDefinitionsClassPath] and create it's definition from the KotlinScript annotation
- *  - if [useDiscovery] method returns true, the classpath returned by [getDefinitionsClassPath] will be scanned for the discovery
+ *    the [getTemplateClasspath] and create it's definition from the KotlinScript annotation
+ *  - if [useDiscovery] method returns true, the classpath returned by [getTemplateClasspath] will be scanned for the discovery
  *    markers, and found script definitions will be loaded and created the same way as ones returned from [getDefinitionClasses]
  * After collecting all definitions will be passed to the [provideDefinitions] for possible modifications. The implementation
  * may also remove or add new definitions at this point.
@@ -29,18 +31,27 @@ interface ScriptDefinitionsProvider {
     /**
      * Should return a list of the FQNs of the script definition template classes to load explicitly, if any
      */
-    fun getDefinitionClasses(): Iterable<String>
+    fun getDefinitionClasses(): Iterable<String> = emptyList()
 
     /**
      * Should return a classpath required for loading script definition template classes
      */
-    fun getDefinitionsClassPath(): Iterable<File>
+    @Deprecated("Use getTemplateClasspath instead", ReplaceWith("getTemplateClasspath()"))
+    fun getDefinitionsClassPath(): Iterable<File> = emptyList()
+
+    /**
+     * Should return a classpath required for loading script definition template classes.
+     *
+     * Supersedes [getDefinitionsClassPath], which it falls back to while implementations are migrated off `java.io.File`.
+     */
+    fun getTemplateClasspath(): Iterable<Path> =
+        @Suppress("DEPRECATION", "IO_FILE_USAGE") getDefinitionsClassPath().map { it.toPath() }
 
     /**
      * if returns true, the IntelliJ will scan the classpath from [getDefinitionClasses] to discover script definition templates
      * using definition markers in the "META-INF/kotlin/script/templates/" folder
      */
-    fun useDiscovery(): Boolean
+    fun useDiscovery(): Boolean = false
 
     /**
      * The callback to update/add/remove script definitions after loading, if needed

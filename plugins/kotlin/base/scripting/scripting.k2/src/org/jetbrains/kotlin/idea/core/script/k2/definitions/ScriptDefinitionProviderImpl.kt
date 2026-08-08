@@ -10,10 +10,19 @@ import com.intellij.openapi.util.SimpleModificationTracker
 import org.jetbrains.kotlin.caches.project.cacheByClass
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.core.script.k2.settings.ScriptDefinitionSettingsStateComponent
-import org.jetbrains.kotlin.idea.core.script.shared.SCRIPT_DEFINITIONS_SOURCES
+import org.jetbrains.kotlin.idea.core.script.shared.definition.loadDefinitionsFromTemplates
+import org.jetbrains.kotlin.idea.core.script.v1.loggingReporter
+import org.jetbrains.kotlin.idea.core.script.v1.scriptingInfoLog
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionProvider
+import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsFromClasspathDiscoverySource
+import java.io.File
+import java.nio.file.Path
+import kotlin.script.experimental.api.ScriptEvaluationConfiguration
 import kotlin.script.experimental.api.SourceCode
+import kotlin.script.experimental.host.ScriptingHostConfiguration
+import kotlin.script.experimental.intellij.ScriptDefinitionsProvider
+import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
 
 
 @Service(Service.Level.PROJECT)
@@ -29,18 +38,47 @@ class ScriptDefinitionProviderImpl(val project: Project) : ScriptDefinitionProvi
         get() {
             val settingsProvider = ScriptDefinitionSettingsStateComponent.getInstance(project)
 
-            return definitionsFromSources.asSequence()
+            return cachedProvidedDefinitions.asSequence()
                 .filter { settingsProvider.isScriptDefinitionEnabled(it) }
                 .sortedBy { settingsProvider.getScriptDefinitionOrder(it) }
         }
 
-    val definitionsFromSources: List<ScriptDefinition>
-        get() = computeOrGetDefinitions(project)
+    /** Eager on purpose: loading templates walks the classpath, so it must happen once per cache invalidation. */
+    val cachedProvidedDefinitions: List<ScriptDefinition>
+        get() = project.cacheByClass(
+            ScriptDefinitionProviderImpl::class.java,
+            ScriptDefinitionsModificationTracker.getInstance(project),
+            ProjectRootModificationTracker.getInstance(project),
+        ) {
+            project.extensionArea
+                .getExtensionPoint(ScriptDefinitionsProvider.EP_NAME)
+                .extensionList.asSequence().flatMap { provider ->
+                    scriptingInfoLog("processing definitions provider ${provider::class.java.name}")
+                    val baseHostConfiguration = defaultJvmScriptingHostConfiguration
+                    // TODO: rewrite load and discovery to return kotlin.script.experimental.host.ScriptDefinition to avoid unnecessary conversions
+                    val loadedDefinitions = scriptDefinitionsFromClasspath(
+                        classpath = provider.getTemplateClasspath().toList(),
+                        templateFqns = provider.getDefinitionClasses().toList(),
+                        discover = provider.useDiscovery(),
+                        hostConfiguration = baseHostConfiguration,
+                    ).map {
+                        kotlin.script.experimental.host.ScriptDefinition(
+                            it.compilationConfiguration,
+                            it.evaluationConfiguration ?: ScriptEvaluationConfiguration.Default,
+                        )
+                    }.toList()
+
+                    provider.provideDefinitions(baseHostConfiguration, loadedDefinitions).asSequence().map {
+                        IdeScriptDefinitionFromProvider(baseHostConfiguration, it)
+                    }
+                }.toList() + project.defaultDefinition
+        }
 
     override fun isScript(script: SourceCode): Boolean = findDefinition(script) != null
 
+    // the bundled default is already part of currentDefinitions
     override fun getKnownFilenameExtensions(): Sequence<String> =
-        (currentDefinitions + getDefaultDefinition()).map { it.fileExtension }.distinct()
+        currentDefinitions.map { it.fileExtension }.distinct()
 
     override fun findDefinition(script: SourceCode): ScriptDefinition? {
         val locationId = script.locationId ?: return null
@@ -52,17 +90,44 @@ class ScriptDefinitionProviderImpl(val project: Project) : ScriptDefinitionProvi
     override fun getDefaultDefinition(): ScriptDefinition = project.defaultDefinition
 
     companion object {
-        private fun computeOrGetDefinitions(project: Project): List<ScriptDefinition> = project.cacheByClass(
-            ScriptDefinitionProviderImpl::class.java,
-            ScriptDefinitionsModificationTracker.getInstance(project),
-            ProjectRootModificationTracker.getInstance(project),
-        ) {
-            SCRIPT_DEFINITIONS_SOURCES.getExtensions(project).flatMap { it.definitions }
-        }
-
         private val nonScriptFilenameSuffixes: Set<String> = setOf(".${KotlinFileType.EXTENSION}", ".${JavaFileType.DEFAULT_EXTENSION}")
 
         fun getInstance(project: Project): ScriptDefinitionProviderImpl =
             project.service<ScriptDefinitionProvider>() as ScriptDefinitionProviderImpl
+    }
+
+    /**
+     * Builds definitions from [classpath]: loads the templates named in [templateFqns], and — when [discover]
+     * is set — scans [classpath] for definition markers under `META-INF/kotlin/script/templates/`.
+     */
+    private fun scriptDefinitionsFromClasspath(
+        classpath: List<Path>,
+        templateFqns: List<String> = emptyList(),
+        discover: Boolean = templateFqns.isEmpty(),
+        hostConfiguration: ScriptingHostConfiguration = defaultJvmScriptingHostConfiguration,
+    ): Sequence<ScriptDefinition> {
+        val fromTemplates =
+            if (templateFqns.isEmpty()) emptySequence()
+            else loadDefinitionsFromTemplates(templateFqns, classpath, baseHostConfiguration = hostConfiguration)
+
+        val discovered =
+            if (!discover) emptySequence()
+            else ScriptDefinitionsFromClasspathDiscoverySource(
+                classpath.map { File(it.toString()) },
+                hostConfiguration,
+                ::loggingReporter,
+            ).definitions
+
+        return fromTemplates + discovered
+    }
+}
+
+/** Definitions coming from a provider always take precedence over the ones from other sources. */
+private class IdeScriptDefinitionFromProvider(
+    baseHostConfiguration: ScriptingHostConfiguration,
+    definition: kotlin.script.experimental.host.ScriptDefinition,
+) : ScriptDefinition.FromNewDefinition(baseHostConfiguration, definition) {
+    init {
+        order = Int.MIN_VALUE
     }
 }

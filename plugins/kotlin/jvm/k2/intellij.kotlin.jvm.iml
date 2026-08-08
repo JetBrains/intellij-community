@@ -71,5 +71,6 @@
     <orderEntry type="module" module-name="intellij.kotlin.base.statistics" />
     <orderEntry type="module" module-name="intellij.platform.util.progress" />
     <orderEntry type="module" module-name="intellij.platform.util" />
+    <orderEntry type="module" module-name="kotlin.scripting" />
   </component>
 </module>
