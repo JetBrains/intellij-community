@@ -45,6 +45,7 @@ jvm_library(
         "//platform/util:util-ui",
         "//platform/core-ui",
         "//java/java-frontback-psi-api:frontback-psi",
+        "//platform/lang-impl",
     ],
 )
 
@@ -70,6 +71,7 @@ jvm_library(
         "//platform/util:util-ui_test_lib",
         "//platform/core-ui:core-ui_test_lib",
         "//java/java-frontback-psi-api:frontback-psi_test_lib",
+        "//platform/lang-impl:lang-impl_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.base.resources` end

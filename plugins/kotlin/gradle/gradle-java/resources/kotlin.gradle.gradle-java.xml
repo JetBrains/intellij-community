@@ -111,6 +111,7 @@
     <kotlinDslFrameworkSupport implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinDslGradleKotlinJSBrowserFrameworkSupportProvider"/>
     <kotlinDslFrameworkSupport implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinDslGradleKotlinJSNodeFrameworkSupportProvider"/>
 
+    <!--suppress PluginXmlReferencesModuleReachability (a dependency on intellij.gradle.java.groovy would exclude this module when the Groovy plugin is absent; the row is inert then) -->
     <pluginDescriptions implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinGradlePluginDescription"/>
 
     <projectResolve implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.PrepareKotlinIdeImportTaskResolver" order="first" />
@@ -222,6 +223,7 @@
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
+    <!--suppress PluginXmlReferencesModuleReachability (a dependency on intellij.gradle.java.groovy would exclude this module when the Groovy plugin is absent; the row is inert then) -->
     <pluginDescriptions implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinGradlePluginDescriptions"/>
   </extensions>
 
