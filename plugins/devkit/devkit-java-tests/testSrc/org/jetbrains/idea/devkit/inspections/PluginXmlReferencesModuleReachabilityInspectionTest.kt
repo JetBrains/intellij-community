@@ -6,6 +6,7 @@ import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.IntelliJProjectUtil
 import com.intellij.openapi.roots.DependencyScope
+import com.intellij.openapi.roots.ModuleOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.psi.PsiFile
@@ -760,6 +761,373 @@ class PluginXmlReferencesModuleReachabilityInspectionTest : JavaCodeInsightFixtu
       """.trimIndent()
     )
     testHighlighting(testedFile)
+  }
+
+  fun `test references to module in same plugin module set - no error`() {
+    val siblingModule = addModuleWithActionsXml("siblingModule", "Sibling")
+    declarePluginModuleSets(listOf(myFixture.module.name, siblingModule.name))
+
+    val testedFile = addPluginXml(
+      """
+      <idea-plugin>
+          <actions>
+              <action class="com.intellij.openapi.actionSystem.AnAction" id="MyAction">
+                  <add-to-group group-id="SiblingGroup" relative-to-action="SiblingAction" anchor="after"/>
+              </action>
+              <reference ref="SiblingAction"/>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    testHighlighting(testedFile)
+  }
+
+  fun `test references to module in another plugin module set - error`() {
+    val otherPluginModule = addModuleWithActionsXml("otherPluginModule", "Other")
+    declarePluginModuleSets(listOf(myFixture.module.name), listOf(otherPluginModule.name))
+
+    val testedFile = addPluginXml(
+      """
+      <idea-plugin>
+          <actions>
+              <reference ref="<error descr="Action or group 'OtherAction' (module 'otherPluginModule') is not reachable from module '${myFixture.module.name}' dependencies">OtherAction</error>"/>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    testHighlighting(testedFile)
+  }
+
+  fun `test class in test source root of same module - error`() {
+    addTestOnlyTopic()
+
+    val testedFile = addPluginXml(
+      """
+      <idea-plugin>
+          <applicationListeners>
+              <listener class="com.example.MyListener" topic="<error descr="Class 'com.example.TestOnlyTopic' (module '${myFixture.module.name}') is not reachable from module '${myFixture.module.name}' dependencies">com.example.TestOnlyTopic</error>"/>
+          </applicationListeners>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    testHighlighting(testedFile)
+  }
+
+  fun `test class in own test source root while module is in a plugin module set - error`() {
+    addTestOnlyTopic()
+    declarePluginModuleSets(listOf(myFixture.module.name, addModuleWithSourceRoot("siblingModule").name))
+
+    val testedFile = addPluginXml(
+      """
+      <idea-plugin>
+          <applicationListeners>
+              <listener class="com.example.MyListener" topic="<error descr="Class 'com.example.TestOnlyTopic' (module '${myFixture.module.name}') is not reachable from module '${myFixture.module.name}' dependencies">com.example.TestOnlyTopic</error>"/>
+          </applicationListeners>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    testHighlighting(testedFile)
+  }
+
+  fun `test class in test source root of sibling module in same plugin module set - error`() {
+    myFixture.addClass("package com.example; public class MyListener {}")
+    val siblingModule = addModuleWithSourceRoot("siblingModule")
+    PsiTestUtil.addSourceRoot(siblingModule, myFixture.tempDirFixture.findOrCreateDir("siblingModule/testSrc"), true)
+    myFixture.addFileToProject(
+      "siblingModule/testSrc/com/example/SiblingTestOnlyTopic.java",
+      //language=JAVA
+      "package com.example; public interface SiblingTestOnlyTopic {}"
+    )
+    declarePluginModuleSets(listOf(myFixture.module.name, siblingModule.name))
+
+    val testedFile = addPluginXml(
+      """
+      <idea-plugin>
+          <applicationListeners>
+              <listener class="com.example.MyListener" topic="<error descr="Class 'com.example.SiblingTestOnlyTopic' (module 'siblingModule') is not reachable from module '${myFixture.module.name}' dependencies">com.example.SiblingTestOnlyTopic</error>"/>
+          </applicationListeners>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    testHighlighting(testedFile)
+  }
+
+  fun `test class in production source root of sibling module in same plugin module set - error because of separate classloader`() {
+    myFixture.addClass("package com.example; public class MyListener {}")
+    val siblingModule = addModuleWithSourceRoot("siblingModule")
+    myFixture.addFileToProject(
+      "siblingModule/com/example/SiblingTopic.java",
+      //language=JAVA
+      "package com.example; public interface SiblingTopic {}"
+    )
+    declarePluginModuleSets(listOf(myFixture.module.name, siblingModule.name))
+
+    val testedFile = addPluginXml(
+      """
+      <idea-plugin>
+          <applicationListeners>
+              <listener class="com.example.MyListener" topic="<error descr="Class 'com.example.SiblingTopic' (module 'siblingModule') is not reachable from module '${myFixture.module.name}' dependencies">com.example.SiblingTopic</error>"/>
+          </applicationListeners>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    testHighlighting(testedFile)
+  }
+
+  fun `test extension point in sibling module in same plugin module set - no error`() {
+    val siblingModule = addModuleWithSourceRoot("siblingModule")
+    val resourceRoot = myFixture.tempDirFixture.findOrCreateDir("siblingModule/resources")
+    PsiTestUtil.addSourceRoot(siblingModule, resourceRoot, JavaResourceRootType.RESOURCE)
+    myFixture.addFileToProject(
+      "siblingModule/resources/META-INF/plugin.xml",
+      //language=XML
+      """
+      <idea-plugin>
+          <extensionPoints>
+              <extensionPoint qualifiedName="com.example.myTestEp" interface="java.lang.Runnable" dynamic="true"/>
+          </extensionPoints>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    myFixture.addClass("package com.example; public class MyImpl implements Runnable { public void run() {} }")
+    declarePluginModuleSets(listOf(myFixture.module.name, siblingModule.name))
+
+    val testedFile = addPluginXml(
+      """
+      <idea-plugin>
+          <extensions defaultExtensionNs="com.example">
+              <myTestEp implementation="com.example.MyImpl"/>
+          </extensions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    testHighlighting(testedFile)
+  }
+
+  fun `test resource-bundle in sibling module in same plugin module set - error because of separate classloader`() {
+    val siblingModule = addModuleWithSourceRoot("siblingModule")
+    myFixture.addFileToProject("siblingModule/messages/SiblingBundle.properties", "key=value")
+    declarePluginModuleSets(listOf(myFixture.module.name, siblingModule.name))
+
+    val testedFile = addPluginXml(
+      """
+      <idea-plugin>
+          <resource-bundle><error descr="Bundle 'messages.SiblingBundle' (module 'siblingModule') is not reachable from module '${myFixture.module.name}' dependencies">messages.SiblingBundle</error></resource-bundle>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    testHighlighting(testedFile)
+  }
+
+  fun `test class in production source root of sibling module in same plugin module set - error when plugin xml is in test resource root`() {
+    myFixture.addClass("package com.example; public class MyListener {}")
+    val siblingModule = addModuleWithSourceRoot("siblingModule")
+    myFixture.addFileToProject(
+      "siblingModule/com/example/SiblingTopic.java",
+      //language=JAVA
+      "package com.example; public interface SiblingTopic {}"
+    )
+    declarePluginModuleSets(listOf(myFixture.module.name, siblingModule.name))
+
+    val testResourceDir = myFixture.tempDirFixture.findOrCreateDir("testResources")
+    PsiTestUtil.addSourceRoot(myFixture.module, testResourceDir, JavaResourceRootType.TEST_RESOURCE)
+    val testedFile = myFixture.addFileToProject(
+      "testResources/plugin.xml",
+      //language=XML
+      """
+      <idea-plugin>
+          <applicationListeners>
+              <listener class="com.example.MyListener" topic="<error descr="Class 'com.example.SiblingTopic' (module 'siblingModule') is not reachable from module '${myFixture.module.name}' dependencies">com.example.SiblingTopic</error>"/>
+          </applicationListeners>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    testHighlighting(testedFile)
+  }
+
+  fun `test class in test source root of sibling module - error even when plugin xml is in test resource root`() {
+    myFixture.addClass("package com.example; public class MyListener {}")
+    val siblingModule = addModuleWithSourceRoot("siblingModule")
+    PsiTestUtil.addSourceRoot(siblingModule, myFixture.tempDirFixture.findOrCreateDir("siblingModule/testSrc"), true)
+    myFixture.addFileToProject(
+      "siblingModule/testSrc/com/example/SiblingTestOnlyTopic.java",
+      //language=JAVA
+      "package com.example; public interface SiblingTestOnlyTopic {}"
+    )
+    declarePluginModuleSets(listOf(myFixture.module.name, siblingModule.name))
+
+    val testResourceDir = myFixture.tempDirFixture.findOrCreateDir("testResources")
+    PsiTestUtil.addSourceRoot(myFixture.module, testResourceDir, JavaResourceRootType.TEST_RESOURCE)
+    val testedFile = myFixture.addFileToProject(
+      "testResources/plugin.xml",
+      //language=XML
+      """
+      <idea-plugin>
+          <applicationListeners>
+              <listener class="com.example.MyListener" topic="<error descr="Class 'com.example.SiblingTestOnlyTopic' (module 'siblingModule') is not reachable from module '${myFixture.module.name}' dependencies">com.example.SiblingTestOnlyTopic</error>"/>
+          </applicationListeners>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    testHighlighting(testedFile)
+  }
+
+  fun `test no add-dependency quick fix for a class in test source root of another module`() {
+    myFixture.addClass("package com.example; public class MyListener {}")
+    val otherModule = addModuleWithSourceRoot("otherModule")
+    PsiTestUtil.addSourceRoot(otherModule, myFixture.tempDirFixture.findOrCreateDir("otherModule/testSrc"), true)
+    myFixture.addFileToProject(
+      "otherModule/testSrc/com/example/OtherTestOnlyTopic.java",
+      //language=JAVA
+      "package com.example; public interface OtherTestOnlyTopic {}"
+    )
+
+    myFixture.configureByText(
+      "plugin.xml",
+      //language=XML
+      """
+      <idea-plugin>
+          <applicationListeners>
+              <listener class="com.example.MyListener" topic="com.example.OtherTestOnly<caret>Topic"/>
+          </applicationListeners>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    val intentions = myFixture.filterAvailableIntentions("Add dependency on module")
+    Assert.assertTrue("test output stays off a production classpath, but got: ${intentions.map { it.text }}", intentions.isEmpty())
+  }
+
+  fun `test quick fix adds test dependency for a class in test source root of another module when plugin xml is in test resource root`() {
+    myFixture.addClass("package com.example; public class MyListener {}")
+    val otherModule = addModuleWithSourceRoot("otherModule")
+    PsiTestUtil.addSourceRoot(otherModule, myFixture.tempDirFixture.findOrCreateDir("otherModule/testSrc"), true)
+    myFixture.addFileToProject(
+      "otherModule/testSrc/com/example/OtherTestOnlyTopic.java",
+      //language=JAVA
+      "package com.example; public interface OtherTestOnlyTopic {}"
+    )
+
+    val testResourceDir = myFixture.tempDirFixture.findOrCreateDir("testResources")
+    PsiTestUtil.addSourceRoot(myFixture.module, testResourceDir, JavaResourceRootType.TEST_RESOURCE)
+    val testedFile = myFixture.addFileToProject(
+      "testResources/plugin.xml",
+      //language=XML
+      """
+      <idea-plugin>
+          <applicationListeners>
+              <listener class="com.example.MyListener" topic="com.example.OtherTestOnlyTopic"/>
+          </applicationListeners>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    myFixture.configureFromExistingVirtualFile(testedFile.virtualFile)
+    myFixture.editor.caretModel.moveToOffset(testedFile.text.indexOf("com.example.OtherTestOnlyTopic"))
+
+    val intention = myFixture.findSingleIntention("Add test dependency on module 'otherModule'")
+    myFixture.launchAction(intention)
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
+
+    val dependency = ModuleRootManager.getInstance(myFixture.module).orderEntries
+      .filterIsInstance<ModuleOrderEntry>()
+      .single { it.moduleName == otherModule.name }
+    Assert.assertEquals("only a test dependency puts test output on a test classpath", DependencyScope.TEST, dependency.scope)
+  }
+
+  fun `test quick fix adds test dependency for a class in production source root of another module when plugin xml is in test resource root`() {
+    myFixture.addClass("package com.example; public class MyListener {}")
+    val otherModule = addModuleWithSourceRoot("otherModule")
+    myFixture.addFileToProject(
+      "otherModule/com/example/OtherTopic.java",
+      //language=JAVA
+      "package com.example; public interface OtherTopic {}"
+    )
+
+    val testResourceDir = myFixture.tempDirFixture.findOrCreateDir("testResources")
+    PsiTestUtil.addSourceRoot(myFixture.module, testResourceDir, JavaResourceRootType.TEST_RESOURCE)
+    val testedFile = myFixture.addFileToProject(
+      "testResources/plugin.xml",
+      //language=XML
+      """
+      <idea-plugin>
+          <applicationListeners>
+              <listener class="com.example.MyListener" topic="com.example.OtherTopic"/>
+          </applicationListeners>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    myFixture.configureFromExistingVirtualFile(testedFile.virtualFile)
+    myFixture.editor.caretModel.moveToOffset(testedFile.text.indexOf("com.example.OtherTopic"))
+
+    val intention = myFixture.findSingleIntention("Add test dependency on module 'otherModule'")
+    myFixture.launchAction(intention)
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
+
+    val dependency = ModuleRootManager.getInstance(myFixture.module).orderEntries
+      .filterIsInstance<ModuleOrderEntry>()
+      .single { it.moduleName == otherModule.name }
+    Assert.assertEquals("a test descriptor needs its target only on the test classpath", DependencyScope.TEST, dependency.scope)
+  }
+
+  fun `test no self-dependency quick fix for a class in test source root of same module`() {
+    addTestOnlyTopic()
+
+    myFixture.configureByText(
+      "plugin.xml",
+      //language=XML
+      """
+      <idea-plugin>
+          <applicationListeners>
+              <listener class="com.example.MyListener" topic="com.example.TestOnly<caret>Topic"/>
+          </applicationListeners>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    val intentions = myFixture.filterAvailableIntentions("Add dependency on module")
+    Assert.assertTrue("a module cannot depend on itself, but got: ${intentions.map { it.text }}", intentions.isEmpty())
+  }
+
+  private fun addTestOnlyTopic() {
+    myFixture.addClass("package com.example; public class MyListener {}")
+    val testSourceDir = myFixture.tempDirFixture.findOrCreateDir("testSrc")
+    PsiTestUtil.addSourceRoot(myFixture.module, testSourceDir, true)
+    myFixture.addFileToProject(
+      "testSrc/com/example/TestOnlyTopic.java",
+      //language=JAVA
+      "package com.example; public interface TestOnlyTopic {}"
+    )
+  }
+
+  private fun addModuleWithActionsXml(moduleName: String, idPrefix: String): Module {
+    val module = addModuleWithSourceRoot(moduleName)
+    val resourceRoot = myFixture.tempDirFixture.findOrCreateDir("$moduleName/resources")
+    PsiTestUtil.addSourceRoot(module, resourceRoot, JavaResourceRootType.RESOURCE)
+    myFixture.addFileToProject(
+      "$moduleName/resources/META-INF/plugin.xml",
+      //language=XML
+      """
+      <idea-plugin>
+          <actions>
+              <group id="${idPrefix}Group"/>
+              <action class="com.intellij.openapi.actionSystem.AnAction" id="${idPrefix}Action"/>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    return module
+  }
+
+  /**
+   * Plugin module sets are configured on [PluginXmlRegistrationCheckInspection], so it has to be present in the profile for
+   * [PluginXmlReferencesModuleReachabilityInspection] to see them.
+   */
+  private fun declarePluginModuleSets(vararg moduleSets: List<String>) {
+    val registrationCheck = PluginXmlRegistrationCheckInspection()
+    moduleSets.forEach { moduleNames ->
+      registrationCheck.pluginsModules.add(PluginXmlRegistrationCheckInspection.PluginModuleSet().apply {
+        modules = LinkedHashSet(moduleNames)
+      })
+    }
+    myFixture.enableInspections(registrationCheck)
   }
 
   private fun addPluginXml(@Language("XML") content: String): PsiFile {

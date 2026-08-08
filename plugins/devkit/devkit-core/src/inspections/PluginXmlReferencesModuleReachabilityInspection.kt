@@ -19,6 +19,7 @@ import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.roots.JavaProjectModelModificationService
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
@@ -54,9 +55,10 @@ internal class PluginXmlReferencesModuleReachabilityInspection : DevKitPluginXml
         val extensionPoint = element.extensionPoint ?: return
         val epTag = extensionPoint.xmlTag
         val epFqn = extensionPoint.effectiveQualifiedName
-        if (!isEpReachableFromModuleByFqn(epFqn, element, module)) {
+        if (!isEpReachableFromModuleByFqn(epFqn, element, module) &&
+            !isInSiblingModuleOfSamePlugin(element, epTag, module)) {
           holder.reportUnreachableClassProblem(
-            element, epTag, epFqn, module.name,
+            element, epTag, epFqn, module,
             "inspection.plugin.xml.references.module.reachability.extension.point"
           )
         }
@@ -71,7 +73,7 @@ internal class PluginXmlReferencesModuleReachabilityInspection : DevKitPluginXml
           if (!isClassReachableFromModuleByFqn(qualifiedName, element, module)) {
             val referencedClassName = qualifiedName ?: value.name ?: ""
             holder.reportUnreachableClassProblem(
-              element, value, referencedClassName, module.name,
+              element, value, referencedClassName, module,
               "inspection.plugin.xml.references.module.reachability.class"
             )
           }
@@ -84,9 +86,10 @@ internal class PluginXmlReferencesModuleReachabilityInspection : DevKitPluginXml
             is ActionOrGroupIdReference -> {
               val target = ref.resolve() ?: continue
               if (!isReachableFromModule(element, target, module) &&
-                  !isActionOrGroupReachableFromModuleById(ref.canonicalText, element, module)) {
+                  !isActionOrGroupReachableFromModuleById(ref.canonicalText, element, module) &&
+                  !isInSiblingModuleOfSamePlugin(element, target, module)) {
                 holder.reportUnreachableClassProblem(
-                  element, target, ref.canonicalText, module.name,
+                  element, target, ref.canonicalText, module,
                   "inspection.plugin.xml.references.module.reachability.action.or.group"
                 )
               }
@@ -97,7 +100,7 @@ internal class PluginXmlReferencesModuleReachabilityInspection : DevKitPluginXml
               if (!isReachableFromModule(element, target, module) &&
                   !isBundleReachableFromModule(ref.canonicalText, element, module)) {
                 holder.reportUnreachableClassProblem(
-                  element, target, ref.canonicalText, module.name,
+                  element, target, ref.canonicalText, module,
                   "inspection.plugin.xml.references.module.reachability.bundle"
                 )
               }
@@ -121,6 +124,22 @@ internal class PluginXmlReferencesModuleReachabilityInspection : DevKitPluginXml
     return moduleRuntimeScope(element, module).contains(targetFile)
   }
 
+  /**
+   * Checked last, and only for names resolved through the plugin's registration scope (extension points, actions, groups):
+   * modules of one plugin register into a shared scope, so such names resolve between them without a dependency edge.
+   * Classes and resource bundles do not qualify: a non-embedded content module loads them with its own classloader,
+   * which sees only declared dependencies. A plugin is built from production roots alone, so the exemption holds only
+   * between production roots: a test descriptor lives on the test classpath, where reachability is decided by
+   * dependency edges; unmarked content directories are built into nothing.
+   */
+  private fun isInSiblingModuleOfSamePlugin(element: DomElement, target: PsiElement?, module: Module): Boolean {
+    val targetModule = target?.let { ModuleUtilCore.findModuleForPsiElement(it) } ?: return false
+    val descriptorFile = DomUtil.getFile(element)
+    return isInProductionRoots(PsiUtilCore.getVirtualFile(target), module.project) &&
+           isInProductionRoots(descriptorFile.virtualFile, module.project) &&
+           areSiblingModulesInSamePlugin(module, targetModule, descriptorFile)
+  }
+
   private fun isActionOrGroupReachableFromModuleById(id: String, element: DomElement, module: Module): Boolean {
     return !IdeaPluginRegistrationIndex.processActionOrGroup(module.project, id, moduleRuntimeScope(element, module)) { false }
   }
@@ -132,25 +151,33 @@ internal class PluginXmlReferencesModuleReachabilityInspection : DevKitPluginXml
   }
 
   private fun moduleRuntimeScope(element: DomElement, module: Module): GlobalSearchScope {
-    val elementFile = DomUtil.getFile(element).virtualFile
-    val includeTests = elementFile != null && ProjectFileIndex.getInstance(module.project).isInTestSourceContent(elementFile)
+    val includeTests = isInTestRoots(DomUtil.getFile(element).virtualFile, module.project)
     return GlobalSearchScope.moduleRuntimeScope(module, includeTests)
+  }
+
+  private fun isInTestRoots(file: VirtualFile?, project: Project): Boolean {
+    return file != null && ProjectFileIndex.getInstance(project).isInTestSourceContent(file)
+  }
+
+  private fun isInProductionRoots(file: VirtualFile?, project: Project): Boolean {
+    val fileIndex = ProjectFileIndex.getInstance(project)
+    return file != null && fileIndex.isInSourceContent(file) && !fileIndex.isInTestSourceContent(file)
   }
 
   private fun DomElementAnnotationHolder.reportUnreachableClassProblem(
     element: DomElement,
     referencedElement: PsiElement,
     referencedClassName: String,
-    moduleName: String,
+    module: Module,
     @PropertyKey(resourceBundle = DevKitBundle.BUNDLE) messageKey: String
   ) {
     val targetModuleName = resolveLocationName(referencedElement)
     this.createProblem(
       element,
       ProblemHighlightType.LIKE_UNKNOWN_SYMBOL,
-      message(messageKey, referencedClassName, moduleName, targetModuleName),
+      message(messageKey, referencedClassName, module.name, targetModuleName),
       null,
-      *createFixes(referencedElement)
+      *createFixes(element, referencedElement, module)
     )
   }
 
@@ -162,12 +189,29 @@ internal class PluginXmlReferencesModuleReachabilityInspection : DevKitPluginXml
     return ""
   }
 
-  private fun createFixes(target: PsiElement): Array<LocalQuickFix> {
+  /**
+   * A test descriptor lives on the test classpath only, which a test dependency already reaches whatever root the target
+   * is in; a production descriptor is packaged from production output alone, so only a production target closes its gap.
+   * No fix when no scope reaches the target: a module cannot depend on itself, and unmarked content directories are
+   * built into nothing.
+   */
+  private fun createFixes(element: DomElement, target: PsiElement, module: Module): Array<LocalQuickFix> {
     val targetModule = ModuleUtilCore.findModuleForPsiElement(target) ?: return emptyArray()
-    val descriptorDependency = resolveDescriptorDependency(targetModule)
+    if (targetModule == module) return emptyArray()
+    val targetFile = PsiUtilCore.getVirtualFile(target)
+    val targetInProductionRoots = isInProductionRoots(targetFile, module.project)
+    val scope = when {
+      isInTestRoots(DomUtil.getFile(element).virtualFile, module.project) &&
+      (targetInProductionRoots || isInTestRoots(targetFile, module.project)) -> DependencyScope.TEST
+      targetInProductionRoots -> DependencyScope.COMPILE
+      else -> return emptyArray()
+    }
+    // no plugin descriptor covers test output, so a descriptor dependency would describe nothing
+    val descriptorDependency = if (targetInProductionRoots) resolveDescriptorDependency(targetModule) else null
     return arrayOf(
       AddModuleDependencyFix(
         targetModuleName = targetModule.name,
+        dependencyScope = scope,
         descriptorDependencyId = descriptorDependency?.first,
         isContentModuleDependency = descriptorDependency?.second ?: false,
       )
@@ -198,23 +242,33 @@ internal class PluginXmlReferencesModuleReachabilityInspection : DevKitPluginXml
 
 private class AddModuleDependencyFix(
   private val targetModuleName: String,
+  private val dependencyScope: DependencyScope,
   private val descriptorDependencyId: String?,
   private val isContentModuleDependency: Boolean,
 ) : LocalQuickFix {
+
+  private val isTestDependency: Boolean get() = dependencyScope == DependencyScope.TEST
 
   override fun getFamilyName(): String {
     return message("inspection.plugin.xml.references.module.reachability.fix.family.name")
   }
 
   override fun getName(): String {
-    return message("inspection.plugin.xml.references.module.reachability.fix.name", targetModuleName)
+    return if (isTestDependency) {
+      message("inspection.plugin.xml.references.module.reachability.fix.name.test", targetModuleName)
+    } else {
+      message("inspection.plugin.xml.references.module.reachability.fix.name", targetModuleName)
+    }
   }
 
   override fun generatePreview(project: Project, previewDescriptor: ProblemDescriptor): IntentionPreviewInfo {
-    val text = if (descriptorDependencyId != null) {
-      message("inspection.plugin.xml.references.module.reachability.fix.preview.with.descriptor", targetModuleName, descriptorDependencyId)
-    } else {
-      message("inspection.plugin.xml.references.module.reachability.fix.preview", targetModuleName)
+    val text = when {
+      descriptorDependencyId != null && isTestDependency ->
+        message("inspection.plugin.xml.references.module.reachability.fix.preview.test.with.descriptor", targetModuleName, descriptorDependencyId)
+      descriptorDependencyId != null ->
+        message("inspection.plugin.xml.references.module.reachability.fix.preview.with.descriptor", targetModuleName, descriptorDependencyId)
+      isTestDependency -> message("inspection.plugin.xml.references.module.reachability.fix.preview.test", targetModuleName)
+      else -> message("inspection.plugin.xml.references.module.reachability.fix.preview", targetModuleName)
     }
     return IntentionPreviewInfo.Html(HtmlChunk.text(text))
   }
@@ -223,7 +277,7 @@ private class AddModuleDependencyFix(
     val module = ModuleUtilCore.findModuleForPsiElement(descriptor.psiElement) ?: return
     val targetModule = ModuleManager.getInstance(project).findModuleByName(targetModuleName) ?: return
     JavaProjectModelModificationService.getInstance(project)
-      .addDependency(module, targetModule, DependencyScope.COMPILE, false)
+      .addDependency(module, targetModule, dependencyScope, false)
       .onSuccess {
         ReadAction.nonBlocking<IdeaPlugin?> {
           resolveIdeaPlugin(descriptor)

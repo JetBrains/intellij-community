@@ -15,9 +15,21 @@ compile and runtime dependencies.
 </ul>
 
 <p>
+  A plugin may be assembled from several modules. Such modules share a registration scope at runtime, so extension points,
+  actions, and groups declared in a sibling module's production roots are reachable even without a module dependency and
+  are not reported. Classes and resource bundles are still checked: a content module loads them with its own classloader,
+  which sees only declared dependencies. The multi-module plugin
+  configuration is picked from the
+  <code>Plugin DevKit | Plugin descriptor | Plugin.xml registration check</code> inspection.
+</p>
+
+<p>
   A quick fix is available to add a build system dependency on the module that contains the referenced element,
   and, when applicable, the corresponding <code>&lt;depends&gt;</code>, <code>&lt;dependencies&gt;</code> / <code>&lt;plugin&gt;</code>,
   or <code>&lt;dependencies&gt;</code> / <code>&lt;module&gt;</code> entry in the plugin descriptor.
+  A descriptor in a test root gets a test-scoped dependency instead, since it is only loaded on the test classpath.
+  A production descriptor referencing a test root of another module gets no fix,
+  since test output is not packaged into a plugin.
 </p>
 </body>
 </html>

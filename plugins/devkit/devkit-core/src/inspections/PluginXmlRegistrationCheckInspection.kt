@@ -7,6 +7,9 @@ import com.intellij.codeInspection.options.OptPane.checkbox
 import com.intellij.codeInspection.options.OptPane.pane
 import com.intellij.codeInspection.options.OptPane.stringList
 import com.intellij.codeInspection.options.OptionController
+import com.intellij.openapi.module.Module
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager
+import com.intellij.psi.PsiElement
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.xml.DomElement
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder
@@ -76,6 +79,8 @@ internal class PluginXmlRegistrationCheckInspection : DevKitPluginXmlInspectionB
     myPluginModuleSetByModuleName.drop();
   }
 
+  fun findPluginModuleSet(moduleName: String): PluginModuleSet? = myPluginModuleSetByModuleName.value[moduleName]
+
   override fun checkDomElement(element: DomElement, holder: DomElementAnnotationHolder, helper: DomHighlightingHelper) {
     if (element !is Extension &&
         element !is ExtensionPoint &&
@@ -116,3 +121,22 @@ internal class PluginXmlRegistrationCheckInspection : DevKitPluginXmlInspectionB
   }
 
 }
+
+/**
+ * Modules listed in one `pluginsModules` set are assembled into a single plugin and share its registration scope, so
+ * registered names (extension points, actions, groups) resolve between them without a JPS dependency edge. They do not
+ * necessarily share a classloader: a non-embedded content module loads classes and bundles with its own classloader.
+ * [module] is not a sibling of itself: a reference inside one module is decided by that module's runtime scope, which
+ * tells production and test roots apart.
+ * Returns `false` when [PluginXmlRegistrationCheckInspection] is absent from the profile or declares no set containing [module].
+ */
+internal fun areSiblingModulesInSamePlugin(module: Module, otherModule: Module, context: PsiElement): Boolean {
+  if (module == otherModule) return false
+  val inspection = InspectionProjectProfileManager.getInstance(module.project).currentProfile
+                     .getUnwrappedTool(REGISTRATION_CHECK_SHORT_NAME, context) as? PluginXmlRegistrationCheckInspection
+                   ?: return false
+  val moduleSet = inspection.findPluginModuleSet(module.name) ?: return false
+  return moduleSet === inspection.findPluginModuleSet(otherModule.name)
+}
+
+private const val REGISTRATION_CHECK_SHORT_NAME = "PluginXmlRegistrationCheck"
