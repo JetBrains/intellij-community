@@ -13,4 +13,4 @@ import org.jetbrains.annotations.ApiStatus
  * callback is a no-op.
  */
 @ApiStatus.Internal
-class JediTermOsc8LinkInfo(val uri: String) : LinkInfo({})
+data class JediTermOsc8LinkInfo(val uri: String) : LinkInfo({})
