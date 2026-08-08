@@ -6,16 +6,22 @@ import com.intellij.notebooks.visualization.useG2D
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.colors.EditorColors
+import com.intellij.openapi.editor.impl.EditorToolbarButtonLook
 import com.intellij.ui.JBColor
-import com.intellij.ui.NewUiValue
 import com.intellij.ui.RoundedLineBorder
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
 import java.awt.AlphaComposite
 import java.awt.Cursor
+import java.awt.Dimension
 import java.awt.Graphics
 import java.awt.Graphics2D
+import java.util.function.Supplier
 import javax.swing.BorderFactory
 import javax.swing.JComponent
 
@@ -27,15 +33,16 @@ abstract class JupyterAbstractAboveCellToolbar(
   toolbarTargetComponent: JComponent,
   place: String = ActionPlaces.EDITOR_INLAY,
   private val actionsUpdatedCallback: (() -> Unit)? = null,
+  private val editor: Editor,
 ) : ActionToolbarImpl(place, actionGroup, true) {
-
   init {
+    setCustomButtonLook(EditorToolbarButtonLook(editor))
     isOpaque = false
     targetComponent = toolbarTargetComponent
     cursor = Cursor.getDefaultCursor()
-    val borderColor = when (NewUiValue.isEnabled()) {
-      true -> JBColor.namedColor("Editor.Toolbar.borderColor", JBColor.border())
-      else -> JBColor.GRAY
+    val borderColor = JBColor.lazy {
+      val scheme = editor.colorsScheme
+      scheme.getColor(EditorColors.PREVIEW_BORDER_COLOR) ?: scheme.defaultForeground
     }
     border = BorderFactory.createCompoundBorder(RoundedLineBorder(borderColor, getArcSize(), TOOLBAR_BORDER_THICKNESS),
                                                 BorderFactory.createEmptyBorder(getVerticalPadding(),
@@ -43,6 +50,17 @@ abstract class JupyterAbstractAboveCellToolbar(
                                                                                 getVerticalPadding(),
                                                                                 getHorizontalPadding()))
     putClientProperty(SelectClickedCellEventHelper.SKIP_CLICK_PROCESSING_FOR_CELL_SELECTION, true)
+  }
+
+  override fun createTextButton(
+    action: AnAction,
+    place: String,
+    presentation: Presentation,
+    minimumSize: Supplier<out Dimension>,
+  ): ActionButtonWithText {
+    return super.createTextButton(action, place, presentation, minimumSize).apply {
+      foreground = JBColor.lazy { editor.colorsScheme.defaultForeground }
+    }
   }
 
   override fun actionsUpdated(forceRebuild: Boolean, newVisibleActions: List<AnAction>) {

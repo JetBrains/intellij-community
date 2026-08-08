@@ -104,7 +104,12 @@ internal class EditorCellActionsToolbarController(
     val component = targetComponent ?: return
     val actionGroup = getActionGroup(cell.interval.type) ?: return
 
-    toolbar = JupyterCellActionsToolbar(actionGroup, component, actionsUpdatedCallback = { updateToolbarPosition(component) }).apply {
+    toolbar = JupyterCellActionsToolbar(
+      actionGroup = actionGroup,
+      target = component,
+      editor = editor,
+      actionsUpdatedCallback = { updateToolbarPosition(component) },
+    ).apply {
       background = editor.notebookAppearance.editorBackgroundColor()
     }
     showToolbarJob?.cancel()
