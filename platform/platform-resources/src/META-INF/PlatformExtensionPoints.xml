@@ -1,8 +1,0 @@
-<!--suppress PluginXmlRegistrationCheck -->
-<idea-plugin>
-  <extensionPoints>
-
-    <extensionPoint name="ideStartupWizard" interface="com.intellij.platform.ide.bootstrap.IdeStartupWizard" dynamic="false"/>
-
-  </extensionPoints>
-</idea-plugin>

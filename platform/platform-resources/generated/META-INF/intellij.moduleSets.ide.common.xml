@@ -226,6 +226,7 @@
     <module name="intellij.platform.threadDumpParser" loading="embedded"/>
     <module name="intellij.platform.ide.favoritesTreeView" loading="embedded"/>
     <module name="intellij.platform.ide.designer" loading="embedded"/>
+    <module name="intellij.platform.ide.bootstrap" loading="embedded"/>
     <module name="intellij.platform.bootstrap" loading="embedded"/>
     <module name="intellij.platform.backend.workspace.impl"/>
     <module name="intellij.platform.ide.concurrency" loading="embedded"/>

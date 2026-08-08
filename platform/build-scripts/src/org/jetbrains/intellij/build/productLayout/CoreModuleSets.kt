@@ -398,6 +398,7 @@ object CoreModuleSets {
     // todo not used by platform - move to plugin
     embeddedModule("intellij.platform.ide.designer")
 
+    embeddedModule("intellij.platform.ide.bootstrap")
     embeddedModule("intellij.platform.bootstrap")
 
     // depends on intellij.platform.ide.impl
