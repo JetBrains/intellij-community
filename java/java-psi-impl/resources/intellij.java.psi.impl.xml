@@ -75,6 +75,7 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <!--suppress PluginXmlReferencesModuleReachability (JDK 1.8 module must not depend on intellij.platform.ide.core.impl per JavaVersionInIntelliJModulesTest; it is loaded in all products at runtime) -->
     <registryKey defaultValue="true" description="Use pratt java expression parser" key="pratt.java.expression.parser" restartRequired="true" />
     <applicationService serviceInterface="com.intellij.psi.util.JavaClassSupers"
                         serviceImplementation="com.intellij.psi.impl.JavaClassSupersImpl"/>
@@ -150,30 +151,40 @@
     <lang.elementManipulator forClass="com.intellij.psi.impl.source.javadoc.PsiSnippetDocTagImpl"
                              implementationClass="com.intellij.psi.impl.source.javadoc.SnippetDocTagManipulator"/>
     <lang.psiAugmentProvider implementation="com.intellij.psi.impl.source.JShellPsiAugmentProvider"/>
+    <!--suppress PluginXmlReferencesModuleReachability (JDK 1.8 module must not depend on intellij.platform.analysis per JavaVersionInIntelliJModulesTest; it is loaded in all products at runtime) -->
     <codeInsight.containerProvider implementation="com.intellij.codeInsight.JavaContainerProvider" id="JAVA"/>
     <constantExpressionEvaluator language="JAVA" implementationClass="com.intellij.psi.impl.PsiExpressionEvaluator" />
     <lang.psiAugmentProvider implementation="com.intellij.psi.impl.RecordAugmentProvider"/>
+    <!--suppress PluginXmlReferencesModuleReachability (JDK 1.8 module must not depend on intellij.platform.ide.core.impl per JavaVersionInIntelliJModulesTest; it is loaded in all products at runtime) -->
     <registryKey key="java.empty.enum.constructor.ref" defaultValue="true"
                  description="Make enum constructor reference have empty range at the end of the enum field identifier"/>
     <lang.dumb.mode.supported language="JAVA" implementationClass="com.intellij.lang.java.JavaLanguageDumbAware"/>
 
+    <!--suppress PluginXmlReferencesModuleReachability (JDK 1.8 module must not depend on intellij.platform.ide.core.impl per JavaVersionInIntelliJModulesTest; it is loaded in all products at runtime) -->
     <registryKey key="java.correct.class.type.by.place.resolve.scope" defaultValue="true"
                  description="When resolving Java references, use the resolve scope of the currently processed source file"/>
+    <!--suppress PluginXmlReferencesModuleReachability (JDK 1.8 module must not depend on intellij.platform.ide.core.impl per JavaVersionInIntelliJModulesTest; it is loaded in all products at runtime) -->
     <registryKey key="javac.unchecked.subtyping.during.incorporation" defaultValue="true"
                  description="Javac performs unchecked subtyping during incorporation, accepting code which is rejected by the spec and by the eclipse compiler"/>
+    <!--suppress PluginXmlReferencesModuleReachability (JDK 1.8 module must not depend on intellij.platform.ide.core.impl per JavaVersionInIntelliJModulesTest; it is loaded in all products at runtime) -->
     <registryKey key="javac.fresh.variables.for.captured.wildcards.only" defaultValue="true"
                  description="JLS 18.5.2: if R 0 is a parameterized type, G&lt;A1, ..., An&gt;, and one of A1, ..., An is a wildcard, then, for fresh inference variables B1, ..., Bn ... Javac creates fresh variables only for i: Ai is a wildcard"/>
+    <!--suppress PluginXmlReferencesModuleReachability (JDK 1.8 module must not depend on intellij.platform.ide.core.impl per JavaVersionInIntelliJModulesTest; it is loaded in all products at runtime) -->
     <registryKey key="JDK8042508.bug.fixed" defaultValue="false"
                  description="Disable check for type variable until javac bug is fixed" />
 
+    <!--suppress PluginXmlReferencesModuleReachability (JDK 1.8 module must not depend on intellij.platform.ide.core.impl per JavaVersionInIntelliJModulesTest; it is loaded in all products at runtime) -->
     <registryKey key="java.dont.convert.digits.after.dollar.name" defaultValue="true"
                  description="Skip digits after '$' in class names in class files"/>
 
+    <!--suppress PluginXmlReferencesModuleReachability (JDK 1.8 module must not depend on intellij.platform.ide.core.impl per JavaVersionInIntelliJModulesTest; it is loaded in all products at runtime) -->
     <registryKey key="java.folding.icons.for.control.flow"
                  defaultValue="true"
                  description="Add folding icons to the gutter for control flow statements"/>
+    <!--suppress PluginXmlReferencesModuleReachability (JDK 1.8 module must not depend on intellij.platform.ide.core.impl per JavaVersionInIntelliJModulesTest; it is loaded in all products at runtime) -->
     <registryKey key="unsound.capture.conversion.java.spec.change" defaultValue="false"
                  description="Capture in method reference return type is unsound, and the spec would be changed, see https://bugs.openjdk.org/browse/JDK-8170887"/>
+    <!--suppress PluginXmlReferencesModuleReachability (JDK 1.8 module must not depend on intellij.platform.ide.core.impl per JavaVersionInIntelliJModulesTest; it is loaded in all products at runtime) -->
     <registryKey key="ide.goto.implementation.show.interfaces" defaultValue="true"
                  description="Whether to show sub-interfaces when invoking the 'Go to Implementation' action (Ctrl+Alt+B) on an interface."/>
   </extensions>

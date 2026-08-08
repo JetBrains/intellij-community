@@ -16,6 +16,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <superMethodsSearch implementation="com.intellij.psi.impl.search.MethodSuperSearcher"/>
 
+    <!--suppress PluginXmlReferencesModuleReachability (JDK 1.8 module must not depend on intellij.platform.indexing per JavaVersionInIntelliJModulesTest; it is loaded in all products at runtime) -->
     <stubElementRegistryExtension implementation="com.intellij.psi.impl.java.stubs.JavaStubRegistryExtension"/>
   </extensions>
 </idea-plugin>

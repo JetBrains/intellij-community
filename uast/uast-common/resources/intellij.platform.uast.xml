@@ -27,8 +27,10 @@
 
   <!--from intellij.java.psi.impl.xml-->
   <extensions defaultExtensionNs="com.intellij">
+    <!--suppress PluginXmlReferencesModuleReachability (module must not depend on intellij.platform.ide.core.impl per JavaVersionInIntelliJModulesTest; it is loaded in all products at runtime) -->
     <registryKey key="uast.evaluator.depth.limit" defaultValue="15"
                  description="Maximal allowed depth for UAST TreeBasedEvaluator visitor"/>
+    <!--suppress PluginXmlReferencesModuleReachability (module must not depend on intellij.platform.ide.core.impl per JavaVersionInIntelliJModulesTest; it is loaded in all products at runtime) -->
     <registryKey key="uast.evaluator.loop.iteration.limit" defaultValue="20"
                  description="Maximal allowed iteration count for loop evaluation in the UAST TreeBasedEvaluator visitor"/>
   </extensions>

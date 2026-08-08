@@ -17,7 +17,9 @@
     <!--suppress PluginXmlValidity -->
     <projectCustomDataSynchronizer implementation="com.intellij.java.frontback.psi.impl.JavaLangLevelProjectCustomDataSynchronizer"/>
 
+    <!--suppress PluginXmlReferencesModuleReachability (JDK 1.8 module must not depend on intellij.platform.ide.impl per JavaVersionInIntelliJModulesTest; it is loaded in all products at runtime) -->
     <fileType extensions="java" hashBangs="java" name="JAVA" language="JAVA" fieldName="INSTANCE" implementationClass="com.intellij.ide.highlighter.JavaFileType"/>
+    <!--suppress PluginXmlReferencesModuleReachability (JDK 1.8 module must not depend on intellij.platform.ide.impl per JavaVersionInIntelliJModulesTest; it is loaded in all products at runtime) -->
     <fileType extensions="class" name="CLASS" fieldName="INSTANCE" implementationClass="com.intellij.ide.highlighter.JavaClassFileType"/>
   </extensions>
 

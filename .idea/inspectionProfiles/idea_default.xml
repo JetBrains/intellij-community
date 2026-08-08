@@ -1199,7 +1199,9 @@
             <module name="intellij.platform.lang.impl" />
             <module name="intellij.platform.lvcs.impl" />
             <module name="intellij.platform.ide.codeinsight.inline" />
+            <module name="intellij.platform.ide.newUiOnboarding" />
             <module name="intellij.platform.ide.impl" />
+            <module name="intellij.java.ide.resources" />
             <module name="intellij.platform.ide.initialConfigImport" />
             <module name="intellij.platform.projectModel.impl" />
             <module name="intellij.platform.scriptDebugger.protocolReaderRuntime" />
@@ -1470,7 +1472,9 @@
           <module name="intellij.platform.lang.impl" />
           <module name="intellij.platform.lvcs.impl" />
           <module name="intellij.platform.ide.codeinsight.inline" />
+          <module name="intellij.platform.ide.newUiOnboarding" />
           <module name="intellij.platform.ide.impl" />
+          <module name="intellij.java.ide.resources" />
           <module name="intellij.platform.ide.initialConfigImport" />
           <module name="intellij.platform.projectModel.impl" />
           <module name="intellij.platform.scriptDebugger.protocolReaderRuntime" />

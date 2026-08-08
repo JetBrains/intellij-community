@@ -9,6 +9,7 @@
   </dependencies>
   <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
+    <!--suppress PluginXmlReferencesModuleReachability (OpenAPI module must stay free of impl dependencies per ModuleDependenciesInIntellijProjectTest; intellij.platform.ide.core.impl is loaded in all products at runtime) -->
     <registryKey key="java.highest.language.level" defaultValue="26" description="Highest released language level" restartRequired="false"/>
   </extensions>
 </idea-plugin>
