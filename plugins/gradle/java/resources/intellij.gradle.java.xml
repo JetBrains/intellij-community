@@ -50,7 +50,6 @@
     <module name="intellij.properties.backend.psi"/>
   </dependencies>
   <!-- endregion -->
-  <resource-bundle>messages.GradleInspectionBundle</resource-bundle>
 
   <extensionPoints>
     <extensionPoint qualifiedName="org.jetbrains.plugins.gradle.frameworkSupport"
