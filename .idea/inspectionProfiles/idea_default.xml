@@ -1202,6 +1202,12 @@
             <module name="intellij.platform.ide.newUiOnboarding" />
             <module name="intellij.platform.ide.impl" />
             <module name="intellij.java.ide.resources" />
+            <module name="intellij.grid.csv.core.impl" />
+            <module name="intellij.database.core.impl" />
+            <module name="intellij.database.sql.core.impl" />
+            <module name="intellij.database.dialects.cassandra" />
+            <module name="intellij.database.dialects.hivebase" />
+            <module name="intellij.database.dialects.redis" />
             <module name="intellij.platform.ide.initialConfigImport" />
             <module name="intellij.platform.projectModel.impl" />
             <module name="intellij.platform.scriptDebugger.protocolReaderRuntime" />
@@ -1475,6 +1481,12 @@
           <module name="intellij.platform.ide.newUiOnboarding" />
           <module name="intellij.platform.ide.impl" />
           <module name="intellij.java.ide.resources" />
+          <module name="intellij.grid.csv.core.impl" />
+          <module name="intellij.database.core.impl" />
+          <module name="intellij.database.sql.core.impl" />
+          <module name="intellij.database.dialects.cassandra" />
+          <module name="intellij.database.dialects.hivebase" />
+          <module name="intellij.database.dialects.redis" />
           <module name="intellij.platform.ide.initialConfigImport" />
           <module name="intellij.platform.projectModel.impl" />
           <module name="intellij.platform.scriptDebugger.protocolReaderRuntime" />
