@@ -35,6 +35,7 @@ jvm_library(
         "//libraries/kotlinx/serialization/core",
         "//platform/platform-api:ide",
         "//platform/ide-core",
+        "//platform/ide-core-impl",
     ],
 )
 
@@ -60,6 +61,7 @@ jvm_library(
         "//libraries/kotlinx/serialization/core:core_test_lib",
         "//platform/platform-api:ide_test_lib",
         "//platform/ide-core:ide-core_test_lib",
+        "//platform/ide-core-impl:ide-core-impl_test_lib",
     ],
 )
 ### auto-generated section `build intellij.python.community.common` end

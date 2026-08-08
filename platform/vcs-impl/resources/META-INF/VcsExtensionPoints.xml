@@ -214,18 +214,10 @@
                     area="IDEA_PROJECT"
                     dynamic="false"/>
 
-    <extensionPoint qualifiedName="com.intellij.vcs.envCustomizer"
-                    interface="com.intellij.openapi.vcs.VcsEnvCustomizer"
-                    dynamic="true"/>
-
     <extensionPoint qualifiedName="com.intellij.vcs.vcsSymlinkResolver"
                     interface="com.intellij.vcs.VcsSymlinkResolver"
                     area="IDEA_PROJECT"
                     dynamic="false"/>
-
-    <extensionPoint qualifiedName="com.intellij.vcs.codeVisionLanguageContext" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
-      <with attribute="implementationClass" implements="com.intellij.codeInsight.hints.VcsCodeVisionLanguageContext"/>
-    </extensionPoint>
 
     <extensionPoint qualifiedName="com.intellij.vcs.defaultCommitMessagePolicy" interface="com.intellij.vcs.commit.DefaultCommitMessagePolicy" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.vcs.changeListClassifierProvider" interface="com.intellij.vcs.commit.ChangeListClassifierProvider" dynamic="true"/>

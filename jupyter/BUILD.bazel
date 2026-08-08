@@ -33,6 +33,7 @@ jvm_library(
         "//libraries/netty/codec-http:libraries-netty-codec-http",
         "//platform/projectModel-api:projectModel",
         "//platform/analysis-api:analysis",
+        "//platform/platform-impl:ide-impl",
     ],
 )
 
@@ -60,6 +61,7 @@ jvm_library(
         "//libraries/netty/codec-http:libraries-netty-codec-http_test_lib",
         "//platform/projectModel-api:projectModel_test_lib",
         "//platform/analysis-api:analysis_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
     ],
 )
 ### auto-generated section `build intellij.notebooks.jupyter.core` end
