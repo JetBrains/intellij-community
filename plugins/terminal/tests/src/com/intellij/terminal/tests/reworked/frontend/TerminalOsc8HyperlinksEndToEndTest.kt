@@ -57,6 +57,35 @@ internal class TerminalOsc8HyperlinksEndToEndTest : BasePlatformTestCase() {
   }
 
   @Test
+  fun `two adjacent OSC8 writes with the same URI are rendered as a single hyperlink`(): Unit = doTest { fixture ->
+    fixture.connector.feed(osc8("https://jetbrains.com", "foo") + osc8("https://jetbrains.com", "bar"))
+
+    val highlighter = fixture.awaitHyperlink()
+    assertThat(fixture.textOf(highlighter)).isEqualTo("foobar")
+    assertThat(fixture.uriOf(highlighter)).isEqualTo("https://jetbrains.com")
+  }
+
+  @Test
+  fun `hyperlink split into several ranges by an in-place edit is still rendered as a single hyperlink`(): Unit = doTest { fixture ->
+    fixture.connector.feed(osc8("https://jetbrains.com", "world"))
+    fixture.connector.feed("${ESC}[3D") // move the cursor back to the "r" in "world"
+    fixture.connector.feed(osc8("https://jetbrains.com", "R"))
+
+    val highlighter = fixture.awaitHyperlink()
+    assertThat(fixture.textOf(highlighter)).isEqualTo("woRld")
+    assertThat(fixture.uriOf(highlighter)).isEqualTo("https://jetbrains.com")
+  }
+
+  @Test
+  fun `adjacent OSC8 hyperlinks with different URIs are not collapsed into one`(): Unit = doTest { fixture ->
+    fixture.connector.feed(osc8("https://jetbrains.com", "foo") + osc8("https://example.com", "bar"))
+
+    val highlighters = fixture.awaitHyperlinks(2)
+    assertThat(highlighters.map { fixture.textOf(it) }).containsExactly("foo", "bar")
+    assertThat(highlighters.map { fixture.uriOf(it) }).containsExactly("https://jetbrains.com", "https://example.com")
+  }
+
+  @Test
   fun `a target that is not a recognized URL is not rendered as a hyperlink`(): Unit = doTest { fixture ->
     fixture.connector.feed(osc8("definitely-not-a-url", "click me"))
     // A real link fed right after: once it's rendered, reconciliation has scanned the whole link list

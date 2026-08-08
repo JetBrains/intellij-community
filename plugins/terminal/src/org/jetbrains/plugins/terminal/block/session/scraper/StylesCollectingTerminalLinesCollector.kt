@@ -80,8 +80,8 @@ class StylesCollectingTerminalLinesCollector(
     var endOffset: Int,
   ) {
     fun extend(nextLinkInfo: JediTermOsc8LinkInfo?, nextLinkStartOffset: Int, nextLinkEndOffset: Int): Boolean {
-      if (linkInfo === nextLinkInfo && endOffset == nextLinkStartOffset) {
-        // Same link instance and the links are adjacent: extend the current link.
+      if (linkInfo == nextLinkInfo && endOffset == nextLinkStartOffset) {
+        // Same URI and the links are adjacent: extend the current link.
         endOffset = nextLinkEndOffset
         return true
       }

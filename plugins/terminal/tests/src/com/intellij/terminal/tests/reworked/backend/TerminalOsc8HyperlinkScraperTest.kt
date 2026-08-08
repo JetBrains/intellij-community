@@ -55,6 +55,22 @@ internal class TerminalOsc8HyperlinkScraperTest : BasePlatformTestCase() {
   }
 
   @Test
+  fun `two adjacent links with the same uri are merged even as distinct instances`() {
+    val term = createTerminal(width = 40, height = 3)
+
+    // Two distinct HyperlinkStyle/JediTermOsc8LinkInfo instances (as two separate OSC8 sequences always
+    // produce, see JediTermOsc8HyperlinkFilter) but with the same URI: JediTermOsc8LinkInfo compares by
+    // URI, so the collector must still merge these adjacent runs into a single link.
+    val first = HyperlinkStyle(TextStyle.EMPTY, JediTermOsc8LinkInfo("https://example.com"))
+    val second = HyperlinkStyle(TextStyle.EMPTY, JediTermOsc8LinkInfo("https://example.com"))
+    term.write("aaa", first, y = 1, x = 0)
+    term.write("bbb", second, y = 1, x = 3)
+
+    val update = term.tracker.getContentUpdate() ?: error("Update is null")
+    assertOsc8(update, expected = listOf(Osc8Expectation("aaabbb", "https://example.com")))
+  }
+
+  @Test
   fun `plain text between two links with the same uri keeps them separate`() {
     val term = createTerminal(width = 40, height = 3)
 
