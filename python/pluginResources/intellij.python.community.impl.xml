@@ -1,8 +1,7 @@
 <idea-plugin visibility="public">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <module name="intellij.platform.debugger.impl"/>
-    <module name="intellij.platform.externalSystem.impl"/>
+    <module name="intellij.commandInterface"/>
     <module name="intellij.json"/>
     <module name="intellij.libraries.caffeine"/>
     <module name="intellij.libraries.commons.lang3"/>
@@ -40,6 +39,7 @@
     <module name="intellij.platform.core.ui"/>
     <module name="intellij.platform.credentialStore"/>
     <module name="intellij.platform.debugger"/>
+    <module name="intellij.platform.debugger.impl"/>
     <module name="intellij.platform.debugger.impl.rpc"/>
     <module name="intellij.platform.debugger.impl.shared"/>
     <module name="intellij.platform.debugger.impl.ui"/>
@@ -48,6 +48,7 @@
     <module name="intellij.platform.execution"/>
     <module name="intellij.platform.execution.impl"/>
     <module name="intellij.platform.externalSystem"/>
+    <module name="intellij.platform.externalSystem.impl"/>
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.core.impl"/>
     <module name="intellij.platform.ide.impl"/>
@@ -485,6 +486,12 @@
                      key="INSP.pandas.truth.value.is.ambiguous.df" enabledByDefault="true" level="WARNING"
                      implementationClass="com.jetbrains.python.inspections.PyPandasTruthValueIsAmbiguousInspection"
                      groupKey="INSP.GROUP.pandas"/>
+    <localInspection language="CommandLine" shortName="CommandLineInspection" bundle="messages.CommandInterfaceBundle"
+                     key="commandLine.inspection.name"
+                     enabledByDefault="true" level="WARNING"
+                     groupKey="INSP.GROUP.python"
+                     groupBundle="messages.PyBundle"
+                     implementationClass="com.intellij.commandInterface.commandLine.CommandLineInspection"/>
 
     <listSplitJoinContext language="Python" implementationClass="com.jetbrains.python.codeInsight.editorActions.PyListSplitJoinContext"/>
 

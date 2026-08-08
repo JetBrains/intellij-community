@@ -1,7 +1,7 @@
 <idea-plugin visibility="public" package="com.intellij.commandInterface">
   <dependencies>
-    <!-- uses messages.PyBundle -->
-    <plugin id="com.intellij.modules.python"/>
+    <!-- The module is backend-only: it registers a parser, an inspection, and a reference contributor. -->
+    <module name="intellij.platform.backend"/>
     <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.libraries.kotlinx.collections.immutable"/>
     <module name="intellij.platform.analysis"/>
@@ -25,12 +25,6 @@
                               implementation="com.intellij.commandInterface.commandLine.CommandLineReferenceContributor"/>
     <lang.elementManipulator forClass="com.intellij.commandInterface.commandLine.CommandLineElement"
                              implementationClass="com.intellij.commandInterface.commandLine.CommandLineElementManipulator"/>
-    <localInspection language="CommandLine" shortName="CommandLineInspection" bundle="messages.CommandInterfaceBundle"
-                     key="commandLine.inspection.name"
-                     enabledByDefault="true" level="WARNING"
-                     groupKey="INSP.GROUP.python"
-                     groupBundle="messages.PyBundle"
-                     implementationClass="com.intellij.commandInterface.commandLine.CommandLineInspection"/>
     <lang.documentationProvider language="CommandLine"
                                 implementationClass="com.intellij.commandInterface.commandLine.CommandLineDocumentationProvider"/>
   </extensions>
