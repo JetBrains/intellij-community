@@ -68,13 +68,13 @@ class SpinningProgressIcon(
   }
 
   private fun getIconFromCache(i: Int): Icon {
+    val scale = JBUI.pixScale()
+    val cacheKey = 31 * iconColor.hashCode() + scale.toBits()
     val icon = iconCache[i]
-    val cacheKey = iconColor.hashCode()
     if (icon != null && iconCacheKey == cacheKey) {
       return icon
     }
 
-    val scale = JBUI.pixScale()
     val stringBuilder = StringBuilder()
     val header = createRooTag()
     val stroke = ColorUtil.toHex(iconColor)
