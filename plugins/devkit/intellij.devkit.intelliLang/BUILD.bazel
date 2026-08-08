@@ -14,6 +14,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//plugins/IntelliLang:langInjection"],
 )
 
 content_module_jar(module = ":intelliLang")
@@ -27,7 +28,11 @@ jvm_library(
     ),
     module_name = "intellij.devkit.intelliLang",
     visibility = ["//visibility:public"],
-    runtime_deps = [":intelliLang"],
+    runtime_deps = [
+        # do not sort,
+        ":intelliLang",
+        "//plugins/IntelliLang:langInjection_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.devkit.intelliLang` end
 
