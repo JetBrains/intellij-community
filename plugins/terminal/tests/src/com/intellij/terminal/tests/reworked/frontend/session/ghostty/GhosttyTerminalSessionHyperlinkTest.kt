@@ -11,7 +11,7 @@ import org.junit.Test
  * OSC 8 hyperlinks through the Ghostty-backed session: the emulator tracks the link per cell, and
  * `TerminalEmulatorOutputProjector` must coalesce that into the [TerminalContentUpdatedEvent.osc8Hyperlinks]
  * ranges (offsets relative to the event text) the output model expects. The JediTerm counterpart is
- * [com.intellij.terminal.tests.reworked.backend.TerminalOsc8HyperlinksEndToEndTest].
+ * [com.intellij.terminal.tests.reworked.frontend.TerminalOsc8HyperlinksEndToEndTest].
  */
 internal class GhosttyTerminalSessionHyperlinkTest : GhosttyTerminalSessionTestCase() {
 

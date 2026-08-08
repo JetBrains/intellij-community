@@ -52,29 +52,30 @@ internal class TerminalSessionImpl(
     }
   }
 
+  override val eelDescriptor: EelDescriptor
+    /**
+     * Falls back to [LocalEelDescriptor] when [ttyConnector] isn't a [LocalTerminalTtyConnector].
+     * In production, [ttyConnector] is always a [LocalTerminalTtyConnector].
+     * The fallback is test-only, exercised by tests driving the session through a fake connector.
+     */
+    get() = (ttyConnector.original as? LocalTerminalTtyConnector)?.eelDescriptor ?: LocalEelDescriptor
+
   private var missingLocalTtyConnectorLogged = false
 
-  private val localTtyConnector: LocalTerminalTtyConnector?
-    /**
-     * In production, [ttyConnector] is always a [LocalTerminalTtyConnector]; on a miss, [eelDescriptor]
-     * and [processId] return guesses, hence `LOG.error`.
-     * In tests with a fake connector (see `LoopbackTtyConnector`), `LOG.error` fails
-     * tests that rely on these getters.
-     */
-    get() = ttyConnector.original as? LocalTerminalTtyConnector ?: run {
-      if (!missingLocalTtyConnectorLogged) {
-        missingLocalTtyConnectorLogged = true
-        LOG.error("Unable to find LocalTerminalTtyConnector in $ttyConnector")
-      }
-      null
-    }
-
-  override val eelDescriptor: EelDescriptor
-    get() = localTtyConnector?.eelDescriptor ?: LocalEelDescriptor
-
   override val processId: Long
+    /**
+     * In production, [ttyConnector] is always a [LocalTerminalTtyConnector].
+     * Miss can happen only in tests where a fake connector is used, so `LOG.error` to fail the test.
+     */
     get() {
-      val localTtyConnector = localTtyConnector ?: return -1
+      val localTtyConnector = ttyConnector.original as? LocalTerminalTtyConnector
+      if (localTtyConnector == null) {
+        if (!missingLocalTtyConnectorLogged) {
+          missingLocalTtyConnectorLogged = true
+          LOG.error("Unable to find LocalTerminalTtyConnector in $ttyConnector")
+        }
+        return -1
+      }
       return localTtyConnector.shellEelProcess.eelProcess.pid.value
     }
 
