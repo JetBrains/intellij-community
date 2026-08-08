@@ -452,7 +452,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
   }
 
   @Internal
-  open fun getProjectPath(project: Project): Path? {
+  override fun getProjectPath(project: Project): Path? {
     return ((project as? ProjectStoreOwner)?.componentStore ?: return null).storeDescriptor.presentableUrl
   }
 
