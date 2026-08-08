@@ -33,6 +33,12 @@
     libraries:
       JUnit4:
       - name: $MAVEN_REPOSITORY$/junit/junit/4/junit-4.jar
+- name: lib/intellij.libraries.opentest4j.jar
+  contentModules:
+  - name: intellij.libraries.opentest4j
+    libraries:
+      opentest4j:
+      - name: $MAVEN_REPOSITORY$/org/opentest4j/opentest4j/1/opentest4j-1.jar
 - name: lib/modules/intellij.groovy.ant.jar
   contentModules:
   - name: intellij.groovy.ant

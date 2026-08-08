@@ -1,12 +1,13 @@
 <idea-plugin visibility="internal">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <module name="intellij.libraries.junit4"/>
     <module name="intellij.libraries.junit5.jupiter"/>
-    <module name="intellij.libraries.junit5.launcher"/>
     <module name="intellij.libraries.junit5.vintage"/>
     <module name="intellij.libraries.asm.tools"/>
+    <module name="intellij.libraries.junit4"/>
     <module name="intellij.libraries.junit5"/>
+    <module name="intellij.libraries.junit5.launcher"/>
+    <module name="intellij.libraries.opentest4j"/>
     <module name="intellij.libraries.teamcity.service.messages"/>
   </dependencies>
   <!-- endregion -->

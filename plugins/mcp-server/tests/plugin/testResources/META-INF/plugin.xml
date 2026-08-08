@@ -29,5 +29,6 @@
   </content>
   <content>
     <module name="intellij.libraries.assertj.core"/>
+    <module name="intellij.libraries.opentest4j"/>
   </content>
 </idea-plugin>

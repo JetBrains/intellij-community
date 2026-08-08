@@ -138,6 +138,8 @@
   <content>
     <!-- chain: direct -->
     <module name="intellij.libraries.assertj.core"/>
+    <!-- chain: intellij.platform.testFramework.core -> intellij.libraries.opentest4j -->
+    <module name="intellij.libraries.opentest4j"/>
   </content>
   <!-- endregion -->
 </idea-plugin>

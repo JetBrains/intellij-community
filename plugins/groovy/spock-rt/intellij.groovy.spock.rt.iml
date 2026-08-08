@@ -39,6 +39,6 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="library" scope="PROVIDED" name="opentest4j" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.opentest4j" scope="PROVIDED" />
   </component>
 </module>

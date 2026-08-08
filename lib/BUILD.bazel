@@ -13670,6 +13670,13 @@ jvm_import(
     visibility = ["//visibility:public"],
 )
 
+jvm_import(
+    name = "libraries-opentest4j-opentest4j",
+    jar = "@org_opentest4j-opentest4j-1_3_0_http//file",
+    source_jar = "@org_opentest4j-opentest4j-1_3_0-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
 copy_file(
     name = "oro/oro-2.0.8.jar_copy",
     src = "@oro-oro-2_0_8_http//file",
@@ -18755,20 +18762,6 @@ jvm_import(
     name = "com_squareup_okio-okio-jvm-3_9_0_http_import",
     jar = "@com_squareup_okio-okio-jvm-3_9_0_http//file",
     source_jar = "@com_squareup_okio-okio-jvm-3_9_0-sources_http//file",
-)
-
-jvm_import(
-    name = "opentest4j",
-    jar = "@org_opentest4j-opentest4j-1_3_0_http//file",
-    source_jar = "@org_opentest4j-opentest4j-1_3_0-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-java_library(
-    name = "opentest4j-provided",
-    neverlink = True,
-    visibility = ["//visibility:public"],
-    exports = [":opentest4j"],
 )
 
 copy_file(

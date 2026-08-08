@@ -567,6 +567,7 @@ libraries/opentelemetry-exporter-sender-jdk
 libraries/opentelemetry-extension-kotlin
 libraries/opentelemetry-sdk-autoconfigure-spi
 libraries/opentelemetry-semconv
+libraries/opentest4j
 libraries/oro-matcher
 libraries/oshi-core
 libraries/plexus-utils

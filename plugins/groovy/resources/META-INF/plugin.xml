@@ -27,6 +27,7 @@
   <content>
     <module name="intellij.libraries.hamcrest" loading="embedded"/>
     <module name="intellij.libraries.junit4" loading="embedded"/>
+    <module name="intellij.libraries.opentest4j" loading="embedded"/>
   </content>
   <dependencies>
     <plugin id="com.intellij.properties"/>
