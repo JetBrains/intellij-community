@@ -14,6 +14,8 @@ import com.intellij.psi.PsiReference
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.QualifiedName
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.ContainerUtil.addAll
+import com.intellij.util.containers.ContainerUtil.addIfNotNull
 import com.intellij.util.containers.addIfNotNull
 import com.jetbrains.python.PyCustomType
 import com.jetbrains.python.PyNames
@@ -285,8 +287,42 @@ class PyUnresolvedReferencesVisitor(
 
   private fun registerUnresolvedReferenceProblem(node: PyElement, reference: PsiReference, severity: HighlightSeverity) {
     val spec = buildProblemSpec(node, reference, severity) ?: return
-    val fixes = collectFixes(spec)
-    emitProblem(spec, fixes)
+    val fixes: MutableList<LocalQuickFix> = ArrayList()
+    val reference = spec.reference
+    val element = spec.element
+    if (reference is PsiReferenceEx) {
+      fixes.addAll(reference.getQuickFixes(myTypeEvalContext))
+    }
+    if (element is PyReferenceExpression && !element.isQualified) {
+      fixes.addIfNotNull(getTrueFalseQuickFix(spec.refText))
+      fixes.addAll(getAddSelfFixes(myTypeEvalContext, spec.node, element))
+      fixes.addIfNotNull(getCreateFunctionQuickFix(element))
+      fixes.addIfNotNull(getAddParameterQuickFix(spec.refName, element))
+      fixes.add(PyRenameUnresolvedRefQuickFix())
+    }
+    if (spec.qualifierType != null) {
+      fixes.addAll(getCreateMemberFromUsageFixes(myTypeEvalContext, spec.qualifierType, reference, spec.refText))
+    }
+    if (spec.fallbackToUnqualifiedFix) {
+      fixes.addAll(quickFixes.getAutoImportFixes(spec.node, reference, element))
+      fixes.addIfNotNull(getCreateClassFix(myTypeEvalContext, spec.refText, element))
+    }
+    val hlType = computeHighlightType(spec.severity)
+    addAll(fixes, quickFixes.getImportStatementQuickFixes(spec.element))
+    addAll(fixes, quickFixes.getAddIgnoredIdentifierQuickFixes(spec.qualifiedNames))
+    val installPackageQuickFixes = quickFixes.getInstallPackageQuickFixes(spec.node, spec.reference, spec.refName)
+    val installAll = installPackageQuickFixes.isNotEmpty()
+    if (installAll) {
+      addAll(fixes, installPackageQuickFixes)
+      myUnresolvedRefs.add(PyPackageInstallAllProblemInfo(spec.node, spec.message, hlType, spec.refName, fixes))
+    }
+    addIfNotNull(fixes, quickFixes.getAddSourceRootQuickFix(spec.node))
+    // PySubstitutionChunkReference: install-all only, no direct registerProblem.
+    if (spec.reference is PySubstitutionChunkReference) return
+    quickFixes.getPluginQuickFixes(fixes, spec.reference)
+    if (!installAll) {
+      registerProblem(spec.node, spec.message, hlType, *fixes.toTypedArray<LocalQuickFix>(), rangeInElement = spec.rangeInElement)
+    }
   }
 
   private fun buildProblemSpec(initialNode: PyElement, reference: PsiReference, initialSeverity: HighlightSeverity): ProblemSpec? {
@@ -419,55 +455,6 @@ class PyUnresolvedReferencesVisitor(
     }
     // Legacy non-qualified ignore patterns.
     return myIgnoredIdentifiers.contains(refName)
-  }
-
-  private fun collectFixes(spec: ProblemSpec): MutableList<LocalQuickFix> {
-    val fixes: MutableList<LocalQuickFix> = ArrayList()
-    val reference = spec.reference
-    val element = spec.element
-
-    if (reference is PsiReferenceEx) {
-      fixes.addAll(reference.getQuickFixes(myTypeEvalContext))
-    }
-    if (element is PyReferenceExpression && !element.isQualified) {
-      fixes.addIfNotNull(getTrueFalseQuickFix(spec.refText))
-      fixes.addAll(getAddSelfFixes(myTypeEvalContext, spec.node, element))
-      fixes.addIfNotNull(getCreateFunctionQuickFix(element))
-      fixes.addIfNotNull(getAddParameterQuickFix(spec.refName, element))
-      fixes.add(PyRenameUnresolvedRefQuickFix())
-    }
-    if (spec.qualifierType != null) {
-      fixes.addAll(getCreateMemberFromUsageFixes(myTypeEvalContext, spec.qualifierType, reference, spec.refText))
-    }
-    if (spec.fallbackToUnqualifiedFix) {
-      fixes.addAll(quickFixes.getAutoImportFixes(spec.node, reference, element))
-      fixes.addIfNotNull(getCreateClassFix(myTypeEvalContext, spec.refText, element))
-    }
-    return fixes
-  }
-
-  private fun emitProblem(spec: ProblemSpec, fixes: MutableList<LocalQuickFix>) {
-    val hlType = computeHighlightType(spec.severity)
-
-    ContainerUtil.addAll(fixes, quickFixes.getImportStatementQuickFixes(spec.element))
-    ContainerUtil.addAll(fixes, quickFixes.getAddIgnoredIdentifierQuickFixes(spec.qualifiedNames))
-
-    val installPackageQuickFixes = quickFixes.getInstallPackageQuickFixes(spec.node, spec.reference, spec.refName)
-    val installAll = installPackageQuickFixes.isNotEmpty()
-    if (installAll) {
-      ContainerUtil.addAll(fixes, installPackageQuickFixes)
-      myUnresolvedRefs.add(PyPackageInstallAllProblemInfo(spec.node, spec.message, hlType, spec.refName, fixes))
-    }
-
-    ContainerUtil.addIfNotNull(fixes, quickFixes.getAddSourceRootQuickFix(spec.node))
-
-    // PySubstitutionChunkReference: install-all only, no direct registerProblem.
-    if (spec.reference is PySubstitutionChunkReference) return
-
-    quickFixes.getPluginQuickFixes(fixes, spec.reference)
-    if (!installAll) {
-      registerProblem(spec.node, spec.message, hlType, *fixes.toTypedArray(), rangeInElement = spec.rangeInElement)
-    }
   }
 
   private fun computeHighlightType(severity: HighlightSeverity): ProblemHighlightType {
