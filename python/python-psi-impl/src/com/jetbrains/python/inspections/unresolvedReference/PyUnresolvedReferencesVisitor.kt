@@ -14,8 +14,6 @@ import com.intellij.psi.PsiReference
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.QualifiedName
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.containers.ContainerUtil.addAll
-import com.intellij.util.containers.ContainerUtil.addIfNotNull
 import com.intellij.util.containers.addIfNotNull
 import com.jetbrains.python.PyCustomType
 import com.jetbrains.python.PyNames
@@ -308,15 +306,15 @@ class PyUnresolvedReferencesVisitor(
       fixes.addIfNotNull(getCreateClassFix(myTypeEvalContext, spec.refText, element))
     }
     val hlType = computeHighlightType(spec.severity)
-    addAll(fixes, quickFixes.getImportStatementQuickFixes(spec.element))
-    addAll(fixes, quickFixes.getAddIgnoredIdentifierQuickFixes(spec.qualifiedNames))
+    fixes.addAll(quickFixes.getImportStatementQuickFixes(spec.element))
+    fixes.addAll(quickFixes.getAddIgnoredIdentifierQuickFixes(spec.qualifiedNames))
     val installPackageQuickFixes = quickFixes.getInstallPackageQuickFixes(spec.node, spec.reference, spec.refName)
     val installAll = installPackageQuickFixes.isNotEmpty()
     if (installAll) {
-      addAll(fixes, installPackageQuickFixes)
+      fixes.addAll(installPackageQuickFixes)
       myUnresolvedRefs.add(PyPackageInstallAllProblemInfo(spec.node, spec.message, hlType, spec.refName, fixes))
     }
-    addIfNotNull(fixes, quickFixes.getAddSourceRootQuickFix(spec.node))
+    fixes.addIfNotNull(quickFixes.getAddSourceRootQuickFix(spec.node))
     // PySubstitutionChunkReference: install-all only, no direct registerProblem.
     if (spec.reference is PySubstitutionChunkReference) return
     quickFixes.getPluginQuickFixes(fixes, spec.reference)
@@ -559,7 +557,7 @@ class PyUnresolvedReferencesVisitor(
     val location = ref.element as? PyExpression
     return type.members.firstOrNull { t ->
       t != null && !ignoreUnresolvedMemberForType(t, ref, name) &&
-      ContainerUtil.isEmpty(t.resolveMember(name, location, AccessDirection.READ, resolveContext))
+      t.resolveMember(name, location, AccessDirection.READ, resolveContext).isNullOrEmpty()
     }
   }
 
@@ -597,19 +595,14 @@ class PyUnresolvedReferencesVisitor(
   }
 
   fun addInstallAllImports() {
-    val refNames = ContainerUtil.map2Set(
-      myUnresolvedRefs,
-      com.intellij.util.Function { it: PyPackageInstallAllProblemInfo? -> it!!.refName })
+    val refNamesCount = myUnresolvedRefs.distinctBy { it.refName }.size
     val installAllPackageQuickFixes = quickFixes.getInstallAllPackagesQuickFix(myUnresolvedRefs)
-    for (unresolved in myUnresolvedRefs) {
-      val quickFixes: MutableList<LocalQuickFix> = unresolved.fixes.toMutableList()
-      if (refNames.size > 1) {
-        ContainerUtil.addIfNotNull(quickFixes, installAllPackageQuickFixes)
+    for ((psiElement, message, highlightType, _, fixes) in myUnresolvedRefs) {
+      val quickFixes = fixes.toMutableList()
+      if (refNamesCount > 1) {
+        quickFixes.addIfNotNull(installAllPackageQuickFixes)
       }
-      registerProblem(
-        unresolved.psiElement, unresolved.message, unresolved.highlightType,
-        *quickFixes.toTypedArray()
-      )
+      registerProblem(psiElement, message, highlightType, *quickFixes.toTypedArray())
     }
   }
 
