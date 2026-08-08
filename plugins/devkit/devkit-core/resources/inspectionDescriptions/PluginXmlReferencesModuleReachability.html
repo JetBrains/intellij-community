@@ -17,9 +17,11 @@ compile and runtime dependencies.
 <p>
   A plugin may be assembled from several modules. Such modules share a registration scope at runtime, so extension points,
   actions, and groups declared in a sibling module's production roots are reachable even without a module dependency and
-  are not reported. Classes and resource bundles are still checked: a content module loads them with its own classloader,
-  which sees only declared dependencies. The multi-module plugin
-  configuration is picked from the
+  are not reported. Classes and resource bundles resolve through classloaders instead and are exempt only between sibling
+  modules loaded by the plugin's main classloader: content modules included with <code>loading="embedded"</code> everywhere,
+  or modules packaged into the main plugin jar without an own content-module descriptor. A content module with any other
+  loading mode gets its own classloader, which sees only declared dependencies, so its classes and bundles are still
+  reported. The multi-module plugin configuration is picked from the
   <code>Plugin DevKit | Plugin descriptor | Plugin.xml registration check</code> inspection.
 </p>
 
