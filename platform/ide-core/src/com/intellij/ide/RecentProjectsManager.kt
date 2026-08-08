@@ -57,6 +57,16 @@ interface RecentProjectsManager {
 
   fun hasPath(path: @SystemIndependent String?): Boolean = false
 
+  /**
+   * Returns the product-managed project identity path used for recent-project persistence and reopen.
+   *
+   * This path can differ from the project base directory; product implementations may return a
+   * project file such as a Rider `.sln` or Bazel project-view file. The default implementation
+   * returns `null` for implementations that do not expose such identity.
+   */
+  @ApiStatus.Internal
+  fun getProjectPath(project: Project): Path? = null
+
   suspend fun willReopenProjectOnStart(): Boolean = false
 
   @ApiStatus.Internal
