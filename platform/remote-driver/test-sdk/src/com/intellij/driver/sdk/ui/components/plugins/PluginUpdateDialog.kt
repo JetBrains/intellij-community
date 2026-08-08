@@ -1,5 +1,6 @@
 package com.intellij.driver.sdk.ui.components.plugins
 
+import com.intellij.driver.sdk.step
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.elements.DialogUiComponent
@@ -13,14 +14,17 @@ class ChoosePluginsToInstallDialogUi(data: ComponentData) : DialogUiComponent(da
   private val pluginsTable: JTableUiComponent
     get() = table()
 
-  fun selectPlugin(pluginName: String) {
-    pluginsTable.apply {
-      val (pluginRow, _) = findRowColumn { it.contains(pluginName) }
-      clickCell(pluginRow, 0)
+  fun selectPlugin(pluginName: String) : ChoosePluginsToInstallDialogUi {
+    step ("Select plugin to install from plugins list") {
+      pluginsTable.apply {
+        val (pluginRow, _) = findRowColumn { it.contains(pluginName) }
+        clickCell(pluginRow, 0)
+      }
     }
+    return this
   }
 
-  fun installAndClose() {
+  fun clickOkAndCloseDialog() {
     okButton.click()
   }
 }
