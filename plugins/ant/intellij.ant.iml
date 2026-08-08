@@ -66,6 +66,7 @@
     <orderEntry type="module" module-name="intellij.platform.codeStyle" />
     <orderEntry type="module" module-name="intellij.platform.lang" />
     <orderEntry type="module" module-name="intellij.platform.testRunner" />
+    <orderEntry type="module" module-name="intellij.java.backend" />
   </component>
   <component name="copyright">
     <Base>

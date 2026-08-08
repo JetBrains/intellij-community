@@ -82,6 +82,7 @@ jvm_library(
         "//platform/code-style-api:codeStyle",
         "//platform/lang-api:lang",
         "//platform/testRunner",
+        "//java/java-backend:backend",
     ],
 )
 
@@ -159,6 +160,7 @@ jvm_library(
         "//platform/code-style-api:codeStyle_test_lib",
         "//platform/lang-api:lang_test_lib",
         "//platform/testRunner:testRunner_test_lib",
+        "//java/java-backend:backend_test_lib",
     ],
 )
 ### auto-generated section `build intellij.ant` end

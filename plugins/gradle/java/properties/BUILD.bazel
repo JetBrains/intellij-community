@@ -32,6 +32,7 @@ jvm_library(
         "//platform/indexing-api:indexing",
         "//java/java-psi-api:psi",
         "//platform/util:util-ui",
+        "//plugins/properties:properties-backend",
     ],
 )
 
@@ -60,6 +61,7 @@ jvm_library(
         "//platform/indexing-api:indexing_test_lib",
         "//java/java-psi-api:psi_test_lib",
         "//platform/util:util-ui_test_lib",
+        "//plugins/properties:properties-backend_test_lib",
     ],
 )
 ### auto-generated section `build intellij.gradle.java.properties` end

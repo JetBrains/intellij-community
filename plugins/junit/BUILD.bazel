@@ -67,6 +67,7 @@ jvm_library(
         "//platform/forms_rt:java-guiForms-rt",
         "//java/java-frontback-psi-api:frontback-psi",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+        "//java/java-backend:backend",
     ],
 )
 
@@ -132,6 +133,7 @@ jvm_library(
         "//platform/forms_rt:java-guiForms-rt_test_lib",
         "//java/java-frontback-psi-api:frontback-psi_test_lib",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+        "//java/java-backend:backend_test_lib",
     ],
 )
 ### auto-generated section `build intellij.junit` end

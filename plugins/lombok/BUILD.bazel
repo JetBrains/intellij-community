@@ -57,6 +57,7 @@ jvm_library(
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//platform/code-style-api:codeStyle",
         "//platform/util:util-ui",
+        "//java/java-backend:backend",
     ],
 )
 
@@ -125,6 +126,7 @@ jvm_library(
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
         "//platform/code-style-api:codeStyle_test_lib",
         "//platform/util:util-ui_test_lib",
+        "//java/java-backend:backend_test_lib",
     ],
 )
 ### auto-generated section `build intellij.lombok` end

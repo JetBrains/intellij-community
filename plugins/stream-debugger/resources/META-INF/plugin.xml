@@ -37,4 +37,9 @@
 
       <p>In the latter mode, you can switch between operations manually using the tabs on top.</p>
     ]]></description>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.platform.ide.core.impl"/>
+  </dependencies>
+  <!-- endregion -->
 </idea-plugin>

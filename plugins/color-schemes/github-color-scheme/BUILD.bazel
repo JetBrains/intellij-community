@@ -13,6 +13,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/projectModel-impl"],
 )
 
 jvm_library(
@@ -24,7 +25,11 @@ jvm_library(
     ),
     module_name = "intellij.color.scheme.github",
     visibility = ["//visibility:public"],
-    runtime_deps = [":color-scheme-github"],
+    runtime_deps = [
+        # do not sort,
+        ":color-scheme-github",
+        "//platform/projectModel-impl:projectModel-impl_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.color.scheme.github` end
 

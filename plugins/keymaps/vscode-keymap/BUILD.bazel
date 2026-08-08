@@ -13,6 +13,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/platform-impl:ide-impl"],
 )
 
 jvm_library(
@@ -24,7 +25,11 @@ jvm_library(
     ),
     module_name = "intellij.keymap.vscode",
     visibility = ["//visibility:public"],
-    runtime_deps = [":keymap-vscode"],
+    runtime_deps = [
+        # do not sort,
+        ":keymap-vscode",
+        "//platform/platform-impl:ide-impl_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.keymap.vscode` end
 

@@ -35,6 +35,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    deps = ["//platform/platform-impl:ide-impl"],
 )
 
 jvm_library(
@@ -47,7 +48,11 @@ jvm_library(
     kotlinc_opts = ":custom_vcs-git",
     module_name = "intellij.vcs.git",
     visibility = ["//visibility:public"],
-    runtime_deps = [":vcs-git"],
+    runtime_deps = [
+        # do not sort,
+        ":vcs-git",
+        "//platform/platform-impl:ide-impl_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.vcs.git` end
 

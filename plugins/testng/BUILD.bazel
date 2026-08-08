@@ -83,6 +83,7 @@ jvm_library(
         "//jps/model-api:model",
         "//jps/model-serialization",
         "//platform/statistics",
+        "//java/java-backend:backend",
     ],
 )
 
@@ -152,6 +153,7 @@ jvm_library(
         "//jps/model-api:model_test_lib",
         "//jps/model-serialization:model-serialization_test_lib",
         "//platform/statistics:statistics_test_lib",
+        "//java/java-backend:backend_test_lib",
     ],
 )
 ### auto-generated section `build intellij.testng` end

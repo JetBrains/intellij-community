@@ -27,5 +27,6 @@
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem.impl" />
+    <orderEntry type="module" module-name="intellij.properties.backend" />
   </component>
 </module>

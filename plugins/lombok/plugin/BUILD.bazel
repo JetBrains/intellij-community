@@ -15,6 +15,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/platform-impl:ide-impl"],
 )
 
 jvm_library(
@@ -26,7 +27,11 @@ jvm_library(
     ),
     module_name = "intellij.lombok.plugin",
     visibility = ["//visibility:public"],
-    runtime_deps = [":plugin"],
+    runtime_deps = [
+        # do not sort,
+        ":plugin",
+        "//platform/platform-impl:ide-impl_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.lombok.plugin` end
 

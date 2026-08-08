@@ -43,5 +43,6 @@
     <orderEntry type="module" module-name="intellij.platform.lang.core" />
     <orderEntry type="module" module-name="intellij.platform.util.ui" />
     <orderEntry type="module" module-name="intellij.platform.util.ex" />
+    <orderEntry type="module" module-name="intellij.platform.lvcs.impl" />
   </component>
 </module>

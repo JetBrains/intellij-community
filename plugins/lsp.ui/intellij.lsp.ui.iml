@@ -25,5 +25,6 @@
     <orderEntry type="module" module-name="intellij.platform.jps.model" />
     <orderEntry type="module" module-name="intellij.platform.util.ui" />
     <orderEntry type="module" module-name="intellij.platform.frontend" />
+    <orderEntry type="module" module-name="intellij.platform.lsp.impl" />
   </component>
 </module>

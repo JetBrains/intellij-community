@@ -24,6 +24,7 @@
   </content>
   <dependencies>
     <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.java.backend"/>
     <module name="intellij.java.debugger.impl"/>
     <module name="intellij.java.execution.impl"/>
     <module name="intellij.java.frontback.psi"/>

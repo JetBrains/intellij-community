@@ -44,6 +44,9 @@
 
   <dependencies>
     <plugin id="com.intellij.java"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.platform.ide.impl"/>
+    <!-- endregion -->
   </dependencies>
 
   <content namespace="jetbrains">

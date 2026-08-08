@@ -13,6 +13,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/platform-impl:ide-impl"],
 )
 
 jvm_library(
@@ -24,7 +25,11 @@ jvm_library(
     ),
     module_name = "intellij.keymap.visualStudio2022",
     visibility = ["//visibility:public"],
-    runtime_deps = [":keymap-visualStudio2022"],
+    runtime_deps = [
+        # do not sort,
+        ":keymap-visualStudio2022",
+        "//platform/platform-impl:ide-impl_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.keymap.visualStudio2022` end
 

@@ -34,6 +34,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/ide-core-impl"],
 )
 
 jvm_library(
@@ -45,7 +46,11 @@ jvm_library(
     ),
     module_name = "intellij.debugger.streams.plugin",
     visibility = ["//visibility:public"],
-    runtime_deps = [":debugger-streams-plugin"],
+    runtime_deps = [
+        # do not sort,
+        ":debugger-streams-plugin",
+        "//platform/ide-core-impl:ide-core-impl_test_lib",
+    ],
 )
 ### auto-generated section `build intellij.debugger.streams.plugin` end
 

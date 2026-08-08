@@ -13,6 +13,7 @@
 
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
+    <plugin id="AntSupport"/>
     <module name="intellij.libraries.fastutil"/>
     <module name="intellij.libraries.jaxen"/>
     <module name="intellij.libraries.kotlinx.collections.immutable"/>
