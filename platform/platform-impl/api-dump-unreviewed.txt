@@ -691,7 +691,6 @@ f:com.intellij.ide.IdeEventQueue
 - f:executeInProductionModeEvenThoughWeAreInTests(java.lang.Runnable):V
 - f:flushNativeEventQueue():V
 - f:getPostedEventCount():J
-- f:getPostedSystemEventCount():J
 - f:getReturnedEventCount():J
 - f:isInputMethodEnabled():Z
 - f:pumpEventsForHierarchy(java.awt.Component,java.util.concurrent.Future,java.util.function.Consumer):V
