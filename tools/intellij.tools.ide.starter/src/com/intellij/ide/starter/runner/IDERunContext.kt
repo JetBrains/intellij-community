@@ -161,7 +161,6 @@ data class IDERunContext(
 
       installProfiler()
       setSnapshotPath(lastIdeReportingData.snapshotsDir)
-      setPathForMemorySnapshot()
       collectOpenTelemetry()
       setupLogDir()
 
@@ -326,12 +325,6 @@ data class IDERunContext(
         .listDirectoryEntriesQuietly()
         ?.filter { file -> filesToBeDeleted.any { fileToBeDeleted -> file.name == fileToBeDeleted } }
         ?.forEach { it.deleteRecursively() }
-    }
-  }
-
-  private fun setPathForMemorySnapshot() {
-    addVMOptionsPatch {
-      addSystemProperty("memory.snapshots.path", lastIdeReportingData.logsDir)
     }
   }
 

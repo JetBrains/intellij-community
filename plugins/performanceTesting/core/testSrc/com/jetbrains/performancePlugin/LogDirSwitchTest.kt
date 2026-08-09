@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.JulLogger
 import com.intellij.openapi.diagnostic.RollingFileHandler
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments
 import com.intellij.openapi.util.Disposer
+import com.jetbrains.performancePlugin.commands.MemoryDumpCommand
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before

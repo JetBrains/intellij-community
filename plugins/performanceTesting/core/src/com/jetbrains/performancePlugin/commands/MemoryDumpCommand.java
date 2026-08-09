@@ -11,7 +11,6 @@ import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
@@ -39,9 +38,8 @@ public final class MemoryDumpCommand extends AbstractCommand {
   }
 
   public static @NotNull Path getMemoryDumpPath() {
-    String memoryDumpPath = System.getProperties().getProperty("memory.snapshots.path", LogDirHandler.currentLogDir().toString());
     String currentTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
-    return Paths.get(memoryDumpPath, Timer.instance.getActivityName() + '-' + currentTime + ".zip");
+    return LogDirHandler.currentLogDir().resolve(Timer.instance.getActivityName() + '-' + currentTime + ".zip");
   }
 
   public static void captureZippedMemoryDump(String dumpPath) throws Exception {
