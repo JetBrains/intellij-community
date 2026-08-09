@@ -21,12 +21,13 @@ import org.jetbrains.idea.devkit.dom.impl.PluginPsiClassConverter
  * Checks whether the given DOM element value is a *registered* class.
  */
 internal fun isClassRegistration(element: GenericDomValue<*>): Boolean {
+  // structural equals on purpose: DOM proxy identity is not stable across cache regeneration
   return when (val parent = element.parent) {
-    is ExtensionPoint -> element === parent.getInterface() || element === parent.beanClass
+    is ExtensionPoint -> element == parent.getInterface() || element == parent.beanClass
     is Extension -> isRegistrationInExtension(element, parent)
-    is Action -> element === parent.clazz
-    is Listeners.Listener -> element === parent.listenerClassName
-    is Component -> element === parent.implementationClass
+    is Action -> element == parent.clazz
+    is Listeners.Listener -> element == parent.listenerClassName
+    is Component -> element == parent.implementationClass
     else -> false
   }
 }
@@ -37,7 +38,7 @@ private fun isRegistrationInExtension(element: GenericDomValue<*>, extension: Ex
   }
   for (attributeDescription in extension.genericInfo.attributeChildrenDescriptions) {
     val attributeValue = attributeDescription.getDomAttributeValue(extension) ?: continue
-    if (attributeValue !== element) continue
+    if (attributeValue != element) continue
     val attributeName = attributeDescription.name
     return attributeValue.converter is PluginPsiClassConverter
       && attributeName != "forClass"

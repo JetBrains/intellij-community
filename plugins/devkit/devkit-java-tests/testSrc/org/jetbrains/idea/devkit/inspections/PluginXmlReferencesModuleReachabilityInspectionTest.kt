@@ -661,7 +661,7 @@ class PluginXmlReferencesModuleReachabilityInspectionTest : JavaCodeInsightFixtu
       <idea-plugin>
           <actions>
               <action class="com.intellij.openapi.actionSystem.AnAction" id="MyAction">
-                  <add-to-group group-id="<error descr="Action or group 'UnrelatedGroup' (module 'unrelatedModule') is not reachable from module '${myFixture.module.name}' dependencies">UnrelatedGroup</error>" relative-to-action="<error descr="Action or group 'UnrelatedAction' (module 'unrelatedModule') is not reachable from module '${myFixture.module.name}' dependencies">UnrelatedAction</error>" anchor="after"/>
+                  <add-to-group group-id="<error descr="Action or group 'UnrelatedGroup' (module 'unrelatedModule') is not reachable from module '${myFixture.module.name}' dependencies">UnrelatedGroup</error>" relative-to-action="UnrelatedAction" anchor="after"/>
               </action>
               <reference ref="<error descr="Action or group 'UnrelatedAction' (module 'unrelatedModule') is not reachable from module '${myFixture.module.name}' dependencies">UnrelatedAction</error>"/>
           </actions>
@@ -697,6 +697,57 @@ class PluginXmlReferencesModuleReachabilityInspectionTest : JavaCodeInsightFixtu
                   <add-to-group group-id="DepGroup" relative-to-action="DepAction" anchor="after"/>
               </action>
               <reference ref="DepAction"/>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    testHighlighting(testedFile)
+  }
+
+  fun `test add-to-group relative-to-action in unrelated module - no error because positioning-only`() {
+    addModuleWithActionsXml("unrelatedModule", "Unrelated")
+
+    val testedFile = addPluginXml(
+      """
+      <idea-plugin>
+          <actions>
+              <group id="LocalGroup"/>
+              <action class="com.intellij.openapi.actionSystem.AnAction" id="MyAction">
+                  <add-to-group group-id="LocalGroup" relative-to-action="UnrelatedAction" anchor="after"/>
+              </action>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    testHighlighting(testedFile)
+  }
+
+  fun `test use-shortcut-of in unrelated module - no error because positioning-only`() {
+    addModuleWithActionsXml("unrelatedModule", "Unrelated")
+
+    val testedFile = addPluginXml(
+      """
+      <idea-plugin>
+          <actions>
+              <action class="com.intellij.openapi.actionSystem.AnAction" id="MyAction" use-shortcut-of="UnrelatedAction"/>
+              <group id="MyGroup" use-shortcut-of="UnrelatedAction"/>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    testHighlighting(testedFile)
+  }
+
+  fun `test add-to-group group-id in unrelated module - error stays for functional reference`() {
+    addModuleWithActionsXml("unrelatedModule", "Unrelated")
+
+    val testedFile = addPluginXml(
+      """
+      <idea-plugin>
+          <actions>
+              <action class="com.intellij.openapi.actionSystem.AnAction" id="MyAction">
+                  <add-to-group group-id="<error descr="Action or group 'UnrelatedGroup' (module 'unrelatedModule') is not reachable from module '${myFixture.module.name}' dependencies">UnrelatedGroup</error>"/>
+              </action>
           </actions>
       </idea-plugin>
       """.trimIndent()
@@ -754,6 +805,1850 @@ class PluginXmlReferencesModuleReachabilityInspectionTest : JavaCodeInsightFixtu
     val testedFile = addPluginXml(
       """
       <idea-plugin>
+          <extensions defaultExtensionNs="com.example">
+              <myTestEp implementation="com.example.MyImpl"/>
+          </extensions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    testHighlighting(testedFile)
+  }
+
+  fun `test action group id registered by declared plugin dependency - no error`() {
+    addPluginDescriptor(
+      "gateModule",
+      """
+      <idea-plugin>
+          <id>com.example.gatePlugin</id>
+          <actions>
+              <group id="GateGroup"/>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+
+    val testedFile = addPluginXml(
+      """
+      <idea-plugin>
+          <dependencies>
+              <plugin id="com.example.gatePlugin"/>
+          </dependencies>
+          <actions>
+              <action class="com.intellij.openapi.actionSystem.AnAction" id="MyAction">
+                  <add-to-group group-id="GateGroup"/>
+              </action>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    testHighlighting(testedFile)
+  }
+
+  fun `test action group id registered in fragment of declared plugin alias descriptor - no error`() {
+    addPluginDescriptor(
+      "productModule",
+      """
+      <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+          <id>com.example.product</id>
+          <module value="com.example.modules.gate"/>
+          <xi:include href="product-customization.xml"/>
+      </idea-plugin>
+      """.trimIndent(),
+      descriptorName = "ProductPlugin.xml"
+    )
+    myFixture.addFileToProject(
+      "productModule/resources/META-INF/product-customization.xml",
+      //language=XML
+      """
+      <idea-plugin>
+          <actions>
+              <group id="ProductGroup"/>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+
+    val testedFile = addPluginXml(
+      """
+      <idea-plugin>
+          <dependencies>
+              <plugin id="com.example.modules.gate"/>
+          </dependencies>
+          <actions>
+              <action class="com.intellij.openapi.actionSystem.AnAction" id="MyAction">
+                  <add-to-group group-id="ProductGroup"/>
+              </action>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    testHighlighting(testedFile)
+  }
+
+  fun `test action group id in content module gated on plugin dependency - no error`() {
+    addPluginDescriptor(
+      "gateModule",
+      """
+      <idea-plugin>
+          <id>com.example.gatePlugin</id>
+          <actions>
+              <group id="GateGroup"/>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    val contentModule = addModuleWithSourceRoot("contentModule")
+    myFixture.addFileToProject(
+      "contentModule/com/example/ContentAction.java",
+      //language=JAVA
+      "package com.example; public class ContentAction extends com.intellij.openapi.actionSystem.AnAction {}"
+    )
+    addPluginXml(
+      """
+      <idea-plugin>
+          <content>
+              <module name="contentModule"/>
+          </content>
+      </idea-plugin>
+      """.trimIndent()
+    )
+
+    val testedFile = addContentModuleDescriptor(
+      contentModule,
+      """
+      <idea-plugin>
+          <dependencies>
+              <plugin id="com.example.gatePlugin"/>
+          </dependencies>
+          <actions>
+              <action class="com.example.ContentAction" id="ContentAction">
+                  <add-to-group group-id="GateGroup"/>
+              </action>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    testHighlighting(testedFile)
+  }
+
+  fun `test action group id in unrelated module with another declared plugin dependency - error`() {
+    addPluginDescriptor(
+      "gateModule",
+      """
+      <idea-plugin>
+          <id>com.example.gatePlugin</id>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    addModuleWithActionsXml("unrelatedModule", "Unrelated")
+
+    val testedFile = addPluginXml(
+      """
+      <idea-plugin>
+          <dependencies>
+              <plugin id="com.example.gatePlugin"/>
+          </dependencies>
+          <actions>
+              <action class="com.intellij.openapi.actionSystem.AnAction" id="MyAction">
+                  <add-to-group group-id="<error descr="Action or group 'UnrelatedGroup' (module 'unrelatedModule') is not reachable from module '${myFixture.module.name}' dependencies">UnrelatedGroup</error>"/>
+              </action>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    testHighlighting(testedFile)
+  }
+
+  fun `test action group id under alias declared by two descriptors with one missing the registration - error`() {
+    addPluginDescriptor(
+      "productA",
+      """
+      <idea-plugin>
+          <id>com.example.productA</id>
+          <module value="com.example.modules.shared"/>
+          <actions>
+              <group id="SharedGroup"/>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    addPluginDescriptor(
+      "productB",
+      """
+      <idea-plugin>
+          <id>com.example.productB</id>
+          <module value="com.example.modules.shared"/>
+      </idea-plugin>
+      """.trimIndent()
+    )
+
+    val testedFile = addPluginXml(
+      """
+      <idea-plugin>
+          <dependencies>
+              <plugin id="com.example.modules.shared"/>
+          </dependencies>
+          <actions>
+              <action class="com.intellij.openapi.actionSystem.AnAction" id="MyAction">
+                  <add-to-group group-id="<error descr="Action or group 'SharedGroup' (module 'productA') is not reachable from module '${myFixture.module.name}' dependencies">SharedGroup</error>"/>
+              </action>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    testHighlighting(testedFile)
+  }
+
+  fun `test action group id under alias declared by two descriptors each carrying own registration - no error`() {
+    addPluginDescriptor(
+      "productA",
+      """
+      <idea-plugin>
+          <id>com.example.productA</id>
+          <module value="com.example.modules.shared"/>
+          <actions>
+              <group id="SharedGroup"/>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    addPluginDescriptor(
+      "productB",
+      """
+      <idea-plugin>
+          <id>com.example.productB</id>
+          <module value="com.example.modules.shared"/>
+          <actions>
+              <group id="SharedGroup"/>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+
+    val testedFile = addPluginXml(
+      """
+      <idea-plugin>
+          <dependencies>
+              <plugin id="com.example.modules.shared"/>
+          </dependencies>
+          <actions>
+              <action class="com.intellij.openapi.actionSystem.AnAction" id="MyAction">
+                  <add-to-group group-id="SharedGroup"/>
+              </action>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    testHighlighting(testedFile)
+  }
+
+  fun `test extension point under alias declared by two descriptors each carrying own declaration - no error`() {
+    addPluginDescriptor(
+      "productA",
+      """
+      <idea-plugin>
+          <id>com.example.productA</id>
+          <module value="com.example.modules.shared"/>
+          <extensionPoints>
+              <extensionPoint qualifiedName="com.example.myTestEp" interface="java.lang.Runnable" dynamic="true"/>
+          </extensionPoints>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    addPluginDescriptor(
+      "productB",
+      """
+      <idea-plugin>
+          <id>com.example.productB</id>
+          <module value="com.example.modules.shared"/>
+          <extensionPoints>
+              <extensionPoint qualifiedName="com.example.myTestEp" interface="java.lang.Runnable" dynamic="true"/>
+          </extensionPoints>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    myFixture.addClass("package com.example; public class MyImpl implements Runnable { public void run() {} }")
+
+    val testedFile = addPluginXml(
+      """
+      <idea-plugin>
+          <dependencies>
+              <plugin id="com.example.modules.shared"/>
+          </dependencies>
+          <extensions defaultExtensionNs="com.example">
+              <myTestEp implementation="com.example.MyImpl"/>
+          </extensions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    testHighlighting(testedFile)
+  }
+
+  fun `test extension point under alias declared by two descriptors with one missing the declaration - error`() {
+    addPluginDescriptor(
+      "productA",
+      """
+      <idea-plugin>
+          <id>com.example.productA</id>
+          <module value="com.example.modules.shared"/>
+          <extensionPoints>
+              <extensionPoint qualifiedName="com.example.myTestEp" interface="java.lang.Runnable" dynamic="true"/>
+          </extensionPoints>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    addPluginDescriptor(
+      "productB",
+      """
+      <idea-plugin>
+          <id>com.example.productB</id>
+          <module value="com.example.modules.shared"/>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    myFixture.addClass("package com.example; public class MyImpl implements Runnable { public void run() {} }")
+
+    val testedFile = addPluginXml(
+      """
+      <idea-plugin>
+          <dependencies>
+              <plugin id="com.example.modules.shared"/>
+          </dependencies>
+          <extensions defaultExtensionNs="com.example">
+              <<error descr="Extension point 'com.example.myTestEp' (module 'productA') is not reachable from module '${myFixture.module.name}' dependencies">myTestEp</error> implementation="com.example.MyImpl"/>
+          </extensions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    testHighlighting(testedFile)
+  }
+
+  fun `test action group id in fragment merged with a sub-selecting xpointer of declared plugin alias descriptor - error`() {
+    addPluginDescriptor(
+      "productModule",
+      """
+      <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+          <id>com.example.product</id>
+          <module value="com.example.modules.gate"/>
+          <xi:include href="product-customization.xml" xpointer="xpointer(/idea-plugin/actions/*)"/>
+      </idea-plugin>
+      """.trimIndent(),
+      descriptorName = "ProductPlugin.xml"
+    )
+    myFixture.addFileToProject(
+      "productModule/resources/META-INF/product-customization.xml",
+      //language=XML
+      """
+      <idea-plugin>
+          <actions>
+              <group id="ProductGroup"/>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+
+    val testedFile = addPluginXml(
+      """
+      <idea-plugin>
+          <dependencies>
+              <plugin id="com.example.modules.gate"/>
+          </dependencies>
+          <actions>
+              <action class="com.intellij.openapi.actionSystem.AnAction" id="MyAction">
+                  <add-to-group group-id="<error descr="Action or group 'ProductGroup' (module 'productModule') is not reachable from module '${myFixture.module.name}' dependencies">ProductGroup</error>"/>
+              </action>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    testHighlighting(testedFile)
+  }
+
+  fun `test action group id under alias in fragment only merged with a sub-selecting xpointer - error`() {
+    addPluginDescriptor(
+      "productModule",
+      """
+      <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+          <id>com.example.product</id>
+          <xi:include href="product-shared.xml" xpointer="xpointer(/idea-plugin/actions/*)"/>
+      </idea-plugin>
+      """.trimIndent(),
+      descriptorName = "ProductPlugin.xml"
+    )
+    myFixture.addFileToProject(
+      "productModule/resources/META-INF/product-shared.xml",
+      //language=XML
+      """
+      <idea-plugin>
+          <module value="com.example.modules.gate"/>
+          <actions>
+              <group id="SharedGroup"/>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+
+    val testedFile = addPluginXml(
+      """
+      <idea-plugin>
+          <dependencies>
+              <plugin id="com.example.modules.gate"/>
+          </dependencies>
+          <actions>
+              <action class="com.intellij.openapi.actionSystem.AnAction" id="MyAction">
+                  <add-to-group group-id="<error descr="Action or group 'SharedGroup' (module 'productModule') is not reachable from module '${myFixture.module.name}' dependencies">SharedGroup</error>"/>
+              </action>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    testHighlighting(testedFile)
+  }
+
+  fun `test action group id under alias in fragment wholly merged by one product and sub-selected by another - error`() {
+    addPluginDescriptor(
+      "productModule",
+      """
+      <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+          <id>com.example.productA</id>
+          <xi:include href="product-shared.xml"/>
+      </idea-plugin>
+      """.trimIndent(),
+      descriptorName = "ProductA.xml"
+    )
+    myFixture.addFileToProject(
+      "productModule/resources/META-INF/ProductB.xml",
+      //language=XML
+      """
+      <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+          <id>com.example.productB</id>
+          <xi:include href="product-shared.xml" xpointer="xpointer(/idea-plugin/actions/*)"/>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    myFixture.addFileToProject(
+      "productModule/resources/META-INF/product-shared.xml",
+      //language=XML
+      """
+      <idea-plugin>
+          <module value="com.example.modules.gate"/>
+          <actions>
+              <group id="SharedGroup"/>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+
+    val testedFile = addPluginXml(
+      """
+      <idea-plugin>
+          <dependencies>
+              <plugin id="com.example.modules.gate"/>
+          </dependencies>
+          <actions>
+              <action class="com.intellij.openapi.actionSystem.AnAction" id="MyAction">
+                  <add-to-group group-id="<error descr="Action or group 'SharedGroup' (module 'productModule') is not reachable from module '${myFixture.module.name}' dependencies">SharedGroup</error>"/>
+              </action>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    testHighlighting(testedFile)
+  }
+
+  fun `test action group id registered by v1 depends plugin - no error`() {
+    addPluginDescriptor(
+      "gateModule",
+      """
+      <idea-plugin>
+          <id>com.example.gatePlugin</id>
+          <actions>
+              <group id="GateGroup"/>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+
+    val testedFile = addPluginXml(
+      """
+      <idea-plugin>
+          <depends>com.example.gatePlugin</depends>
+          <actions>
+              <action class="com.intellij.openapi.actionSystem.AnAction" id="MyAction">
+                  <add-to-group group-id="GateGroup"/>
+              </action>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    testHighlighting(testedFile)
+  }
+
+  fun `test action group id with only optional v1 depends - error`() {
+    addPluginDescriptor(
+      "gateModule",
+      """
+      <idea-plugin>
+          <id>com.example.gatePlugin</id>
+          <actions>
+              <group id="GateGroup"/>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+
+    val testedFile = addPluginXml(
+      """
+      <idea-plugin>
+          <depends optional="true" config-file="gate.xml">com.example.gatePlugin</depends>
+          <actions>
+              <action class="com.intellij.openapi.actionSystem.AnAction" id="MyAction">
+                  <add-to-group group-id="<error descr="Action or group 'GateGroup' (module 'gateModule') is not reachable from module '${myFixture.module.name}' dependencies">GateGroup</error>"/>
+              </action>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    testHighlighting(testedFile)
+  }
+
+  fun `test action group id in optional v1 depends config file - no error`() {
+    addPluginDescriptor(
+      "gateModule",
+      """
+      <idea-plugin>
+          <id>com.example.gatePlugin</id>
+          <actions>
+              <group id="GateGroup"/>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    addPluginXml(
+      """
+      <idea-plugin>
+          <depends optional="true" config-file="gate.xml">com.example.gatePlugin</depends>
+      </idea-plugin>
+      """.trimIndent()
+    )
+
+    val testedFile = myFixture.addFileToProject(
+      "gate.xml",
+      //language=XML
+      """
+      <idea-plugin>
+          <actions>
+              <action class="com.intellij.openapi.actionSystem.AnAction" id="MyAction">
+                  <add-to-group group-id="GateGroup"/>
+              </action>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    testHighlighting(testedFile)
+  }
+
+  fun `test action group id in unrelated module referenced from optional depends config file - error`() {
+    addPluginDescriptor(
+      "gateModule",
+      """
+      <idea-plugin>
+          <id>com.example.gatePlugin</id>
+          <actions>
+              <group id="GateGroup"/>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    addPluginDescriptor(
+      "unrelatedModule",
+      """
+      <idea-plugin>
+          <id>com.example.unrelatedPlugin</id>
+          <actions>
+              <group id="UnrelatedGroup"/>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    addPluginXml(
+      """
+      <idea-plugin>
+          <depends optional="true" config-file="gate.xml">com.example.gatePlugin</depends>
+      </idea-plugin>
+      """.trimIndent()
+    )
+
+    val testedFile = myFixture.addFileToProject(
+      "gate.xml",
+      //language=XML
+      """
+      <idea-plugin>
+          <actions>
+              <action class="com.intellij.openapi.actionSystem.AnAction" id="MyAction">
+                  <add-to-group group-id="<error descr="Action or group 'UnrelatedGroup' (module 'unrelatedModule') is not reachable from module '${myFixture.module.name}' dependencies">UnrelatedGroup</error>"/>
+              </action>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    testHighlighting(testedFile)
+  }
+
+  fun `test action group id in required content module of plugin dependency - no error`() {
+    val contentModule = addModuleWithSourceRoot("gateContentModule")
+    addPluginDescriptor(
+      "gateModule",
+      """
+      <idea-plugin>
+          <id>com.example.gatePlugin</id>
+          <content>
+              <module name="gateContentModule" loading="required"/>
+          </content>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    addContentModuleDescriptor(
+      contentModule,
+      """
+      <idea-plugin>
+          <actions>
+              <group id="GateGroup"/>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+
+    val testedFile = addPluginXml(
+      """
+      <idea-plugin>
+          <dependencies>
+              <plugin id="com.example.gatePlugin"/>
+          </dependencies>
+          <actions>
+              <action class="com.intellij.openapi.actionSystem.AnAction" id="MyAction">
+                  <add-to-group group-id="GateGroup"/>
+              </action>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    testHighlighting(testedFile)
+  }
+
+  fun `test action group id in optional content module of plugin dependency - error`() {
+    val contentModule = addModuleWithSourceRoot("gateContentModule")
+    addPluginDescriptor(
+      "gateModule",
+      """
+      <idea-plugin>
+          <id>com.example.gatePlugin</id>
+          <content>
+              <module name="gateContentModule"/>
+          </content>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    addContentModuleDescriptor(
+      contentModule,
+      """
+      <idea-plugin>
+          <actions>
+              <group id="GateGroup"/>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+
+    val testedFile = addPluginXml(
+      """
+      <idea-plugin>
+          <dependencies>
+              <plugin id="com.example.gatePlugin"/>
+          </dependencies>
+          <actions>
+              <action class="com.intellij.openapi.actionSystem.AnAction" id="MyAction">
+                  <add-to-group group-id="<error descr="Action or group 'GateGroup' (module 'gateContentModule') is not reachable from module '${myFixture.module.name}' dependencies">GateGroup</error>"/>
+              </action>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    testHighlighting(testedFile)
+  }
+
+  fun `test action group id in same-named descriptor of unrelated module - error`() {
+    val contentModule = addModuleWithSourceRoot("gateContentModule")
+    addContentModuleDescriptor(contentModule)
+    addPluginDescriptor(
+      "gateModule",
+      """
+      <idea-plugin>
+          <id>com.example.gatePlugin</id>
+          <content>
+              <module name="gateContentModule" loading="required"/>
+          </content>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    addModuleWithSourceRoot("unrelatedModule")
+    myFixture.addFileToProject(
+      "unrelatedModule/gateContentModule.xml",
+      //language=XML
+      """
+      <idea-plugin>
+          <actions>
+              <group id="GateGroup"/>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+
+    val testedFile = addPluginXml(
+      """
+      <idea-plugin>
+          <dependencies>
+              <plugin id="com.example.gatePlugin"/>
+          </dependencies>
+          <actions>
+              <action class="com.intellij.openapi.actionSystem.AnAction" id="MyAction">
+                  <add-to-group group-id="<error descr="Action or group 'GateGroup' (module 'unrelatedModule') is not reachable from module '${myFixture.module.name}' dependencies">GateGroup</error>"/>
+              </action>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    testHighlighting(testedFile)
+  }
+
+  fun `test action group id in strict depends of plugin dependency - no error`() {
+    addPluginDescriptor(
+      "registrarModule",
+      """
+      <idea-plugin>
+          <id>com.example.registrar</id>
+          <actions>
+              <group id="GateGroup"/>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    addPluginDescriptor(
+      "gateModule",
+      """
+      <idea-plugin>
+          <id>com.example.gatePlugin</id>
+          <depends>com.example.registrar</depends>
+      </idea-plugin>
+      """.trimIndent()
+    )
+
+    val testedFile = addPluginXml(
+      """
+      <idea-plugin>
+          <dependencies>
+              <plugin id="com.example.gatePlugin"/>
+          </dependencies>
+          <actions>
+              <action class="com.intellij.openapi.actionSystem.AnAction" id="MyAction">
+                  <add-to-group group-id="GateGroup"/>
+              </action>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    testHighlighting(testedFile)
+  }
+
+  fun `test action group id reachable through two-hop strict dependency chain - no error`() {
+    addPluginDescriptor(
+      "registrarModule",
+      """
+      <idea-plugin>
+          <id>com.example.registrar</id>
+          <actions>
+              <group id="GateGroup"/>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    addPluginDescriptor(
+      "midModule",
+      """
+      <idea-plugin>
+          <id>com.example.midPlugin</id>
+          <dependencies>
+              <plugin id="com.example.registrar"/>
+          </dependencies>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    addPluginDescriptor(
+      "gateModule",
+      """
+      <idea-plugin>
+          <id>com.example.gatePlugin</id>
+          <dependencies>
+              <plugin id="com.example.midPlugin"/>
+          </dependencies>
+      </idea-plugin>
+      """.trimIndent()
+    )
+
+    val testedFile = addPluginXml(
+      """
+      <idea-plugin>
+          <dependencies>
+              <plugin id="com.example.gatePlugin"/>
+          </dependencies>
+          <actions>
+              <action class="com.intellij.openapi.actionSystem.AnAction" id="MyAction">
+                  <add-to-group group-id="GateGroup"/>
+              </action>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    testHighlighting(testedFile)
+  }
+
+  fun `test action group id in optional depends of plugin dependency - error`() {
+    addPluginDescriptor(
+      "registrarModule",
+      """
+      <idea-plugin>
+          <id>com.example.registrar</id>
+          <actions>
+              <group id="GateGroup"/>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    addPluginDescriptor(
+      "gateModule",
+      """
+      <idea-plugin>
+          <id>com.example.gatePlugin</id>
+          <depends optional="true" config-file="registrar-part.xml">com.example.registrar</depends>
+      </idea-plugin>
+      """.trimIndent()
+    )
+
+    val testedFile = addPluginXml(
+      """
+      <idea-plugin>
+          <dependencies>
+              <plugin id="com.example.gatePlugin"/>
+          </dependencies>
+          <actions>
+              <action class="com.intellij.openapi.actionSystem.AnAction" id="MyAction">
+                  <add-to-group group-id="<error descr="Action or group 'GateGroup' (module 'registrarModule') is not reachable from module '${myFixture.module.name}' dependencies">GateGroup</error>"/>
+              </action>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    testHighlighting(testedFile)
+  }
+
+  fun `test action group id in strict depends of only one gate alias provider - error`() {
+    addPluginDescriptor(
+      "registrarModule",
+      """
+      <idea-plugin>
+          <id>com.example.registrar</id>
+          <actions>
+              <group id="GateGroup"/>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    addPluginDescriptor(
+      "providerOneModule",
+      """
+      <idea-plugin>
+          <id>com.example.providerOne</id>
+          <module value="com.example.gateAlias"/>
+          <depends>com.example.registrar</depends>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    addPluginDescriptor(
+      "providerTwoModule",
+      """
+      <idea-plugin>
+          <id>com.example.providerTwo</id>
+          <module value="com.example.gateAlias"/>
+      </idea-plugin>
+      """.trimIndent()
+    )
+
+    val testedFile = addPluginXml(
+      """
+      <idea-plugin>
+          <dependencies>
+              <plugin id="com.example.gateAlias"/>
+          </dependencies>
+          <actions>
+              <action class="com.intellij.openapi.actionSystem.AnAction" id="MyAction">
+                  <add-to-group group-id="<error descr="Action or group 'GateGroup' (module 'registrarModule') is not reachable from module '${myFixture.module.name}' dependencies">GateGroup</error>"/>
+              </action>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    testHighlighting(testedFile)
+  }
+
+  fun `test action group id in plugin required by module dependency descriptor - no error`() {
+    addPluginDescriptor(
+      "registrarModule",
+      """
+      <idea-plugin>
+          <id>com.example.registrar</id>
+          <actions>
+              <group id="GateGroup"/>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    val contentModule = addModuleWithSourceRoot("gateContentModule")
+    addContentModuleDescriptor(
+      contentModule,
+      """
+      <idea-plugin>
+          <dependencies>
+              <plugin id="com.example.registrar"/>
+          </dependencies>
+      </idea-plugin>
+      """.trimIndent()
+    )
+
+    val testedFile = addPluginXml(
+      """
+      <idea-plugin>
+          <dependencies>
+              <module name="gateContentModule"/>
+          </dependencies>
+          <actions>
+              <action class="com.intellij.openapi.actionSystem.AnAction" id="MyAction">
+                  <add-to-group group-id="GateGroup"/>
+              </action>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    testHighlighting(testedFile)
+  }
+
+  fun `test action group id in plugin whose content module declares the gate alias - no error`() {
+    val aliasModule = addModuleWithSourceRoot("aliasContentModule")
+    addPluginDescriptor(
+      "gateModule",
+      """
+      <idea-plugin>
+          <id>com.example.gatePlugin</id>
+          <content>
+              <module name="aliasContentModule"/>
+          </content>
+          <actions>
+              <group id="GateGroup"/>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    addContentModuleDescriptor(
+      aliasModule,
+      """
+      <idea-plugin>
+          <module value="com.example.modules.gate"/>
+      </idea-plugin>
+      """.trimIndent()
+    )
+
+    val testedFile = addPluginXml(
+      """
+      <idea-plugin>
+          <dependencies>
+              <plugin id="com.example.modules.gate"/>
+          </dependencies>
+          <actions>
+              <action class="com.intellij.openapi.actionSystem.AnAction" id="MyAction">
+                  <add-to-group group-id="GateGroup"/>
+              </action>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    testHighlighting(testedFile)
+  }
+
+  fun `test action group id under content module alias packaged by two plugins with one missing the registration - error`() {
+    val sharedModule = addModuleWithSourceRoot("sharedContentModule")
+    addContentModuleDescriptor(
+      sharedModule,
+      """
+      <idea-plugin>
+          <module value="com.example.modules.gate"/>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    addPluginDescriptor(
+      "productA",
+      """
+      <idea-plugin>
+          <id>com.example.productA</id>
+          <content>
+              <module name="sharedContentModule" loading="required"/>
+          </content>
+          <actions>
+              <group id="SharedGroup"/>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    addPluginDescriptor(
+      "productB",
+      """
+      <idea-plugin>
+          <id>com.example.productB</id>
+          <content>
+              <module name="sharedContentModule" loading="required"/>
+          </content>
+      </idea-plugin>
+      """.trimIndent()
+    )
+
+    val testedFile = addPluginXml(
+      """
+      <idea-plugin>
+          <dependencies>
+              <plugin id="com.example.modules.gate"/>
+          </dependencies>
+          <actions>
+              <action class="com.intellij.openapi.actionSystem.AnAction" id="MyAction">
+                  <add-to-group group-id="<error descr="Action or group 'SharedGroup' (module 'productA') is not reachable from module '${myFixture.module.name}' dependencies">SharedGroup</error>"/>
+              </action>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    testHighlighting(testedFile)
+  }
+
+  fun `test action group id under gate alias in mutually packaged content modules - error`() {
+    val cycleModuleA = addModuleWithSourceRoot("cycleModuleA")
+    val cycleModuleB = addModuleWithSourceRoot("cycleModuleB")
+    addContentModuleDescriptor(
+      cycleModuleA,
+      """
+      <idea-plugin>
+          <module value="com.example.modules.gate"/>
+          <content>
+              <module name="cycleModuleB"/>
+          </content>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    addContentModuleDescriptor(
+      cycleModuleB,
+      """
+      <idea-plugin>
+          <content>
+              <module name="cycleModuleA"/>
+          </content>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    addPluginDescriptor(
+      "productC",
+      """
+      <idea-plugin>
+          <id>com.example.modules.gate</id>
+          <actions>
+              <group id="CycleGroup"/>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+
+    val testedFile = addPluginXml(
+      """
+      <idea-plugin>
+          <dependencies>
+              <plugin id="com.example.modules.gate"/>
+          </dependencies>
+          <actions>
+              <action class="com.intellij.openapi.actionSystem.AnAction" id="MyAction">
+                  <add-to-group group-id="<error descr="Action or group 'CycleGroup' (module 'productC') is not reachable from module '${myFixture.module.name}' dependencies">CycleGroup</error>"/>
+              </action>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    testHighlighting(testedFile)
+  }
+
+  fun `test action group id under gate alias in transitively packaged content module - no error`() {
+    val midModule = addModuleWithSourceRoot("midContentModule")
+    val leafModule = addModuleWithSourceRoot("leafContentModule")
+    addPluginDescriptor(
+      "productA",
+      """
+      <idea-plugin>
+          <id>com.example.productA</id>
+          <content>
+              <module name="midContentModule"/>
+          </content>
+          <actions>
+              <group id="ChainGroup"/>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    addContentModuleDescriptor(
+      midModule,
+      """
+      <idea-plugin>
+          <content>
+              <module name="leafContentModule"/>
+          </content>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    addContentModuleDescriptor(
+      leafModule,
+      """
+      <idea-plugin>
+          <module value="com.example.modules.gate"/>
+      </idea-plugin>
+      """.trimIndent()
+    )
+
+    val testedFile = addPluginXml(
+      """
+      <idea-plugin>
+          <dependencies>
+              <plugin id="com.example.modules.gate"/>
+          </dependencies>
+          <actions>
+              <action class="com.intellij.openapi.actionSystem.AnAction" id="MyAction">
+                  <add-to-group group-id="ChainGroup"/>
+              </action>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    testHighlighting(testedFile)
+  }
+
+  fun `test action group id in module dependency target - no error`() {
+    val gateContentModule = addModuleWithSourceRoot("gateContentModule")
+    addPluginDescriptor(
+      "gateModule",
+      """
+      <idea-plugin>
+          <id>com.example.gatePlugin</id>
+          <content>
+              <module name="gateContentModule"/>
+          </content>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    addContentModuleDescriptor(
+      gateContentModule,
+      """
+      <idea-plugin>
+          <actions>
+              <group id="GateGroup"/>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+
+    val testedFile = addPluginXml(
+      """
+      <idea-plugin>
+          <dependencies>
+              <module name="gateContentModule"/>
+          </dependencies>
+          <actions>
+              <action class="com.intellij.openapi.actionSystem.AnAction" id="MyAction">
+                  <add-to-group group-id="GateGroup"/>
+              </action>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    testHighlighting(testedFile)
+  }
+
+  fun `test action group id in plugin packaging the module dependency target - no error`() {
+    val gateContentModule = addModuleWithSourceRoot("gateContentModule")
+    addPluginDescriptor(
+      "gateModule",
+      """
+      <idea-plugin>
+          <id>com.example.gatePlugin</id>
+          <content>
+              <module name="gateContentModule"/>
+          </content>
+          <actions>
+              <group id="GateGroup"/>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    addContentModuleDescriptor(gateContentModule)
+
+    val testedFile = addPluginXml(
+      """
+      <idea-plugin>
+          <dependencies>
+              <module name="gateContentModule"/>
+          </dependencies>
+          <actions>
+              <action class="com.intellij.openapi.actionSystem.AnAction" id="MyAction">
+                  <add-to-group group-id="GateGroup"/>
+              </action>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    testHighlighting(testedFile)
+  }
+
+  fun `test action group id in unrelated module with module dependency declared - error`() {
+    val gateContentModule = addModuleWithSourceRoot("gateContentModule")
+    addPluginDescriptor(
+      "gateModule",
+      """
+      <idea-plugin>
+          <id>com.example.gatePlugin</id>
+          <content>
+              <module name="gateContentModule"/>
+          </content>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    addContentModuleDescriptor(gateContentModule)
+    addModuleWithActionsXml("unrelatedModule", "Unrelated")
+
+    val testedFile = addPluginXml(
+      """
+      <idea-plugin>
+          <dependencies>
+              <module name="gateContentModule"/>
+          </dependencies>
+          <actions>
+              <action class="com.intellij.openapi.actionSystem.AnAction" id="MyAction">
+                  <add-to-group group-id="<error descr="Action or group 'UnrelatedGroup' (module 'unrelatedModule') is not reachable from module '${myFixture.module.name}' dependencies">UnrelatedGroup</error>"/>
+              </action>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    testHighlighting(testedFile)
+  }
+
+  fun `test action group id in module dependency target with same-named sub-descriptor in another module - no error`() {
+    val gateContentModule = addModuleWithSourceRoot("gate.content")
+    val subDescriptorOwner = addModuleWithSourceRoot("gate")
+    addContentModuleDescriptor(subDescriptorOwner, "<idea-plugin/>", fileName = "gate.content")
+    addPluginDescriptor(
+      "gateModule",
+      """
+      <idea-plugin>
+          <id>com.example.gatePlugin</id>
+          <content>
+              <module name="gate.content"/>
+          </content>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    addContentModuleDescriptor(
+      gateContentModule,
+      """
+      <idea-plugin>
+          <actions>
+              <group id="GateGroup"/>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+
+    val testedFile = addPluginXml(
+      """
+      <idea-plugin>
+          <dependencies>
+              <module name="gate.content"/>
+          </dependencies>
+          <actions>
+              <action class="com.intellij.openapi.actionSystem.AnAction" id="MyAction">
+                  <add-to-group group-id="GateGroup"/>
+              </action>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    testHighlighting(testedFile)
+  }
+
+  fun `test action group id in slash-named module dependency target with same-named module descriptor in another module - no error`() {
+    val subDescriptorOwner = addModuleWithSourceRoot("gate")
+    val decoyModule = addModuleWithSourceRoot("gate.content")
+    addContentModuleDescriptor(decoyModule)
+    addPluginDescriptor(
+      "gateModule",
+      """
+      <idea-plugin>
+          <id>com.example.gatePlugin</id>
+          <content>
+              <module name="gate/content"/>
+          </content>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    addContentModuleDescriptor(
+      subDescriptorOwner,
+      """
+      <idea-plugin>
+          <actions>
+              <group id="GateGroup"/>
+          </actions>
+      </idea-plugin>
+      """.trimIndent(),
+      fileName = "gate.content"
+    )
+
+    val testedFile = addPluginXml(
+      """
+      <idea-plugin>
+          <dependencies>
+              <module name="gate/content"/>
+          </dependencies>
+          <actions>
+              <action class="com.intellij.openapi.actionSystem.AnAction" id="MyAction">
+                  <add-to-group group-id="GateGroup"/>
+              </action>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    testHighlighting(testedFile)
+  }
+
+  fun `test action group id in same-named sub-descriptor of another module under module dependency - error`() {
+    val gateContentModule = addModuleWithSourceRoot("gate.content")
+    val subDescriptorOwner = addModuleWithSourceRoot("gate")
+    addContentModuleDescriptor(gateContentModule)
+    addPluginDescriptor(
+      "gateModule",
+      """
+      <idea-plugin>
+          <id>com.example.gatePlugin</id>
+          <content>
+              <module name="gate.content"/>
+          </content>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    addContentModuleDescriptor(
+      subDescriptorOwner,
+      """
+      <idea-plugin>
+          <actions>
+              <group id="GateGroup"/>
+          </actions>
+      </idea-plugin>
+      """.trimIndent(),
+      fileName = "gate.content"
+    )
+
+    val testedFile = addPluginXml(
+      """
+      <idea-plugin>
+          <dependencies>
+              <module name="gate.content"/>
+          </dependencies>
+          <actions>
+              <action class="com.intellij.openapi.actionSystem.AnAction" id="MyAction">
+                  <add-to-group group-id="<error descr="Action or group 'GateGroup' (module 'gate') is not reachable from module '${myFixture.module.name}' dependencies">GateGroup</error>"/>
+              </action>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    testHighlighting(testedFile)
+  }
+
+  fun `test action group id under module dependency on module packaged by two plugins with one missing the registration - error`() {
+    val sharedModule = addModuleWithSourceRoot("sharedContentModule")
+    addContentModuleDescriptor(sharedModule)
+    addPluginDescriptor(
+      "productA",
+      """
+      <idea-plugin>
+          <id>com.example.productA</id>
+          <content>
+              <module name="sharedContentModule"/>
+          </content>
+          <actions>
+              <group id="SharedGroup"/>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    addPluginDescriptor(
+      "productB",
+      """
+      <idea-plugin>
+          <id>com.example.productB</id>
+          <content>
+              <module name="sharedContentModule"/>
+          </content>
+      </idea-plugin>
+      """.trimIndent()
+    )
+
+    val testedFile = addPluginXml(
+      """
+      <idea-plugin>
+          <dependencies>
+              <module name="sharedContentModule"/>
+          </dependencies>
+          <actions>
+              <action class="com.intellij.openapi.actionSystem.AnAction" id="MyAction">
+                  <add-to-group group-id="<error descr="Action or group 'SharedGroup' (module 'productA') is not reachable from module '${myFixture.module.name}' dependencies">SharedGroup</error>"/>
+              </action>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    testHighlighting(testedFile)
+  }
+
+  fun `test module dependency target with same-named descriptor in unrelated module - no error`() {
+    val gateContentModule = addModuleWithSourceRoot("gateContentModule")
+    addPluginDescriptor(
+      "gateModule",
+      """
+      <idea-plugin>
+          <id>com.example.gatePlugin</id>
+          <content>
+              <module name="gateContentModule"/>
+          </content>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    addContentModuleDescriptor(
+      gateContentModule,
+      """
+      <idea-plugin>
+          <actions>
+              <group id="GateGroup"/>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    val unrelatedModule = addModuleWithSourceRoot("unrelatedModule")
+    val resourceRoot = myFixture.tempDirFixture.findOrCreateDir("unrelatedModule/resources")
+    PsiTestUtil.addSourceRoot(unrelatedModule, resourceRoot, JavaResourceRootType.RESOURCE)
+    myFixture.addFileToProject("unrelatedModule/resources/gateContentModule.xml", "<idea-plugin/>")
+
+    val testedFile = addPluginXml(
+      """
+      <idea-plugin>
+          <dependencies>
+              <module name="gateContentModule"/>
+          </dependencies>
+          <actions>
+              <action class="com.intellij.openapi.actionSystem.AnAction" id="MyAction">
+                  <add-to-group group-id="GateGroup"/>
+              </action>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    testHighlighting(testedFile)
+  }
+
+  fun `test action group id in strict dependency of plugin packaging the module dependency target - no error`() {
+    addPluginDescriptor(
+      "registrarModule",
+      """
+      <idea-plugin>
+          <id>com.example.registrar</id>
+          <actions>
+              <group id="GateGroup"/>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    val gateContentModule = addModuleWithSourceRoot("gateContentModule")
+    addPluginDescriptor(
+      "gateModule",
+      """
+      <idea-plugin>
+          <id>com.example.gatePlugin</id>
+          <content>
+              <module name="gateContentModule"/>
+          </content>
+          <dependencies>
+              <plugin id="com.example.registrar"/>
+          </dependencies>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    addContentModuleDescriptor(gateContentModule)
+
+    val testedFile = addPluginXml(
+      """
+      <idea-plugin>
+          <dependencies>
+              <module name="gateContentModule"/>
+          </dependencies>
+          <actions>
+              <action class="com.intellij.openapi.actionSystem.AnAction" id="MyAction">
+                  <add-to-group group-id="GateGroup"/>
+              </action>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    testHighlighting(testedFile)
+  }
+
+  fun `test action group id in strict dependency of only one of two plugins packaging the module dependency target - error`() {
+    addPluginDescriptor(
+      "registrarModule",
+      """
+      <idea-plugin>
+          <id>com.example.registrar</id>
+          <actions>
+              <group id="GateGroup"/>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    val gateContentModule = addModuleWithSourceRoot("gateContentModule")
+    addPluginDescriptor(
+      "gateModule",
+      """
+      <idea-plugin>
+          <id>com.example.gatePlugin</id>
+          <content>
+              <module name="gateContentModule"/>
+          </content>
+          <dependencies>
+              <plugin id="com.example.registrar"/>
+          </dependencies>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    addPluginDescriptor(
+      "productB",
+      """
+      <idea-plugin>
+          <id>com.example.productB</id>
+          <content>
+              <module name="gateContentModule"/>
+          </content>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    addContentModuleDescriptor(gateContentModule)
+
+    val testedFile = addPluginXml(
+      """
+      <idea-plugin>
+          <dependencies>
+              <module name="gateContentModule"/>
+          </dependencies>
+          <actions>
+              <action class="com.intellij.openapi.actionSystem.AnAction" id="MyAction">
+                  <add-to-group group-id="<error descr="Action or group 'GateGroup' (module 'registrarModule') is not reachable from module '${myFixture.module.name}' dependencies">GateGroup</error>"/>
+              </action>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    testHighlighting(testedFile)
+  }
+
+  fun `test action group id in strict dependency of plugin packaging the referencing content module - no error`() {
+    addPluginDescriptor(
+      "registrarModule",
+      """
+      <idea-plugin>
+          <id>com.example.registrar</id>
+          <actions>
+              <group id="GateGroup"/>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    val contentModule = addModuleWithSourceRoot("contentModule")
+    myFixture.addFileToProject(
+      "contentModule/com/example/ContentAction.java",
+      //language=JAVA
+      "package com.example; public class ContentAction extends com.intellij.openapi.actionSystem.AnAction {}"
+    )
+    addPluginXml(
+      """
+      <idea-plugin>
+          <content>
+              <module name="contentModule"/>
+          </content>
+          <dependencies>
+              <plugin id="com.example.registrar"/>
+          </dependencies>
+      </idea-plugin>
+      """.trimIndent()
+    )
+
+    val testedFile = addContentModuleDescriptor(
+      contentModule,
+      """
+      <idea-plugin>
+          <actions>
+              <action class="com.example.ContentAction" id="ContentAction">
+                  <add-to-group group-id="GateGroup"/>
+              </action>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    testHighlighting(testedFile)
+  }
+
+  fun `test action group id in strict dependency of only one of two plugins packaging the referencing content module - error`() {
+    addPluginDescriptor(
+      "registrarModule",
+      """
+      <idea-plugin>
+          <id>com.example.registrar</id>
+          <actions>
+              <group id="GateGroup"/>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    val contentModule = addModuleWithSourceRoot("contentModule")
+    myFixture.addFileToProject(
+      "contentModule/com/example/ContentAction.java",
+      //language=JAVA
+      "package com.example; public class ContentAction extends com.intellij.openapi.actionSystem.AnAction {}"
+    )
+    addPluginXml(
+      """
+      <idea-plugin>
+          <content>
+              <module name="contentModule"/>
+          </content>
+          <dependencies>
+              <plugin id="com.example.registrar"/>
+          </dependencies>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    addPluginDescriptor(
+      "productB",
+      """
+      <idea-plugin>
+          <id>com.example.productB</id>
+          <content>
+              <module name="contentModule"/>
+          </content>
+      </idea-plugin>
+      """.trimIndent()
+    )
+
+    val testedFile = addContentModuleDescriptor(
+      contentModule,
+      """
+      <idea-plugin>
+          <actions>
+              <action class="com.example.ContentAction" id="ContentAction">
+                  <add-to-group group-id="<error descr="Action or group 'GateGroup' (module 'registrarModule') is not reachable from module 'contentModule' dependencies">GateGroup</error>"/>
+              </action>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    testHighlighting(testedFile)
+  }
+
+  fun `test action group id in strict dependency of packaging plugin when referencing content module is also xi-included - error`() {
+    addPluginDescriptor(
+      "registrarModule",
+      """
+      <idea-plugin>
+          <id>com.example.registrar</id>
+          <actions>
+              <group id="GateGroup"/>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    val contentModule = addModuleWithSourceRoot("contentModule")
+    myFixture.addFileToProject(
+      "contentModule/com/example/ContentAction.java",
+      //language=JAVA
+      "package com.example; public class ContentAction extends com.intellij.openapi.actionSystem.AnAction {}"
+    )
+    addPluginXml(
+      """
+      <idea-plugin>
+          <content>
+              <module name="contentModule"/>
+          </content>
+          <dependencies>
+              <plugin id="com.example.registrar"/>
+          </dependencies>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    myFixture.addFileToProject(
+      "other-product.xml",
+      //language=XML
+      """
+      <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+          <xi:include href="contentModule/resources/contentModule.xml"/>
+      </idea-plugin>
+      """.trimIndent()
+    )
+
+    val testedFile = addContentModuleDescriptor(
+      contentModule,
+      """
+      <idea-plugin>
+          <actions>
+              <action class="com.example.ContentAction" id="ContentAction">
+                  <add-to-group group-id="<error descr="Action or group 'GateGroup' (module 'registrarModule') is not reachable from module 'contentModule' dependencies">GateGroup</error>"/>
+              </action>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    testHighlighting(testedFile)
+  }
+
+  fun `test action group id in optional config file of plugin dependency with the condition plugin declared - no error`() {
+    addPluginDescriptor(
+      "gateModule",
+      """
+      <idea-plugin>
+          <id>com.example.gatePlugin</id>
+          <depends optional="true" config-file="gate-optional.xml">com.example.condPlugin</depends>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    myFixture.addFileToProject(
+      "gateModule/resources/META-INF/gate-optional.xml",
+      //language=XML
+      """
+      <idea-plugin>
+          <actions>
+              <group id="GateGroup"/>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    addPluginDescriptor(
+      "condModule",
+      """
+      <idea-plugin>
+          <id>com.example.condPlugin</id>
+      </idea-plugin>
+      """.trimIndent()
+    )
+
+    val testedFile = addPluginXml(
+      """
+      <idea-plugin>
+          <dependencies>
+              <plugin id="com.example.gatePlugin"/>
+              <plugin id="com.example.condPlugin"/>
+          </dependencies>
+          <actions>
+              <action class="com.intellij.openapi.actionSystem.AnAction" id="MyAction">
+                  <add-to-group group-id="GateGroup"/>
+              </action>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    testHighlighting(testedFile)
+  }
+
+  fun `test action group id in optional config file of plugin dependency without the condition plugin - error`() {
+    addPluginDescriptor(
+      "gateModule",
+      """
+      <idea-plugin>
+          <id>com.example.gatePlugin</id>
+          <depends optional="true" config-file="gate-optional.xml">com.example.condPlugin</depends>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    myFixture.addFileToProject(
+      "gateModule/resources/META-INF/gate-optional.xml",
+      //language=XML
+      """
+      <idea-plugin>
+          <actions>
+              <group id="GateGroup"/>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    addPluginDescriptor(
+      "condModule",
+      """
+      <idea-plugin>
+          <id>com.example.condPlugin</id>
+      </idea-plugin>
+      """.trimIndent()
+    )
+
+    val testedFile = addPluginXml(
+      """
+      <idea-plugin>
+          <dependencies>
+              <plugin id="com.example.gatePlugin"/>
+          </dependencies>
+          <actions>
+              <action class="com.intellij.openapi.actionSystem.AnAction" id="MyAction">
+                  <add-to-group group-id="<error descr="Action or group 'GateGroup' (module 'gateModule') is not reachable from module '${myFixture.module.name}' dependencies">GateGroup</error>"/>
+              </action>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    testHighlighting(testedFile)
+  }
+
+  fun `test extension point declared by plugin dependency descriptor - no error`() {
+    addPluginDescriptor(
+      "gateModule",
+      """
+      <idea-plugin>
+          <id>com.example.gatePlugin</id>
+          <extensionPoints>
+              <extensionPoint qualifiedName="com.example.myTestEp" interface="java.lang.Runnable" dynamic="true"/>
+          </extensionPoints>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    myFixture.addClass("package com.example; public class MyImpl implements Runnable { public void run() {} }")
+
+    val testedFile = addPluginXml(
+      """
+      <idea-plugin>
+          <dependencies>
+              <plugin id="com.example.gatePlugin"/>
+          </dependencies>
           <extensions defaultExtensionNs="com.example">
               <myTestEp implementation="com.example.MyImpl"/>
           </extensions>
@@ -2351,10 +4246,17 @@ class PluginXmlReferencesModuleReachabilityInspectionTest : JavaCodeInsightFixtu
     )
   }
 
-  private fun addContentModuleDescriptor(module: Module, @Language("XML") content: String = "<idea-plugin/>"): PsiFile {
+  private fun addPluginDescriptor(moduleName: String, @Language("XML") content: String, descriptorName: String = "plugin.xml"): PsiFile {
+    val module = addModuleWithSourceRoot(moduleName)
+    val resourceRoot = myFixture.tempDirFixture.findOrCreateDir("$moduleName/resources")
+    PsiTestUtil.addSourceRoot(module, resourceRoot, JavaResourceRootType.RESOURCE)
+    return myFixture.addFileToProject("$moduleName/resources/META-INF/$descriptorName", content)
+  }
+
+  private fun addContentModuleDescriptor(module: Module, @Language("XML") content: String = "<idea-plugin/>", fileName: String = module.name): PsiFile {
     val resourceRoot = myFixture.tempDirFixture.findOrCreateDir("${module.name}/resources")
     PsiTestUtil.addSourceRoot(module, resourceRoot, JavaResourceRootType.RESOURCE)
-    return myFixture.addFileToProject("${module.name}/resources/${module.name}.xml", content)
+    return myFixture.addFileToProject("${module.name}/resources/$fileName.xml", content)
   }
 
   /**

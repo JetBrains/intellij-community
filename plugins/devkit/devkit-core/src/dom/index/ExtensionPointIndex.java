@@ -31,6 +31,7 @@ import org.jetbrains.idea.devkit.dom.ExtensionPoints;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -92,6 +93,10 @@ public final class ExtensionPointIndex extends PluginXmlIndexBase<String, Intege
 
   public static @Nullable ExtensionPoint findExtensionPoint(Module module, String fqn) {
     return findExtensionPoint(module.getProject(), GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module, false), fqn);
+  }
+
+  public static @NotNull Collection<VirtualFile> getFiles(GlobalSearchScope scope, String fqn) {
+    return FileBasedIndex.getInstance().getContainingFiles(NAME, fqn, scope);
   }
 
   public static @Nullable ExtensionPoint findExtensionPoint(Project project, GlobalSearchScope scope, String fqn) {
