@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.java.diff.utils.jar
+  modules:
+  - name: intellij.libraries.java.diff.utils
+    libraries:
+      java-diff-utils:
+      - name: $MAVEN_REPOSITORY$/io/github/java-diff-utils/java-diff-utils/4/java-diff-utils-4.jar

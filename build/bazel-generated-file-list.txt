@@ -466,6 +466,7 @@ libraries/jackson3/jackson
 libraries/jackson3/jr-objects
 libraries/jackson3/module-kotlin
 libraries/java-compatibility
+libraries/java-diff-utils
 libraries/java-websocket
 libraries/javax/activation
 libraries/javax/annotation
