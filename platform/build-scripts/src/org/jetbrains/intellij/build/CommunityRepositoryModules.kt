@@ -337,21 +337,22 @@ object CommunityRepositoryModules {
     }
   }
 
+  /**
+   * The JCEF archive the [jcefPlugin] resource generator downloads. Public so tests that
+   * pre-provision the build-dependencies download cache can pin the same URL.
+   */
+  fun jcefDownloadUrl(os: OsFamily, arch: JvmArchitecture, build: String): String {
+    val archSuffix = when (arch) {
+      JvmArchitecture.x64 -> "x64"
+      JvmArchitecture.aarch64 -> "aarch64"
+    }
+    return "https://cache-redirector.jetbrains.com/intellij-jbr/jcef-${os.jbrArchiveSuffix}-${archSuffix}-${build}.tar.gz"
+  }
+
   fun jcefPlugin(os: OsFamily, arch: JvmArchitecture): PluginLayout {
     return plugin("intellij.jcef.plugin") { spec ->
       spec.bundlingRestrictions.supportedOs = persistentListOf(os)
       spec.bundlingRestrictions.supportedArch = persistentListOf(arch)
-
-      fun archSuffix(arch: JvmArchitecture): String = when (arch) {
-        JvmArchitecture.x64 -> "x64"
-        JvmArchitecture.aarch64 -> "aarch64"
-      }
-
-      fun jcefArchiveName(os: OsFamily, arch: JvmArchitecture, build: String): String =
-        "jcef-${os.jbrArchiveSuffix}-${archSuffix(arch)}-${build}.tar.gz"
-
-      fun downloadUrlFor(os: OsFamily, arch: JvmArchitecture, build: String): String =
-        "https://cache-redirector.jetbrains.com/intellij-jbr/${jcefArchiveName(os, arch, build)}"
 
       patchOsSpecificPluginXml(spec, os, arch)
 
@@ -366,7 +367,7 @@ object CommunityRepositoryModules {
         val properties = BuildDependenciesDownloader.getDependencyProperties(communityRoot)
         val jcefBuildNumber = properties.property("jcefBuild")
 
-        val archivePath = downloadFileToCacheLocation(downloadUrlFor(os, arch, jcefBuildNumber), communityRoot)
+        val archivePath = downloadFileToCacheLocation(jcefDownloadUrl(os, arch, jcefBuildNumber), communityRoot)
         val subDir = targetDir.resolve("jcef-tmp") // to not clean up root plugin directory on BuildDependenciesDownloader.extractFile
         Files.createDirectories(subDir)
 

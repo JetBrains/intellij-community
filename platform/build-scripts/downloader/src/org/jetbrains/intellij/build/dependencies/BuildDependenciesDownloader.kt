@@ -63,6 +63,7 @@ import kotlin.error
 import kotlin.getValue
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.lazy
+import kotlin.let
 
 private val LOG = Logger.getLogger(BuildDependenciesDownloader::class.java.name)
 private val fileLocks = StripedMutex(1024)
@@ -127,6 +128,14 @@ object BuildDependenciesDownloader {
     return getDownloadCachePath(communityRoot).resolve("${hashString}-${lastNameFromUri}")
   }
 
+  /**
+   * The project-local download cache (`<communityRoot>/build/download`), or its
+   * [BuildDependenciesConstants.DOWNLOAD_CACHE_DIR_PROPERTY] override. Deliberately not the
+   * TeamCity persistent cache: callers use this for extraction targets whose flag files are
+   * project-local too, so both must move together or not at all.
+   */
+  fun getDownloadCacheDirectory(communityRoot: BuildDependenciesCommunityRoot): Path = getProjectLocalDownloadCache(communityRoot)
+
   @Synchronized
   @JvmStatic
   fun extractFileToCacheLocation(
@@ -160,11 +169,31 @@ object BuildDependenciesDownloader {
   ) {
     cleanUpIfRequired(communityRoot)
     fileLocks.getLock(target.toString()).withLock {
-      // Extracting different archive files into the same target should overwrite the target each time.
-      // That's why `flagFile` should be dependent only on the target location.
-      val hash = hashString(target.toString()).substring(0, 6)
-      val flagFile = getProjectLocalDownloadCache(communityRoot).resolve("${hash}-${target.fileName}.flag.txt")
-      extractFileWithFlagFileLocation(archiveFile, target, flagFile, options)
+      extractFileWithFlagFileLocation(archiveFile, target, extractFlagFile(target, communityRoot), options)
+    }
+  }
+
+  // Extracting different archive files into the same target should overwrite the target each time.
+  // That's why `flagFile` should be dependent only on the target location.
+  private fun extractFlagFile(target: Path, communityRoot: BuildDependenciesCommunityRoot): Path {
+    val hash = hashString(target.toString()).substring(0, 6)
+    return getProjectLocalDownloadCache(communityRoot).resolve("${hash}-${target.fileName}.flag.txt")
+  }
+
+  /**
+   * Records that [target] already holds the extracted content of [archiveFile], so a later
+   * [extractFile] call with the same arguments takes the up-to-date fast path instead of cleaning
+   * and re-extracting [target]. For pre-provisioned targets on read-only storage (e.g., a checkout
+   * mounted read-only into a VM), where re-extraction is both destructive and impossible.
+   */
+  suspend fun markExtracted(
+    archiveFile: Path,
+    target: Path,
+    communityRoot: BuildDependenciesCommunityRoot,
+    vararg options: BuildDependenciesExtractOptions,
+  ) {
+    fileLocks.getLock(target.toString()).withLock {
+      Files.write(extractFlagFile(target, communityRoot), getExpectedFlagFileContent(archiveFile, target, options))
     }
   }
 
@@ -227,12 +256,17 @@ suspend fun extractFileToCacheLocation(archiveFile: Path, communityRoot: BuildDe
 
 private val EMPTY_OPTIONS = emptyArray<BuildDependenciesExtractOptions>()
 
+private fun downloadCacheDirOverride(): Path? {
+  return System.getProperty(BuildDependenciesConstants.DOWNLOAD_CACHE_DIR_PROPERTY)?.let { Path.of(it) }
+}
+
 private fun getProjectLocalDownloadCache(communityRoot: BuildDependenciesCommunityRoot): Path {
-  return Files.createDirectories(communityRoot.communityRoot.resolve("build/download"))
+  val cacheDir = downloadCacheDirOverride() ?: communityRoot.communityRoot.resolve("build/download")
+  return Files.createDirectories(cacheDir)
 }
 
 private fun getDownloadCachePath(communityRoot: BuildDependenciesCommunityRoot): Path {
-  val path: Path = if (TeamCityHelper.isUnderTeamCity) {
+  val path: Path = if (downloadCacheDirOverride() == null && TeamCityHelper.isUnderTeamCity) {
     TeamCityHelper.persistentCachePath ?: error("'agent.persistent.cache' system property is required under TeamCity")
   }
   else {

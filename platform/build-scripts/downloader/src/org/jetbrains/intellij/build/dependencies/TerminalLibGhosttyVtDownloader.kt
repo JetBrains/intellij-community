@@ -20,8 +20,11 @@ object TerminalLibGhosttyVtDownloader {
    */
   fun getOrDownloadLibRoot(communityRoot: BuildDependenciesCommunityRoot): Path {
     val version = BuildDependenciesDownloader.getDependencyProperties(communityRoot).property("libGhosttyVtVersion")
-    val uri = URI.create("https://packages.jetbrains.team/files/p/ij/intellij-build-dependencies/$LIB_GHOSTTY_VT/$version/$LIB_GHOSTTY_VT.zip.zst")
-    val archiveFile = BuildDependenciesDownloader.downloadFileToCacheLocation(communityRoot, uri)
+    val archiveFile = BuildDependenciesDownloader.downloadFileToCacheLocation(communityRoot, URI.create(downloadUrl(version)))
     return BuildDependenciesDownloader.extractFileToCacheLocation(communityRoot, archiveFile)
   }
+
+  /** Public so tests that pre-provision the build-dependencies download cache can pin the same URL. */
+  fun downloadUrl(version: String): String =
+    "https://packages.jetbrains.team/files/p/ij/intellij-build-dependencies/$LIB_GHOSTTY_VT/$version/$LIB_GHOSTTY_VT.zip.zst"
 }

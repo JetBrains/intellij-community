@@ -9,6 +9,13 @@ load(":jps_library_derivation_test.bzl", "jps_library_derivation_test_suite")
 
 jps_library_derivation_test_suite(name = "jps_library_derivation_test")
 
+# The pinned build-dependency versions, for tests that gate downstream copies of these URLs
+# (e.g. AIR's air_build_download_dependencies.bzl) against version bumps.
+exports_files(
+    ["dependencies/dependencies.properties"],
+    visibility = ["//visibility:public"],
+)
+
 jps_library_derivation_pipeline_test_suite(name = "jps_library_derivation_pipeline_test")
 
 # == BAZEL_TARGETS_JSON_COMMUNITY
