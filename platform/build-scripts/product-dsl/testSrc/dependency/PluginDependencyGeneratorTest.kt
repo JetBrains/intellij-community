@@ -396,7 +396,8 @@ class PluginDependencyGeneratorTest {
           content("intellij.some.known.module")
         }
         contentModule("intellij.some.known.module") {
-          descriptor = """<idea-plugin package="com.intellij.some"/>"""
+          // 'internal' so the module stays reachable from another plugin; a private module would not be (IJPL-252475).
+          descriptor = """<idea-plugin package="com.intellij.some" visibility="internal"/>"""
         }
       }
 
@@ -476,7 +477,8 @@ class PluginDependencyGeneratorTest {
           content("intellij.shared.module")
         }
         contentModule("intellij.shared.module") {
-          descriptor = """<idea-plugin package="com.intellij.shared"/>"""
+          // 'internal' so the module stays reachable from another plugin; a private module would not be (IJPL-252475).
+          descriptor = """<idea-plugin package="com.intellij.shared" visibility="internal"/>"""
         }
         // Another production plugin depends on the shared module
         plugin("intellij.consumer.plugin") {

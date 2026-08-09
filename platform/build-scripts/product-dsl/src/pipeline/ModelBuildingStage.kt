@@ -58,6 +58,7 @@ import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.util.JpsPathUtil
+import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -183,7 +184,14 @@ internal object ModelBuildingStage {
     val pluginInfos = LinkedHashMap<TargetName, PluginContentInfo>()
 
     val extraPluginDescriptors = if (config.includeTestPluginDescriptorsFromSources) {
-      discoverPluginDescriptorsFromSources(outputProvider)
+      val dslOwnedPluginXmlPaths = dslTestPluginsByProduct.values.asSequence()
+        .flatten()
+        .mapTo(HashSet()) { config.projectRoot.resolve(it.pluginXmlPath).normalize() }
+      discoverPluginDescriptorsFromSources(
+        outputProvider = outputProvider,
+        testFrameworkContentModules = config.testFrameworkContentModules,
+        dslOwnedPluginXmlPaths = dslOwnedPluginXmlPaths,
+      )
     }
     else {
       DiscoveredPluginDescriptors(emptySet(), emptySet())
@@ -1034,7 +1042,11 @@ internal object ModelBuildingStage {
     val pluginModules: Set<TargetName>,
   )
 
-  internal fun discoverPluginDescriptorsFromSources(outputProvider: ModuleOutputProvider): DiscoveredPluginDescriptors {
+  internal fun discoverPluginDescriptorsFromSources(
+    outputProvider: ModuleOutputProvider,
+    testFrameworkContentModules: Set<ContentModuleName> = emptySet(),
+    dslOwnedPluginXmlPaths: Set<Path> = emptySet(),
+  ): DiscoveredPluginDescriptors {
     val modules = outputProvider.getAllModules()
     if (modules.isEmpty()) {
       return DiscoveredPluginDescriptors(emptySet(), emptySet())
@@ -1050,7 +1062,18 @@ internal object ModelBuildingStage {
       else {
         null
       }
+      if (prodPluginXml != null && prodPluginXml in dslOwnedPluginXmlPaths) {
+        // A DSL `testPlugin {}` already owns this descriptor under its own plugin id; seeding the JPS module as well
+        // would put the same plugin.xml in the graph twice, under two different plugin nodes.
+        continue
+      }
       if (testPluginXml != null) {
+        testPluginModules.add(TargetName(module.name))
+      }
+      else if (prodPluginXml != null && declaresTestFrameworkContent(prodPluginXml, testFrameworkContentModules)) {
+        // Test plugins that keep plugin.xml in production resources (the rdct and ReSharper ones, for instance) are
+        // invisible to every list the generator is configured with, so without this they get neither auto-add nor
+        // validation and a content module conversion breaks them silently (IJPL-252475).
         testPluginModules.add(TargetName(module.name))
       }
       if (hasPluginContentYaml(module)) {
@@ -1059,6 +1082,24 @@ internal object ModelBuildingStage {
     }
 
     return DiscoveredPluginDescriptors(testPluginModules, pluginModules)
+  }
+
+  /**
+   * Cheap text probe: a descriptor declaring one of the test-framework marker modules as content is a test plugin,
+   * the same criterion [org.jetbrains.intellij.build.productLayout.validator.rule.isTestPlugin] applies once the plugin
+   * is in the graph. Parsing every plugin.xml in the project just to seed extraction would be far more expensive.
+   */
+  private fun declaresTestFrameworkContent(pluginXml: Path, testFrameworkContentModules: Set<ContentModuleName>): Boolean {
+    if (testFrameworkContentModules.isEmpty()) {
+      return false
+    }
+    val content = try {
+      Files.readString(pluginXml)
+    }
+    catch (_: IOException) {
+      return false
+    }
+    return testFrameworkContentModules.any { content.contains("\"${it.value}\"") }
   }
 
   private fun hasPluginContentYaml(module: JpsModule): Boolean {
