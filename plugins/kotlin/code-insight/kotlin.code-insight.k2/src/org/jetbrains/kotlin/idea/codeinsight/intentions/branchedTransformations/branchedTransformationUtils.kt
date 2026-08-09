@@ -477,8 +477,10 @@ fun KtExpression.isPure(): Boolean {
         }
 
         is KtCallExpression -> {
-            // Collection literals: listOf(), setOf(), mapOf() - smart stdlib detection
-            return isStdlibCollectionConstructorCall(expr)
+            return isStdlibCollectionConstructorCall(expr) &&
+                    expr.valueArguments.all { argument ->
+                        argument.getArgumentExpression()?.isPure() ?: true
+                    }
         }
 
         is KtQualifiedExpression -> {
