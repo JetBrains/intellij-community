@@ -267,8 +267,8 @@ class MavenDistributionResolveTest(mavenVersion: String, modelVersion: String) {
         ex.sendResponseHeaders(HttpURLConnection.HTTP_OK, 0)
         ex.responseHeaders.add("Content-Type", "application/zip")
         ZipOutputStream(ex.responseBody).use { zos ->
-          ZipUtil.addDirToZipRecursively(zos, null, MavenDistributionsCache.resolveEmbeddedMavenHome().mavenHome.parent.toFile(),
-                                         "", null, null)
+          val mavenHome = MavenDistributionsCache.resolveEmbeddedMavenHome().mavenHome
+          ZipUtil.addDirToZipRecursively(zos, null, mavenHome.toFile(), mavenHome.fileName.toString(), null, null)
         }
         ex.close()
       }
