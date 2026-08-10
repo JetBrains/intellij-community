@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.index.vfs
 
 import com.github.benmanes.caffeine.cache.CacheLoader
@@ -159,8 +159,31 @@ internal class GitIndexFileSystemRefresher(private val project: Project) : Dispo
         if (dataToApply.isEmpty()) return@writeInEdtAndWait
 
         applyRefresh(dataToApply)
+        reloadDocuments(dataToApply)
       }
     }
+  }
+
+  /**
+   * Reload the cached documents of refreshed files.
+   *
+   * [applyRefresh] publishes its content-change events on [VirtualFileManager.VFS_CHANGES], but [FileDocumentManager]
+   * reloads documents from an [com.intellij.openapi.vfs.AsyncFileListener] driven by `VFS_CHANGES_BG` — which our manual
+   * publish does not trigger. So the metadata ([GitIndexVirtualFile.data]) advances while the cached document keeps the
+   * previous index content. Reload it explicitly here. IJPL-249948
+   */
+  private fun reloadDocuments(fileDataList: List<IndexFileData>) {
+    val fileDocumentManager = FileDocumentManager.getInstance()
+    val filesToReload = fileDataList.asSequence()
+      .filter { it.reloadDocument } // first load: the document, if any, was just read from the current index
+      .filter { fileData ->
+        val document = fileDocumentManager.getCachedDocument(fileData.file) ?: return@filter false
+        // Never discard the user's pending in-memory stage edits; memory/disk conflicts are resolved by the write path.
+        !fileDocumentManager.isDocumentUnsaved(document)
+      }
+      .map { it.file }
+      .toList()
+    fileDocumentManager.reloadFiles(*filesToReload.toTypedArray())
   }
 
   private fun readFromGit(file: GitIndexVirtualFile): IndexFileData? {
@@ -336,8 +359,8 @@ internal class GitIndexFileSystemRefresher(private val project: Project) : Dispo
       if (application.isDispatchThread) computeUnderPotemkinProgress(project, message, computation) else computation()
   }
 
-  private inner class IndexFileData(
-    private val file: GitIndexVirtualFile,
+  private class IndexFileData(
+    val file: GitIndexVirtualFile,
     private val oldData: GitIndexVirtualFile.CachedData?,
     private val newHash: Hash?,
     oldLength: Long,
@@ -346,6 +369,8 @@ internal class GitIndexFileSystemRefresher(private val project: Project) : Dispo
     oldModificationStamp: Long,
   ) {
     val event = VFileContentChangeEvent(REFRESH_REQUESTOR, file, oldModificationStamp, VFileContentChangeEvent.UNDEFINED_TIMESTAMP_OR_LENGTH.toLong(), 0, 0, oldLength, newLength)
+
+    val reloadDocument: Boolean get() = oldData != null
 
     fun isOutdated() = file.data != null && file.data?.hash != oldData?.hash
 
