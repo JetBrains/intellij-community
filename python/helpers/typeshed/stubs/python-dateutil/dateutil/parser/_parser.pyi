@@ -141,8 +141,8 @@ class _tzparser:
         stdoffset: int | None
         dstabbr: str | None
         dstoffset: int | None
-        start: _attr
-        end: _attr
+        start: _attr  # pyrefly: ignore [unknown-name]
+        end: _attr  # pyrefly: ignore [unknown-name]
 
         class _attr(_resultbase):
             __slots__ = ["month", "week", "weekday", "yday", "jyday", "day", "time"]

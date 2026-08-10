@@ -17,25 +17,17 @@ _struct.pack
 _struct.pack_into
 _thread.RLock.__exit__
 _thread.lock.__exit__
-copy.deepcopy
 dataclasses.MISSING
 dataclasses._MISSING_TYPE
 dataclasses.field
-doctest.DocTestRunner.report_skip
 importlib._abc.Loader.load_module
 importlib._bootstrap_external.NamespacePath
-importlib.abc.InspectLoader.source_to_code
 importlib.abc.MetaPathFinder.discover
 importlib.abc.PathEntryFinder.discover
 importlib.resources._common.package_to_anchor
-mailbox.Mailbox.__enter__
-mailbox.Mailbox.__exit__
 mailbox._ProxyFile.__class_getitem__
 multiprocessing.process.BaseProcess.__init__
 threading.Condition.locked
-tkinter.Image.__iter__
-tkinter.Misc.__iter__
-tkinter.font.Font.__iter__
 
 # =============================================================
 # Allowlist entries that cannot or should not be fixed; >= 3.15

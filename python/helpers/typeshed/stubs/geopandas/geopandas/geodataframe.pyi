@@ -31,7 +31,7 @@ from .plotting import GeoplotAccessor
 
 crs_mismatch_error: str
 
-class GeoDataFrame(GeoPandasBase, pd.DataFrame):  # type: ignore[misc]
+class GeoDataFrame(GeoPandasBase, pd.DataFrame):  # type: ignore[misc]  # pyrefly: ignore [inconsistent-inheritance]
     # Override the weird annotation of DataFrame.__new__ in pandas-stubs
     @overload
     def __new__(

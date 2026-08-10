@@ -248,12 +248,12 @@ class _Container(_ContainerSpace):
     def drawOn(self, canv: Canvas, x: float, y: float) -> None: ...
     def copyContent(self, content: _FlowableSublist | None = None) -> None: ...
 
-class PTOContainer(_Container, Flowable):
+class PTOContainer(_Container, Flowable):  # pyrefly: ignore [inconsistent-inheritance]
     def __init__(
         self, content: _FlowableSublist | None, trailer: _FlowableSublist | None = None, header: _FlowableSublist | None = None
     ) -> None: ...
 
-class KeepInFrame(_Container, Flowable):
+class KeepInFrame(_Container, Flowable):  # pyrefly: ignore [inconsistent-inheritance]
     name: str
     maxWidth: float
     maxHeight: float
@@ -296,7 +296,7 @@ class PlacedStory(Flowable):
 
 class _FindSplitterMixin: ...
 
-class ImageAndFlowables(_Container, _FindSplitterMixin, Flowable):
+class ImageAndFlowables(_Container, _FindSplitterMixin, Flowable):  # pyrefly: ignore [inconsistent-inheritance]
     imageHref: str | None
     def __init__(
         self,
@@ -411,7 +411,7 @@ class ListItem:
     # TODO: Use Unpack for kwds with the ListStyle properties + value/spaceBefore/spaceAfter
     def __init__(self, flowables: _FlowableSublist, style: PropertySet | None = None, **kwds) -> None: ...
 
-class ListFlowable(_Container, Flowable, _FindSplitterMixin):
+class ListFlowable(_Container, Flowable, _FindSplitterMixin):  # pyrefly: ignore [inconsistent-inheritance]
     style: ListStyle
     # NOTE: style has to be a ListStyle, but this will be annoying with sheet["ul"]
     # TODO: Use Unpack for kwds with the ListStyle properties + spaceBefore/spaceAfter

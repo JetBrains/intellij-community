@@ -70,10 +70,10 @@ class Dispute(AttributeGetter):
     amount_won: Decimal | None
     protection_level: Incomplete
     transaction_details: TransactionDetails
-    transaction = transaction_details
+    transaction = transaction_details  # pyrefly: ignore [unknown-name]
     evidence: list[DisputeEvidence] | None
     paypal_messages: list[DisputePayPalMessage] | None
     status_history: list[DisputeStatusHistory] | None
     processor_comments: Incomplete
-    forwarded_comments: processor_comments
+    forwarded_comments: processor_comments  # pyrefly: ignore [unknown-name]
     def __init__(self, attributes) -> None: ...

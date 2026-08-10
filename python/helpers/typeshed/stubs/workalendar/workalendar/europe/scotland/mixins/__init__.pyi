@@ -49,7 +49,7 @@ __all__ = [
     "SpringHolidayFirstMondayJune",
     "VictoriaDayFourthMondayMay",
     "VictoriaDayLastMondayMay",
-    "VictoriaDayTuesdayAfterFirstMondayMay",  # noqa: F822 # pyright: ignore[reportUnsupportedDunderAll] see https://github.com/workalendar/workalendar/pull/778
+    "VictoriaDayTuesdayAfterFirstMondayMay",  # noqa: F822 # pyright: ignore[reportUnsupportedDunderAll] see https://github.com/workalendar/workalendar/pull/778  # pyrefly: ignore [bad-dunder-all]
     "VictoriaDayFirstMondayJune",
     "FairHolidayLastMondayJune",
     "FairHolidayFirstMondayJuly",

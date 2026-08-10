@@ -29,7 +29,7 @@ def _pythonpath_env() -> dict[str, str]:
     return env
 
 
-def _ty_platform() -> str:
+def _checker_platform() -> str:
     if sys.platform.startswith("win"):
         return "win32"
     return sys.platform
@@ -123,7 +123,24 @@ def main() -> None:
             "--python-version",
             python_version,
             "--platform",
-            _ty_platform(),
+            _checker_platform(),
+            "--python",
+            sys.executable,
+        ],
+        env=_pythonpath_env(),
+        check=False,
+    )
+
+    print(f"\nRunning pyrefly for Python {python_version}...")
+    pyrefly_result = subprocess.run(
+        [
+            sys.executable,
+            "tests/pyrefly_test.py",
+            path,
+            "--python-version",
+            python_version,
+            "--platform",
+            _checker_platform(),
             "--python",
             sys.executable,
         ],
@@ -203,6 +220,7 @@ def main() -> None:
             check_structure_result.returncode,
             pyright_returncode,
             ty_result.returncode,
+            pyrefly_result.returncode,
             mypy_result.returncode,
             getattr(stubtest_result, "returncode", 0),
             pyright_testcases_returncode,
@@ -230,6 +248,7 @@ def main() -> None:
     else:
         print("Pyright:", _SUCCESS if pyright_returncode == 0 else _FAILED)
     print("ty:", _SUCCESS if ty_result.returncode == 0 else _FAILED)
+    print("pyrefly:", _SUCCESS if pyrefly_result.returncode == 0 else _FAILED)
     print("mypy:", _SUCCESS if mypy_result.returncode == 0 else _FAILED)
     if stubtest_result is None:
         print("stubtest:", _SKIPPED)

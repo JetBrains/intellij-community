@@ -8,7 +8,7 @@ class PredictionContext:
     EMPTY: Incomplete
     EMPTY_RETURN_STATE: int
     globalNodeCount: int
-    id = globalNodeCount
+    id = globalNodeCount  # pyrefly: ignore [unknown-name]
     cachedHashCode: Incomplete
     def __init__(self, cachedHashCode: int) -> None: ...
     def __len__(self) -> int: ...

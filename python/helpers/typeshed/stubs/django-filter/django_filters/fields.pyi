@@ -1,9 +1,10 @@
 from _typeshed import Unused
 from collections.abc import Callable, Iterable, Mapping, Sequence
-from typing import Any, NamedTuple, TypeAlias
+from typing import Any, NamedTuple, TypeAlias, TypeVar
 
 from django import forms
 from django.db.models import Choices
+from django.db.models.base import Model
 from django.forms import Widget
 from django_stubs_ext import StrOrPromise
 
@@ -26,6 +27,8 @@ _ChoiceNamedGroup: TypeAlias = tuple[str, Iterable[_Choice]]
 _Choices: TypeAlias = Iterable[_Choice | _ChoiceNamedGroup]
 _ChoicesMapping: TypeAlias = Mapping[Any, Any]
 _ChoicesInput: TypeAlias = _Choices | _ChoicesMapping | type[Choices] | Callable[[], _Choices | _ChoicesMapping]
+
+_M = TypeVar("_M", bound=Model)
 
 class RangeField(forms.MultiValueField):
     widget: _ClassLevelWidget = ...
@@ -111,7 +114,7 @@ class ChoiceIterator:
     def __iter__(self) -> Any: ...  # Iterator yields choice tuples with any value types
     def __len__(self) -> int: ...
 
-class ModelChoiceIterator(forms.models.ModelChoiceIterator):
+class ModelChoiceIterator(forms.models.ModelChoiceIterator[_M]):
     def __iter__(self) -> Any: ...  # Iterator yields choice tuples with any value types
     def __len__(self) -> int: ...
 
