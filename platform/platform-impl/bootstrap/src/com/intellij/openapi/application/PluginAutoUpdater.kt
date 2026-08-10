@@ -8,7 +8,6 @@ import com.intellij.ide.plugins.PluginInitializationContext
 import com.intellij.ide.plugins.PluginInitializationDiagnosticUtils
 import com.intellij.ide.plugins.PluginInstaller
 import com.intellij.ide.plugins.PluginMainDescriptor
-import com.intellij.ide.plugins.PluginVersionIsSuperseded
 import com.intellij.ide.plugins.PluginsDiscoveryResult
 import com.intellij.ide.plugins.PluginsSourceContext
 import com.intellij.ide.plugins.isExcluded
@@ -176,7 +175,7 @@ object PluginAutoUpdater {
       // bit more formalized and a bit more flexible to be reused here (TODO).
       val plugin = pluginSet.candidateSet.resolvePluginId(id)
       if (plugin == null || plugin !== updateDesc) {
-        val nonLoadReason = excludedDescriptors[updateDesc].takeUnless { it is PluginVersionIsSuperseded }
+        val nonLoadReason = excludedDescriptors[updateDesc]
         rejectedUpdates[id] = "plugin ${updateDesc.shortLogDescription} would not load after the update" +
                               (nonLoadReason?.let { ": ${PluginInitializationDiagnosticUtils.getLogMessageForRootExclusionReason(it)}" } ?:
                                plugin?.let { ": version ${it.version} is selected for loading instead" }.orEmpty())
