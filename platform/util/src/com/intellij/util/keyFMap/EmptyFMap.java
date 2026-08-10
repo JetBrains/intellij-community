@@ -10,7 +10,7 @@ final class EmptyFMap implements KeyFMap {
 
   @Override
   public @NotNull <V> KeyFMap plus(@NotNull Key<V> key, @NotNull V value) {
-    return new OneElementFMap<>(key, value);
+    return new OneElementFMap(key, value);
   }
 
   @Override
