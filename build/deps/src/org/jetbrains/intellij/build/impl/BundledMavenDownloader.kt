@@ -19,13 +19,13 @@ import org.jetbrains.intellij.build.dependencies.BuildDependenciesManualRunOnly
 import org.jetbrains.intellij.build.resolveAndExtractToCacheLocation
 import org.jetbrains.intellij.build.resolveFileForReading
 import java.nio.file.Files
+import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.nio.file.attribute.FileTime
 import java.security.MessageDigest
 import java.time.Instant
 import java.util.HexFormat
-import kotlin.io.path.readBytes
 
 private val maven4Libs: List<String> = listOf(
   // let's not bundle archetype plugin version 3 with maven version 4
@@ -43,7 +43,12 @@ object BundledMavenDownloader {
   data class MavenLibraryFile(
     @JvmField val fileName: String,
     @JvmField val source: Path,
-    @JvmField val sha256: String,
+    /**
+     * The SHA-256 a preloaded downloads manifest declares for [source], or `null` for a file only the
+     * download cache vouches for. Never computed here - see [inventoryId] for what identifies an
+     * inventory when nothing has declared a digest.
+     */
+    @JvmField val sha256: String?,
   )
 
   private val distributionMutex = Mutex()
@@ -61,11 +66,6 @@ object BundledMavenDownloader {
       println("Maven 3 libs at $maven3DownloadedLibs")
       println("Maven 4 libs at $maven4DownloadedLibs")
     }
-  }
-
-  private fun fileChecksum(path: Path): String {
-    val digest = MessageDigest.getInstance("SHA-256").digest(path.readBytes())
-    return HexFormat.of().formatHex(digest)
   }
 
   fun downloadMaven4LibsSync(communityRoot: BuildDependenciesCommunityRoot): Path {
@@ -100,36 +100,60 @@ object BundledMavenDownloader {
 
   private suspend fun downloadMavenLibs(communityRoot: BuildDependenciesCommunityRoot, path: String, libs: List<String>): Path {
     val libraryFiles = resolveMavenLibs(communityRoot, libs)
-    val inventoryDigest = MessageDigest.getInstance("SHA-256")
-    for ((fileName, _, sha256) in libraryFiles.sortedBy { it.fileName }) {
-      inventoryDigest.update(fileName.toByteArray())
-      inventoryDigest.update(0.toByte())
-      inventoryDigest.update(sha256.toByteArray())
-      inventoryDigest.update(0.toByte())
-    }
-    val inventoryId = HexFormat.of().formatHex(inventoryDigest.digest())
-    val root = BuildDependenciesDownloader.getDownloadCacheDirectory(communityRoot).resolve("maven-libraries-$path-$inventoryId")
+    val root = BuildDependenciesDownloader.getDownloadCacheDirectory(communityRoot)
+      .resolve("maven-libraries-$path-${inventoryId(libraryFiles)}")
     withContext(Dispatchers.IO) {
       Files.createDirectories(root)
-      Files.setLastModifiedTime(root, FileTime.from(Instant.now()))
-    }
-    withContext(Dispatchers.IO) {
-      for ((fileName, source, sha256) in libraryFiles) {
+      for ((fileName, source, _) in libraryFiles) {
         val targetFile = root.resolve(fileName)
-        if (Files.notExists(targetFile) || sha256 != fileChecksum(targetFile)) {
-          val tempFile = Files.createTempFile(root, fileName, ".tmp")
-          try {
-            Files.copy(source, tempFile, StandardCopyOption.REPLACE_EXISTING)
-            Files.move(tempFile, targetFile, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
-          }
-          finally {
-            Files.deleteIfExists(tempFile)
-          }
+        // the directory name already states which content belongs here, so all a warm call has to
+        // establish is that every jar landed - one `stat` each, where comparing digests read them whole
+        if (fileSizeOrNull(targetFile) == Files.size(source)) {
+          continue
+        }
+        val tempFile = Files.createTempFile(root, fileName, ".tmp")
+        try {
+          Files.copy(source, tempFile, StandardCopyOption.REPLACE_EXISTING)
+          Files.move(tempFile, targetFile, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
+        }
+        finally {
+          Files.deleteIfExists(tempFile)
         }
       }
+      // maintain the FIFO cache: `CacheDirCleanup` reclaims a top-level entry by its own modification time
       Files.setLastModifiedTime(root, FileTime.from(Instant.now()))
     }
     return root
+  }
+
+  /**
+   * Identifies an inventory without reading a byte of it.
+   *
+   * A preloaded input is identified by the digest its manifest declares - authoritative, and free.
+   * Anything else is a download-cache entry whose file name
+   * ([BuildDependenciesDownloader.getTargetFile]) is already derived from the artifact URL, so it
+   * names the content just as precisely, also for free.
+   */
+  private fun inventoryId(libraryFiles: List<MavenLibraryFile>): String {
+    val digest = MessageDigest.getInstance("SHA-256")
+    for ((fileName, source, sha256) in libraryFiles.sortedBy { it.fileName }) {
+      digest.update(fileName.toByteArray())
+      digest.update(0.toByte())
+      digest.update((sha256 ?: source.fileName.toString()).toByteArray())
+      digest.update(0.toByte())
+    }
+    // as short as `getTargetFile` keeps its own hash - a download cache lives under the community root,
+    // where this repository has a Windows path-length budget to respect
+    return HexFormat.of().formatHex(digest.digest()).substring(0, 16)
+  }
+
+  private fun fileSizeOrNull(file: Path): Long? {
+    return try {
+      Files.size(file)
+    }
+    catch (_: NoSuchFileException) {
+      null
+    }
   }
 
   private suspend fun resolveMavenLibs(communityRoot: BuildDependenciesCommunityRoot, libs: List<String>): List<MavenLibraryFile> {
@@ -153,12 +177,7 @@ object BundledMavenDownloader {
       fileNameToUri.map { (fileName, uri) ->
         async {
           val resolved = resolveFileForReading(uri.toString(), communityRoot)
-          // a preloaded input arrives with the digest Bazel already verified; only a downloaded one has to be read back
-          MavenLibraryFile(
-            fileName = fileName,
-            source = resolved.file,
-            sha256 = resolved.sha256 ?: fileChecksum(resolved.file),
-          )
+          MavenLibraryFile(fileName = fileName, source = resolved.file, sha256 = resolved.sha256)
         }
       }.awaitAll()
     }

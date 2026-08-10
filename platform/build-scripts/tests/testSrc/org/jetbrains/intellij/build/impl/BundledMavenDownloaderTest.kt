@@ -100,7 +100,10 @@ class BundledMavenDownloaderTest {
       Assert.assertEquals(setOf("telemetry-3.jar"), Files.list(telemetry).use { it.map { file -> file.fileName.toString() }.toList().toSet() })
       Assert.assertTrue(Files.list(maven4).use { it.findAny().isEmpty })
       Assert.assertEquals(cache, maven3.parent)
-      Assert.assertTrue(maven3.fileName.toString().startsWith("maven-libraries-maven3-server-common-"))
+      val inventoryPrefix = "maven-libraries-maven3-server-common-"
+      Assert.assertTrue(maven3.fileName.toString().startsWith(inventoryPrefix))
+      // the id stays short on purpose - a download cache lives under the community root, on Windows too
+      Assert.assertEquals(inventoryPrefix.length + 16, maven3.fileName.toString().length)
       Assert.assertFalse(Files.exists(cache.resolve("maven-libraries")))
       Assert.assertFalse(Files.exists(community.resolve("plugins/maven/maven36-server-impl/lib/maven3")))
       Assert.assertFalse(Files.exists(community.resolve("plugins/maven/maven3-server-common/lib")))
@@ -111,6 +114,17 @@ class BundledMavenDownloaderTest {
         async { BundledMavenDownloader.downloadMaven3Libs(communityRoot) }
       }.awaitAll()
       Assert.assertEquals(setOf(maven3), concurrentMaven3.toSet())
+
+      // a warm call re-copies nothing: the directory name already states which content belongs here,
+      // so a jar of the right size is taken as the right jar - a digest comparison would have read it back
+      Files.writeString(maven3.resolve("two-2.jar"), "CONTENT-2")
+      Assert.assertEquals(maven3, BundledMavenDownloader.downloadMaven3Libs(communityRoot))
+      Assert.assertEquals("CONTENT-2", Files.readString(maven3.resolve("two-2.jar")))
+
+      // a jar that did not land whole is still copied again
+      Files.writeString(maven3.resolve("two-2.jar"), "trunc")
+      Assert.assertEquals(maven3, BundledMavenDownloader.downloadMaven3Libs(communityRoot))
+      Assert.assertEquals("content-2", Files.readString(maven3.resolve("two-2.jar")))
 
       // the manifest is authoritative, so re-pinning it - not the bytes behind it - is what re-identifies the inventory
       Assert.assertEquals("content-1", Files.readString(maven3.resolve("one-1.jar")))
