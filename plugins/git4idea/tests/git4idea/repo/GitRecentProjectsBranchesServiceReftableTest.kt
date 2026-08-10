@@ -3,14 +3,27 @@ package git4idea.repo
 
 import com.intellij.openapi.vcs.Executor.cd
 import com.intellij.openapi.vcs.Executor.touch
+import git4idea.config.GitVersion
 import git4idea.test.GitSingleRepoTest
 import git4idea.test.git
 import git4idea.test.makeCommit
 import git4idea.test.setupDefaultUsername
 import kotlinx.coroutines.runBlocking
+import org.junit.Assume.assumeTrue
 import java.nio.file.Files
+import java.nio.file.Path
 
 class GitRecentProjectsBranchesServiceReftableTest : GitSingleRepoTest() {
+
+  override fun setUp() {
+    super.setUp()
+    assumeTrue("Refs command is supported only since Git 2.46", isVersionSupported())
+  }
+
+  private fun isVersionSupported(): Boolean {
+    return vcs.version.isLaterOrEqual(GitVersion(2, 46, 0, 0))
+  }
+
   fun `test branch is resolved in case of reftable format is used`() {
     git("refs migrate --ref-format=reftable")
     val actual = runBlocking {
@@ -32,10 +45,11 @@ class GitRecentProjectsBranchesServiceReftableTest : GitSingleRepoTest() {
   fun `test branch is resolved with reftable sha256`() {
     val sha256Repo = initSha256ReftableRepo()
     val actual = runBlocking {
-      GitRecentProjectsBranchesService.loadBranch(previousValue = null, sha256Repo)
+      GitRecentProjectsBranchesService.loadBranch(previousValue = null, sha256Repo.toString())
     }
+    val expected = sha256Repo.resolve(".git/HEAD").toString()
     assertEquals(
-      GitRecentProjectCachedBranch.KnownBranch(branchName = "master", headFilePath = "$sha256Repo/.git/HEAD"),
+      GitRecentProjectCachedBranch.KnownBranch(branchName = "master", headFilePath = expected),
       actual,
     )
   }
@@ -48,10 +62,11 @@ class GitRecentProjectsBranchesServiceReftableTest : GitSingleRepoTest() {
     git(project, "commit -m second")
     git(project, "checkout HEAD^")
     val actual = runBlocking {
-      GitRecentProjectsBranchesService.loadBranch(previousValue = null, sha256Repo)
+      GitRecentProjectsBranchesService.loadBranch(previousValue = null, sha256Repo.toString())
     }
+    val expected = sha256Repo.resolve(".git/HEAD").toString()
     assertEquals(
-      GitRecentProjectCachedBranch.NotOnBranch("$sha256Repo/.git/HEAD"),
+      GitRecentProjectCachedBranch.NotOnBranch(expected),
       actual,
     )
   }
@@ -117,20 +132,23 @@ class GitRecentProjectsBranchesServiceReftableTest : GitSingleRepoTest() {
     val worktree = "feature"
     git("worktree add $worktree")
 
+    val worktreePath = projectNioRoot.resolve(worktree)
+
     val actual = runBlocking {
-      GitRecentProjectsBranchesService.loadBranch(previousValue = null, "$projectPath/$worktree")
+      GitRecentProjectsBranchesService.loadBranch(previousValue = null, worktreePath.toString())
     }
+    val expected = repo.repositoryFiles.worktreesDirFile.resolve(worktree).resolve("HEAD").toString()
     assertEquals(
       GitRecentProjectCachedBranch.KnownBranch(
         branchName = worktree,
-        headFilePath = "${repo.repositoryFiles.worktreesDirFile}/$worktree/HEAD",
+        headFilePath = expected,
       ),
       actual,
     )
   }
 
-  private fun initSha256ReftableRepo(): String {
-    val repoDir = Files.createTempDirectory(projectRoot.toNioPath(), "sha256").toString()
+  private fun initSha256ReftableRepo(): Path {
+    val repoDir = Files.createTempDirectory(projectRoot.toNioPath(), "sha256")
     cd(repoDir)
     git(project, "init --initial-branch=master --object-format=sha256")
     setupDefaultUsername()

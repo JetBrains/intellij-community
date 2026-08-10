@@ -28,8 +28,9 @@ class GitRecentProjectsBranchesServiceTest : GitSingleRepoTest() {
     git("worktree add $worktree")
 
     val actual = runBlocking { GitRecentProjectsBranchesService.loadBranch(previousValue = null, "$projectPath/$worktree") }
+    val expected = repo.repositoryFiles.worktreesDirFile.resolve(worktree).resolve("HEAD").toString()
     assertEquals(
-      GitRecentProjectCachedBranch.KnownBranch(branchName = worktree, headFilePath = "${repo.repositoryFiles.worktreesDirFile}/$worktree/HEAD"),
+      GitRecentProjectCachedBranch.KnownBranch(branchName = worktree, headFilePath = expected),
       actual
     )
   }
