@@ -2,7 +2,10 @@
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
 public class PathReferenceTest extends LightJavaCodeInsightFixtureTestCase {
@@ -16,5 +19,15 @@ public class PathReferenceTest extends LightJavaCodeInsightFixtureTestCase {
     PsiReference reference = myFixture.getReferenceAtCaretPosition();
     PsiReference[] references = reference.getElement().getReferences();
     assertEquals(1, references.length);
+  }
+
+  public void testDeepPathDoesNotOverflowStack() {
+    // resolving reference #i used to recurse into #i-1, so a path with many segments blew the stack
+    String path = "dir/".repeat(20_000) + "file.txt";
+    PsiFile file = myFixture.configureByText("a.txt", path);
+    FileReferenceSet set = new FileReferenceSet(path, file, 0, null, true);
+    FileReference last = set.getLastReference();
+    assertNotNull(last);
+    assertEmpty(last.multiResolve(false));
   }
 }
