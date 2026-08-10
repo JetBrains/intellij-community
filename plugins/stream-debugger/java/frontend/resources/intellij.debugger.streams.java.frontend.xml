@@ -1,0 +1,38 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="fleet.rhizomedb"/>
+    <module name="intellij.debugger.streams.shared"/>
+    <module name="intellij.java.debugger.impl.shared"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.debugger"/>
+    <module name="intellij.platform.debugger.impl.rpc"/>
+    <module name="intellij.platform.debugger.impl.shared"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.rpc"/>
+    <module name="intellij.platform.frontend"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensions defaultExtensionNs="com.intellij">
+    <advancedSetting id="stream.debugger.show.inlays" default="true"
+                     bundle="messages.JavaStreamDebuggerFrontendBundle"/>
+  </extensions>
+
+  <projectListeners>
+    <listener class="com.intellij.debugger.streams.java.frontend.StreamDebuggerInlaySessionListener"
+              topic="com.intellij.xdebugger.impl.XDebuggerManagerProxyListener"/>
+  </projectListeners>
+
+  <actions resource-bundle="messages.JavaStreamDebuggerFrontendBundle">
+    <group id="StreamDebuggerInlayPopup" popup="true"/>
+    <action id="DisableStreamDebuggerInlay"
+            class="com.intellij.debugger.streams.java.frontend.DisableStreamDebuggerInlay">
+      <add-to-group group-id="StreamDebuggerInlayPopup"/>
+    </action>
+  </actions>
+</idea-plugin>

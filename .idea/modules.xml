@@ -388,6 +388,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/stream-debugger/backend/intellij.debugger.streams.backend.iml" filepath="$PROJECT_DIR$/plugins/stream-debugger/backend/intellij.debugger.streams.backend.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/stream-debugger/core/intellij.debugger.streams.core.iml" filepath="$PROJECT_DIR$/plugins/stream-debugger/core/intellij.debugger.streams.core.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/stream-debugger/java/intellij.debugger.streams.java.iml" filepath="$PROJECT_DIR$/plugins/stream-debugger/java/intellij.debugger.streams.java.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/stream-debugger/java/frontend/intellij.debugger.streams.java.frontend.iml" filepath="$PROJECT_DIR$/plugins/stream-debugger/java/frontend/intellij.debugger.streams.java.frontend.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/stream-debugger/rt/intellij.debugger.streams.java.rt.iml" filepath="$PROJECT_DIR$/plugins/stream-debugger/rt/intellij.debugger.streams.java.rt.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/stream-debugger/rt/gatherers/intellij.debugger.streams.java.rt.gatherers.iml" filepath="$PROJECT_DIR$/plugins/stream-debugger/rt/gatherers/intellij.debugger.streams.java.rt.gatherers.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/stream-debugger/intellij.debugger.streams.plugin.iml" filepath="$PROJECT_DIR$/plugins/stream-debugger/intellij.debugger.streams.plugin.iml" />

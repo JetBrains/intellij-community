@@ -37,7 +37,7 @@ open class TraceStreamAction : AnAction(), SplitDebuggerAction {
   override fun actionPerformed(e: AnActionEvent) {
     val sessionProxy = DebuggerUIUtil.getSessionProxy(e) ?: return
     sessionProxy.coroutineScope.launch {
-      StreamDebuggerApi.getInstance().showTraceDebuggerDialog(sessionProxy.id)
+      StreamDebuggerApi.getInstance().showTraceDebuggerDialog(sessionProxy.id, TraceEntryPointDto.TOOLBAR_ACTION)
     }
   }
 }

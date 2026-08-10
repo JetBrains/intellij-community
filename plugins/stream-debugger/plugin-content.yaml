@@ -13,6 +13,9 @@
 - name: lib/modules/intellij.debugger.streams.core.jar
   contentModules:
   - name: intellij.debugger.streams.core
+- name: lib/modules/intellij.debugger.streams.java.frontend.jar
+  contentModules:
+  - name: intellij.debugger.streams.java.frontend
 - name: lib/modules/intellij.debugger.streams.java.jar
   contentModules:
   - name: intellij.debugger.streams.java

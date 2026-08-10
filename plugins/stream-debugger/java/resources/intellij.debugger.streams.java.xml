@@ -4,7 +4,6 @@
     <module name="intellij.debugger.streams.core"/>
     <module name="intellij.debugger.streams.java.rt"/>
     <module name="intellij.debugger.streams.java.rt.gatherers"/>
-    <module name="intellij.debugger.streams.shared"/>
     <module name="intellij.java"/>
     <module name="intellij.java.backend"/>
     <module name="intellij.java.debugger"/>
@@ -24,10 +23,7 @@
     <module name="intellij.platform.debugger.impl.shared"/>
     <module name="intellij.platform.debugger.impl.ui"/>
     <module name="intellij.platform.editor.ui"/>
-    <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.impl"/>
-    <module name="intellij.platform.lang"/>
-    <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.projectModel"/>
   </dependencies>
   <!-- endregion -->
@@ -39,20 +35,5 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <registryKey key="debugger.streams.use.breakpoint.based.tracing" defaultValue="true" description="Use new breakpoint based engine for stream tracing" />
-    <advancedSetting id="stream.debugger.show.inlays" default="true"
-                     bundle="messages.StreamDebuggerBundle"/>
   </extensions>
-
-  <projectListeners>
-    <listener class="com.intellij.debugger.streams.inlay.StreamDebuggerInlaySessionListener"
-              topic="com.intellij.xdebugger.XDebuggerManagerListener"/>
-  </projectListeners>
-
-  <actions resource-bundle="messages.StreamDebuggerBundle">
-    <group id="StreamDebuggerInlayPopup" popup="true"/>
-    <action id="DisableStreamDebuggerInlay"
-            class="com.intellij.debugger.streams.inlay.DisableStreamDebuggerInlay">
-      <add-to-group group-id="StreamDebuggerInlayPopup"/>
-    </action>
-  </actions>
 </idea-plugin>

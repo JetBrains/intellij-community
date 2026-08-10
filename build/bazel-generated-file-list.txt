@@ -1598,6 +1598,7 @@ plugins/stream-debugger
 plugins/stream-debugger/backend
 plugins/stream-debugger/core
 plugins/stream-debugger/java
+plugins/stream-debugger/java/frontend
 plugins/stream-debugger/rt
 plugins/stream-debugger/rt/gatherers
 plugins/stream-debugger/shared

@@ -12,7 +12,8 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 interface StreamDebuggerApi : RemoteApi<Unit> {
   suspend fun getChainStatus(sessionId: XDebugSessionId): Flow<ChainStatusDto>
-  suspend fun showTraceDebuggerDialog(sessionId: XDebugSessionId)
+  suspend fun getInlayState(sessionId: XDebugSessionId): Flow<StreamChainInlayStateDto>
+  suspend fun showTraceDebuggerDialog(sessionId: XDebugSessionId, entryPoint: TraceEntryPointDto)
 
   companion object {
     @JvmStatic

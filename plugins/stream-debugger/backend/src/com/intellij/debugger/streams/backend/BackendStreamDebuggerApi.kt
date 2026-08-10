@@ -2,12 +2,16 @@ package com.intellij.debugger.streams.backend
 
 import com.intellij.debugger.streams.core.ChainStatus
 import com.intellij.debugger.streams.core.ChainDetectionStateManager
+import com.intellij.debugger.streams.core.StreamChainInlayState
 import com.intellij.debugger.streams.core.action.TraceStreamRunner
 import com.intellij.debugger.streams.core.statistics.TraceEntryPoint
 import com.intellij.debugger.streams.shared.ChainStatusDto
+import com.intellij.debugger.streams.shared.StreamChainInlayStateDto
 import com.intellij.debugger.streams.shared.StreamDebuggerApi
+import com.intellij.debugger.streams.shared.TraceEntryPointDto
 import com.intellij.platform.debugger.impl.rpc.XDebugSessionId
 import com.intellij.xdebugger.impl.rpc.models.findValue
+import com.intellij.xdebugger.impl.rpc.toRpc
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emptyFlow
@@ -23,9 +27,17 @@ internal class BackendStreamDebuggerApi : StreamDebuggerApi {
       .distinctUntilChanged()
   }
 
-  override suspend fun showTraceDebuggerDialog(sessionId: XDebugSessionId) {
+  override suspend fun getInlayState(sessionId: XDebugSessionId): Flow<StreamChainInlayStateDto> {
+    val session = sessionId.findValue() ?: return emptyFlow()
+    return ChainDetectionStateManager
+      .getInstance(session.project)
+      .inlayStateFlow(session)
+      .map { it.toDto() }
+  }
+
+  override suspend fun showTraceDebuggerDialog(sessionId: XDebugSessionId, entryPoint: TraceEntryPointDto) {
     val session = sessionId.findValue() ?: return
-    TraceStreamRunner.getInstance(session.project).actionPerformed(session, TraceEntryPoint.TOOLBAR_ACTION)
+    TraceStreamRunner.getInstance(session.project).actionPerformed(session, entryPoint.toEntryPoint())
   }
 }
 
@@ -34,4 +46,14 @@ private fun ChainStatus.toDto(): ChainStatusDto = when (this) {
   ChainStatus.LanguageNotSupported -> ChainStatusDto.LANGUAGE_NOT_SUPPORTED
   ChainStatus.NotFound -> ChainStatusDto.NOT_FOUND
   is ChainStatus.Found -> ChainStatusDto.FOUND
+}
+
+private suspend fun StreamChainInlayState.toDto(): StreamChainInlayStateDto = when (this) {
+  is StreamChainInlayState.Visible -> StreamChainInlayStateDto.Visible(position.toRpc())
+  StreamChainInlayState.Hidden -> StreamChainInlayStateDto.Hidden
+}
+
+private fun TraceEntryPointDto.toEntryPoint(): TraceEntryPoint = when (this) {
+  TraceEntryPointDto.TOOLBAR_ACTION -> TraceEntryPoint.TOOLBAR_ACTION
+  TraceEntryPointDto.INLAY_HINT -> TraceEntryPoint.INLAY_HINT
 }
