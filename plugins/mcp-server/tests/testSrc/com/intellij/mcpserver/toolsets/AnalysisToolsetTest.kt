@@ -29,11 +29,19 @@ import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assumptions.assumeTrue
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.nio.file.Files
 
 class AnalysisToolsetTest : GeneralMcpToolsetTestBase() {
   private val commonsCsvJar by projectFixture.fileOrDirInProjectFixture("libraries/commons-csv/commons-csv-1.14.1.jar")
+
+  @BeforeEach
+  fun waitForProjectIndexes() {
+    // The shared source root is registered in the base @BeforeEach. Call hierarchy assertions below expect complete
+    // index-backed results, while analyze_calls is allowed to return partial results when indexing is still in progress.
+    DumbService.getInstance(project).waitForSmartMode()
+  }
 
   @Test
   fun analyze_calls_renders_outgoing_tree() = runBlocking(Dispatchers.Default) {

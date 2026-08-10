@@ -1,5 +1,23 @@
 load("@community//build:tests-options.bzl", "jps_test")
+load("@community//plugins/kotlin:kotlin_test_dependencies.bzl", "all_test_dep_targets")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jps_test(
+    name = "tests_test",
+    timeout = "moderate",
+    data = all_test_dep_targets,
+    tags = ["community-aggregator"],
+    runtime_deps = [
+        ":tests_test_lib",
+        "//java/plugin",
+        "//java/structuralsearch-java:structuralSearch",
+        "//platform/structuralsearch:structuralSearch",
+        "//platform/structuralsearch/plugin",
+        "//plugins/kotlin:kotlin-plugin-community-main",
+        "//plugins/kotlin/base/pluginTestFramework:kotlin-base-plugin-testFramework",
+    ],
+)
+### skip generation section `test intellij.mcpserver.tests`
 
 ### auto-generated section `build intellij.mcpserver.tests` start
 jvm_library(
@@ -57,6 +75,10 @@ jvm_library(
         "//libraries/kotlinx/serialization/json:json_test_lib",
         "//libraries/ktor/client",
         "//libraries/ktor/client:client_test_lib",
+        "//libraries/misc/plugin",
+        "//libraries/misc/plugin:plugin_test_lib",
+        "//libraries/lucene.common",
+        "//libraries/lucene.common:lucene.common_test_lib",
         "//plugins/mcp-server/mcpserver.plugin",
         "//plugins/mcp-server/mcpserver.plugin:mcpserver.plugin_test_lib",
         "//plugins/mcp-server/mcpserver.toolsets",
@@ -75,6 +97,10 @@ jvm_library(
         "//plugins/mcp-server/mcpserver.terminal:mcpserver.terminal_test_lib",
         "//plugins/editorconfig/backend",
         "//plugins/editorconfig/backend:backend_test_lib",
+        "//aether-dependency-resolver",
+        "//aether-dependency-resolver:aether-dependency-resolver_test_lib",
+        "//aether-dependency-resolver/plugin",
+        "//aether-dependency-resolver/plugin:plugin_test_lib",
         "//platform/analysis-api:analysis",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/code-style-api:codeStyle",
@@ -91,6 +117,14 @@ jvm_library(
         "//platform/lang-impl:lang-impl_test_lib",
         "//platform/projectModel-api:projectModel",
         "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/structure-view-impl:structureView",
+        "//platform/structure-view-impl:structureView_test_lib",
+        "//platform/structure-view-impl/plugin",
+        "//platform/structure-view-impl/plugin:plugin_test_lib",
+        "//platform/todo",
+        "//platform/todo:todo_test_lib",
+        "//platform/todo/plugin",
+        "//platform/todo/plugin:plugin_test_lib",
         "//platform/vcs-api:vcs",
         "//platform/vcs-api:vcs_test_lib",
         "//platform/testFramework",
@@ -103,12 +137,16 @@ jvm_library(
         "//images:images-tests_test_lib",
         "//RegExpSupport:regexp-tests",
         "//RegExpSupport:regexp-tests_test_lib",
+        "//spellchecker",
+        "//spellchecker:spellchecker_test_lib",
         "//platform/xdebugger-impl:debugger-impl-tests",
         "//platform/xdebugger-impl:debugger-impl-tests_test_lib",
         "//platform/execution",
         "//platform/execution:execution_test_lib",
         "//platform/execution-impl",
         "//platform/execution-impl:execution-impl_test_lib",
+        "//platform/testRunner/plugin",
+        "//platform/testRunner/plugin:plugin_test_lib",
         "//platform/util:util-ui",
         "//platform/util:util-ui_test_lib",
         "//platform/util-ex",
@@ -128,10 +166,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.mcpserver.tests` end
-
-### auto-generated section `test intellij.mcpserver.tests` start
-jps_test(
-    name = "tests_test",
-    runtime_deps = [":tests_test_lib"],
-)
-### auto-generated section `test intellij.mcpserver.tests` end

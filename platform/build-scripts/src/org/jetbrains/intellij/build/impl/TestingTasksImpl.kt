@@ -1676,4 +1676,5 @@ private val COMMUNITY_AGGREGATOR_BAZEL_MIGRATED_MODULES = listOf(
   "intellij.vcs.gitlab.yaml.tests",
   "intellij.platform.ide.impl.tests",
   "intellij.platform.lvcs.impl.tests",
+  "intellij.mcpserver.tests",
 )
