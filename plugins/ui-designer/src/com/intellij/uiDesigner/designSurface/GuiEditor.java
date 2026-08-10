@@ -72,14 +72,12 @@ import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.XmlReader;
 import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.compiler.FormErrorInfo;
-import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.componentTree.ComponentPtr;
 import com.intellij.uiDesigner.componentTree.ComponentSelectionListener;
 import com.intellij.uiDesigner.componentTree.ComponentTree;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.core.Util;
 import com.intellij.uiDesigner.editor.UIFormEditor;
-import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
 import com.intellij.uiDesigner.lw.IProperty;
 import com.intellij.uiDesigner.lw.LwRootContainer;
 import com.intellij.uiDesigner.make.FormElementNavigatable;
@@ -961,9 +959,10 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
 
       final String text = myDocument.getText();
 
-      final ClassLoader classLoader = LoaderFactory.getInstance(getProject()).getLoader(myFile);
+      final LoaderFactory loaderFactory = LoaderFactory.getInstance(getProject());
+      final ClassLoader classLoader = loaderFactory.getLoader(myFile);
 
-      final LwRootContainer rootContainer = Utils.getRootContainer(text, new CompiledClassPropertiesProvider(classLoader));
+      final LwRootContainer rootContainer = loaderFactory.readRootContainer(myFile, text);
       final RadRootContainer container = XmlReader.createRoot(this, rootContainer, classLoader, oldLocale);
       setRootContainer(container);
       if (keepSelection) {

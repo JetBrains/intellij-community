@@ -84,7 +84,7 @@ public final class CompiledClassPropertiesProvider implements PropertiesProvider
         property = new LwIntroListModelProperty(name, propertyType.getName());
       }
       else if (propertyType.getSuperclass() != null && "java.lang.Enum".equals(propertyType.getSuperclass().getName())) {
-        property = new LwIntroEnumProperty(name, propertyType);
+        property = new LwIntroEnumProperty(name, propertyType.getName());
       }
     }
     return property;

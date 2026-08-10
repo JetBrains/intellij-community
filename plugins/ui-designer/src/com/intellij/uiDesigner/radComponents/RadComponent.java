@@ -685,9 +685,14 @@ public abstract class RadComponent implements IComponent {
     myLoadingProperties = true;
     try {
       try {
-        final Object value = lwComponent.getPropertyValue(lwProperty);
-        //noinspection unchecked
-        property.setValue(this, value);
+        final Object lwValue = lwComponent.getPropertyValue(lwProperty);
+        final Object value = property.fromLwValue(lwValue);
+        // a conversion that dropped the value means the value cannot be represented, so leave the default in place;
+        // a value that was null to begin with is passed on as before
+        if (value != null || lwValue == null) {
+          //noinspection unchecked
+          property.setValue(this, value);
+        }
       }
       catch (Exception e) {
         LOG.error(e);
