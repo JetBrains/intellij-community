@@ -37,13 +37,6 @@ class PluginSet internal constructor(
   private val sortedModulesWithDependencies: ModulesWithDependencies
 
   init {
-    // module -> index
-    val resolvedModules = LinkedHashMap<PluginModuleDescriptor, Int>(resolvedPluginSet.sortedResolvedDescriptors.size)
-    for ((index, descriptor) in resolvedPluginSet.sortedResolvedDescriptors.withIndex()) {
-      if (descriptor is PluginModuleDescriptor) {
-        resolvedModules[descriptor] = index
-      }
-    }
     val mostRecentExcludedPlugins = excludedFromCandidateSubset.keys.asSequence()
       .filter { resolvedPluginSet.candidateSet.resolvePluginId(it.pluginId)?.pluginId != it.pluginId }
       .groupBy { it.pluginId }
@@ -53,13 +46,14 @@ class PluginSet internal constructor(
       }
     allPlugins = (resolvedPluginSet.candidateSet.plugins + mostRecentExcludedPlugins.values).toSet()
 
+    val resolvedModules = resolvedPluginSet.sortedResolvedDescriptors.filterIsInstance<PluginModuleDescriptor>()
     sortedModulesWithDependencies = ModulesWithDependencies(
-      modules = resolvedModules.keys.toList(),
-      directDependencies = resolvedModules.keys.associateWith {
+      modules = resolvedModules,
+      directDependencies = resolvedModules.associateWith {
         resolvedPluginSet.getDirectResolvedDependencies(it).filterIsInstance<PluginModuleDescriptor>()
       }
     )
-    enabledModules = resolvedModules.keys.toList()
+    enabledModules = resolvedModules
   }
 
   fun getEnabledModules(): List<PluginModuleDescriptor> = enabledModules
