@@ -427,8 +427,15 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
       else listOf(mainModule)
     }.let { modules ->
       //filter out only for community (ALL_EXCLUDE_DEFINED)
-      if (options.testGroups?.contains(GroupBasedTestClassFilter.ALL_EXCLUDE_DEFINED) == true) {
+      if (options.testGroups?.contains(GroupBasedTestClassFilter.ALL_EXCLUDE_DEFINED) == true && mainModule.name == "intellij.idea.community.main.tests") {
         val (bazelMigratedModules, jpsModules) = modules.partition { COMMUNITY_AGGREGATOR_BAZEL_MIGRATED_MODULES.contains(it.name) }
+        val jpsModulesNotInAllowlist = jpsModules.filter { !COMMUNITY_AGGREGATOR_JPS_MODULES_ALLOWLIST.contains(it.name) }
+        if (jpsModulesNotInAllowlist.isNotEmpty()) {
+          context.messages.reportBuildProblem("JPS modules should be migrated to Bazel test execution: ${jpsModulesNotInAllowlist.joinToString(", ") { it.name }}. " +
+                                              "Add or update Bazel test targets in BUILD.bazel, include them into the community aggregator with the 'community-aggregator' tag " +
+                                              "and include into migrated modules list org.jetbrains.intellij.build.impl.TestingTasksImplKt.COMMUNITY_AGGREGATOR_BAZEL_MIGRATED_MODULES. " +
+                                              "Use the `bazel-test-migration` AI skill, use any module returned by `./bazel.cmd query 'attr(\"tags\", \"community-aggregator\", @community//...)'` as a reference.")
+        }
         if (bazelMigratedModules.isNotEmpty()) {
           context.messages.info("Skipping tests in ${bazelMigratedModules.size} modules migrated to Bazel: ${bazelMigratedModules.joinToString(", ") { it.name }}")
         }
@@ -1482,6 +1489,13 @@ private fun publishTestDiscovery(messages: BuildMessages, file: String?) {
   }
   messages.buildStatus("With Discovery, {build.status.text}")
 }
+
+private val COMMUNITY_AGGREGATOR_JPS_MODULES_ALLOWLIST = setOf(
+  "intellij.vcs.git.backend.tests",
+  "intellij.java.tests",
+  // no tests
+  "kotlin.jvm-debugger.testFramework",
+)
 
 private val COMMUNITY_AGGREGATOR_BAZEL_MIGRATED_MODULES = listOf(
   "intellij.maven.server.eventListener.tests",
