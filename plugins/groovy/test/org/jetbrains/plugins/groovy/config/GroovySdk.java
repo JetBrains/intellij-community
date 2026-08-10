@@ -22,7 +22,7 @@ import java.nio.charset.StandardCharsets;
 /**
  * Can be used to update groovy.sdk.xml md5 values and does some basic validation.
  * The same file is available onine at
- * <a href="https://jetbrains.team/p/ld/repositories/frameworks-data/groovy/index.xml">https://framework.jetbrains.com/groovy/index.xml</a>
+ * <a href="https://jetbrains.team/p/ld/repositories/frameworks-data/files/master/data/groovy/index.xml">https://framework.jetbrains.com/groovy/index.xml</a>
  *
  * @author Bas Leijdekkers
  */
