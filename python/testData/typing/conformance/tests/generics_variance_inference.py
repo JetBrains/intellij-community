@@ -192,3 +192,14 @@ class ShouldBeContravariant2[T](Parent_Contravariant[T]):
 
 c1: ShouldBeContravariant2[int] = ShouldBeContravariant2[float]()  # OK
 c2: ShouldBeContravariant2[float] = ShouldBeContravariant2[int]()  # E
+
+class ShouldBeCovariant7[T]:
+    def get(self) -> T:
+        raise NotImplementedError
+
+    def add[S](self: "ShouldBeCovariant7[S]", other: list[S]) -> "ShouldBeCovariant7[S]":
+        raise NotImplementedError
+
+
+d1: ShouldBeCovariant7[object] = ShouldBeCovariant7[int]()  # OK
+d2: ShouldBeCovariant7[int] = ShouldBeCovariant7[object]()  # E
