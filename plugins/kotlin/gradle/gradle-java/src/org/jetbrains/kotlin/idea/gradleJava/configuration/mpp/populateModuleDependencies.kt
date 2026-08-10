@@ -2,11 +2,16 @@
 
 package org.jetbrains.kotlin.idea.gradleJava.configuration.mpp
 
+import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinBinaryDependency
 import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinProjectArtifactDependency
 import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinUnresolvedBinaryDependency
 import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinMppGradleProjectResolver
 import org.jetbrains.kotlin.idea.gradleTooling.IdeaKotlinDependenciesContainer
+import org.jetbrains.kotlin.idea.gradleTooling.getCompilations
 import org.jetbrains.kotlin.idea.projectModel.KotlinGradlePluginVersionDependentApi
+import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform.ANDROID
+import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform.JVM
+import org.jetbrains.kotlin.idea.projectModel.KotlinSourceSet
 
 @OptIn(KotlinGradlePluginVersionDependentApi::class)
 internal fun KotlinMppGradleProjectResolver.Context.populateModuleDependencies() {
@@ -69,6 +74,63 @@ internal fun KotlinMppGradleProjectResolver.Context.populateModuleDependenciesWi
             this, sourceSetDataNode, sourceSet, substitutedSourceSetDependencies, createdDependencyNodes
         )
     }
+
+    populatePlatformPropagationDependenciesWithDependenciesContainer(dependencies)
+}
+
+private fun KotlinMppGradleProjectResolver.Context.populatePlatformPropagationDependenciesWithDependenciesContainer(
+    dependencies: IdeaKotlinDependenciesContainer
+) {
+    mppModel.sourceSetsByName.values
+        .filter { sourceSet -> isDependencyContainerPlatformPropagationAllowed(sourceSet) }
+        .forEach { sourceSet ->
+            val sourceSetModuleId = KotlinSourceSetModuleId(resolverCtx, gradleModule, sourceSet)
+            val sourceSetDataNode = projectDataNode.findSourceSetDataNode(sourceSetModuleId) ?: return@forEach
+            val propagatedDependencies = findDependencyContainerCompilationsToPropagateFrom(sourceSet)
+                .map { compilation ->
+                    compilation.declaredSourceSets
+                        .flatMap { declaredSourceSet -> dependencies[declaredSourceSet.name] }
+                        .filterIsInstance<IdeaKotlinBinaryDependency>()
+                        .toSet()
+                }
+                .dependencyContainerIntersection()
+
+            propagatedDependencies.forEachIndexed { index, dependency ->
+                sourceSetDataNode.addDependency(dependency)?.data?.setOrder(index)
+            }
+        }
+}
+
+private fun KotlinMppGradleProjectResolver.Context.isDependencyContainerPlatformPropagationAllowed(sourceSet: KotlinSourceSet): Boolean {
+    if (dependencyContainerPropagationPlatforms(sourceSet) == setOf(JVM, ANDROID)) {
+        return true
+    }
+
+    if (mppModel.sourceSetsByName.values.any { otherSourceSet -> sourceSet.name in otherSourceSet.declaredDependsOnSourceSets } &&
+        (sourceSet.actualPlatforms.platforms.singleOrNull() == JVM ||
+                sourceSet.actualPlatforms.platforms.singleOrNull() == ANDROID)
+    ) return true
+
+    return false
+}
+
+private fun KotlinMppGradleProjectResolver.Context.findDependencyContainerCompilationsToPropagateFrom(sourceSet: KotlinSourceSet) =
+    when (dependencyContainerPropagationPlatforms(sourceSet)) {
+        setOf(JVM, ANDROID) -> mppModel.getCompilations(sourceSet).filter { compilation -> compilation.platform == JVM }
+        else -> mppModel.getCompilations(sourceSet)
+    }.toSet()
+
+private fun KotlinMppGradleProjectResolver.Context.dependencyContainerPropagationPlatforms(sourceSet: KotlinSourceSet) =
+    mppModel.getCompilations(sourceSet).mapTo(mutableSetOf()) { compilation -> compilation.platform }
+
+private fun List<Set<IdeaKotlinBinaryDependency>>.dependencyContainerIntersection(): Set<IdeaKotlinBinaryDependency> {
+    if (isEmpty()) return emptySet()
+    if (size == 1) return first()
+
+    val coordinatesIntersection = map { dependencies -> dependencies.mapNotNull { it.coordinates }.toSet() }
+        .reduce { acc, coordinates -> acc intersect coordinates }
+
+    return first().filter { dependency -> dependency.coordinates in coordinatesIntersection }.toSet()
 }
 
 /**
