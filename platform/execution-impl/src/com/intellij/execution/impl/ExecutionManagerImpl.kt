@@ -87,6 +87,7 @@ import com.intellij.util.SlowOperations
 import com.intellij.util.SmartList
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.messages.Topic
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -792,6 +793,7 @@ open class ExecutionManagerImpl(private val project: Project, private val corout
   @ApiStatus.Internal
   fun executeConfiguration(environment: ExecutionEnvironment, showSettings: Boolean, assignNewId: Boolean = true) {
     withEnvironmentDataContext(environment.dataContext) {
+      environment.project.messageBus.syncPublisher(ExecutionEnvironmentListener.TOPIC).executionRequested(environment)
       val runnerAndConfigurationSettings = environment.runnerAndConfigurationSettings
       val project = environment.project
       val runner = environment.runner
@@ -1006,6 +1008,22 @@ open class ExecutionManagerImpl(private val project: Project, private val corout
         }
       }
     }
+
+  @Internal
+  interface ExecutionEnvironmentListener {
+    /**
+     * Called synchronously when an already constructed environment is submitted for execution,
+     * before validation or execution can continue on another thread.
+     */
+    fun executionRequested(environment: ExecutionEnvironment) {}
+
+    companion object {
+      @JvmField
+      @Topic.ProjectLevel
+      val TOPIC: Topic<ExecutionEnvironmentListener> =
+        Topic("execution requested", ExecutionEnvironmentListener::class.java, Topic.BroadcastDirection.TO_PARENT)
+    }
+  }
 }
 
 @ApiStatus.Internal
