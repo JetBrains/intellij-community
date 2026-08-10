@@ -863,6 +863,11 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
                 runTest("../../completion/testData/handlers/basic/override/ImplementAnnotatedFunctionMultipleAnnotations2.kt");
             }
 
+            @TestMetadata("ImplementAnnotatedFunctionWithExistingAnnotation.kt")
+            public void testImplementAnnotatedFunctionWithExistingAnnotation() throws Exception {
+                runTest("../../completion/testData/handlers/basic/override/ImplementAnnotatedFunctionWithExistingAnnotation.kt");
+            }
+
             @TestMetadata("ImplementAnnotatedFunctionWithExtension.kt")
             public void testImplementAnnotatedFunctionWithExtension() throws Exception {
                 runTest("../../completion/testData/handlers/basic/override/ImplementAnnotatedFunctionWithExtension.kt");

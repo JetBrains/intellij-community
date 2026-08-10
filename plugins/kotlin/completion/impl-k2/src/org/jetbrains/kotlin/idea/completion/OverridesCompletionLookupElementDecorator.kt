@@ -142,16 +142,22 @@ class OverridesCompletionLookupElementDecorator(
 
     /**
      * Determines which annotations should be retained, according to the [OverrideImplementsAnnotationsFilter] parameters,
-     * and copies them from the original [KtModifierList] to the new one.
+     * and copies them from [from] to [to], skipping annotations already present on [to].
      */
     private fun InsertionContext.copyRetainedAnnotations(from: KtModifierList, to: KtModifierList) {
-        val annotationsToRetain = from.annotationEntries.filter {
-            val fqName = it.typeReference?.text.orEmpty()
-            OverrideImplementsAnnotationsFilter.keepAnnotationOnOverrideMember(fqName, file)
+        val existingAnnotationShortNames = to.annotationEntries
+            .filter { it.typeReference != null }
+            .mapNotNullTo(hashSetOf()) { it.shortName }
+        val annotationsToAdd = from.annotationEntries.filter { entry ->
+            val typeReference = entry.typeReference
+            typeReference != null &&
+                    OverrideImplementsAnnotationsFilter.keepAnnotationOnOverrideMember(typeReference.text, file) &&
+                    entry.shortName !in existingAnnotationShortNames
         }
-        val annotationsToAdd = annotationsToRetain - to.annotationEntries.toSet()
-        if (annotationsToAdd.isNotEmpty()) {
-            to.addRangeBefore(annotationsToAdd.first(), annotationsToAdd.last(), to.firstChild)
+        // Insert in reverse order so the resulting order matches the source order,
+        // since each annotation is inserted before the current first child.
+        for (annotation in annotationsToAdd.asReversed()) {
+            to.addBefore(annotation, to.firstChild)
         }
     }
 }
