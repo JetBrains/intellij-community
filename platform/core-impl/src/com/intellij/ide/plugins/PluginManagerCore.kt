@@ -598,7 +598,7 @@ object PluginManagerCore {
         resolvedModules[descriptor] = index
       }
     }
-    val topologicalComparator = toCoreAwareComparator(Comparator { o1, o2 ->
+    val topologicalComparator = toCoreAwareComparator(Comparator { o1, o2 -> // TODO drop, should have no noticeable effect anymore
       compareValues(resolvedModules[o1]!!, resolvedModules[o2]!!)
     })
     val enabledPluginAndV1ModuleMap = HashMap<PluginId, PluginModuleDescriptor>()
