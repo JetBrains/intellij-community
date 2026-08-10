@@ -83,8 +83,7 @@ private object GradleIssueFailureLocationResolver {
 
   private val ERROR_LOCATION_IN_FILE_PATTERN = Pattern.compile("(?:Build|Settings) file '([^']*)' line: (\\d+)")
   private val ERROR_IN_FILE_PATTERN = Pattern.compile("(?:Build|Settings) file '([^']*)'")
-  private val STACK_TRACE_SCRIPT_LOCATION_PATTERN = Pattern.compile("\\((.*?\\.(?:gradle\\.kts|gradle)):(\\d+)\\)")
-
+  private val STACK_TRACE_SCRIPT_LOCATION_PATTERN = Pattern.compile("\\(([^()]*?\\.(?:gradle\\.kts|gradle)):(\\d+)\\)")
   fun getFilePositionFromText(text: String?): FilePosition? {
     if (text.isNullOrEmpty()) return null
     for (line in StringUtil.splitByLines(text)) {
