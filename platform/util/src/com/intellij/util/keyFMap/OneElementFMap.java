@@ -2,13 +2,15 @@
 package com.intellij.util.keyFMap;
 
 import com.intellij.openapi.util.Key;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-final class OneElementFMap implements KeyFMap {
-  private final Key<?> myKey;
-  private final Object myValue;
+@ApiStatus.Internal
+public class OneElementFMap implements KeyFMap {
+  protected final @NotNull Key<?> myKey;
+  protected final @NotNull Object myValue;
 
-  OneElementFMap(@NotNull Key<?> key, @NotNull Object value) {
+  protected OneElementFMap(@NotNull Key<?> key, @NotNull Object value) {
     myKey = key;
     myValue = value;
   }
@@ -60,7 +62,7 @@ final class OneElementFMap implements KeyFMap {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof OneElementFMap)) return false;
+    if (o == null || o.getClass() != OneElementFMap.class) return false;
 
     OneElementFMap map = (OneElementFMap)o;
     return myKey == map.myKey && myValue.equals(map.myValue);
@@ -69,7 +71,7 @@ final class OneElementFMap implements KeyFMap {
   @Override
   public boolean equalsByReference(@NotNull KeyFMap o) {
     if (this == o) return true;
-    if (!(o instanceof OneElementFMap)) return false;
+    if (o.getClass() != OneElementFMap.class) return false;
 
     OneElementFMap map = (OneElementFMap)o;
     return myKey == map.myKey && myValue == map.myValue;

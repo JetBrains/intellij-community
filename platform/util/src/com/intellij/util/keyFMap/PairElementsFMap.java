@@ -2,16 +2,18 @@
 package com.intellij.util.keyFMap;
 
 import com.intellij.openapi.util.Key;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-final class PairElementsFMap implements KeyFMap {
+@ApiStatus.Internal
+public class PairElementsFMap implements KeyFMap {
   // invariant: key1.hashCode() < key2.hashCode()
-  private final @NotNull Key<?> key1;
-  private final @NotNull Key<?> key2;
-  private final @NotNull Object value1;
-  private final @NotNull Object value2;
+  protected final @NotNull Key<?> key1;
+  protected final @NotNull Key<?> key2;
+  protected final @NotNull Object value1;
+  protected final @NotNull Object value2;
 
-  PairElementsFMap(@NotNull Key<?> key1, @NotNull Object value1, @NotNull Key<?> key2, @NotNull Object value2) {
+  protected PairElementsFMap(@NotNull Key<?> key1, @NotNull Object value1, @NotNull Key<?> key2, @NotNull Object value2) {
     // Key hashCodes are unique and ordered
     int c = Integer.compare(key1.hashCode(), key2.hashCode());
     if (c < 0) {
@@ -96,7 +98,7 @@ final class PairElementsFMap implements KeyFMap {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof PairElementsFMap)) return false;
+    if (o == null || o.getClass() != PairElementsFMap.class) return false;
 
     PairElementsFMap map = (PairElementsFMap)o;
 
@@ -106,7 +108,7 @@ final class PairElementsFMap implements KeyFMap {
   @Override
   public boolean equalsByReference(@NotNull KeyFMap o) {
     if (this == o) return true;
-    if (!(o instanceof PairElementsFMap)) return false;
+    if (o.getClass() != PairElementsFMap.class) return false;
 
     PairElementsFMap map = (PairElementsFMap)o;
 

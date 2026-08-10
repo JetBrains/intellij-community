@@ -3,10 +3,15 @@ package com.intellij.util.keyFMap;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.util.containers.UnmodifiableHashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-final class EmptyFMap implements KeyFMap {
+@ApiStatus.Internal
+public class EmptyFMap implements KeyFMap {
   private static final Key[] EMPTY_KEYS_ARRAY = {};
+
+  protected EmptyFMap() {
+  }
 
   @Override
   public @NotNull <V> KeyFMap plus(@NotNull Key<V> key, @NotNull V value) {
