@@ -9,4 +9,4 @@ import org.jetbrains.annotations.ApiStatus
  * [SEND_REJECTED] means the server rejected the file (HTTP 400) or it failed local validation, so it will never be accepted.
  */
 @ApiStatus.Internal
-enum class FileDeletionCause { AGE, SIZE_CAP, DISK_FULL, SEND_REJECTED }
+enum class FileDeletionCause { AGE, SIZE_CAP, DISK_FULL, SEND_REJECTED, SEND_SUCCESS }

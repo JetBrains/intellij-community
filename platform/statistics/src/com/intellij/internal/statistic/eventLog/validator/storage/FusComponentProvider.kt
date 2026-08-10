@@ -12,7 +12,9 @@ import com.intellij.internal.statistic.eventLog.EventLogConfigOptionsService
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration
 import com.intellij.internal.statistic.eventLog.EventLogInternalApplicationInfo
 import com.intellij.internal.statistic.eventLog.EventLogListenersManager
+import com.intellij.internal.statistic.eventLog.EventLogSystemCollector
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
+import com.intellij.internal.statistic.eventLog.FileDeletionCause
 import com.intellij.internal.statistic.eventLog.LICENSE_CODE_KEY
 import com.intellij.internal.statistic.eventLog.MachineId
 import com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil.getEventLogProvider
@@ -76,6 +78,9 @@ import com.jetbrains.fus.reporting.defaults.MetadataUpdateDelay
 import com.jetbrains.fus.reporting.defaults.NoOpAnonymizer
 import com.jetbrains.fus.reporting.defaults.NoOpLoggerFactory
 import com.jetbrains.fus.reporting.defaults.dispatcher.EventLogBuildType
+import com.jetbrains.fus.reporting.defaults.dispatcher.LOGS_FILE_DELETED
+import com.jetbrains.fus.reporting.defaults.dispatcher.LOGS_FILE_METRICS_CALCULATED_TOPIC
+import com.jetbrains.fus.reporting.defaults.dispatcher.LogsFileDeleteCause
 import com.jetbrains.fus.reporting.defaults.dispatcher.PersistentQueue
 import com.jetbrains.fus.reporting.defaults.dispatcher.SEND_INFORMATION_TOPIC
 import com.jetbrains.fus.reporting.defaults.dispatcher.SimpleLegacyReportDispatcher
@@ -207,6 +212,18 @@ object FusComponentProvider {
     )
   }
 
+  private fun EventLogBuildType.toIntelliJBuildType() = try {
+    com.intellij.internal.statistic.config.eventLog.EventLogBuildType.valueOf(this.name)
+  } catch (_: Exception) {
+    com.intellij.internal.statistic.config.eventLog.EventLogBuildType.UNKNOWN
+  }
+
+  private fun LogsFileDeleteCause.toIntelliJFileDeleteCause() = when (this) {
+    LogsFileDeleteCause.AGE -> FileDeletionCause.AGE
+    LogsFileDeleteCause.SEND_REJECTED -> FileDeletionCause.SEND_REJECTED
+    LogsFileDeleteCause.SEND_SUCCESS -> FileDeletionCause.SEND_SUCCESS
+  }
+
   @JvmStatic
   fun createFusComponents(
     recorderId: String
@@ -264,44 +281,7 @@ object FusComponentProvider {
         sendEnabled { eventLogProvider.isSendEnabled() }
       }
 
-      messageHandler(REMOTE_CONFIG_OPTIONS_UPDATED) { updateOptions(recorderId, it) }
-      messageHandler(REMOTE_CONFIG_OPTIONS_UPDATE_FAILED) { systemCollector.logLoadingConfigFailed(it.first, it.second.toLong()) }
-      messageHandler(METADATA_LOADED_TOPIC) { systemCollector.logMetadataLoaded(it) }
-      messageHandler(METADATA_LOAD_FAILED_TOPIC) { systemCollector.logMetadataLoadFailed(loadErrorToEventLogMetadataUpdateError(it)) }
-      messageHandler(METADATA_UPDATED_TOPIC) { systemCollector.logMetadataUpdated(it) }
-      messageHandler(METADATA_UPDATE_FAILED_TOPIC) { systemCollector.logMetadataUpdateFailed(loadErrorToEventLogMetadataUpdateError(it)) }
-      messageHandler(DICTIONARY_LIST_LOAD_FAILED_TOPIC) { systemCollector.logDictionaryListLoadFailed(loadErrorToEventLogMetadataUpdateError(it)) }
-      messageHandler(DICTIONARY_LIST_UPDATE_FAILED_TOPIC) { systemCollector.logDictionaryListUpdateFailed(loadErrorToEventLogMetadataUpdateError(it)) }
-      messageHandler(DICTIONARY_LOADED_TOPIC) { systemCollector.logDictionaryLoaded(it.timestamp) }
-      messageHandler(DICTIONARY_LOAD_FAILED_TOPIC) { systemCollector.logDictionaryLoadFailed(loadErrorToEventLogMetadataUpdateError(it)) }
-      messageHandler(DICTIONARY_UPDATED_TOPIC) { systemCollector.logDictionaryUpdated(it.timestamp) }
-      messageHandler(DICTIONARY_UPDATE_FAILED_TOPIC) { systemCollector.logDictionaryUpdateFailed(loadErrorToEventLogMetadataUpdateError(it)) }
-
-      val listenersManager = ApplicationManager.getApplication().getService(EventLogListenersManager::class.java)
-      val testMode = StatisticsRecorderUtil.isTestModeEnabled(recorderId)
-      messageHandler(RAW_EVENT_TOPIC) { fusEvent ->
-        val recorderHasJcpListener = service<EventLogListenersManager>().hasJcpListener(recorderId)
-        val keepRawData = testMode || recorderHasJcpListener
-        val event = fusEvent.event as? LogEvent ?: return@messageHandler
-        listenersManager.notifySubscribers(
-          recorderId,
-          event,
-          if (keepRawData) fusEvent.rawEventId else null,
-          if (keepRawData) fusEvent.rawEventData else null,
-          false,
-        )
-      }
-
-      messageHandler(SEND_INFORMATION_TOPIC) { info ->
-        systemCollector.logFilesSend(
-          total = info.totalAmountOfBatches ?: (info.successfulBatches + info.failedBatches),
-          succeed = info.successfulBatches,
-          failed = info.failedBatches,
-          external = false,
-          successfullySentFiles = info.paths.toList(),
-          errors = info.errorCodes.mapNotNull { it.toIntOrNull() },
-        )
-      }
+      setupMessageHandlers(recorderId, systemCollector)
 
       components {
         loggerFactory { NoOpLoggerFactory() }
@@ -408,6 +388,94 @@ object FusComponentProvider {
     }
 
     return FusComponents(metadataStorage = metadataStorageRef!!, fusClient = client)
+  }
+
+  private fun FusClient.Builder<LogEvent, ValidatedFusReport>.setupMessageHandlers(
+    recorderId: String,
+    systemCollector: EventLogSystemCollector,
+  ) {
+    setupRemoteOptionsUpdateMessageHandler(recorderId)
+    setupSystemCollectorMessageHandlers(systemCollector)
+    setupEventListenersMessageHandler(recorderId)
+  }
+
+  private fun FusClient.Builder<LogEvent, ValidatedFusReport>.setupRemoteOptionsUpdateMessageHandler(
+    recorderId: String,
+  ) = messageHandler(REMOTE_CONFIG_OPTIONS_UPDATED) {
+    updateOptions(recorderId, it)
+  }
+
+  private fun FusClient.Builder<LogEvent, ValidatedFusReport>.setupEventListenersMessageHandler(
+    recorderId: String,
+  ) {
+    val listenersManager = ApplicationManager.getApplication().getService(EventLogListenersManager::class.java)
+    val testMode = StatisticsRecorderUtil.isTestModeEnabled(recorderId)
+    messageHandler(RAW_EVENT_TOPIC) { fusEvent ->
+      val recorderHasJcpListener = service<EventLogListenersManager>().hasJcpListener(recorderId)
+      val keepRawData = testMode || recorderHasJcpListener
+      val event = fusEvent.event as? LogEvent ?: return@messageHandler
+      listenersManager.notifySubscribers(
+        recorderId,
+        event,
+        if (keepRawData) fusEvent.rawEventId else null,
+        if (keepRawData) fusEvent.rawEventData else null,
+        false,
+      )
+    }
+  }
+
+  private fun FusClient.Builder<LogEvent, ValidatedFusReport>.setupSystemCollectorMessageHandlers(
+    systemCollector: EventLogSystemCollector,
+  ) {
+    messageHandler(REMOTE_CONFIG_OPTIONS_UPDATE_FAILED) {
+      systemCollector.logLoadingConfigFailed(it.first, it.second)
+    }
+    messageHandler(METADATA_LOADED_TOPIC) {
+      systemCollector.logMetadataLoaded(it)
+    }
+    messageHandler(METADATA_LOAD_FAILED_TOPIC) {
+      systemCollector.logMetadataLoadFailed(loadErrorToEventLogMetadataUpdateError(it))
+    }
+    messageHandler(METADATA_UPDATED_TOPIC) {
+      systemCollector.logMetadataUpdated(it)
+    }
+    messageHandler(METADATA_UPDATE_FAILED_TOPIC) {
+      systemCollector.logMetadataUpdateFailed(loadErrorToEventLogMetadataUpdateError(it))
+    }
+    messageHandler(DICTIONARY_LIST_LOAD_FAILED_TOPIC) {
+      systemCollector.logDictionaryListLoadFailed(loadErrorToEventLogMetadataUpdateError(it))
+    }
+    messageHandler(DICTIONARY_LIST_UPDATE_FAILED_TOPIC) {
+      systemCollector.logDictionaryListUpdateFailed(loadErrorToEventLogMetadataUpdateError(it))
+    }
+    messageHandler(DICTIONARY_LOADED_TOPIC) {
+      systemCollector.logDictionaryLoaded(it.timestamp)
+    }
+    messageHandler(DICTIONARY_LOAD_FAILED_TOPIC) {
+      systemCollector.logDictionaryLoadFailed(loadErrorToEventLogMetadataUpdateError(it))
+    }
+    messageHandler(DICTIONARY_UPDATED_TOPIC) {
+      systemCollector.logDictionaryUpdated(it.timestamp)
+    }
+    messageHandler(DICTIONARY_UPDATE_FAILED_TOPIC) {
+      systemCollector.logDictionaryUpdateFailed(loadErrorToEventLogMetadataUpdateError(it))
+    }
+    messageHandler(LOGS_FILE_DELETED) {
+      systemCollector.logFileDeleted(it.cause.toIntelliJFileDeleteCause(), it.ageMs, it.queuedMs, it.fileSizeBytes, it.buildType.toIntelliJBuildType())
+    }
+    messageHandler(LOGS_FILE_METRICS_CALCULATED_TOPIC) {
+      systemCollector.logFileMetricsCalculated(it.first, it.second)
+    }
+    messageHandler(SEND_INFORMATION_TOPIC) { info ->
+      systemCollector.logFilesSend(
+        total = info.totalAmountOfBatches ?: (info.successfulBatches + info.failedBatches),
+        succeed = info.successfulBatches,
+        failed = info.failedBatches,
+        external = false,
+        successfullySentFiles = info.paths.toList(),
+        errors = info.errorCodes.mapNotNull { it.toIntOrNull() },
+      )
+    }
   }
 
   /**
