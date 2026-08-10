@@ -1,5 +1,5 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.gradle.action
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.gradle.backend.action
 
 import com.intellij.ide.actions.QualifiedNameProvider
 import com.intellij.openapi.editor.Editor
@@ -22,8 +22,8 @@ import kotlin.io.path.pathString
 
 /**
  * Feeds **Copy Reference** via [com.intellij.ide.actions.FqnUtil]: Gradle identity path for the project that owns
- * this script, following Gradle's tooling model ([ExternalProject.getBuildFile], [ExternalProject.getProjectDir],
- * [ExternalProject.getIdentityPath]).
+ * this script, following Gradle's tooling model ([org.jetbrains.plugins.gradle.model.ExternalProject.getBuildFile], [org.jetbrains.plugins.gradle.model.ExternalProject.getProjectDir],
+ * [org.jetbrains.plugins.gradle.model.ExternalProject.getIdentityPath]).
  */
 class GradleBuildScriptQualifiedNameProvider : QualifiedNameProvider {
   override fun adjustElementToCopy(element: PsiElement): PsiElement? = null
@@ -41,15 +41,15 @@ class GradleBuildScriptQualifiedNameProvider : QualifiedNameProvider {
 
   companion object {
     /**
-     * Formats Gradle [ExternalProject.getIdentityPath] for display (task / reference style), matching
+     * Formats Gradle [org.jetbrains.plugins.gradle.model.ExternalProject.getIdentityPath] for display (task / reference style), matching
      * tooling usage in the Gradle plugin.
      */
     internal fun formatGradleIdentityForReference(identityPath: String): String =
       if (identityPath == ":") ":" else identityPath.removeSuffix(":")
 
     /**
-     * Gradle project path as used in Gradle APIs and task paths (for example `:app:core`), from synced [ModuleData].
-     * Prefer [findGradleProjectReferencePath] which uses Gradle's [ExternalProject] model when available.
+     * Gradle project path as used in Gradle APIs and task paths (for example `:app:core`), from synced [com.intellij.openapi.externalSystem.model.project.ModuleData].
+     * Prefer [findGradleProjectReferencePath] which uses Gradle's [org.jetbrains.plugins.gradle.model.ExternalProject] model when available.
      */
     internal fun gradleProjectReferencePath(moduleData: ModuleData): String? {
       val identity = moduleData.gradleIdentityPathOrNull
@@ -64,7 +64,7 @@ class GradleBuildScriptQualifiedNameProvider : QualifiedNameProvider {
     /**
      * Resolves the Gradle reference path for a build or settings script using the Gradle tooling model when possible
      * (correct for composite / included builds, buildSrc, custom [org.gradle.api.initialization.Settings.getRootProject].buildFileName,
-     * and non-default project directories). Falls back to [ExternalSystemModuleDataIndex] when the model is unavailable.
+     * and non-default project directories). Falls back to [com.intellij.openapi.externalSystem.service.project.ExternalSystemModuleDataIndex] when the model is unavailable.
      */
     internal fun findGradleProjectReferencePath(project: Project, scriptFile: VirtualFile): String? {
       if (!looksLikeGradleBuildOrSettingsScript(scriptFile.name)) return null

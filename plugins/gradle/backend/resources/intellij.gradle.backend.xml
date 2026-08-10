@@ -14,4 +14,7 @@
     <module name="intellij.platform.rpc.backend"/>
     <!-- endregion -->
   </dependencies>
+  <extensions defaultExtensionNs="com.intellij">
+    <qualifiedNameProvider implementation="com.intellij.gradle.backend.action.GradleBuildScriptQualifiedNameProvider"/>
+  </extensions>
 </idea-plugin>
