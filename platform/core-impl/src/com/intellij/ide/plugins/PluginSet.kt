@@ -44,9 +44,6 @@ class PluginSet internal constructor(
         resolvedModules[descriptor] = index
       }
     }
-    val topologicalComparator = toCoreAwareComparator(Comparator { o1, o2 -> // TODO drop, should have no noticeable effect anymore
-      compareValues(resolvedModules[o1]!!, resolvedModules[o2]!!)
-    })
     val mostRecentExcludedPlugins = excludedFromCandidateSubset.keys.asSequence()
       .filter { resolvedPluginSet.candidateSet.resolvePluginId(it.pluginId)?.pluginId != it.pluginId }
       .groupBy { it.pluginId }
@@ -59,7 +56,7 @@ class PluginSet internal constructor(
     sortedModulesWithDependencies = ModulesWithDependencies(
       modules = resolvedModules.keys.toList(),
       directDependencies = resolvedModules.keys.associateWith {
-        resolvedPluginSet.getDirectResolvedDependencies(it).filterIsInstance<PluginModuleDescriptor>().sortedWith(topologicalComparator)
+        resolvedPluginSet.getDirectResolvedDependencies(it).filterIsInstance<PluginModuleDescriptor>()
       }
     )
     enabledModules = resolvedModules.keys.toList()
