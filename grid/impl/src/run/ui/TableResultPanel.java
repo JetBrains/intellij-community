@@ -592,7 +592,7 @@ public class TableResultPanel extends UserDataHolderBase
       if (column == null) continue;
       int width = getInitialColumnWidth(column);
       if (width <= 0) continue;
-      ResultViewColumn viewColumn = resultView.getLayoutColumn(modelIndex);
+      ResultViewColumn viewColumn = resultView.getLayoutColumnForDataColumn(modelIndex);
       if (viewColumn != null) viewColumn.setColumnWidthByUser(width);
     }
   }
@@ -1366,8 +1366,11 @@ public class TableResultPanel extends UserDataHolderBase
 
   private void dropModelDependentCache() {
     if (!(myResultView instanceof ResultViewWithColumns resultViewWithColumns)) return;
-    for (var columnIdx : getDataModel(DATA_WITH_MUTATIONS).getColumnIndices().asIterable()) {
-      var layoutColumn = resultViewWithColumns.getLayoutColumn(columnIdx);
+    GridModel<GridRow, GridColumn> model = getDataModel(DATA_WITH_MUTATIONS);
+    // layout columns are backed by rows in a transposed view
+    var columnDataIndices = myResultView.isTransposed() ? model.getRowIndices().asIterable() : model.getColumnIndices().asIterable();
+    for (var columnDataIdx : columnDataIndices) {
+      var layoutColumn = resultViewWithColumns.getLayoutColumn(columnDataIdx);
       if (layoutColumn != null) {
         layoutColumn.dropModelDependentCache();
       }

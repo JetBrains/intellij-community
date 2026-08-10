@@ -2031,6 +2031,12 @@ public final class TableResultView extends JBTableWithResizableCells
   }
 
   @Override
+  public @Nullable ResultViewColumn getLayoutColumnForDataColumn(@NotNull ModelIndex<GridColumn> column) {
+    // Layout columns of a transposed table are backed by rows, so a data column has no layout column of its own.
+    return isTransposed() ? null : getLayoutColumn(column);
+  }
+
+  @Override
   public @NotNull ModelIndexSet<GridRow> getVisibleRows() {
     int rowCount = isTransposed() ? getModel().getColumnCount() : getModel().getRowCount();
     int[] viewRowIndices = new int[rowCount];
