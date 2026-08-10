@@ -162,16 +162,6 @@ class NonIndexableFilesDequeImpl internal constructor(
 
     @JvmStatic
     @ApiStatus.Internal
-    fun nonCancellableIfFileIsLocal(file: VirtualFile, block: (VirtualFile) -> Unit) {
-      if (file.toNioPath().getEelDescriptor() == LocalEelDescriptor) {
-        Cancellation.executeInNonCancelableSection { block(file) }
-      } else {
-        block(file)
-      }
-    }
-
-    @JvmStatic
-    @ApiStatus.Internal
     fun shouldProcessFileAndListChildrenIfTheyShouldBe(workspaceFileIndex: WorkspaceFileIndexEx, file: VirtualFile, childrenProcessor: (Array<VirtualFile>) -> Unit): Boolean {
       if (workspaceFileIndex.isExcludedOrInvalid(file)) return false
       val indexableFileSetsFromFile = workspaceFileIndex.allIndexableFileSets(file)
@@ -184,12 +174,13 @@ class NonIndexableFilesDequeImpl internal constructor(
       // Would be great but the plaform callsites don't allow this
       //ThreadingAssertions.assertBackgroundThread()
       //ThreadingAssertions.assertNoReadAccess()
-      nonCancellableIfFileIsLocal(file) { file ->
+      // Have to to each with cancellations :( or platform gets angry
+      //nonCancellableIfFileIsLocal(file) { file ->
         if (file.isValid && !file.isRecursiveOrCircularSymlink) {
           val children = file.children
           childrenProcessor(children)
         }
-      }
+      //}
       if (indexableFileSetsFromFile.nonRecursive.isNotEmpty()) return false // skip only the current file, children can be non-indexable
       return true
     }
