@@ -26,13 +26,13 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.github.api.data.GHCommit
 import org.jetbrains.plugins.github.authentication.GHLoginSource
 import org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.GHApiLoadingErrorHandler
+import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHCommitModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRChangeListViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRChangeListViewModelBase
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRCommitChangeListViewModelImpl
@@ -40,7 +40,7 @@ import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRCumulativeC
 import java.util.concurrent.CancellationException
 
 @ApiStatus.Experimental
-interface GHPRChangesViewModel : CodeReviewChangesViewModel<GHCommit> {
+interface GHPRChangesViewModel : CodeReviewChangesViewModel<GHCommitModel> {
   val changeListVm: StateFlow<ComputedResult<GHPRChangeListViewModel>>
   val changesLoadingErrorHandler: GHApiLoadingErrorHandler
 
@@ -64,10 +64,12 @@ internal class GHPRChangesViewModelImpl(
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  override val reviewCommits: StateFlow<List<GHCommit>> =
+  override val reviewCommits: StateFlow<List<GHCommitModel>> =
     dataProvider.changesData.changesNeedReloadSignal.withInitial(Unit).transformLatest {
       try {
-        dataProvider.changesData.loadCommits()
+        dataProvider.changesData.loadCommits().map {
+          GHCommitModel(project, it)
+        }
       }
       catch (e: Exception) {
         emptyList()
@@ -108,7 +110,7 @@ internal class GHPRChangesViewModelImpl(
     else commits.indexOfFirst { it.oid.startsWith(sha) }
   }.modelFlow(cs, thisLogger())
 
-  override val selectedCommit: SharedFlow<GHCommit?> = reviewCommits.combine(selectedCommitIndex) { commits, index ->
+  override val selectedCommit: SharedFlow<GHCommitModel?> = reviewCommits.combine(selectedCommitIndex) { commits, index ->
     commits.getOrNull(index)
   }.modelFlow(cs, thisLogger())
 
@@ -142,5 +144,5 @@ internal class GHPRChangesViewModelImpl(
     GHPRStatisticsCollector.logChangeSelected(project)
   }
 
-  override fun commitHash(commit: GHCommit): String = commit.abbreviatedOid
+  override fun commitHash(commit: GHCommitModel): String = commit.abbreviatedOid
 }
