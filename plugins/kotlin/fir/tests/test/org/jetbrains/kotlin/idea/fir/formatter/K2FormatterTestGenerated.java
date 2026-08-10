@@ -324,6 +324,11 @@ public abstract class K2FormatterTestGenerated extends AbstractK2FormatterTest {
                 runTest("../../idea/tests/testData/formatter/kdoc/LongMarkdownTableIsNotWrapped.after.kt");
             }
 
+            @TestMetadata("LongSetextHeadingIsNotWrapped.after.kt")
+            public void testLongSetextHeadingIsNotWrapped() throws Exception {
+                runTest("../../idea/tests/testData/formatter/kdoc/LongSetextHeadingIsNotWrapped.after.kt");
+            }
+
             @TestMetadata("LongUnbrokenLineIsNotWrapped.after.kt")
             public void testLongUnbrokenLineIsNotWrapped() throws Exception {
                 runTest("../../idea/tests/testData/formatter/kdoc/LongUnbrokenLineIsNotWrapped.after.kt");
@@ -394,6 +399,21 @@ public abstract class K2FormatterTestGenerated extends AbstractK2FormatterTest {
                 runTest("../../idea/tests/testData/formatter/kdoc/ReflowParagraph.after.kt");
             }
 
+            @TestMetadata("SetextHeadingIsNotReflowed.after.kt")
+            public void testSetextHeadingIsNotReflowed() throws Exception {
+                runTest("../../idea/tests/testData/formatter/kdoc/SetextHeadingIsNotReflowed.after.kt");
+            }
+
+            @TestMetadata("SetextUnderlineAfterListItem.after.kt")
+            public void testSetextUnderlineAfterListItem() throws Exception {
+                runTest("../../idea/tests/testData/formatter/kdoc/SetextUnderlineAfterListItem.after.kt");
+            }
+
+            @TestMetadata("SingleCharacterSetextUnderline.after.kt")
+            public void testSingleCharacterSetextUnderline() throws Exception {
+                runTest("../../idea/tests/testData/formatter/kdoc/SingleCharacterSetextUnderline.after.kt");
+            }
+
             @TestMetadata("SingleLineKDoc.after.kt")
             public void testSingleLineKDoc() throws Exception {
                 runTest("../../idea/tests/testData/formatter/kdoc/SingleLineKDoc.after.kt");
@@ -407,6 +427,11 @@ public abstract class K2FormatterTestGenerated extends AbstractK2FormatterTest {
             @TestMetadata("TabIndentedCodeBlockSeparatorKept.after.kt")
             public void testTabIndentedCodeBlockSeparatorKept() throws Exception {
                 runTest("../../idea/tests/testData/formatter/kdoc/TabIndentedCodeBlockSeparatorKept.after.kt");
+            }
+
+            @TestMetadata("ThemeBreakIsNotASetextUnderline.after.kt")
+            public void testThemeBreakIsNotASetextUnderline() throws Exception {
+                runTest("../../idea/tests/testData/formatter/kdoc/ThemeBreakIsNotASetextUnderline.after.kt");
             }
 
             @TestMetadata("TopLevelDeclarations.after.kt")

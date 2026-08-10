@@ -142,7 +142,8 @@ private fun splitIntoBlocks(destarredLines: List<DestarredLine>): List<Block> {
     var todoIndent = 0
     var prevLineBlank = true
 
-    for ((rawLine, hadSeparatorSpace) in destarredLines) {
+    for ((index, destarredLine) in destarredLines.withIndex()) {
+        val (rawLine, hadSeparatorSpace) = destarredLine
         val fenceForThisLine = currentFence ?: findCodeFence(rawLine, opening = true)
         val isBlank = rawLine.isBlank()
 
@@ -169,7 +170,8 @@ private fun splitIntoBlocks(destarredLines: List<DestarredLine>): List<Block> {
         val isProtected = fenceForThisLine != null ||
                 (inIndentedCode && !isBlank) ||
                 inTodo ||
-                isSingleLineMarkdownConstruct(rawLine)
+                isSingleLineMarkdownConstruct(rawLine) ||
+                isSetextHeadingLine(destarredLines, index)
         val startsNewTag = currentFence == null && rawLine.startsWith("@")
 
         if (startsNewTag) {
@@ -383,6 +385,35 @@ private fun isThemeBreak(line: String): Boolean {
     if (marks.length < 3) return false
     val mark = marks[0]
     return (mark == '-' || mark == '_' || mark == '*') && marks.all { it == mark }
+}
+
+/**
+ * Checks whether [line] could be a setext underline, which is the case if
+ * it only consists of `-` or `=`.
+ */
+private fun isSetextUnderline(line: String): Boolean {
+    val trimmed = line.trim()
+    if (trimmed.isEmpty()) return false
+    val mark = trimmed[0]
+    return (mark == '=' || mark == '-') && trimmed.all { it == mark }
+}
+
+/**
+ * Whether [line] can be the text an underline turns into a setext heading.
+ */
+private fun canBeSetextHeadingText(line: String?): Boolean =
+    !line.isNullOrBlank() && !isSetextUnderline(line) && !isStartOfMarkdownConstruct(line)
+
+/**
+ * Whether the line at [index] is part of a setext heading, being either the underline itself or the text line
+ * it underlines.
+ */
+private fun isSetextHeadingLine(lines: List<DestarredLine>, index: Int): Boolean {
+    val line = lines[index].text
+    val above = lines.getOrNull(index - 1)?.text
+    val below = lines.getOrNull(index + 1)?.text
+    return (isSetextUnderline(line) && canBeSetextHeadingText(above)) ||
+            (canBeSetextHeadingText(line) && below != null && isSetextUnderline(below))
 }
 
 private val LIST_ITEM_PATTERN = Regex("^\\d+[).]")
