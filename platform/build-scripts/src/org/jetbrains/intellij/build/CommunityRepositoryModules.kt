@@ -33,7 +33,6 @@ import org.jetbrains.intellij.build.telemetry.use
 import java.net.URI
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.StandardCopyOption
 import java.util.Locale
 
 object CommunityRepositoryModules {
@@ -115,13 +114,7 @@ object CommunityRepositoryModules {
         val targetLib = targetDir.resolve("lib")
 
         val mavenDist = BundledMavenDownloader.downloadMavenDistribution(context.paths.communityHomeDirRoot)
-        val maven3Dir = targetLib.resolve("maven3")
-        if (context.options.linkImmutableCacheEntries) {
-          linkOrCopyDir(mavenDist, maven3Dir)
-        }
-        else {
-          copyDir(mavenDist, maven3Dir)
-        }
+        materializeCacheDir(sourceDir = mavenDist, targetDir = targetLib.resolve("maven3"), context = context)
       }
 
       with("intellij.maven.server3") {
@@ -382,22 +375,17 @@ object CommunityRepositoryModules {
         val properties = BuildDependenciesDownloader.getDependencyProperties(communityRoot)
         val jcefBuildNumber = properties.property("jcefBuild")
 
-        val archive = resolveFileForReading(jcefDownloadUrl(os, arch, jcefBuildNumber), communityRoot)
-        val subDir = targetDir.resolve("jcef-tmp") // to not clean up root plugin directory on BuildDependenciesDownloader.extractFile
-        Files.createDirectories(subDir)
-
-        BuildDependenciesDownloader.extractFile(
-          archiveFile = archive.file,
-          target = subDir,
+        // extracted into the content-keyed cache rather than straight into the layout: a dev run directory is wiped
+        // on every launch (`IdeBuilder`), so an extraction that lands in it is an extraction repeated every launch
+        val extracted = resolveAndExtractToCacheLocation(
+          url = jcefDownloadUrl(os, arch, jcefBuildNumber),
           communityRoot = communityRoot,
-          sha256 = archive.sha256,
-          options = arrayOf(BuildDependenciesExtractOptions.STRIP_ROOT),
+          BuildDependenciesExtractOptions.STRIP_ROOT,
         )
 
         // Unix ZIP does not have root `jcef` directory
-        val jcefOutputDir = if (Files.exists(subDir.resolve("jcef"))) subDir.resolve("jcef") else subDir
-        Files.move(jcefOutputDir, targetDir.resolve("jcef"), StandardCopyOption.REPLACE_EXISTING)
-        Files.deleteIfExists(subDir)
+        val jcefOutputDir = extracted.resolve("jcef").takeIf { Files.exists(it) } ?: extracted
+        materializeCacheDir(sourceDir = jcefOutputDir, targetDir = targetDir.resolve("jcef"), context = context)
       }
 
       spec.enableSymlinksAndExecutableResources()
@@ -816,13 +804,34 @@ object CommunityRepositoryModules {
 
 private fun copyMavenLibraries(libraries: List<BundledMavenDownloader.MavenLibraryFile>, targetDir: Path, context: BuildContext) {
   for ((fileName, source) in libraries) {
-    val target = targetDir.resolve(fileName)
-    if (context.options.linkImmutableCacheEntries) {
-      linkOrCopyFile(source, target)
-    }
-    else {
-      copyFile(source, target)
-    }
+    materializeCacheFile(source = source, target = targetDir.resolve(fileName), context = context)
+  }
+}
+
+/**
+ * Puts an entry of an immutable cache - a download-cache file, an extracted archive, a Bazel runfile - into the
+ * layout, hardlinking it where the layout is a disposable dev run directory and copying it everywhere else.
+ *
+ * See [BuildOptions.linkImmutableCacheEntries] for why only a dev run directory may share bytes with the cache.
+ */
+private fun materializeCacheFile(source: Path, target: Path, context: BuildContext) {
+  if (context.options.linkImmutableCacheEntries) {
+    linkOrCopyFile(source, target)
+  }
+  else {
+    copyFile(source, target)
+  }
+}
+
+/**
+ * [materializeCacheFile] for a whole extracted tree.
+ */
+private fun materializeCacheDir(sourceDir: Path, targetDir: Path, context: BuildContext) {
+  if (context.options.linkImmutableCacheEntries) {
+    linkOrCopyDir(sourceDir, targetDir)
+  }
+  else {
+    copyDir(sourceDir, targetDir)
   }
 }
 

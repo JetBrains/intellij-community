@@ -60,20 +60,35 @@ fun copyDir(sourceDir: Path, targetDir: Path, dirFilter: Predicate<Path>? = null
  */
 fun linkOrCopyFile(file: Path, target: Path) {
   Files.createDirectories(target.parent)
-  try {
-    Files.deleteIfExists(target)
-    Files.createLink(target, file)
+  doLinkOrCopyFile(file = file, target = target, isSymbolicLink = Files.isSymbolicLink(file))
+}
+
+/**
+ * [linkOrCopyFile] for a caller that has already created `target.parent` and already knows whether
+ * [file] is a symbolic link, so that neither costs an extra syscall per file of a tree.
+ */
+private fun doLinkOrCopyFile(file: Path, target: Path, isSymbolicLink: Boolean) {
+  // a symlink is recreated, never hardlinked: `link` follows symlinks on macOS but not on Linux, so a hardlinked
+  // one would mean a different thing per OS - and what a tree of frameworks needs is the link itself
+  if (!isSymbolicLink) {
+    try {
+      Files.deleteIfExists(target)
+      Files.createLink(target, file)
+      return
+    }
+    catch (_: IOException) {
+    }
+    catch (_: UnsupportedOperationException) {
+    }
   }
-  catch (_: IOException) {
-    Files.copy(file, target, StandardCopyOption.COPY_ATTRIBUTES, StandardCopyOption.REPLACE_EXISTING)
-  }
-  catch (_: UnsupportedOperationException) {
-    Files.copy(file, target, StandardCopyOption.COPY_ATTRIBUTES, StandardCopyOption.REPLACE_EXISTING)
-  }
+  Files.copy(file, target, StandardCopyOption.COPY_ATTRIBUTES, StandardCopyOption.REPLACE_EXISTING, LinkOption.NOFOLLOW_LINKS)
 }
 
 /**
  * [linkOrCopyFile] for a whole tree. Same constraints, and the same reason for them.
+ *
+ * Symbolic links are reproduced as links, as [copyDir] does - a JCEF or JBR tree is a tree of macOS
+ * frameworks, where dereferencing one would both break the framework layout and multiply its size.
  */
 fun linkOrCopyDir(sourceDir: Path, targetDir: Path) {
   Files.createDirectories(targetDir)
@@ -84,7 +99,12 @@ fun linkOrCopyDir(sourceDir: Path, targetDir: Path) {
     }
 
     override fun visitFile(sourceFile: Path, attributes: BasicFileAttributes): FileVisitResult {
-      linkOrCopyFile(sourceFile, targetDir.resolve(sourceDir.relativize(sourceFile).toString()))
+      // `walkFileTree` does not follow links, so a link to a directory arrives here too, as a file
+      doLinkOrCopyFile(
+        file = sourceFile,
+        target = targetDir.resolve(sourceDir.relativize(sourceFile).toString()),
+        isSymbolicLink = attributes.isSymbolicLink,
+      )
       return FileVisitResult.CONTINUE
     }
   })

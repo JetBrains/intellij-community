@@ -454,8 +454,11 @@ private fun extractFileWithFlagFileLocation(
       )
     }
   }
-  Files.write(flagFile, getExpectedFlagFileContent(cacheKey, targetDirectory, options))
-  check(checkFlagFile(cacheKey, flagFile, targetDirectory, options)) {
+  // the expected content is computed once and compared against what landed: recomputing it through `checkFlagFile`
+  // would walk the whole extracted tree a second time, which for a JBR-sized one is not free
+  val expectedFlagFileContent = getExpectedFlagFileContent(cacheKey, targetDirectory, options)
+  Files.write(flagFile, expectedFlagFileContent)
+  check(Files.readAllBytes(flagFile).contentEquals(expectedFlagFileContent)) {
     "'checkFlagFile' must be true right after extracting the archive. flagFile:${flagFile} archiveFile:${archiveFile} target:${targetDirectory}"
   }
 }
