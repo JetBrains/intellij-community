@@ -32,10 +32,17 @@ internal class KDocParser(
 }
 
 /**
+ * A KDoc line with its leading `*` removed.
+ * [hadSeparatorSpace] is true whenever there was a space following the `*` before destarring.
+ * Note that if [hadSeparatorSpace] is true, the single space separator is not included in [text].
+ */
+private data class DestarredLine(val text: String, val hadSeparatorSpace: Boolean)
+
+/**
  * A line is a single line in a [Block].
  * If [isProtected] is true, the line is not wrapped.
  */
-private data class Line(val text: String, val isProtected: Boolean)
+private data class Line(val text: String, val isProtected: Boolean, val hadSeparatorSpace: Boolean = true)
 
 /**
  * A block is an inseparable unit of a KDoc element.
@@ -48,7 +55,7 @@ private data class Block(val tag: String?, val lines: MutableList<Line> = mutabl
  * A paragraph is a flowing piece of [text] that might span multiple lines and can potentially be wrapped.
  * If [isProtected] is true, the paragraph is not wrapped.
  */
-private data class Paragraph(val text: String, val isProtected: Boolean)
+private data class Paragraph(val text: String, val isProtected: Boolean, val hadSeparatorSpace: Boolean = true)
 
 /**
  * A fence is a set of characters that introduce a special markdown/code block in a KDoc.
@@ -78,14 +85,15 @@ private fun wrapKDocBody(
  * Strips the leading `*` and a single leading space of KDoc comment lines.
  * Additionally, trailing whitespaces are also removed.
  */
-private fun destarLines(body: String): List<String> = body.split("\n").map { rawLine ->
+private fun destarLines(body: String): List<DestarredLine> = body.split("\n").map { rawLine ->
     val withoutIndent = rawLine.trimStart()
-    val content = if (withoutIndent.startsWith("*")) {
-        withoutIndent.substring(1).removePrefix(" ")
-    } else {
-        withoutIndent
+    if (!withoutIndent.startsWith("*")) {
+        // A line without the leading `*` gains one, so it also gains the conventional separator.
+        return@map DestarredLine(withoutIndent.trimEnd(), hadSeparatorSpace = true)
     }
-    content.trimEnd()
+    val afterStar = withoutIndent.substring(1)
+    val hadSeparatorSpace = afterStar.startsWith(" ")
+    DestarredLine(afterStar.removePrefix(" ").trimEnd(), hadSeparatorSpace)
 }
 
 
@@ -111,12 +119,12 @@ private fun indentWidth(line: String): Int {
  * block followed by one block per `@tag` occurrence, in original order.
  * A line is only treated as a tag boundary outside an open code fence.
  */
-private fun splitIntoBlocks(destarredLines: List<String>): List<Block> {
+private fun splitIntoBlocks(destarredLines: List<DestarredLine>): List<Block> {
     val blocks = mutableListOf(Block(tag = null))
     var currentFence: FenceInfo? = null
     var inIndentedCode = false
     var prevLineBlank = true
-    for (rawLine in destarredLines) {
+    for ((rawLine, hadSeparatorSpace) in destarredLines) {
         val fenceForThisLine = currentFence ?: findCodeFence(rawLine, opening = true)
         val isBlank = rawLine.isBlank()
 
@@ -140,7 +148,7 @@ private fun splitIntoBlocks(destarredLines: List<String>): List<Block> {
             newBlock.lines += Line(rest, isProtected = false)
             blocks += newBlock
         } else {
-            blocks.last().lines += Line(rawLine, isProtected)
+            blocks.last().lines += Line(rawLine, isProtected, hadSeparatorSpace)
         }
 
         currentFence = when {
@@ -171,11 +179,11 @@ private fun splitIntoParagraphs(lines: List<Line>, preserveLineFeeds: Boolean): 
         }
     }
 
-    for ((line, isProtectedLine) in lines) {
+    for ((line, isProtectedLine, hadSeparatorSpace) in lines) {
         when {
             isProtectedLine -> {
                 flush()
-                result += Paragraph(line, isProtected = true)
+                result += Paragraph(line, isProtected = true, hadSeparatorSpace = hadSeparatorSpace)
             }
 
             line.isEmpty() -> {
@@ -183,12 +191,15 @@ private fun splitIntoParagraphs(lines: List<Line>, preserveLineFeeds: Boolean): 
                 result += Paragraph("", isProtected = false)
             }
 
-            preserveLineFeeds -> result += Paragraph(line, isProtected = false)
+            preserveLineFeeds -> result += Paragraph(line, isProtected = false, hadSeparatorSpace = hadSeparatorSpace)
             else -> {
                 if (isStartOfMarkdownConstruct(line)) flush()
                 if (sb.isEmpty()) {
+                    // The line that opens a paragraph keeps its own indentation: for a nested list item or
+                    // blockquote that indentation is structural, and trimming it would flatten the nesting.
                     sb.append(line)
                 } else {
+                    // Horizontal spacing loses its meaning once lines are fused into one paragraph.
                     sb.append(' ').append(line.trim())
                 }
             }
@@ -208,7 +219,7 @@ private fun wrapBlock(block: Block, rightMargin: Int, indent: String, preserveLi
     var isFirstLine = true
     for (paragraph in splitIntoParagraphs(block.lines, preserveLineFeeds)) {
         if (paragraph.isProtected || paragraph.text.isEmpty()) {
-            wrapped += Line(paragraph.text, isProtected = paragraph.isProtected)
+            wrapped += Line(paragraph.text, paragraph.isProtected, paragraph.hadSeparatorSpace)
             isFirstLine = false
             continue
         }
@@ -274,31 +285,36 @@ private fun render(
     wasMultiline: Boolean,
     rightMargin: Int,
 ): String {
-    val physicalLines = mutableListOf<String>()
+    val physicalLines = mutableListOf<Line>()
     for ((tag, lines) in wrappedBlocks) {
         lines.forEachIndexed { idx, line ->
             physicalLines += when {
-                idx != 0 || tag == null -> line.text
-                line.text.isEmpty() -> "@$tag"
-                else -> "@$tag ${line.text}"
+                idx != 0 || tag == null -> line
+                line.text.isEmpty() -> line.copy(text = "@$tag", hadSeparatorSpace = true)
+                else -> line.copy(text = "@$tag ${line.text}", hadSeparatorSpace = true)
             }
         }
     }
     // An empty multi-line KDoc needs to keep its empty line, while a single-line KDoc should not gain an additional line
-    if (!wasMultiline && physicalLines.size == 1 && physicalLines[0].isEmpty()) physicalLines.clear()
+    if (!wasMultiline && physicalLines.size == 1 && physicalLines[0].text.isEmpty()) physicalLines.clear()
 
     val canStayInline = !wasMultiline && physicalLines.size <= 1 &&
-            indent.length + "/**  */".length + (physicalLines.firstOrNull()?.length ?: 0) <= rightMargin
+            indent.length + "/**  */".length + (physicalLines.firstOrNull()?.text?.length ?: 0) <= rightMargin
 
     if (canStayInline) {
-        return if (physicalLines.isEmpty()) "/** */" else "/** ${physicalLines[0]} */"
+        return if (physicalLines.isEmpty()) "/** */" else "/** ${physicalLines[0].text} */"
     }
 
     return buildString {
         append("/**\n")
-        for (line in physicalLines) {
+        for ((text, _, hadSeparatorSpace) in physicalLines) {
             append(indent).append(" *")
-            if (line.isNotEmpty()) append(' ').append(line)
+            if (text.isNotEmpty()) {
+                if (hadSeparatorSpace) {
+                    append(' ')
+                }
+                append(text)
+            }
             append('\n')
         }
         append(indent).append(" */")

@@ -374,6 +374,11 @@ public abstract class K2FormatterTestGenerated extends AbstractK2FormatterTest {
                 runTest("../../idea/tests/testData/formatter/kdoc/SingleLineKDoc.after.kt");
             }
 
+            @TestMetadata("TabIndentedCodeBlockSeparatorKept.after.kt")
+            public void testTabIndentedCodeBlockSeparatorKept() throws Exception {
+                runTest("../../idea/tests/testData/formatter/kdoc/TabIndentedCodeBlockSeparatorKept.after.kt");
+            }
+
             @TestMetadata("TopLevelDeclarations.after.kt")
             public void testTopLevelDeclarations() throws Exception {
                 runTest("../../idea/tests/testData/formatter/kdoc/TopLevelDeclarations.after.kt");
