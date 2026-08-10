@@ -13,6 +13,7 @@
   <technology name="allure2" root="io.qameta.allure"/>
   <technology name="androidx-compose" root="androidx.compose"/>
   <technology name="android" root="android"/>
+  <technology name="anthropic-java" root="com.anthropic"/>
   <technology name="apache-bval" root="org.apache.bval"/>
   <technology name="apache-camel" root="org.apache.camel"/>
   <technology name="apache-cayenne" root="org.apache.cayenne"/>
@@ -105,6 +106,7 @@
   <technology name="elastic4s" root="elastic4s"/>
   <technology name="elasticjob" root="org.apache.shardingsphere.elasticjob"/>
   <technology name="elasticmq" root="elasticmq"/>
+  <technology name="embabel" root="com.embabel"/>
   <technology name="errorprone" root="com.google.errorprone.annotations"/>
   <technology name="eureka" root="com.netflix.discovery"/>
   <technology name="exposed" root="org.jetbrains.exposed"/>
