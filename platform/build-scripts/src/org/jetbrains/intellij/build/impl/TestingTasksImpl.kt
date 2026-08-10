@@ -1679,4 +1679,5 @@ private val COMMUNITY_AGGREGATOR_BAZEL_MIGRATED_MODULES = listOf(
   "intellij.mcpserver.tests",
   "intellij.mcpserver.terminal.tests",
   "intellij.mcpserver.terminal.frontend.tests",
+  "intellij.python.mcp.tests",
 )
