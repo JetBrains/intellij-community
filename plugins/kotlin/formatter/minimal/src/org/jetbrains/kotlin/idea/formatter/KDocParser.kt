@@ -1,7 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.formatter
 
+import com.intellij.ide.todo.TodoConfiguration
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import java.util.regex.Pattern
 
 /**
  * Parser responsible for parsing KDocs and splitting the comment text into [Block]s and [Paragraph]s.
@@ -115,15 +117,31 @@ private fun indentWidth(line: String): Int {
 }
 
 /**
+ * Whether [line] starts a `TODO` item.
+ * Note: `TODO`s are only recognized at the start of a line.
+ */
+private fun startsTodo(line: String, todoPatterns: List<Pattern>): Boolean {
+    if (todoPatterns.isEmpty()) return false
+    val trimmed = line.trim()
+    return todoPatterns.any { it.matcher(trimmed).matches() }
+}
+
+/**
  * Splits destarred lines into an ordered list of blocks: a leading (possibly empty) description
  * block followed by one block per `@tag` occurrence, in original order.
  * A line is only treated as a tag boundary outside an open code fence.
  */
 private fun splitIntoBlocks(destarredLines: List<DestarredLine>): List<Block> {
     val blocks = mutableListOf(Block(tag = null))
+    // Patterns recognized to start TODO sections (e.g. `FIXME` and `TODO`)
+    val todoPatterns = TodoConfiguration.getInstance().todoPatterns.mapNotNull { it.pattern }
+    val multilineTodosEnabled = TodoConfiguration.getInstance().isMultiLine
     var currentFence: FenceInfo? = null
     var inIndentedCode = false
+    var inTodo = false
+    var todoIndent = 0
     var prevLineBlank = true
+
     for ((rawLine, hadSeparatorSpace) in destarredLines) {
         val fenceForThisLine = currentFence ?: findCodeFence(rawLine, opening = true)
         val isBlank = rawLine.isBlank()
@@ -137,7 +155,18 @@ private fun splitIntoBlocks(destarredLines: List<DestarredLine>): List<Block> {
             else -> false
         }
 
-        val isProtected = fenceForThisLine != null || (inIndentedCode && !isBlank)
+        inTodo = when {
+            isBlank -> false
+            // A line matching a pattern ends the previous item and starts a new one
+            startsTodo(rawLine, todoPatterns) -> {
+                todoIndent = indentWidth(rawLine)
+                true
+            }
+            // potential continuation of the TODO on a new line
+            else -> multilineTodosEnabled && inTodo && indentWidth(rawLine) > todoIndent
+        }
+
+        val isProtected = fenceForThisLine != null || (inIndentedCode && !isBlank) || inTodo
         val startsNewTag = currentFence == null && rawLine.startsWith("@")
 
         if (startsNewTag) {

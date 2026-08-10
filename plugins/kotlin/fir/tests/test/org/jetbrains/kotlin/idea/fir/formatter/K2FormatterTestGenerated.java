@@ -334,6 +334,16 @@ public abstract class K2FormatterTestGenerated extends AbstractK2FormatterTest {
                 runTest("../../idea/tests/testData/formatter/kdoc/MarkdownTable.after.kt");
             }
 
+            @TestMetadata("MultilineTodoIsNotReflowed.after.kt")
+            public void testMultilineTodoIsNotReflowed() throws Exception {
+                runTest("../../idea/tests/testData/formatter/kdoc/MultilineTodoIsNotReflowed.after.kt");
+            }
+
+            @TestMetadata("MultilineTodoIsNotWrapped.after.kt")
+            public void testMultilineTodoIsNotWrapped() throws Exception {
+                runTest("../../idea/tests/testData/formatter/kdoc/MultilineTodoIsNotWrapped.after.kt");
+            }
+
             @TestMetadata("NestedDeclarations.after.kt")
             public void testNestedDeclarations() throws Exception {
                 runTest("../../idea/tests/testData/formatter/kdoc/NestedDeclarations.after.kt");
@@ -372,6 +382,11 @@ public abstract class K2FormatterTestGenerated extends AbstractK2FormatterTest {
             @TestMetadata("SingleLineKDoc.after.kt")
             public void testSingleLineKDoc() throws Exception {
                 runTest("../../idea/tests/testData/formatter/kdoc/SingleLineKDoc.after.kt");
+            }
+
+            @TestMetadata("SingleLineTodoIsNotWrapped.after.kt")
+            public void testSingleLineTodoIsNotWrapped() throws Exception {
+                runTest("../../idea/tests/testData/formatter/kdoc/SingleLineTodoIsNotWrapped.after.kt");
             }
 
             @TestMetadata("TabIndentedCodeBlockSeparatorKept.after.kt")
