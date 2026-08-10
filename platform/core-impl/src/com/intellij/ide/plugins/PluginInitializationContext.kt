@@ -111,7 +111,7 @@ interface PluginInitializationContext {
   /**
    * Only is called once during the startup initialization
    */
-  fun runConfigurationDuringStartup(totalPluginSet: AmbiguousPluginSet)
+  fun runConfigurationDuringStartup(candidateSubset: UnambiguousPluginSet)
 
   companion object
 }

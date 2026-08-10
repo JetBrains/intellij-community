@@ -489,7 +489,6 @@ object PluginManagerCore {
         }
       }
     }
-    val totalPluginSet = AmbiguousPluginSet.build(candidateSubset.plugins + incompletePlugins.values)
     val pluginNonLoadReasons = incompletePlugins.values.mapNotNull { plugin ->
       excludedFromCandidateSubset[plugin]!!.toSelectionPluginNonLoadReason()?.let { plugin.pluginId to it }
     }.toMap(mutableMapOf())
@@ -505,7 +504,7 @@ object PluginManagerCore {
     }
 
     initStagesActivity = initStagesActivity?.endAndStart("initContext startup configuration")
-    initContext.runConfigurationDuringStartup(totalPluginSet)
+    initContext.runConfigurationDuringStartup(candidateSubset)
 
     initStagesActivity = initStagesActivity?.endAndStart("resolveConstraints")
     val pluginsToDisable = HashMap<PluginId, PluginStateChangeData>()
@@ -517,7 +516,7 @@ object PluginManagerCore {
       if (loadingError is PluginDependencyIsDisabled) {
         val disabledDependencyId = loadingError.dependencyId
         if (initContext.isPluginDisabled(disabledDependencyId)) {
-          val disabledPlugin = totalPluginSet.resolvePluginId(disabledDependencyId).firstOrNull()
+          val disabledPlugin = candidateSubset.resolvePluginId(disabledDependencyId)
           if (disabledPlugin != null) {
             pluginsToEnable[disabledDependencyId] = PluginStateChangeData(disabledPlugin.pluginId, disabledPlugin.name)
           }

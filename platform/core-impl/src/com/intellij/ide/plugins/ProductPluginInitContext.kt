@@ -124,8 +124,8 @@ class ProductPluginInitContext(
   override fun shouldIncludeContentModulesForDependsEdgeTarget(resolvedTarget: PluginMainDescriptor): Boolean =
     defaultShouldIncludeContentModulesForDependsEdgeTarget(resolvedTarget)
 
-  override fun runConfigurationDuringStartup(totalPluginSet: AmbiguousPluginSet) {
-    thirdPartyPluginsWithoutConsentCheckResult = checkThirdPartyPluginsPrivacyConsent(totalPluginSet)
+  override fun runConfigurationDuringStartup(candidateSubset: UnambiguousPluginSet) {
+    thirdPartyPluginsWithoutConsentCheckResult = checkThirdPartyPluginsPrivacyConsent(candidateSubset)
     thirdPartyPluginsWithoutConsentCheckResult?.let { result ->
       if (result.privacyNoteAccepted != null) {
         ThirdPartyPluginsPrivacyConsentState.setState(result.privacyNoteAccepted)
@@ -147,8 +147,8 @@ class ProductPluginInitContext(
    *
    * Invoked only during startup initialization.
    */
-  private fun checkThirdPartyPluginsPrivacyConsent(pluginSet: AmbiguousPluginSet): ThirdPartyPluginsWithoutConsentCheckResult? {
-    val aliens = ThirdPartyPluginsWithoutConsentFile.consumeAliensFile().mapNotNull { pluginSet.resolvePluginId(it).firstOrNull()?.getMainDescriptor() }
+  private fun checkThirdPartyPluginsPrivacyConsent(candidateSubset: UnambiguousPluginSet): ThirdPartyPluginsWithoutConsentCheckResult? {
+    val aliens = ThirdPartyPluginsWithoutConsentFile.consumeAliensFile().mapNotNull { candidateSubset.resolvePluginId(it)?.getMainDescriptor() }
     if (aliens.isEmpty()) {
       return null
     }
