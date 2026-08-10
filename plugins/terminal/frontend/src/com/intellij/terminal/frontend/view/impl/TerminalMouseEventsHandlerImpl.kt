@@ -46,6 +46,10 @@ internal class TerminalMouseEventsHandlerImpl(
         }
         code = applyModifierKeys(event, code)
         terminalInput.sendBytes(mouseReport(code, x + 1, y + 1))
+
+        // Consume the mouse event to avoid double processing:
+        // by the terminal process and the editor logic (for example, text selection).
+        event.consume()
       }
     }
   }
@@ -68,6 +72,10 @@ internal class TerminalMouseEventsHandlerImpl(
         }
         code = applyModifierKeys(event, code)
         terminalInput.sendBytes(mouseReport(code, x + 1, y + 1))
+
+        // Consume the mouse event to avoid double processing:
+        // by the terminal process and the editor logic (for example, text selection).
+        event.consume()
       }
     }
     lastMotionReport = null
@@ -85,6 +93,10 @@ internal class TerminalMouseEventsHandlerImpl(
       terminalInput.sendBytes(
         mouseReport(MouseButtonCodes.RELEASE or MouseButtonModifierFlags.MOUSE_BUTTON_MOTION_FLAG, x + 1, y + 1)
       )
+
+      // Consume the mouse event to avoid double processing:
+      // by the terminal process and the editor logic (for example, text selection).
+      event.consume()
     }
     lastMotionReport = Point(x, y)
   }
@@ -104,6 +116,10 @@ internal class TerminalMouseEventsHandlerImpl(
         code = code or MouseButtonModifierFlags.MOUSE_BUTTON_MOTION_FLAG
         code = applyModifierKeys(event, code)
         terminalInput.sendBytes(mouseReport(code, x + 1, y + 1))
+
+        // Consume the mouse event to avoid double processing:
+        // by the terminal process and the editor logic (for example, text selection).
+        event.consume()
       }
     }
     lastMotionReport = Point(x, y)
@@ -132,6 +148,9 @@ internal class TerminalMouseEventsHandlerImpl(
         repeat(abs(event.unitsToScroll)) {
           terminalInput.sendBytes(arrowKeys)
         }
+
+        // Consume the mouse event to avoid double processing:
+        // by the terminal process and the editor logic (for example, text selection).
         event.consume()
       }
     }
