@@ -1,15 +1,16 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.model;
 
 import com.intellij.serialization.PropertyMapping;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
 public final class DefaultGradleConfiguration implements GradleConfiguration {
-  private static final long serialVersionUID = 3L;
+  private static final long serialVersionUID = 4L;
 
   private final String name;
   private final String description;
@@ -17,11 +18,12 @@ public final class DefaultGradleConfiguration implements GradleConfiguration {
   private final boolean scriptClasspathConfiguration;
   private final List<String> declarationAlternatives;
   private final Boolean canBeDeclared;
+  private final List<String> extendsFrom;
 
 
   @PropertyMapping({"name", "description", "visible", "declarationAlternatives"})
   public DefaultGradleConfiguration(String name, String description, boolean visible, @NotNull List<String> declarationAlternatives) {
-    this(name, description, visible, false, declarationAlternatives, null);
+    this(name, description, visible, false, declarationAlternatives, null, Collections.emptyList());
   }
 
   public DefaultGradleConfiguration(
@@ -30,7 +32,8 @@ public final class DefaultGradleConfiguration implements GradleConfiguration {
     boolean visible,
     boolean scriptClasspathConfiguration,
     @NotNull List<String> declarationAlternatives,
-    @Nullable Boolean canBeDeclared
+    @Nullable Boolean canBeDeclared,
+    @NotNull List<String> extendsFrom
   ) {
     this.name = name;
     this.description = description;
@@ -38,6 +41,7 @@ public final class DefaultGradleConfiguration implements GradleConfiguration {
     this.scriptClasspathConfiguration = scriptClasspathConfiguration;
     this.declarationAlternatives = declarationAlternatives;
     this.canBeDeclared = canBeDeclared;
+    this.extendsFrom = extendsFrom;
   }
 
   public DefaultGradleConfiguration(GradleConfiguration configuration) {
@@ -46,7 +50,8 @@ public final class DefaultGradleConfiguration implements GradleConfiguration {
          configuration.isVisible(),
          configuration.isScriptClasspathConfiguration(),
          configuration.getDeclarationAlternatives(),
-         configuration.getCanBeDeclared()
+         configuration.getCanBeDeclared(),
+         configuration.getExtendsFrom()
     );
   }
 
@@ -81,6 +86,11 @@ public final class DefaultGradleConfiguration implements GradleConfiguration {
   }
 
   @Override
+  public @NotNull List<String> getExtendsFrom() {
+    return extendsFrom;
+  }
+
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -93,6 +103,7 @@ public final class DefaultGradleConfiguration implements GradleConfiguration {
     if (!Objects.equals(description, that.description)) return false;
     if (!declarationAlternatives.equals(that.declarationAlternatives)) return false;
     if (!Objects.equals(canBeDeclared, that.canBeDeclared)) return false;
+    if (!extendsFrom.equals(that.extendsFrom)) return false;
 
     return true;
   }
@@ -105,6 +116,7 @@ public final class DefaultGradleConfiguration implements GradleConfiguration {
     result = 31 * result + (scriptClasspathConfiguration ? 1 : 0);
     result = 31 * result + (declarationAlternatives.hashCode());
     result = 31 * result + (canBeDeclared != null ? canBeDeclared.hashCode() : 0);
+    result = 31 * result + (extendsFrom.hashCode());
     return result;
   }
 }
