@@ -40,8 +40,9 @@ object MavenClasspathBuilder {
    * `<maven plugin dir>/lib/<subdir>` directory of jars.
    *
    * That layout is the contract produced by the Maven `PluginLayout` in `CommunityRepositoryModules.kt`, and it is the
-   * same in a production installation and in a dev build - so this works for both, and only genuine JPS-output runs
-   * (see [org.jetbrains.idea.maven.utils.MavenUtil.isRunningFromSources]) need the module-output-based alternative.
+   * same in a production installation and in a dev build - so this works for both. Only a genuine JPS-output run
+   * ([org.jetbrains.idea.maven.utils.MavenUtil.isRunningFromSources]) has no such layout, and stitches the classpath
+   * together from module outputs and `BundledMavenDownloader`'s library directory instead.
    */
   @JvmStatic
   fun addMavenServerLibraries(classpath: MutableList<Path>, vararg subdirs: String) {

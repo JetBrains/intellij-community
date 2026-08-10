@@ -219,8 +219,8 @@ object BuildDependenciesDownloader {
   }
 
   fun cleanUpIfRequired(communityRoot: BuildDependenciesCommunityRoot) {
-    if (!cleanupFlag.getAndSet(true)) {
-      // run only once per process
+    // run only once per process - `getAndSet` reports what was there before, so the first caller is the one that runs
+    if (cleanupFlag.getAndSet(true)) {
       return
     }
     if (TeamCityHelper.isUnderTeamCity) {

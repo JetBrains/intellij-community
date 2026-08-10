@@ -1990,16 +1990,6 @@ object MavenUtil {
     return null
   }
 
-  /**
-   * The Maven plugin's source directory **in the checkout**, not in any IDE distribution.
-   *
-   * Only meaningful when [isRunningFromSources] is `true`; an installed IDE and a dev build both read
-   * the assembled plugin layout instead (see [org.jetbrains.idea.maven.MavenClasspathBuilder.addMavenServerLibraries]).
-   */
-  @JvmStatic
-  val mavenPluginParentFile: Path
-    get() = Paths.get(PathManager.getCommunityHomePath(), "plugins", "maven")
-
   @JvmStatic
   @ApiStatus.Internal
   fun isMavenUnitTestModeEnabled(): Boolean {
