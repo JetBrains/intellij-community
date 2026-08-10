@@ -13,10 +13,13 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<idea-plugin visibility="public">
+<idea-plugin visibility="public" xmlns:xi="http://www.w3.org/2001/XInclude">
   <dependencies>
     <module name="intellij.platform.backend"/>
   </dependencies>
+
+  <xi:include href="/META-INF/RegistryKeysIndexingImpl.xml"/>
+
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.java.shortNamesCache" area="IDEA_PROJECT" interface="com.intellij.psi.search.PsiShortNamesCache" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.methodReferencesSearch" interface="com.intellij.util.QueryExecutor" dynamic="true"/>

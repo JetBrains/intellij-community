@@ -1,0 +1,7 @@
+<idea-plugin>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="show.method.base.class.in.java.file.structure" defaultValue="true"
+                 description="Show the base class of a method in the Java File Structure view"/>
+  </extensions>
+</idea-plugin>

@@ -4,7 +4,6 @@
     <module name="intellij.platform.backend"/>
   </dependencies>
 
-  <!--todo move to modules?-->
   <xi:include href="/META-INF/RegistryKeys.xml"/>
 
   <xi:include href="/META-INF/Intentions.xml"/>

@@ -1,4 +1,4 @@
-<idea-plugin visibility="public">
+<idea-plugin visibility="public" xmlns:xi="http://www.w3.org/2001/XInclude">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <plugin id="com.intellij.modules.java-capable"/>
@@ -22,4 +22,6 @@
       id="javaPsiClassLogicalStructureTreeElementProvider"
       implementation="com.intellij.lang.java.logical.JavaPsiClassLogicalStructureTreeElementProvider"/>
   </extensions>
+
+  <xi:include href="/META-INF/RegistryKeysStructureView.xml"/>
 </idea-plugin>
