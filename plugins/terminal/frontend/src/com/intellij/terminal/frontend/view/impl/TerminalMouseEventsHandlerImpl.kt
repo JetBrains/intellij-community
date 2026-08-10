@@ -35,7 +35,10 @@ internal class TerminalMouseEventsHandlerImpl(
     terminalInput.sendBytes(encodedEvent)
     if (event is MouseWheelEvent) {
       editor.selectionModel.removeSelection()
-      event.consume()
     }
+
+    // Consume the mouse event to avoid double processing:
+    // by the terminal process and the editor logic (for example, text selection).
+    event.consume()
   }
 }
