@@ -14377,6 +14377,45 @@ jvm_import(
 )
 
 copy_file(
+    name = "org.xmlunit/xmlunit-core-2.9.1.jar_copy",
+    src = "@org_xmlunit-xmlunit-core-2_9_1_http//file",
+    out = "org.xmlunit/xmlunit-core-2.9.1.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "jakarta.activation/jakarta.activation-api-1.2.2.jar_copy",
+    src = "@jakarta_activation-jakarta_activation-api-1_2_2_http//file",
+    out = "jakarta.activation/jakarta.activation-api-1.2.2.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+java_library(
+    name = "libraries-xmlunit-core-_x_m_l_unit_core",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        ":org_xmlunit-xmlunit-core-2_9_1_http_import",
+        ":jakarta_xml_bind-jakarta_xml_bind-api-2_3_3_http_import",
+        ":jakarta_activation-jakarta_activation-api-1_2_2_http_import",
+    ],
+)
+
+jvm_import(
+    name = "org_xmlunit-xmlunit-core-2_9_1_http_import",
+    jar = "@org_xmlunit-xmlunit-core-2_9_1_http//file",
+    source_jar = "@org_xmlunit-xmlunit-core-2_9_1-sources_http//file",
+)
+
+jvm_import(
+    name = "jakarta_activation-jakarta_activation-api-1_2_2_http_import",
+    jar = "@jakarta_activation-jakarta_activation-api-1_2_2_http//file",
+    source_jar = "@jakarta_activation-jakarta_activation-api-1_2_2-sources_http//file",
+)
+
+copy_file(
     name = "com.thoughtworks.xstream/xstream-1.4.21.jar_copy",
     src = "@com_thoughtworks_xstream-xstream-1_4_21_http//file",
     out = "com.thoughtworks.xstream/xstream-1.4.21.jar",

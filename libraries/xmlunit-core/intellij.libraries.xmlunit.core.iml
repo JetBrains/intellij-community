@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_8" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library" exported="">
+      <library name="XMLUnit Core" type="repository">
+        <properties maven-id="org.xmlunit:xmlunit-core:2.9.1">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/xmlunit/xmlunit-core/2.9.1/xmlunit-core-2.9.1.jar">
+              <sha256sum>7e70f23d4f75e05f0ee79f0f6b9e13b6cf51d34f36c5fc3a6b839429dde1efef</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/jakarta/xml/bind/jakarta.xml.bind-api/2.3.3/jakarta.xml.bind-api-2.3.3.jar">
+              <sha256sum>c04539f472e9a6dd0c7685ea82d677282269ab8e7baca2e14500e381e0c6cec5</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/jakarta/activation/jakarta.activation-api/1.2.2/jakarta.activation-api-1.2.2.jar">
+              <sha256sum>a187a939103aef5849a7af84bd7e27be2d120c410af291437375ffe061f4f09d</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/xmlunit/xmlunit-core/2.9.1/xmlunit-core-2.9.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/jakarta/xml/bind/jakarta.xml.bind-api/2.3.3/jakarta.xml.bind-api-2.3.3.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/jakarta/activation/jakarta.activation-api/1.2.2/jakarta.activation-api-1.2.2.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/xmlunit/xmlunit-core/2.9.1/xmlunit-core-2.9.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/jakarta/xml/bind/jakarta.xml.bind-api/2.3.3/jakarta.xml.bind-api-2.3.3-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/jakarta/activation/jakarta.activation-api/1.2.2/jakarta.activation-api-1.2.2-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+  </component>
+</module>

@@ -600,6 +600,7 @@ libraries/winp
 libraries/xerces
 libraries/xerial-snappy-java
 libraries/xml-rpc
+libraries/xmlunit-core
 libraries/xstream
 libraries/xtext-xbase
 libraries/xz

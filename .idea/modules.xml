@@ -1198,6 +1198,7 @@
       <module fileurl="file://$PROJECT_DIR$/libraries/xerces/intellij.libraries.xerces.iml" filepath="$PROJECT_DIR$/libraries/xerces/intellij.libraries.xerces.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/xerial-snappy-java/intellij.libraries.xerial.snappy.java.iml" filepath="$PROJECT_DIR$/libraries/xerial-snappy-java/intellij.libraries.xerial.snappy.java.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/xml-rpc/intellij.libraries.xml.rpc.iml" filepath="$PROJECT_DIR$/libraries/xml-rpc/intellij.libraries.xml.rpc.iml" />
+      <module fileurl="file://$PROJECT_DIR$/libraries/xmlunit-core/intellij.libraries.xmlunit.core.iml" filepath="$PROJECT_DIR$/libraries/xmlunit-core/intellij.libraries.xmlunit.core.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/xstream/intellij.libraries.xstream.iml" filepath="$PROJECT_DIR$/libraries/xstream/intellij.libraries.xstream.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/xtext-xbase/intellij.libraries.xtext.xbase.iml" filepath="$PROJECT_DIR$/libraries/xtext-xbase/intellij.libraries.xtext.xbase.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/xz/intellij.libraries.xz.iml" filepath="$PROJECT_DIR$/libraries/xz/intellij.libraries.xz.iml" />

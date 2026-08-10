@@ -29,7 +29,6 @@ import java.util.SortedSet
 // These project libraries must be converted to content modules and removed from the allowlist.
 private val IMPLICIT_PROJECT_LIBRARY_ALLOWLIST: Set<String> = java.util.Set.of(
   "Log4J",
-  "XMLUnit Core",
   "java-diff-utils",
   "jetCheck",
   "kotlin-stdlib",

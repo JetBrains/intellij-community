@@ -11376,6 +11376,34 @@ http_file(
 )
 
 http_file(
+    name = "org_xmlunit-xmlunit-core-2_9_1_http",
+    downloaded_file_path = "xmlunit-core-2.9.1.jar",
+    sha256 = "7e70f23d4f75e05f0ee79f0f6b9e13b6cf51d34f36c5fc3a6b839429dde1efef",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/xmlunit/xmlunit-core/2.9.1/xmlunit-core-2.9.1.jar",
+)
+
+http_file(
+    name = "jakarta_activation-jakarta_activation-api-1_2_2_http",
+    downloaded_file_path = "jakarta.activation-api-1.2.2.jar",
+    sha256 = "a187a939103aef5849a7af84bd7e27be2d120c410af291437375ffe061f4f09d",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/jakarta/activation/jakarta.activation-api/1.2.2/jakarta.activation-api-1.2.2.jar",
+)
+
+http_file(
+    name = "org_xmlunit-xmlunit-core-2_9_1-sources_http",
+    downloaded_file_path = "xmlunit-core-2.9.1-sources.jar",
+    sha256 = "10d11cebdd597d66ecb0f6d2d2c71955ca30412dbd4debd4c4c669bda4b0557d",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/xmlunit/xmlunit-core/2.9.1/xmlunit-core-2.9.1-sources.jar",
+)
+
+http_file(
+    name = "jakarta_activation-jakarta_activation-api-1_2_2-sources_http",
+    downloaded_file_path = "jakarta.activation-api-1.2.2-sources.jar",
+    sha256 = "d796357781c245863f310599daf09fa95e8deacb61d150ab73b9db9cfff0dbab",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/jakarta/activation/jakarta.activation-api/1.2.2/jakarta.activation-api-1.2.2-sources.jar",
+)
+
+http_file(
     name = "com_thoughtworks_xstream-xstream-1_4_21_http",
     downloaded_file_path = "xstream-1.4.21.jar",
     sha256 = "f56586f3de59ae2a49430acbc9f27942b8c5cebec9245c869fae7136733333ec",
