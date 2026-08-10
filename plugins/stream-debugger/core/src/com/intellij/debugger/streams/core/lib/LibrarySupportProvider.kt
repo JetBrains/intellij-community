@@ -72,8 +72,8 @@ interface LibrarySupportProvider {
    * @param contextElement is the PSI element at that position,
    * already resolved for chain detection and passed in to avoid resolving it again.
    *
-   * The default keeps every chain. JVM-specific providers override to drop
-   * already-(partially-)executed chains using the bytecode position of the pause point.
+   * The default keeps every chain. JVM-specific providers override to drop already-(partially-)executed chains
+   * using the bytecode position of the pause point, as well as pause points from which tracing is impossible at all.
    */
   suspend fun filterTraceableStreams(
     session: XDebugSession,

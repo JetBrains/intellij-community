@@ -27,6 +27,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XSourcePosition
+import com.sun.jdi.event.ExceptionEvent
 
 abstract class JvmLibrarySupportProvider : LibrarySupportProvider {
   override fun getXValueInterpreter(project: Project): XValueInterpreter = interpreter
@@ -78,6 +79,9 @@ abstract class JvmLibrarySupportProvider : LibrarySupportProvider {
   ): List<StreamChain> {
     if (chains.isEmpty()) return chains
     val suspendContext = session.suspendContext as? SuspendContextImpl ?: return chains
+    // Tracing resumes execution. Once an exception has been thrown, the control flow no longer
+    // goes where the tracer expects it to, so nothing is traceable here.
+    if (suspendContext.eventSet?.any { it is ExceptionEvent } == true) return emptyList()
     return withDebugContext(suspendContext) {
       // The location of the suspended thread always matches `position`.
       val location = suspendContext.location ?: return@withDebugContext chains

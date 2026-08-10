@@ -66,10 +66,9 @@ class ChainDetectionStateManager(private val cs: CoroutineScope) {
 
   fun inlayStateFlow(session: XDebugSession): Flow<StreamChainInlayState> =
     chainStateFlow(session).map { state ->
-      val ctx = state.suspendContext
       val position = state.suspendedStackTopFrame?.sourcePosition
-      if (ctx != null && position != null && state.status is ChainStatus.Found) {
-        StreamChainInlayState.Visible(ctx, position)
+      if (position != null && state.status is ChainStatus.Found) {
+        StreamChainInlayState.Visible(position)
       } else {
         StreamChainInlayState.Hidden
       }
@@ -182,7 +181,7 @@ data class ChainDetectionState(
 
 @ApiStatus.Internal
 sealed interface StreamChainInlayState {
-  data class Visible(val suspendContext: XSuspendContext, val position: XSourcePosition) : StreamChainInlayState
+  data class Visible(val position: XSourcePosition) : StreamChainInlayState
   object Hidden : StreamChainInlayState
 }
 

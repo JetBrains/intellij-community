@@ -7,7 +7,6 @@ import com.intellij.codeInsight.hints.presentation.PresentationFactory
 import com.intellij.codeInsight.hints.presentation.PresentationRenderer
 import com.intellij.codeInsight.hints.presentation.mouseButton
 import com.intellij.debugger.engine.JavaDebugProcess
-import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.streams.core.StreamDebuggerBundle
 import com.intellij.debugger.streams.core.StreamChainInlayState
 import com.intellij.debugger.streams.core.ChainDetectionStateManager
@@ -21,7 +20,6 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
-import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.Project
@@ -31,7 +29,6 @@ import com.intellij.xdebugger.XDebugProcess
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XDebuggerManagerListener
 import com.intellij.xdebugger.XSourcePosition
-import com.sun.jdi.event.ExceptionEvent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -69,7 +66,6 @@ internal class StreamDebuggerInlayDisplay(private val project: Project, private 
     ChainDetectionStateManager.getInstance(project).inlayStateFlow(session).collectLatest { state ->
       val visible = state as? StreamChainInlayState.Visible ?: return@collectLatest
       if (!isStreamDebuggerInlaysEnabled()) return@collectLatest
-      if ((visible.suspendContext as? SuspendContextImpl)?.eventSet?.any { it is ExceptionEvent } == true) return@collectLatest
       val inlay = withContext(Dispatchers.EDT) { createInlay(session, visible.position) } ?: return@collectLatest
       try {
         awaitCancellation()
@@ -87,13 +83,16 @@ internal class StreamDebuggerInlayDisplay(private val project: Project, private 
     val renderer = with(PresentationFactory(editor)) {
       PresentationRenderer(
         roundWithBackgroundAndSmallInset(
-          mouseHandling(
-            seq(
-              smallScaledIcon(DebuggerStreamsSharedIcons.Stream_debugger),
-              smallTextWithoutBackground(message)
+          withCursorOnHover(
+            mouseHandling(
+              seq(
+                smallScaledIcon(DebuggerStreamsSharedIcons.Stream_debugger),
+                smallTextWithoutBackground(message)
+              ),
+              ClickHandler(session),
+              null
             ),
-            ClickHandler(session),
-            HoverHandler(editor)
+            Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
           )
         )
       )
@@ -115,16 +114,6 @@ internal class StreamDebuggerInlayDisplay(private val project: Project, private 
                                          ActionManager.getInstance().getAction("StreamDebuggerInlayPopup") as ActionGroup)
         else -> Unit
       }
-    }
-  }
-
-  private class HoverHandler(private val editor: Editor) : InlayPresentationFactory.HoverListener {
-    override fun onHover(event: MouseEvent, translated: Point) {
-      (editor as? EditorEx)?.setCustomCursor(HoverHandler::class.java, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR))
-    }
-
-    override fun onHoverFinished() {
-      (editor as? EditorEx)?.setCustomCursor(HoverHandler::class.java, null)
     }
   }
 
