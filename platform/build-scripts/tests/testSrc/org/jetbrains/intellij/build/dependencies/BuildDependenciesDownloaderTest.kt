@@ -4,6 +4,7 @@ package org.jetbrains.intellij.build.dependencies
 import com.sun.net.httpserver.HttpServer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.BuildPaths
 import org.jetbrains.intellij.build.downloadFileToCacheLocation
 import org.jetbrains.intellij.build.resolveAndExtractToCacheLocation
@@ -198,6 +199,27 @@ class BuildDependenciesDownloaderTest {
       Assert.assertEquals(direct, dotted)
       Assert.assertEquals(direct, roundTripped)
       Assert.assertEquals("payload", Files.readString(direct.resolve("payload.txt")))
+    }
+  }
+
+  @Test
+  fun `the blocking extract entry point shares its cache entry with the suspending one`() = runBlocking(Dispatchers.Default) {
+    withPreloadedTestRoot { communityRoot, cache, manifestRoot ->
+      val archive = manifestRoot.resolve("blocking.zip")
+      writeZip(archive, "payload.txt", "payload")
+      writeManifest(manifestRoot, "blocking.zip", "8".repeat(64), "https://example.invalid/blocking.zip")
+
+      // a Java caller reaches extraction through here, from whatever thread it happens to be on
+      val blocking = withContext(Dispatchers.IO) {
+        BuildDependenciesDownloader.extractFileToCacheLocation(communityRoot, archive)
+      }
+      Assert.assertTrue("$blocking must be under $cache", blocking.startsWith(cache))
+      Assert.assertEquals("payload", Files.readString(blocking.resolve("payload.txt")))
+
+      // and the suspending one must land on that very directory, and find it up to date
+      val extractCount = BuildDependenciesDownloader.getExtractCount()
+      Assert.assertEquals(blocking, extractFileToCacheLocation(archive, communityRoot))
+      Assert.assertEquals(extractCount, BuildDependenciesDownloader.getExtractCount())
     }
   }
 

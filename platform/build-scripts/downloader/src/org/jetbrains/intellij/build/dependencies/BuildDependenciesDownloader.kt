@@ -146,23 +146,29 @@ object BuildDependenciesDownloader {
    */
   fun getDownloadCacheDirectory(communityRoot: BuildDependenciesCommunityRoot): Path = getProjectLocalDownloadCache(communityRoot)
 
-  @Synchronized
+  /**
+   * The blocking form of [extractToCacheLocation], for a Java caller or a build script that is not
+   * a coroutine - the same shape as [downloadFileToCacheLocation] above.
+   *
+   * It delegates rather than repeating the extraction: sharing the striped `fileLocks` is what keeps
+   * a blocking and a suspending extraction of the same directory out of each other's way. The object
+   * monitor this used to hold did neither - it serialized every extraction in the process against
+   * every other, while excluding nothing at all on the suspending path.
+   */
   @JvmStatic
   fun extractFileToCacheLocation(
     communityRoot: BuildDependenciesCommunityRoot,
     archiveFile: Path,
     vararg options: BuildDependenciesExtractOptions,
   ): Path {
-    cleanUpIfRequired(communityRoot)
-    val cacheKey = archiveCacheKey(archiveFile = archiveFile, sha256 = null)
-    val location = extractCacheLocation(
-      cachePath = getDownloadCachePath(communityRoot),
-      archiveFile = archiveFile,
-      cacheKey = cacheKey,
-      options = options,
-    )
-    extractFileWithFlagFileLocation(archiveFile, location.targetDirectory, location.flagFile, cacheKey, options)
-    return location.targetDirectory
+    return runBlocking {
+      extractToCacheLocation(
+        archiveFile = archiveFile,
+        communityRoot = communityRoot,
+        cacheKey = archiveCacheKey(archiveFile = archiveFile, sha256 = null),
+        options = options,
+      )
+    }
   }
 
   @Suppress("DeprecatedCallableAddReplaceWith")
