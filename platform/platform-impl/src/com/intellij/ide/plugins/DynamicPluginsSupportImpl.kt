@@ -693,7 +693,9 @@ internal class DynamicPluginsSupportImpl(
       }
     }
 
-    (ActionManager.getInstance() as ActionManagerImpl).registerActions(descriptors)
+    application.service<TransferredWriteActionService>().runOnEdtWithTransferredWriteActionAndWait { // FIXME topic listeners expect EDT IJPL-252536
+      (ActionManager.getInstance() as ActionManagerImpl).registerActions(descriptors)
+    }
   }
 
   private fun createDisposeTreePredicate(pluginDescriptor: IdeaPluginDescriptorImpl): Predicate<Disposable>? {
