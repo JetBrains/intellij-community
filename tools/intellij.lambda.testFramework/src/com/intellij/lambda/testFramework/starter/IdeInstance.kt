@@ -36,11 +36,11 @@ object IdeInstance {
 
     try {
       if (isStarted() && currentIdeMode == runMode && IdeStartConfig.current == currentIdeConfig) {
-        LOG.info("IDE is already running in mode: $runMode and there were no requests to change it's config. Reusing the current instance of IDE.")
+        LOG.info("IDE is already running in mode: $runMode with config '${currentIdeConfig.key}'. Reusing the current instance of IDE.")
         return ide
       }
       else {
-        LOG.info("Starting IDE in mode: $runMode")
+        LOG.info("Starting IDE in mode: $runMode (${restartReason(runMode)})")
       }
 
       stopIde()
@@ -85,6 +85,16 @@ object IdeInstance {
       LOG.error("Problems when starting IDE", e)
       throw e
     }
+  }
+
+  /**
+   * Why the running IDE could not be answered with. Every start after the first one costs a suite a cold
+   * launch and a re-index, so a run that expected to reuse and did not has to be able to say what changed.
+   */
+  private fun restartReason(runMode: IdeRunMode): String = when {
+    !isStarted() -> "no IDE is running"
+    currentIdeMode != runMode -> "run mode changed from $currentIdeMode"
+    else -> "config key changed from '${currentIdeConfig.key}' to '${IdeStartConfig.current.key}'"
   }
 
   fun stopIde(): Unit = synchronized(this) {
