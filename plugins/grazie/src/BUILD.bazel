@@ -26,7 +26,6 @@ jvm_library(
         "@lib//:grazie-core-ai-grazie-tasks-library-api-jvm",
         "@lib//:grazie-core-org-jetbrains-intellij-deps-languagetool-languagetool-core",
         "@lib//:ai-grazie-rule-engine",
-        "@lib//:grazie-core-ai-grazie-model-tree-jvm",
         "@lib//:grazie-core-ai-grazie-model-ner-jvm",
     ],
     runtime_deps = [
@@ -100,7 +99,6 @@ jvm_library(
         "//libraries/lucene.common",
         "//libraries/ai.grazie.spell.gec.engine.local",
         "@lib//:ai-grazie-rule-engine",
-        "@lib//:grazie-core-ai-grazie-model-tree-jvm",
         "@lib//:grazie-core-ai-grazie-model-ner-jvm",
         "//libraries/kotlinx/html",
         "//platform/util/coroutines",
@@ -138,7 +136,6 @@ jvm_library(
         "@lib//:grazie-core-ai-grazie-tasks-library-api-jvm",
         "@lib//:grazie-core-org-jetbrains-intellij-deps-languagetool-languagetool-core",
         "@lib//:ai-grazie-rule-engine",
-        "@lib//:grazie-core-ai-grazie-model-tree-jvm",
         "@lib//:grazie-core-ai-grazie-model-ner-jvm",
     ],
     runtime_deps = [
