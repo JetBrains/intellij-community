@@ -329,12 +329,12 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
 
   @Override
   public @NotNull MarkupIterator<RangeHighlighterEx> overlappingErrorStripeIterator(int startOffset, int endOffset) {
-    return overlappingIterator(startOffset, endOffset, RangeHighlighterTree.ERROR_STRIPE_FLAG);
+    return overlappingIterator(startOffset, endOffset, RangeHighlighterTree.ERROR_STRIPE_FLAVOR_FLAG);
   }
 
   @Override
   public @NotNull MarkupIterator<RangeHighlighterEx> overlappingGutterIterator(int startOffset, int endOffset) {
-    return overlappingIterator(startOffset, endOffset, RangeHighlighterTree.RENDER_IN_GUTTER_FLAG);
+    return overlappingIterator(startOffset, endOffset, RangeHighlighterTree.RENDER_IN_GUTTER_FLAVOR_FLAG);
   }
 
   public static @NotNull TextRange roundToLineBoundaries(@NotNull Document document, int startOffset, int endOffset) {
