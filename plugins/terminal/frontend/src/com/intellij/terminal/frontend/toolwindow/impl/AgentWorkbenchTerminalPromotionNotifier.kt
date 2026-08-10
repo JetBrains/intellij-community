@@ -3,7 +3,6 @@ package com.intellij.terminal.frontend.toolwindow.impl
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.asContextElement
@@ -454,7 +453,7 @@ fun createAgentWorkbenchPromotionBanner(
 }
 
 private fun activateAgentWorkbenchToolWindow(project: Project): Boolean {
-  project.service<CoreUiCoroutineScopeHolder>().coroutineScope.launch(Dispatchers.EDT) {
+  project.service<CoreUiCoroutineScopeHolder>().coroutineScope.launch(Dispatchers.UI) {
     val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(AGENT_WORKBENCH_TOOL_WINDOW_ID) ?: return@launch
     toolWindow.activate(null)
   }
