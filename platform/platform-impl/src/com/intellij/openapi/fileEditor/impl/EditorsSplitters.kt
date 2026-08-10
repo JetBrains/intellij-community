@@ -163,8 +163,8 @@ import javax.swing.JSplitPane
 import javax.swing.SwingUtilities
 import javax.swing.TransferHandler
 import javax.swing.UIManager
-import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 
 private val OPEN_FILES_ACTIVITY = Key.create<Activity>("open.files.activity")
 private val LOG = logger<EditorsSplitters>()
@@ -1750,19 +1750,19 @@ private fun resolveFileOrLogError(fileEntry: FileEntry, virtualFileManager: Virt
 
   // In the case of the JetBrains client, it's better to get the file by its ID to avoid a blocking protocol call inside
   // [VirtualFileManager.findFileByUrl]
-  val file = if (PlatformUtils.isJetBrainsClient() && fileEntry.id != null) {
-    if (fileEntry.managingFsCreationTimestamp != null) {
-      fileIdAdapter.getFileWithTimestamp(fileEntry.id, fileEntry, fileEntry.managingFsCreationTimestamp)
+  val file = LOG.runAndLogException {
+    if (PlatformUtils.isJetBrainsClient() && fileEntry.id != null) {
+      if (fileEntry.managingFsCreationTimestamp != null) {
+        fileIdAdapter.getFileWithTimestamp(fileEntry.id, fileEntry, fileEntry.managingFsCreationTimestamp)
+      }
+      else {
+        fileIdAdapter.getFile(fileEntry.id, fileEntry)
+      }
+    }
+    else if (PlatformUtils.isJetBrainsClient() && fileEntry.protocol != null) {
+      fileIdAdapter.getFile(fileEntry.protocol, VirtualFileManager.extractPath(fileEntry.url), fileEntry)
     }
     else {
-      fileIdAdapter.getFile(fileEntry.id, fileEntry)
-    }
-  }
-  else if (PlatformUtils.isJetBrainsClient() && fileEntry.protocol != null) {
-    fileIdAdapter.getFile(fileEntry.protocol, VirtualFileManager.extractPath(fileEntry.url), fileEntry)
-  }
-  else {
-    LOG.runAndLogException {
       virtualFileManager.findFileByUrl(fileEntry.url) ?: virtualFileManager.refreshAndFindFileByUrl(fileEntry.url)
     }
   }
