@@ -18,6 +18,7 @@ import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
@@ -496,10 +497,14 @@ fun TestFixture<Project>.fileEditorManagerFixture(initDockableContentFactory: Bo
 }
 
 @TestOnly
-fun <T : Any> extensionPointFixture(epName: ExtensionPointName<in T>, createExtension: suspend () -> T): TestFixture<T> = testFixture {
+fun <T : Any> extensionPointFixture(
+  epName: ExtensionPointName<in T>,
+  loadingOrder: LoadingOrder = LoadingOrder.ANY,
+  createExtension: suspend () -> T,
+): TestFixture<T> = testFixture {
   val extension = createExtension()
   val disposable = Disposer.newDisposable()
-  epName.point.registerExtension(extension, disposable)
+  epName.point.registerExtension(extension, loadingOrder, disposable)
   initialized(extension) {
     Disposer.dispose(disposable)
   }
