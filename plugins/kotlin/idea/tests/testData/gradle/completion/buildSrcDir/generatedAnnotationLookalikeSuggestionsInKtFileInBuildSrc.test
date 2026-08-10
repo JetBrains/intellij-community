@@ -1,0 +1,18 @@
+// FILE: buildSrc/src/main/kotlin/MyTask.kt
+// "EXPECTED-SUGGESTION": "visibleMember"
+import org.gradle.api.DefaultTask
+
+// Shares its short name with org.gradle.api.Generated, but is a different annotation.
+annotation class Generated
+
+@Generated
+class NotGradleGenerated {
+  fun visibleMember(): String = "not annotated with org.gradle.api.Generated, must be suggested"
+}
+
+abstract class MyTask : DefaultTask() {
+  init {
+    val lookalike = NotGradleGenerated()
+    lookalike.<caret>
+  }
+}
