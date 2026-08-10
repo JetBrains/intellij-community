@@ -174,6 +174,7 @@ abstract class GitRepositoryReaderNewTest(val usingReftable: Boolean) : GitPlatf
   // IDEA-143791
   fun `test branches are case-insensitive on case-insensitive systems`() {
     assumeTrue("case-insensitive FS only", !SystemInfo.isFileSystemCaseSensitive)
+    assumeFalse("Reftable branch names are case-sensitive", usingReftable)
 
     makeCommit("file.txt")
     git("branch UpperCase")
