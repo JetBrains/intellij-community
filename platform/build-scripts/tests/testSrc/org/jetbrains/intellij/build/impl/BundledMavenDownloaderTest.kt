@@ -87,15 +87,24 @@ class BundledMavenDownloaderTest {
       Assert.assertTrue(resolvedMaven4.isEmpty())
       Assert.assertFalse("Resolving preloaded inputs must not create $cache", Files.exists(cache))
 
-      val distribution = BundledMavenDownloader.downloadMavenDistribution(communityRoot)
+      val distribution = BundledMavenDownloader.downloadMavenDistribution(communityRoot, useProjectLocalCache = true)
+      val sharedDistribution = BundledMavenDownloader.downloadMavenDistribution(communityRoot)
       val maven3 = BundledMavenDownloader.downloadMaven3Libs(communityRoot)
       val telemetry = BundledMavenDownloader.downloadMavenTelemetryDependencies(communityRoot)
       val maven4 = BundledMavenDownloader.downloadMaven4Libs(communityRoot)
 
-      for (path in listOf(distribution, maven3, telemetry, maven4)) {
+      for (path in listOf(distribution, sharedDistribution, maven3, telemetry, maven4)) {
         Assert.assertTrue("$path must be under $cache", path.startsWith(cache))
       }
+      // the from-sources embedded Maven home: named after the version, in the project-local cache, because a unit
+      // test reads it through the VFS and `VfsRootAccess` allows only what lives under the IDE home
+      Assert.assertEquals(cache.resolve("apache-maven-1.0"), distribution)
       Assert.assertTrue(Files.isRegularFile(distribution.resolve("lib/maven-core-1.0.jar")))
+      Assert.assertNotEquals(distribution, sharedDistribution)
+      Assert.assertEquals(cache, sharedDistribution.parent)
+      Assert.assertTrue(sharedDistribution.fileName.toString().startsWith("apache-maven-1.0-bin.zip."))
+      Assert.assertTrue(sharedDistribution.fileName.toString().endsWith(".d"))
+      Assert.assertTrue(Files.isRegularFile(sharedDistribution.resolve("lib/maven-core-1.0.jar")))
       Assert.assertEquals(setOf("one-1.jar", "two-2.jar"), Files.list(maven3).use { it.map { file -> file.fileName.toString() }.toList().toSet() })
       Assert.assertEquals(setOf("telemetry-3.jar"), Files.list(telemetry).use { it.map { file -> file.fileName.toString() }.toList().toSet() })
       Assert.assertTrue(Files.list(maven4).use { it.findAny().isEmpty })
@@ -108,8 +117,26 @@ class BundledMavenDownloaderTest {
       Assert.assertFalse(Files.exists(community.resolve("plugins/maven/maven36-server-impl/lib/maven3")))
       Assert.assertFalse(Files.exists(community.resolve("plugins/maven/maven3-server-common/lib")))
 
-      Assert.assertEquals(distribution, BundledMavenDownloader.downloadMavenDistribution(communityRoot))
+      Assert.assertEquals(distribution, BundledMavenDownloader.downloadMavenDistribution(communityRoot, useProjectLocalCache = true))
+      Assert.assertEquals(sharedDistribution, BundledMavenDownloader.downloadMavenDistribution(communityRoot))
       Assert.assertEquals(maven3, BundledMavenDownloader.downloadMaven3Libs(communityRoot))
+
+      // a preloaded input sits at a different runfiles path per test target and per sandbox, and the manifest
+      // declares its digest - so the same archive arriving from elsewhere neither moves nor re-extracts the home
+      val movedRunfiles = root.resolve("moved-runfiles")
+      Files.createDirectories(movedRunfiles)
+      for (url in urls) {
+        val name = url.substringAfterLast('/')
+        Files.copy(runfiles.resolve(name), movedRunfiles.resolve(name))
+      }
+      Files.copy(manifest, movedRunfiles.resolve(manifest.fileName))
+      System.setProperty(BuildDependenciesConstants.PRELOADED_DOWNLOADS_MANIFEST_PROPERTY, movedRunfiles.resolve(manifest.fileName).toString())
+      val extractCountBeforeMove = BuildDependenciesDownloader.getExtractCount()
+      Assert.assertEquals(distribution, BundledMavenDownloader.downloadMavenDistribution(communityRoot, useProjectLocalCache = true))
+      Assert.assertEquals(sharedDistribution, BundledMavenDownloader.downloadMavenDistribution(communityRoot))
+      Assert.assertEquals(extractCountBeforeMove, BuildDependenciesDownloader.getExtractCount())
+      System.setProperty(BuildDependenciesConstants.PRELOADED_DOWNLOADS_MANIFEST_PROPERTY, manifest.toString())
+
       val concurrentMaven3 = List(4) {
         async { BundledMavenDownloader.downloadMaven3Libs(communityRoot) }
       }.awaitAll()

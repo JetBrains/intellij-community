@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.server;
 
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.extensions.PluginDescriptor;
@@ -209,6 +210,9 @@ public final class MavenDistributionsCache {
 
   private static Path getSourceMavenPath() {
     BuildDependenciesCommunityRoot communityRoot = new BuildDependenciesCommunityRoot(Path.of(PathManager.getCommunityHomePath()));
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return BundledMavenDownloader.INSTANCE.downloadMavenDistributionSync(communityRoot, true);
+    }
     return BundledMavenDownloader.INSTANCE.downloadMavenDistributionSync(communityRoot);
   }
 

@@ -184,12 +184,27 @@ object BundledMavenDownloader {
   }
 
   fun downloadMavenDistributionSync(communityRoot: BuildDependenciesCommunityRoot): Path {
+    return downloadMavenDistributionSync(communityRoot = communityRoot, useProjectLocalCache = false)
+  }
+
+  fun downloadMavenDistributionSync(communityRoot: BuildDependenciesCommunityRoot, useProjectLocalCache: Boolean): Path {
     return runBlocking(Dispatchers.Default) {
-      downloadMavenDistribution(communityRoot)
+      downloadMavenDistribution(communityRoot = communityRoot, useProjectLocalCache = useProjectLocalCache)
     }
   }
 
   suspend fun downloadMavenDistribution(communityRoot: BuildDependenciesCommunityRoot): Path {
+    return downloadMavenDistribution(communityRoot = communityRoot, useProjectLocalCache = false)
+  }
+
+  /**
+   * Downloads and extracts the bundled Maven home.
+   *
+   * [useProjectLocalCache] is for an IDE unit test running from JPS module outputs, where this directory is the
+   * embedded Maven home and VFS access is restricted to the IDE home. Build and dev-mode callers retain the shared,
+   * content-addressed extraction cache.
+   */
+  suspend fun downloadMavenDistribution(communityRoot: BuildDependenciesCommunityRoot, useProjectLocalCache: Boolean): Path {
     val properties = BuildDependenciesDownloader.getDependencyProperties(communityRoot)
     val bundledMavenVersion = properties.property("bundledMavenVersion")
     return distributionMutex.withLock {
@@ -201,7 +216,20 @@ object BundledMavenDownloader {
         classifier = "bin",
         packaging = "zip"
       )
-      resolveAndExtractToCacheLocation(uri.toString(), communityRoot, BuildDependenciesExtractOptions.STRIP_ROOT)
+      if (!useProjectLocalCache) {
+        return@withLock resolveAndExtractToCacheLocation(uri.toString(), communityRoot, BuildDependenciesExtractOptions.STRIP_ROOT)
+      }
+
+      val resolved = resolveFileForReading(url = uri.toString(), communityRoot = communityRoot)
+      val mavenHome = BuildDependenciesDownloader.getDownloadCacheDirectory(communityRoot).resolve("apache-maven-$bundledMavenVersion")
+      BuildDependenciesDownloader.extractFile(
+        archiveFile = resolved.file,
+        target = mavenHome,
+        communityRoot = communityRoot,
+        sha256 = resolved.sha256,
+        options = arrayOf(BuildDependenciesExtractOptions.STRIP_ROOT),
+      )
+      mavenHome
     }
   }
 
