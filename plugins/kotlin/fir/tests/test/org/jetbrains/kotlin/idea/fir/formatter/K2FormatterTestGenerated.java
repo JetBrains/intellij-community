@@ -314,9 +314,24 @@ public abstract class K2FormatterTestGenerated extends AbstractK2FormatterTest {
                 runTest("../../idea/tests/testData/formatter/kdoc/LongLinkWithSpacesIsNotSplit.after.kt");
             }
 
+            @TestMetadata("LongMarkdownHeaderIsNotWrapped.after.kt")
+            public void testLongMarkdownHeaderIsNotWrapped() throws Exception {
+                runTest("../../idea/tests/testData/formatter/kdoc/LongMarkdownHeaderIsNotWrapped.after.kt");
+            }
+
+            @TestMetadata("LongMarkdownTableIsNotWrapped.after.kt")
+            public void testLongMarkdownTableIsNotWrapped() throws Exception {
+                runTest("../../idea/tests/testData/formatter/kdoc/LongMarkdownTableIsNotWrapped.after.kt");
+            }
+
             @TestMetadata("LongUnbrokenLineIsNotWrapped.after.kt")
             public void testLongUnbrokenLineIsNotWrapped() throws Exception {
                 runTest("../../idea/tests/testData/formatter/kdoc/LongUnbrokenLineIsNotWrapped.after.kt");
+            }
+
+            @TestMetadata("MarkdownConstructDoesNotSwallowNextLine.after.kt")
+            public void testMarkdownConstructDoesNotSwallowNextLine() throws Exception {
+                runTest("../../idea/tests/testData/formatter/kdoc/MarkdownConstructDoesNotSwallowNextLine.after.kt");
             }
 
             @TestMetadata("MarkdownHeadersAndBlockquote.after.kt")

@@ -166,7 +166,10 @@ private fun splitIntoBlocks(destarredLines: List<DestarredLine>): List<Block> {
             else -> multilineTodosEnabled && inTodo && indentWidth(rawLine) > todoIndent
         }
 
-        val isProtected = fenceForThisLine != null || (inIndentedCode && !isBlank) || inTodo
+        val isProtected = fenceForThisLine != null ||
+                (inIndentedCode && !isBlank) ||
+                inTodo ||
+                isSingleLineMarkdownConstruct(rawLine)
         val startsNewTag = currentFence == null && rawLine.startsWith("@")
 
         if (startsNewTag) {
@@ -353,15 +356,34 @@ private fun render(
 private fun isStartOfMarkdownConstruct(line: String): Boolean {
     val trimmed = line.trim()
     return trimmed.startsWith(">") ||
-            trimmed.startsWith("---") ||
+            isThemeBreak(trimmed) ||
             isStartOfMarkdownHeader(trimmed) ||
             isMarkdownTableRow(trimmed) ||
             isStartOfMarkdownListItem(trimmed)
 }
 
+/**
+ * Whether [line] is a Markdown construct in a line that should not be wrapped.
+ * List items and blockquotes are deliberately excluded.
+ */
+private fun isSingleLineMarkdownConstruct(line: String): Boolean {
+    val trimmed = line.trim()
+    return isStartOfMarkdownHeader(trimmed) || isMarkdownTableRow(trimmed) || isThemeBreak(trimmed)
+}
+
 private fun isStartOfMarkdownHeader(line: String): Boolean = line.startsWith("#")
 
 private fun isMarkdownTableRow(line: String): Boolean = line.startsWith("|") && line.count { it == '|' } > 1
+
+/**
+ * A theme break is three or more `-`, `_` or `*`, all of the same kind, and *nothing* else besides spacing.
+ */
+private fun isThemeBreak(line: String): Boolean {
+    val marks = line.filterNot { it == ' ' || it == '\t' }
+    if (marks.length < 3) return false
+    val mark = marks[0]
+    return (mark == '-' || mark == '_' || mark == '*') && marks.all { it == mark }
+}
 
 private val LIST_ITEM_PATTERN = Regex("^\\d+[).]")
 private fun isStartOfMarkdownListItem(line: String): Boolean =
