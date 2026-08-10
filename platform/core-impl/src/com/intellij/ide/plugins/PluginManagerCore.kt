@@ -581,35 +581,7 @@ object PluginManagerCore {
         }
       }
     }
-    // module -> index
-    val resolvedModules = LinkedHashMap<PluginModuleDescriptor, Int>(resolvedPluginSet.sortedResolvedDescriptors.size)
-    for ((index, descriptor) in resolvedPluginSet.sortedResolvedDescriptors.withIndex()) {
-      if (descriptor is PluginModuleDescriptor) {
-        resolvedModules[descriptor] = index
-      }
-    }
-    val topologicalComparator = toCoreAwareComparator(Comparator { o1, o2 -> // TODO drop, should have no noticeable effect anymore
-      compareValues(resolvedModules[o1]!!, resolvedModules[o2]!!)
-    })
-    val mostRecentExcludedPlugins = excludedFromCandidateSubset.keys.asSequence()
-      .filter { resolvedPluginSet.candidateSet.resolvePluginId(it.pluginId)?.pluginId != it.pluginId }
-      .groupBy { it.pluginId }
-      .mapValues {
-        if (it.value.size == 1) it.value.first()
-        else it.value.maxWith { o1, o2 -> VersionComparatorUtil.compare(o1.version, o2.version) } // take the latest version among excluded disregarding compatibility
-      }
-    val allPlugins = resolvedPluginSet.candidateSet.plugins + mostRecentExcludedPlugins.values
     val pluginSet = PluginSet(
-      sortedModulesWithDependencies = ModulesWithDependencies(
-        modules = resolvedModules.keys.toList(),
-        directDependencies = resolvedModules.keys.associateWith {
-          resolvedPluginSet.getDirectResolvedDependencies(it).filterIsInstance<PluginModuleDescriptor>().sortedWith(topologicalComparator)
-        }
-      ),
-      allPlugins = allPlugins.toSet(),
-      enabledPlugins = resolvedPluginSet.candidateSet.plugins.filter { resolvedPluginSet.isResolved(it) },
-      enabledModuleMap = resolvedModules.keys.asSequence().filterIsInstance<ContentModuleDescriptor>().associateBy { it.moduleId },
-      enabledModules = resolvedModules.keys.toList(),
       resolvedPluginSet = resolvedPluginSet,
       input = input,
       excludedFromCandidateSubset = excludedFromCandidateSubset,

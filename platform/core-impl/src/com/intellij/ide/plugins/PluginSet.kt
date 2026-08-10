@@ -4,6 +4,7 @@ package com.intellij.ide.plugins
 
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.util.containers.Java11Shim
+import com.intellij.util.text.VersionComparatorUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.Collections
@@ -14,19 +15,8 @@ class PluginSubsystemInput(
   val discoveryResult: PluginsDiscoveryResult,
 )
 
-// if otherwise not specified, `module` in terms of v2 plugin model
 @ApiStatus.Internal
 class PluginSet internal constructor(
-  private val sortedModulesWithDependencies: ModulesWithDependencies,
-  /**
-   * Historically, this property only contained one version of each plugin id that is available, while there can be multiple.
-   * This contract is preserved. True `allPlugins` can be obtained through [input].
-   * TODO deprecate and provide alternative API
-   */
-  @JvmField val allPlugins: Set<PluginMainDescriptor>,
-  @JvmField val enabledPlugins: List<PluginMainDescriptor>,
-  private val enabledModuleMap: Map<PluginModuleId, ContentModuleDescriptor>,
-  private val enabledModules: List<PluginModuleDescriptor>,
   val resolvedPluginSet: ResolvedPluginSet,
   val input: PluginSubsystemInput,
   /**
@@ -36,6 +26,49 @@ class PluginSet internal constructor(
    */
   val excludedFromCandidateSubset: Map<PluginMainDescriptor, DescriptorExclusionReason>,
 ) {
+  /**
+   * Historically, this property only contained one version of each plugin id that is available, while there can be multiple.
+   * This contract is preserved. True `allPlugins` can be obtained through [input].
+   * TODO deprecate and provide alternative API
+   */
+  @JvmField val allPlugins: Set<PluginMainDescriptor>
+
+  @JvmField val enabledPlugins: List<PluginMainDescriptor> = resolvedPluginSet.candidateSet.plugins.filter { resolvedPluginSet.isResolved(it) }
+
+  private val enabledModuleMap: Map<PluginModuleId, ContentModuleDescriptor>
+  private val enabledModules: List<PluginModuleDescriptor>
+  private val sortedModulesWithDependencies: ModulesWithDependencies
+
+  init {
+    // module -> index
+    val resolvedModules = LinkedHashMap<PluginModuleDescriptor, Int>(resolvedPluginSet.sortedResolvedDescriptors.size)
+    for ((index, descriptor) in resolvedPluginSet.sortedResolvedDescriptors.withIndex()) {
+      if (descriptor is PluginModuleDescriptor) {
+        resolvedModules[descriptor] = index
+      }
+    }
+    val topologicalComparator = toCoreAwareComparator(Comparator { o1, o2 -> // TODO drop, should have no noticeable effect anymore
+      compareValues(resolvedModules[o1]!!, resolvedModules[o2]!!)
+    })
+    val mostRecentExcludedPlugins = excludedFromCandidateSubset.keys.asSequence()
+      .filter { resolvedPluginSet.candidateSet.resolvePluginId(it.pluginId)?.pluginId != it.pluginId }
+      .groupBy { it.pluginId }
+      .mapValues {
+        if (it.value.size == 1) it.value.first()
+        else it.value.maxWith { o1, o2 -> VersionComparatorUtil.compare(o1.version, o2.version) } // take the latest version among excluded disregarding compatibility
+      }
+    allPlugins = (resolvedPluginSet.candidateSet.plugins + mostRecentExcludedPlugins.values).toSet()
+
+    sortedModulesWithDependencies = ModulesWithDependencies(
+      modules = resolvedModules.keys.toList(),
+      directDependencies = resolvedModules.keys.associateWith {
+        resolvedPluginSet.getDirectResolvedDependencies(it).filterIsInstance<PluginModuleDescriptor>().sortedWith(topologicalComparator)
+      }
+    )
+    enabledModuleMap = resolvedModules.keys.asSequence().filterIsInstance<ContentModuleDescriptor>().associateBy { it.moduleId }
+    enabledModules = resolvedModules.keys.toList()
+  }
+
   fun getEnabledModules(): List<PluginModuleDescriptor> = enabledModules
 
   internal fun getSortedDependencies(moduleDescriptor: IdeaPluginDescriptorImpl): List<PluginModuleDescriptor> {
