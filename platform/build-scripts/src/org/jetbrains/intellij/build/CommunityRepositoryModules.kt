@@ -22,10 +22,7 @@ import org.jetbrains.intellij.build.impl.patchOsSpecificPluginXml
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectLibraryEntry
 import org.jetbrains.intellij.build.io.copyDir
-import org.jetbrains.intellij.build.io.copyFile
 import org.jetbrains.intellij.build.io.copyFileToDir
-import org.jetbrains.intellij.build.io.linkOrCopyDir
-import org.jetbrains.intellij.build.io.linkOrCopyFile
 import org.jetbrains.intellij.build.kotlin.CommunityKotlinPluginBuilder
 import org.jetbrains.intellij.build.python.PythonCommunityPluginModules
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
@@ -805,33 +802,6 @@ object CommunityRepositoryModules {
 private fun copyMavenLibraries(libraries: List<BundledMavenDownloader.MavenLibraryFile>, targetDir: Path, context: BuildContext) {
   for ((fileName, source) in libraries) {
     materializeCacheFile(source = source, target = targetDir.resolve(fileName), context = context)
-  }
-}
-
-/**
- * Puts an entry of an immutable cache - a download-cache file, an extracted archive, a Bazel runfile - into the
- * layout, hardlinking it where the layout is a disposable dev run directory and copying it everywhere else.
- *
- * See [BuildOptions.linkImmutableCacheEntries] for why only a dev run directory may share bytes with the cache.
- */
-private fun materializeCacheFile(source: Path, target: Path, context: BuildContext) {
-  if (context.options.linkImmutableCacheEntries) {
-    linkOrCopyFile(source, target)
-  }
-  else {
-    copyFile(source, target)
-  }
-}
-
-/**
- * [materializeCacheFile] for a whole extracted tree.
- */
-private fun materializeCacheDir(sourceDir: Path, targetDir: Path, context: BuildContext) {
-  if (context.options.linkImmutableCacheEntries) {
-    linkOrCopyDir(sourceDir, targetDir)
-  }
-  else {
-    copyDir(sourceDir, targetDir)
   }
 }
 
