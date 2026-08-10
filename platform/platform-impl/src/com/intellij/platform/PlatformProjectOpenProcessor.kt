@@ -122,9 +122,11 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
         projectName = dummyProjectName,
         runConfigurators = false,
         runConversionBeforeOpen = false,
-        beforeOpen = { project ->
-          project.service<OpenProjectSettingsService>().state.isLocatedInTempDirectory = true
-          options.beforeOpen?.invoke(project) ?: true
+        beforeOpenTasks = options.beforeOpenTasks.toMutableList().apply {
+          addFirst { project ->
+            project.service<OpenProjectSettingsService>().state.isLocatedInTempDirectory = true
+            true
+          }
         }
       ).let {
         // both callers of this go on to `openFileFromCommandLine`, which is what releases the hold this asks for
@@ -160,8 +162,8 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
         val options = runUnderModalProgressIfIsEdt {
           createOptionsToOpenDotIdeaOrCreateNewIfNotExists(file, projectToClose = null).copy(
             projectName = originalOptions.projectName,
-            beforeOpen = {
-              it.putUserData(PROJECT_OPENED_BY_PLATFORM_PROCESSOR, true)
+            beforeOpenTasks = originalOptions.beforeOpenTasks + { project ->
+              project.putUserData(PROJECT_OPENED_BY_PLATFORM_PROCESSOR, true)
               true
             }
           )
@@ -236,8 +238,8 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
           projectIdentityFile = file,
           options = createOptionsToOpenDotIdeaOrCreateNewIfNotExists(file, projectToClose = null).copy(
             projectName = originalOptions.projectName,
-            beforeOpen = {
-              it.putUserData(PROJECT_OPENED_BY_PLATFORM_PROCESSOR, true)
+            beforeOpenTasks = originalOptions.beforeOpenTasks + { project ->
+              project.putUserData(PROJECT_OPENED_BY_PLATFORM_PROCESSOR, true)
               true
             }
           ),
