@@ -1,5 +1,6 @@
 from collections.abc import Callable, Iterable
 from datetime import date, datetime
+from re import Pattern
 from sqlite3 import dbapi2 as Database
 from types import ModuleType
 from typing import Any
@@ -41,7 +42,7 @@ class DatabaseWrapper(BaseDatabaseWrapper):
 
     def is_in_memory_db(self) -> bool: ...
 
-FORMAT_QMARK_REGEX: Any
+FORMAT_QMARK_REGEX: Pattern[str]
 
 class SQLiteCursorWrapper(Database.Cursor):
     @override

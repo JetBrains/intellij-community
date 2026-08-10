@@ -22,8 +22,7 @@ _ExecuteQuery: TypeAlias = str | _Composable
 
 # Python types that can be adapted to SQL.
 _SQLType: TypeAlias = (
-    None
-    | bool
+    bool
     | int
     | float
     | Decimal
@@ -34,6 +33,7 @@ _SQLType: TypeAlias = (
     | UUID
     | tuple[Any, ...]
     | list[Any]
+    | None
 )
 _ExecuteParameters: TypeAlias = Sequence[_SQLType] | Mapping[str, _SQLType] | None
 
@@ -71,15 +71,15 @@ class CursorDebugWrapper(CursorWrapper):
 def debug_transaction(connection: Any, sql: str) -> AbstractContextManager[None]: ...
 def split_tzname_delta(tzname: str) -> tuple[str, str | None, str | None]: ...
 @overload
-def typecast_date(s: None | Literal[""]) -> None: ...  # type: ignore[overload-overlap]
+def typecast_date(s: Literal[""] | None) -> None: ...  # type: ignore[overload-overlap]
 @overload
 def typecast_date(s: str) -> datetime.date: ...
 @overload
-def typecast_time(s: None | Literal[""]) -> None: ...  # type: ignore[overload-overlap]
+def typecast_time(s: Literal[""] | None) -> None: ...  # type: ignore[overload-overlap]
 @overload
 def typecast_time(s: str) -> datetime.time: ...
 @overload
-def typecast_timestamp(s: None | Literal[""]) -> None: ...  # type: ignore[overload-overlap]
+def typecast_timestamp(s: Literal[""] | None) -> None: ...  # type: ignore[overload-overlap]
 @overload
 def typecast_timestamp(s: str) -> datetime.datetime: ...
 def split_identifier(identifier: str) -> tuple[str, str]: ...

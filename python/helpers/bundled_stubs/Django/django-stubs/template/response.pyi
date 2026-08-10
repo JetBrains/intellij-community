@@ -1,14 +1,9 @@
-import functools
 from collections.abc import Callable, Iterator, Sequence
 from http.cookies import SimpleCookie
 from typing import Any, TypeAlias
 
-from django.core.handlers.wsgi import WSGIRequest
 from django.http import HttpResponse
 from django.http.request import HttpRequest
-from django.template.base import Template
-from django.template.context import RequestContext
-from django.test.client import Client
 from typing_extensions import override
 
 from .backends.base import _EngineTemplate
@@ -40,7 +35,7 @@ class SimpleTemplateResponse(HttpResponse):
     def resolve_context(self, context: dict[str, Any] | None) -> dict[str, Any] | None: ...
     @property
     def rendered_content(self) -> str: ...
-    def add_post_render_callback(self, callback: Callable) -> None: ...
+    def add_post_render_callback(self, callback: Callable[..., Any]) -> None: ...
     def render(self) -> SimpleTemplateResponse: ...
     @property
     def is_rendered(self) -> bool: ...
@@ -48,19 +43,13 @@ class SimpleTemplateResponse(HttpResponse):
     def __iter__(self) -> Iterator[Any]: ...
 
 class TemplateResponse(SimpleTemplateResponse):
-    client: Client
     closed: bool
-    context: RequestContext
     context_data: dict[str, Any] | None
     cookies: SimpleCookie
-    csrf_cookie_set: bool
-    json: functools.partial
     _request: HttpRequest
     status_code: int
     template_name: _TemplateForResponseT
-    templates: list[Template]
     using: str | None
-    wsgi_request: WSGIRequest
     rendering_attrs: Any
     def __init__(
         self,

@@ -16,9 +16,9 @@ from django.utils.functional import _StrOrPromise
 from typing_extensions import TypeVar, override
 
 # __set__ value type
-_ST = TypeVar("_ST")
+_ST = TypeVar("_ST", contravariant=True)
 # __get__ return type
-_GT = TypeVar("_GT")
+_GT = TypeVar("_GT", covariant=True)
 
 class ArrayField(CheckPostgresInstalledMixin, CheckFieldDefaultMixin, Field[_ST, _GT]):
     _pyi_private_set_type: Sequence[Any] | Combinable
@@ -26,13 +26,13 @@ class ArrayField(CheckPostgresInstalledMixin, CheckFieldDefaultMixin, Field[_ST,
 
     empty_strings_allowed: bool
     default_error_messages: ClassVar[_ErrorMessagesDict]
-    base_field: Field
+    base_field: Field[Any, Any]
     size: int | None
     default_validators: list[_ValidatorCallable]
     from_db_value: Any
     def __init__(
         self,
-        base_field: Field,
+        base_field: Field[Any, Any],
         size: int | None = None,
         *,
         verbose_name: _StrOrPromise | None = ...,

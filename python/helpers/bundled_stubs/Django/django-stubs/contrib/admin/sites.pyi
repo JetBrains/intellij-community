@@ -20,7 +20,7 @@ all_sites: WeakSet[AdminSite]
 
 _ViewType = TypeVar("_ViewType", bound=Callable[..., HttpResponseBase])
 _ModelT = TypeVar("_ModelT", bound=Model)
-_ActionCallback: TypeAlias = Callable[[ModelAdmin, HttpRequest, QuerySet], TemplateResponse | None]
+_ActionCallback: TypeAlias = Callable[[ModelAdmin[Any], HttpRequest, QuerySet[Any]], TemplateResponse | None]
 
 class AdminSite:
     site_title: _StrOrPromise
@@ -40,7 +40,7 @@ class AdminSite:
     empty_value_display: str
     final_catch_all_view: bool
     _empty_value_display: str
-    _registry: dict[type[Model], ModelAdmin]
+    _registry: dict[type[Model], ModelAdmin[Any]]
     _global_actions: dict[str, _ActionCallback]
     _actions: dict[str, _ActionCallback]
     def __init__(self, name: str = ...) -> None: ...
@@ -84,4 +84,5 @@ class AdminSite:
 
 class DefaultAdminSite(LazyObject[AdminSite]): ...
 
+# site is actually an instance of DefaultAdminSite, but it proxies through to a AdminSite
 site: AdminSite

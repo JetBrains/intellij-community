@@ -110,7 +110,7 @@ class SimpleTestCase(unittest.TestCase):
     ) -> None: ...
     def assertFormSetError(
         self,
-        formset: BaseFormSet,
+        formset: BaseFormSet[Any],
         form_index: int | None,
         field: str | None,
         errors: list[str] | str,
@@ -167,7 +167,7 @@ class TransactionTestCase(SimpleTestCase):
     serialized_rollback: bool
     def assertQuerySetEqual(
         self,
-        qs: Iterator[Any] | list[Model] | QuerySet | RawQuerySet,
+        qs: Iterator[Any] | list[Model] | QuerySet[Any] | RawQuerySet[Any],
         values: Iterable[Any],
         transform: Callable[[Model], Any] | type[str] | None = None,
         ordered: bool = True,

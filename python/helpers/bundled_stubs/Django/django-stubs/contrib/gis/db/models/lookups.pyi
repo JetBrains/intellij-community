@@ -1,9 +1,14 @@
+from re import Pattern
 from typing import Any
 
+from django.db.backends.base.base import BaseDatabaseWrapper
 from django.db.models import Lookup, Transform
+from django.db.models.sql.compiler import SQLCompiler, _AsSqlType
 from typing_extensions import override
 
-class RasterBandTransform(Transform): ...
+class RasterBandTransform(Transform):
+    @override
+    def as_sql(self, compiler: SQLCompiler, connection: BaseDatabaseWrapper) -> _AsSqlType: ...  # type: ignore[override]
 
 class GISLookup(Lookup):
     sql_template: Any
@@ -87,7 +92,7 @@ class OverlapsLookup(GISLookup):
 class RelateLookup(GISLookup):
     lookup_name: str
     sql_template: str
-    pattern_regex: Any
+    pattern_regex: Pattern[str]
     @override
     def process_rhs(self, compiler: Any, connection: Any) -> Any: ...
 

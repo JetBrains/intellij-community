@@ -1,9 +1,9 @@
 from collections.abc import Iterator
 from typing import IO, Any, AnyStr, Generic
 
-from django.utils._os import _PathCompatible
+from _typeshed import StrPath
 
-def validate_file_name(name: _PathCompatible, allow_relative_path: bool = False) -> _PathCompatible: ...
+def validate_file_name(name: StrPath, allow_relative_path: bool = False) -> StrPath: ...
 
 class FileProxyMixin(Generic[AnyStr]):
     file: IO[AnyStr] | None

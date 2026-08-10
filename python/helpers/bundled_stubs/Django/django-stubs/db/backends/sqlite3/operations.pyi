@@ -1,8 +1,11 @@
 from collections.abc import Callable
+from decimal import Decimal
 from typing import Any
 from uuid import UUID
 
+from django.db.backends.base.base import BaseDatabaseWrapper
 from django.db.backends.base.operations import BaseDatabaseOperations
+from django.db.models.expressions import Expression
 from typing_extensions import override
 
 class DatabaseOperations(BaseDatabaseOperations):
@@ -13,7 +16,7 @@ class DatabaseOperations(BaseDatabaseOperations):
     def get_decimalfield_converter(
         self,
         expression: Any,
-    ) -> Callable: ...
+    ) -> Callable[[float | None, Expression, BaseDatabaseWrapper], Decimal | None]: ...
     def convert_uuidfield_value(self, value: Any, expression: Any, connection: Any) -> UUID | None: ...
     def convert_booleanfield_value(self, value: Any, expression: Any, connection: Any) -> Any: ...
     @override

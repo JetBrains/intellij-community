@@ -1,8 +1,9 @@
 import datetime
 from collections.abc import Iterable, Iterator, Mapping, Sequence
+from re import Pattern
 from typing import Any, Literal, Protocol, TypeAlias, type_check_only
 
-import _typeshed
+from _typeshed import Self as MetaclassSelf  # noqa: TID251
 from django.core.files.base import File
 from django.forms.renderers import BaseRenderer
 from django.forms.utils import _DataT, _FilesT
@@ -51,11 +52,11 @@ class Media:
 
 class MediaDefiningClass(type):
     def __new__(
-        mcs: type[_typeshed.Self],  # noqa: TID251
+        mcs: type[MetaclassSelf],
         name: str,
         bases: tuple[type, ...],
         attrs: dict[str, Any],
-    ) -> _typeshed.Self: ...  # noqa: TID251
+    ) -> MetaclassSelf: ...
 
 class Widget(metaclass=MediaDefiningClass):
     needs_multipart_form: bool
@@ -162,7 +163,7 @@ class ClearableFileInput(FileInput):
     checked: bool
     def clear_checkbox_name(self, name: str) -> str: ...
     def clear_checkbox_id(self, name: str) -> str: ...
-    def is_initial(self, value: File | str | None) -> bool: ...
+    def is_initial(self, value: File[Any] | str | None) -> bool: ...
     @override
     def format_value(self, value: Any) -> Any: ...
     @override
@@ -351,7 +352,7 @@ class SelectDateWidget(Widget):
     template_name: str
     input_type: str
     select_widget: type[ChoiceWidget]
-    date_re: Any
+    date_re: Pattern[str]
     years: Iterable[int | str]
     months: Mapping[int, str]
     year_none_value: tuple[Literal[""], str]
@@ -371,7 +372,7 @@ class SelectDateWidget(Widget):
     @override
     def id_for_label(self, id_: str) -> str: ...
     @override
-    def value_from_datadict(self, data: _DataT, files: _FilesT, name: str) -> str | None | Any: ...
+    def value_from_datadict(self, data: _DataT, files: _FilesT, name: str) -> str | Any | None: ...
     @override
     def value_omitted_from_data(self, data: _DataT, files: _FilesT, name: str) -> bool: ...
 

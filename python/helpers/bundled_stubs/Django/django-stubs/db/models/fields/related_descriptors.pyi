@@ -19,7 +19,7 @@ _Through = TypeVar("_Through", bound=Model, default=Model)
 _To = TypeVar("_To", bound=Model)
 
 class ForeignKeyDeferredAttribute(DeferredAttribute):
-    field: RelatedField
+    field: RelatedField[Any, Any]
     def __set__(self, instance: Model, value: Any) -> None: ...
 
 class ForwardManyToOneDescriptor(Generic[_F]):
@@ -35,7 +35,7 @@ class ForwardManyToOneDescriptor(Generic[_F]):
     def get_object(self, instance: Model) -> Model: ...
     def __get__(
         self, instance: Model | None, cls: type[Model] | None = None
-    ) -> Model | ForwardManyToOneDescriptor | None: ...
+    ) -> Model | ForwardManyToOneDescriptor[Any] | None: ...
     def __set__(self, instance: Model, value: Model | None) -> None: ...
     @override
     def __reduce__(self) -> tuple[Callable[..., Any], tuple[type[Model], str]]: ...
@@ -122,7 +122,7 @@ def create_reverse_many_to_one_manager(
     superclass: type[BaseManager[_M]], rel: ManyToOneRel
 ) -> type[RelatedManager[_M]]: ...
 
-class ManyToManyDescriptor(ReverseManyToOneDescriptor, Generic[_To, _Through]):
+class ManyToManyDescriptor(ReverseManyToOneDescriptor[Any], Generic[_To, _Through]):
     """
     In the example::
 

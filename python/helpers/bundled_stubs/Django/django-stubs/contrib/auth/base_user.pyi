@@ -1,3 +1,4 @@
+import datetime as dt
 from collections.abc import Iterable
 from typing import Any, ClassVar, Literal, overload
 
@@ -21,8 +22,8 @@ class AbstractBaseUser(models.Model):
     class Meta:
         abstract: ClassVar[bool]
 
-    password = models.CharField(max_length=128)
-    last_login = models.DateTimeField(blank=True, null=True)
+    password: models.CharField[str | int | Combinable, str]
+    last_login: models.DateTimeField[str | dt.datetime | dt.date | Combinable | None, dt.datetime | None]
     is_active: bool | BooleanField[bool | Combinable, bool]
     backend: str  # Set dynamically by authenticate(), used by login()
 

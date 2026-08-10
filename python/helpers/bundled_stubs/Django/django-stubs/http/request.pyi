@@ -10,6 +10,7 @@ from django.core.files import uploadedfile, uploadhandler
 from django.urls import ResolverMatch
 from django.utils.datastructures import CaseInsensitiveMapping, ImmutableList, MultiValueDict
 from django.utils.functional import cached_property
+from django.views.debug import ExceptionReporter, SafeExceptionReporterFilter
 from typing_extensions import Self, TypeVar, override
 
 RAISE_ERROR: object
@@ -47,7 +48,7 @@ class HttpRequest:
     POST: _ImmutableQueryDict
     COOKIES: dict[str, str]
     META: dict[str, Any]
-    FILES: MultiValueDict[str, uploadedfile.UploadedFile]
+    FILES: MultiValueDict[str, uploadedfile.UploadedFile[Any]]
     path: str
     path_info: str
     method: str | None
@@ -56,19 +57,23 @@ class HttpRequest:
     content_params: dict[str, str] | None
     _body: bytes
     _stream: BinaryIO
-    # Attributes added by optional parts of Django
-    # django.contrib.admin views:
-    current_app: str
+    # Attributes set by middleware:
+    # https://docs.djangoproject.com/en/stable/ref/request-response/#attributes-set-by-middleware
+    # django.contrib.sessions.middleware.SessionMiddleware:
+    session: SessionBase
+    # django.contrib.sites.middleware.CurrentSiteMiddleware:
+    site: Site
     # django.contrib.auth.middleware.AuthenticationMiddleware:
     user: _AnyUser
-    # django.contrib.auth.middleware.AuthenticationMiddleware:
     auser: Callable[[], Awaitable[_AnyUser]]
     # django.middleware.locale.LocaleMiddleware:
     LANGUAGE_CODE: str
-    # django.contrib.sites.middleware.CurrentSiteMiddleware
-    site: Site
-    # django.contrib.sessions.middleware.SessionMiddleware
-    session: SessionBase
+    # Attributes set by application code:
+    # https://docs.djangoproject.com/en/stable/ref/request-response/#attributes-set-by-application-code
+    current_app: str
+    urlconf: str | None
+    exception_reporter_filter: SafeExceptionReporterFilter
+    exception_reporter_class: type[ExceptionReporter]
     def __init__(self) -> None: ...
     def get_host(self) -> str: ...
     def get_port(self) -> str: ...
@@ -97,7 +102,7 @@ class HttpRequest:
     def get_preferred_type(self, media_types: Sequence[str]) -> str | None: ...
     def parse_file_upload(
         self, META: Mapping[str, Any], post_data: _PostDataProtocol
-    ) -> tuple[QueryDict, MultiValueDict[str, uploadedfile.UploadedFile]]: ...
+    ) -> tuple[QueryDict, MultiValueDict[str, uploadedfile.UploadedFile[Any]]]: ...
     @cached_property
     def headers(self) -> HttpHeaders: ...
     @property

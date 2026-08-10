@@ -97,7 +97,7 @@ class AuthenticationForm(forms.Form):
     error_messages: _ErrorMessagesDict
     request: HttpRequest | None
     user_cache: _User | None
-    username_field: models.Field
+    username_field: models.Field[Any, Any]
     def __init__(self, request: HttpRequest | None = ..., *args: Any, **kwargs: Any) -> None: ...
     def confirm_login_allowed(self, user: _User) -> None: ...
     def get_user(self) -> _User: ...
@@ -130,14 +130,14 @@ class PasswordResetForm(forms.Form):
         extra_email_context: dict[str, str] | None = ...,
     ) -> None: ...
 
-class SetPasswordForm(SetPasswordMixin, forms.Form, Generic[_UserType]):
+class SetPasswordForm(SetPasswordMixin[_UserType], forms.Form, Generic[_UserType]):
     new_password1: forms.Field
     new_password2: forms.Field
     user: _UserType
     def __init__(self, user: _UserType, *args: Any, **kwargs: Any) -> None: ...
     def save(self, commit: bool = ...) -> _UserType: ...
 
-class PasswordChangeForm(SetPasswordForm):
+class PasswordChangeForm(SetPasswordForm[_User]):
     old_password: forms.Field
     def clean_old_password(self) -> str: ...
 
@@ -154,5 +154,5 @@ class AdminPasswordChangeForm(forms.Form, Generic[_UserType]):
     @override
     def changed_data(self) -> list[str]: ...
 
-class AdminUserCreationForm(SetUnusablePasswordMixin, UserCreationForm):
+class AdminUserCreationForm(SetUnusablePasswordMixin[_UserType], UserCreationForm[_UserType]):
     usable_password: forms.ChoiceField = ...

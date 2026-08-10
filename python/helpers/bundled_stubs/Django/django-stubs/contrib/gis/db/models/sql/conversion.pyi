@@ -1,9 +1,14 @@
 from typing import Any
 
 from django.db import models
-from typing_extensions import override
+from typing_extensions import TypeVar, override
 
-class AreaField(models.FloatField):
+# __set__ value type
+_ST = TypeVar("_ST", contravariant=True)
+# __get__ return type
+_GT = TypeVar("_GT", covariant=True)
+
+class AreaField(models.FloatField[_ST, _GT]):
     geo_field: Any
     def __init__(self, geo_field: Any) -> None: ...
     @override
@@ -14,7 +19,7 @@ class AreaField(models.FloatField):
     @override
     def get_internal_type(self) -> Any: ...
 
-class DistanceField(models.FloatField):
+class DistanceField(models.FloatField[_ST, _GT]):
     geo_field: Any
     def __init__(self, geo_field: Any) -> None: ...
     @override

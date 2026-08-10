@@ -1,4 +1,5 @@
 from collections.abc import Container, Iterator
+from re import Pattern
 from typing import Any, Literal
 
 from django.db.backends.base.base import BaseDatabaseWrapper
@@ -13,7 +14,7 @@ from .validation import DatabaseValidation
 
 version: Any
 django_conversions: Any
-server_version_re: Any
+server_version_re: Pattern[str]
 
 class CursorWrapper:
     codes_for_integrityerror: Any

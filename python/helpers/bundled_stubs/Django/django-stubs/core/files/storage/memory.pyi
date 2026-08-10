@@ -1,4 +1,4 @@
-from django.utils._os import _PathCompatible
+from _typeshed import StrPath
 from django.utils.deconstruct import _Deconstructible
 from django.utils.functional import cached_property
 
@@ -8,15 +8,15 @@ from .mixins import StorageSettingsMixin
 class InMemoryStorage(_Deconstructible, Storage, StorageSettingsMixin):
     def __init__(
         self,
-        location: _PathCompatible | None = None,
+        location: StrPath | None = None,
         base_url: str | None = None,
         file_permissions_mode: int | None = None,
         directory_permissions_mode: int | None = None,
     ) -> None: ...
     @cached_property
-    def base_location(self) -> _PathCompatible: ...
+    def base_location(self) -> StrPath: ...
     @cached_property
-    def location(self) -> _PathCompatible: ...
+    def location(self) -> StrPath: ...
     @cached_property
     def base_url(self) -> str: ...
     @cached_property

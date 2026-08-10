@@ -41,7 +41,7 @@ class AnyValue(Aggregate):
 class Avg(FixDurationInputMixin, NumericOutputFieldMixin, Aggregate): ...
 
 class Count(Aggregate):
-    output_field: ClassVar[IntegerField]
+    output_field: ClassVar[IntegerField[Any, Any]]
     def __init__(
         self,
         expression: Combinable | str,

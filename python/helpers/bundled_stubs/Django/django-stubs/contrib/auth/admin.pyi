@@ -12,8 +12,8 @@ from typing_extensions import override
 class GroupAdmin(admin.ModelAdmin[Group]):
     @override
     def formfield_for_manytomany(
-        self, db_field: ManyToManyField, request: HttpRequest | None = ..., **kwargs: Any
-    ) -> ModelMultipleChoiceField | None: ...
+        self, db_field: ManyToManyField[Any, Any], request: HttpRequest | None = ..., **kwargs: Any
+    ) -> ModelMultipleChoiceField[Any] | None: ...
 
 class UserAdmin(admin.ModelAdmin[_UserType]):
     change_user_password_template: Any
