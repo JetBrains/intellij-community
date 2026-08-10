@@ -1,4 +1,5 @@
 import threading
+from collections import defaultdict
 from collections.abc import Callable, Iterable
 from typing import Any
 
@@ -13,7 +14,9 @@ class Apps:
     apps_ready: bool
     ready_event: threading.Event
     loading: bool
-    _pending_operations: dict[tuple[str, str], list]
+    # Maps ("app_label", "modelname") tuples to lists of functions to be called when the corresponding model is ready.
+    _pending_operations: defaultdict[tuple[str, str], list[Callable[[type[Model]], Any]]]
+    _apps: dict[str, type[Any]]
     models_ready: bool
     ready: bool
     def __init__(self, installed_apps: Iterable[AppConfig | str] | None = ()) -> None: ...
@@ -35,7 +38,7 @@ class Apps:
     def set_installed_apps(self, installed: Iterable[str]) -> None: ...
     def unset_installed_apps(self) -> None: ...
     def clear_cache(self) -> None: ...
-    def lazy_model_operation(self, function: Callable, *model_keys: Any) -> None: ...
+    def lazy_model_operation(self, function: Callable[..., Any], *model_keys: Any) -> None: ...
     def do_pending_operations(self, model: type[Model]) -> None: ...
 
 apps: Apps

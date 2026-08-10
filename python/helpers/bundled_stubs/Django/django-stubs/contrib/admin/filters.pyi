@@ -27,11 +27,11 @@ class ListFilter:
     request: HttpRequest
     used_parameters: dict[str, object]
     def __init__(
-        self, request: HttpRequest, params: dict[str, list[str]], model: type[Model], model_admin: ModelAdmin
+        self, request: HttpRequest, params: dict[str, list[str]], model: type[Model], model_admin: ModelAdmin[Any]
     ) -> None: ...
     def has_output(self) -> bool: ...
     def choices(self, changelist: ChangeList) -> Iterator[Mapping[str, object]]: ...
-    def queryset(self, request: HttpRequest, queryset: QuerySet) -> QuerySet | None: ...
+    def queryset(self, request: HttpRequest, queryset: QuerySet[Any]) -> QuerySet[Any] | None: ...
     def expected_parameters(self) -> list[str | None]: ...
 
 class FacetsMixin:
@@ -45,7 +45,9 @@ class SimpleListFilter(FacetsMixin, ListFilter):
     parameter_name: str | None
     lookup_choices: list[tuple[str, _StrOrPromise]]
     def value(self) -> str | None: ...
-    def lookups(self, request: HttpRequest, model_admin: ModelAdmin) -> Iterable[tuple[str, _StrOrPromise]] | None: ...
+    def lookups(
+        self, request: HttpRequest, model_admin: ModelAdmin[Any]
+    ) -> Iterable[tuple[str, _StrOrPromise]] | None: ...
     @override
     def choices(self, changelist: ChangeList) -> Iterator[_ListFilterChoices]: ...
 
@@ -59,7 +61,7 @@ class FieldListFilter(FacetsMixin, ListFilter):
         request: HttpRequest,
         params: dict[str, list[str]],
         model: type[Model],
-        model_admin: ModelAdmin,
+        model_admin: ModelAdmin[Any],
         field_path: str,
     ) -> None: ...
     @classmethod
@@ -73,7 +75,7 @@ class FieldListFilter(FacetsMixin, ListFilter):
         request: HttpRequest,
         params: dict[str, list[str]],
         model: type[Model],
-        model_admin: ModelAdmin,
+        model_admin: ModelAdmin[Any],
         field_path: str,
     ) -> FieldListFilter: ...
     @override
@@ -90,10 +92,10 @@ class RelatedFieldListFilter(FieldListFilter):
     @property
     def include_empty_choice(self) -> bool: ...
     def field_admin_ordering(
-        self, field: RelatedField, request: HttpRequest, model_admin: ModelAdmin
+        self, field: RelatedField[Any, Any], request: HttpRequest, model_admin: ModelAdmin[Any]
     ) -> _ListOrTuple[str]: ...
     def field_choices(
-        self, field: RelatedField, request: HttpRequest, model_admin: ModelAdmin
+        self, field: RelatedField[Any, Any], request: HttpRequest, model_admin: ModelAdmin[Any]
     ) -> list[tuple[str, _StrOrPromise]]: ...
 
 class BooleanFieldListFilter(FieldListFilter):
@@ -122,7 +124,7 @@ class AllValuesFieldListFilter(FieldListFilter):
     lookup_val: str | None
     lookup_val_isnull: str | None
     empty_value_display: SafeString
-    lookup_choices: QuerySet
+    lookup_choices: QuerySet[Any]
 
 class RelatedOnlyFieldListFilter(RelatedFieldListFilter): ...
 

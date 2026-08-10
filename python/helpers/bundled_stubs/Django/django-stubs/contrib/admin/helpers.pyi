@@ -2,7 +2,7 @@ from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
 from typing import Any, type_check_only
 
 from django import forms
-from django.contrib.admin.options import ModelAdmin
+from django.contrib.admin.options import BaseModelAdmin, ModelAdmin
 from django.db.models import Model
 from django.db.models.fields import AutoField
 from django.db.models.fields.reverse_related import ForeignObjectRel
@@ -29,17 +29,17 @@ class _PrepopulatedDict(TypedDict):
 
 class AdminForm:
     prepopulated_fields: list[_PrepopulatedDict]
-    model_admin: ModelAdmin | None
+    model_admin: BaseModelAdmin[Any] | None
     readonly_fields: Sequence[str]
-    form: ModelForm
+    form: ModelForm[Any]
     fieldsets: list[tuple[Any, dict[str, list[str]]]]
     def __init__(
         self,
-        form: ModelForm,
+        form: ModelForm[Any],
         fieldsets: list[tuple[Any, dict[str, list[str]]]],
         prepopulated_fields: Mapping[str, Iterable[str]],
         readonly_fields: Sequence[str] | None = ...,
-        model_admin: ModelAdmin | None = ...,
+        model_admin: BaseModelAdmin[Any] | None = ...,
     ) -> None: ...
     def __iter__(self) -> Iterator[Fieldset]: ...
     @property
@@ -54,20 +54,20 @@ class AdminForm:
     def media(self) -> Media: ...
 
 class Fieldset:
-    form: ModelForm
+    form: ModelForm[Any]
     classes: str
     description: str | None
-    model_admin: ModelAdmin | None
+    model_admin: BaseModelAdmin[Any] | None
     readonly_fields: Sequence[str]
     def __init__(
         self,
-        form: ModelForm,
+        form: ModelForm[Any],
         name: Any | None = ...,
         readonly_fields: Sequence[str] = ...,
         fields: Sequence[str] = ...,
         classes: Iterable[str] = ...,
         description: str | None = ...,
-        model_admin: ModelAdmin | None = ...,
+        model_admin: BaseModelAdmin[Any] | None = ...,
     ) -> None: ...
     @cached_property
     def is_collapsible(self) -> bool: ...
@@ -76,17 +76,17 @@ class Fieldset:
     def __iter__(self) -> Iterator[Fieldline]: ...
 
 class Fieldline:
-    form: ModelForm
+    form: ModelForm[Any]
     fields: Sequence[str]
     has_visible_field: bool
-    model_admin: ModelAdmin | None
+    model_admin: BaseModelAdmin[Any] | None
     readonly_fields: Sequence[str]
     def __init__(
         self,
-        form: ModelForm,
+        form: ModelForm[Any],
         field: str | Sequence[str],
         readonly_fields: Sequence[str] | None = ...,
-        model_admin: ModelAdmin | None = ...,
+        model_admin: BaseModelAdmin[Any] | None = ...,
     ) -> None: ...
     def __iter__(self) -> Iterator[AdminField | AdminReadonlyField]: ...
     def errors(self) -> SafeString: ...
@@ -96,7 +96,7 @@ class AdminField:
     is_first: bool
     is_checkbox: bool
     is_readonly: bool
-    def __init__(self, form: ModelForm, field: str, is_first: bool) -> None: ...
+    def __init__(self, form: ModelForm[Any], field: str, is_first: bool) -> None: ...
     def label_tag(self) -> SafeString: ...
     def errors(self) -> SafeString: ...
 
@@ -110,18 +110,18 @@ class _FieldDictT(TypedDict):
 
 class AdminReadonlyField:
     field: _FieldDictT
-    form: ModelForm
-    model_admin: ModelAdmin | None
+    form: ModelForm[Any]
+    model_admin: BaseModelAdmin[Any] | None
     is_first: bool
     is_checkbox: bool
     is_readonly: bool
     empty_value_display: Any
     def __init__(
         self,
-        form: ModelForm,
+        form: ModelForm[Any],
         field: Callable[[Model], Any] | str,
         is_first: bool,
-        model_admin: ModelAdmin | None = ...,
+        model_admin: BaseModelAdmin[Any] | None = ...,
     ) -> None: ...
     def label_tag(self) -> SafeString: ...
     def get_admin_url(self, remote_field: ForeignObjectRel, remote_obj: Model) -> str: ...
@@ -131,7 +131,7 @@ class InlineAdminFormSet:
     opts: Any
     formset: Any
     fieldsets: Any
-    model_admin: ModelAdmin | None
+    model_admin: ModelAdmin[Any] | None
     readonly_fields: Sequence[str]
     prepopulated_fields: dict[str, Any]
     classes: str
@@ -146,7 +146,7 @@ class InlineAdminFormSet:
         fieldsets: Any,
         prepopulated_fields: dict[str, Any] | None = ...,
         readonly_fields: Sequence[str] | None = ...,
-        model_admin: ModelAdmin | None = ...,
+        model_admin: ModelAdmin[Any] | None = ...,
         has_add_permission: bool = ...,
         has_change_permission: bool = ...,
         has_delete_permission: bool = ...,
@@ -175,17 +175,17 @@ class InlineAdminForm(AdminForm):
     def __init__(
         self,
         formset: Any,
-        form: ModelForm,
+        form: ModelForm[Any],
         fieldsets: Any,
         prepopulated_fields: Any,
         original: bool | None,
         readonly_fields: Sequence[str] | None = ...,
-        model_admin: ModelAdmin | None = ...,
+        model_admin: BaseModelAdmin[Any] | None = ...,
         view_on_site_url: str | None = ...,
     ) -> None: ...
     @override
     def __iter__(self) -> Iterator[InlineFieldset]: ...
-    def needs_explicit_pk_field(self) -> bool | AutoField: ...
+    def needs_explicit_pk_field(self) -> bool | AutoField[Any, Any]: ...
     def pk_field(self) -> AdminField: ...
     def fk_field(self) -> AdminField: ...
     def deletion_field(self) -> AdminField: ...
@@ -197,4 +197,4 @@ class InlineFieldset(Fieldset):
     def __iter__(self) -> Iterator[Fieldline]: ...
 
 class AdminErrorList(forms.utils.ErrorList):
-    def __init__(self, form: ModelForm, inline_formsets: Any) -> None: ...
+    def __init__(self, form: ModelForm[Any], inline_formsets: Any) -> None: ...

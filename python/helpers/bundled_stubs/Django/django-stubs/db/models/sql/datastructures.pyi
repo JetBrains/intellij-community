@@ -17,7 +17,7 @@ class Join:
     parent_alias: str
     table_alias: str | None
     join_type: str
-    join_cols: tuple
+    join_cols: tuple[Any, ...]
     join_field: FieldCacheMixin
     nullable: bool
     filtered_relation: FilteredRelation | None

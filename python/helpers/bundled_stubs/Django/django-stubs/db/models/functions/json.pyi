@@ -8,7 +8,7 @@ from django.db.models.sql.compiler import SQLCompiler, _AsSqlType
 from typing_extensions import override
 
 class JSONArray(Func):
-    output_field: ClassVar[JSONField]
+    output_field: ClassVar[JSONField[Any, Any]]
     @override
     def as_sql(self, compiler: SQLCompiler, connection: BaseDatabaseWrapper, **extra_context: Any) -> _AsSqlType: ...  # type: ignore [override]
     def as_native(
@@ -20,7 +20,7 @@ class JSONArray(Func):
     def as_oracle(self, compiler: SQLCompiler, connection: BaseDatabaseWrapper, **extra_context: Any) -> _AsSqlType: ...
 
 class JSONObject(Func):
-    output_field: ClassVar[JSONField]
+    output_field: ClassVar[JSONField[Any, Any]]
     def __init__(self, **fields: Any) -> None: ...
     @override
     def as_sql(self, compiler: SQLCompiler, connection: BaseDatabaseWrapper, **extra_context: Any) -> _AsSqlType: ...  # type: ignore [override]

@@ -1,4 +1,5 @@
 from collections.abc import Callable
+from typing import Any
 
 from django.apps.registry import Apps
 from django.db.models.base import Model
@@ -12,7 +13,7 @@ class ModelSignal(Signal):
     @override
     def connect(  # type: ignore[override]
         self,
-        receiver: Callable,
+        receiver: Callable[..., Any],
         sender: type[Model] | str | None = None,
         weak: bool = True,
         dispatch_uid: _AnyHashable | None = None,
@@ -21,7 +22,7 @@ class ModelSignal(Signal):
     @override
     def disconnect(  # type: ignore[override]
         self,
-        receiver: Callable | None = None,
+        receiver: Callable[..., Any] | None = None,
         sender: type[Model] | str | None = None,
         dispatch_uid: _AnyHashable | None = None,
         apps: Apps | None = None,

@@ -1,3 +1,4 @@
+import datetime as dt
 from collections.abc import Iterable
 from typing import Any, ClassVar, Literal, TypeAlias
 
@@ -8,6 +9,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.db.models import QuerySet
 from django.db.models.base import Model
+from django.db.models.expressions import Combinable
 from django.db.models.manager import EmptyManager
 from django.utils.functional import _StrOrPromise
 from typing_extensions import Never, Self, TypeVar
@@ -36,9 +38,9 @@ class Permission(models.Model):
     content_type_id: int
     objects: ClassVar[PermissionManager]
 
-    name = models.CharField(max_length=255)
-    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
-    codename = models.CharField(max_length=100)
+    name: models.CharField[str | int | Combinable, str]
+    content_type: models.ForeignKey[ContentType | Combinable, ContentType]
+    codename: models.CharField[str | int | Combinable, str]
     def natural_key(self) -> tuple[str, str, str]: ...
 
 class GroupManager(models.Manager[Group]):
@@ -48,7 +50,7 @@ class GroupManager(models.Manager[Group]):
 class Group(models.Model):
     objects: ClassVar[GroupManager]
 
-    name = models.CharField(max_length=150)
+    name: models.CharField[str | int | Combinable, str]
     permissions = models.ManyToManyField(Permission)
     def natural_key(self) -> tuple[str]: ...
 
@@ -75,7 +77,7 @@ class UserManager(BaseUserManager[_UserType]):
     ) -> QuerySet[_UserType]: ...
 
 class PermissionsMixin(models.Model):
-    is_superuser = models.BooleanField()
+    is_superuser: models.BooleanField[bool | Combinable, bool]
     groups = models.ManyToManyField(Group)
     user_permissions = models.ManyToManyField(Permission)
 
@@ -103,13 +105,13 @@ class AbstractUser(AbstractBaseUser, PermissionsMixin):
         verbose_name: ClassVar[str]
         verbose_name_plural: ClassVar[str]
 
-    username = models.CharField(max_length=150)
-    first_name = models.CharField(max_length=30, blank=True)
-    last_name = models.CharField(max_length=150, blank=True)
-    email = models.EmailField(blank=True)
-    is_staff = models.BooleanField()
-    is_active = models.BooleanField()
-    date_joined = models.DateTimeField()
+    username: models.CharField[str | int | Combinable, str]
+    first_name: models.CharField[str | int | Combinable, str]
+    last_name: models.CharField[str | int | Combinable, str]
+    email: models.EmailField[str | Combinable, str]
+    is_staff: models.BooleanField[bool | Combinable, bool]
+    is_active: models.BooleanField[bool | Combinable, bool]
+    date_joined: models.DateTimeField[str | dt.datetime | dt.date | Combinable, dt.datetime]
 
     objects: ClassVar[UserManager[Self]]
 

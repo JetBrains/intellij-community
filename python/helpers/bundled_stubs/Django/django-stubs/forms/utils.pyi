@@ -13,7 +13,7 @@ from typing_extensions import override
 
 _DataT: TypeAlias = Mapping[str, Any]  # noqa: PYI047
 
-_FilesT: TypeAlias = MultiValueDict[str, UploadedFile]  # noqa: PYI047
+_FilesT: TypeAlias = MultiValueDict[str, UploadedFile[Any]]  # noqa: PYI047
 
 def pretty_name(name: str) -> str: ...
 def flatatt(attrs: dict[str, Any]) -> SafeString: ...

@@ -26,7 +26,7 @@ class ForeignObjectRel(FieldCacheMixin):
     empty_strings_allowed: bool
     is_relation: bool
     null: bool
-    field: ForeignObject
+    field: ForeignObject[Any, Any]
     model: type[Model]
     related_name: str | None
     related_query_name: str | None
@@ -38,7 +38,7 @@ class ForeignObjectRel(FieldCacheMixin):
     field_name: str | None
     def __init__(
         self,
-        field: ForeignObject,
+        field: ForeignObject[Any, Any],
         to: type[Model] | str,
         related_name: str | None = None,
         related_query_name: str | None = None,
@@ -51,7 +51,7 @@ class ForeignObjectRel(FieldCacheMixin):
     @cached_property
     def name(self) -> str: ...
     @property
-    def remote_field(self) -> ForeignObject: ...
+    def remote_field(self) -> ForeignObject[Any, Any]: ...
     @property
     def target_field(self) -> Field[Any, Any]: ...
     @cached_property
@@ -92,10 +92,10 @@ class ForeignObjectRel(FieldCacheMixin):
     def path_infos(self) -> list[PathInfo]: ...
 
 class ManyToOneRel(ForeignObjectRel):
-    field: ForeignKey
+    field: ForeignKey[Any, Any]
     def __init__(
         self,
-        field: ForeignKey,
+        field: ForeignKey[Any, Any],
         to: type[Model] | str,
         field_name: str,
         related_name: str | None = None,
@@ -112,10 +112,10 @@ class ManyToOneRel(ForeignObjectRel):
     def identity(self) -> tuple[Any, ...]: ...
 
 class OneToOneRel(ManyToOneRel):
-    field: OneToOneField
+    field: OneToOneField[Any, Any]
     def __init__(
         self,
-        field: OneToOneField,
+        field: OneToOneField[Any, Any],
         to: type[Model] | str,
         field_name: str | None,
         related_name: str | None = None,

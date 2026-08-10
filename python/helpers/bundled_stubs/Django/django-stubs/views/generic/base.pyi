@@ -1,11 +1,11 @@
 import logging
 from collections.abc import Callable, Mapping, Sequence
-from typing import Any
+from typing import Any, Generic
 
 from django.http.request import HttpRequest
 from django.http.response import HttpResponse, HttpResponseBase
 from django.utils.functional import _Getter
-from typing_extensions import override
+from typing_extensions import TypeVar, override
 
 logger: logging.Logger
 
@@ -13,7 +13,9 @@ class ContextMixin:
     extra_context: Mapping[str, Any] | None
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]: ...
 
-class View:
+_ViewResponse = TypeVar("_ViewResponse", bound=HttpResponseBase, default=HttpResponseBase)
+
+class View(Generic[_ViewResponse]):
     http_method_names: Sequence[str]
     request: HttpRequest
     args: Any
@@ -21,23 +23,25 @@ class View:
     def __init__(self, **kwargs: Any) -> None: ...
     view_is_async: _Getter[bool] | bool
     @classmethod
-    def as_view(cls: Any, **initkwargs: Any) -> Callable[..., HttpResponseBase]: ...
+    def as_view(cls: Any, **initkwargs: Any) -> Callable[..., _ViewResponse]: ...
     def setup(self, request: HttpRequest, *args: Any, **kwargs: Any) -> None: ...
     def dispatch(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponseBase: ...
     def http_method_not_allowed(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse: ...
     def options(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponseBase: ...
 
-class TemplateResponseMixin:
+_TemplateResponse = TypeVar("_TemplateResponse", bound=HttpResponse, default=HttpResponse)
+
+class TemplateResponseMixin(Generic[_TemplateResponse]):
     template_name: str | None
     template_engine: str | None
-    response_class: type[HttpResponse]
+    response_class: type[_TemplateResponse]
     content_type: str | None
     request: HttpRequest
-    def render_to_response(self, context: dict[str, Any], **response_kwargs: Any) -> HttpResponse: ...
+    def render_to_response(self, context: dict[str, Any], **response_kwargs: Any) -> _TemplateResponse: ...
     def get_template_names(self) -> list[str]: ...
 
-class TemplateView(TemplateResponseMixin, ContextMixin, View):
-    def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse: ...
+class TemplateView(TemplateResponseMixin[_TemplateResponse], ContextMixin, View[_TemplateResponse]):
+    def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> _TemplateResponse: ...
 
 class RedirectView(View):
     permanent: bool

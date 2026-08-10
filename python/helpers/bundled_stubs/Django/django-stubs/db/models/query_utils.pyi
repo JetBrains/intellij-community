@@ -26,8 +26,8 @@ class class_or_instance_method:
     def __get__(self, instance: Any, owner: Any) -> Callable[..., Any]: ...
 
 class PathInfo(NamedTuple):
-    from_opts: Options
-    to_opts: Options
+    from_opts: Options[Model]
+    to_opts: Options[Model]
     target_fields: tuple[Field[Any, Any], ...]
     join_field: Field[Any, Any]
     m2m: bool

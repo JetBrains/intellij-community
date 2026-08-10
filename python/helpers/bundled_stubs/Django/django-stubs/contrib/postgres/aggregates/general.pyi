@@ -15,7 +15,7 @@ from .mixins import OrderableAggMixin
 class ArrayAgg(OrderableAggMixin, Aggregate):
     @property
     @override
-    def output_field(self) -> ArrayField: ...
+    def output_field(self) -> ArrayField[Any, Any]: ...
     @override
     def resolve_expression(
         self,
@@ -33,13 +33,13 @@ class BitOr(Aggregate): ...
 class BitXor(Aggregate): ...
 
 class BoolAnd(Aggregate):
-    output_field: ClassVar[BooleanField]
+    output_field: ClassVar[BooleanField[Any, Any]]
 
 class BoolOr(Aggregate):
-    output_field: ClassVar[BooleanField]
+    output_field: ClassVar[BooleanField[Any, Any]]
 
 class JSONBAgg(OrderableAggMixin, Aggregate):
-    output_field: ClassVar[JSONField]
+    output_field: ClassVar[JSONField[Any, Any]]
     @override
     def resolve_expression(
         self,
@@ -53,7 +53,7 @@ class JSONBAgg(OrderableAggMixin, Aggregate):
     def as_sql(self, compiler: SQLCompiler, connection: BaseDatabaseWrapper) -> _AsSqlType: ...  # type: ignore[override]
 
 class StringAgg(OrderableAggMixin, Aggregate):
-    output_field: ClassVar[TextField]
+    output_field: ClassVar[TextField[Any, Any]]
     def __init__(
         self,
         expression: BaseExpression | Combinable | str,

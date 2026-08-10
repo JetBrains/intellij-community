@@ -23,14 +23,14 @@ class CreateModel(ModelOperation):
     fields: list[tuple[str, Field[Any, Any]]]
     options: dict[str, Any]
     bases: Sequence[type[Model] | str] | None
-    managers: Sequence[tuple[str, Manager]] | None
+    managers: Sequence[tuple[str, Manager[Any]]] | None
     def __init__(
         self,
         name: str,
         fields: list[tuple[str, Field[Any, Any]]],
         options: dict[str, Any] | None = None,
         bases: Sequence[type[Any] | str] | None = None,
-        managers: Sequence[tuple[str, Manager]] | None = None,
+        managers: Sequence[tuple[str, Manager[Any]]] | None = None,
     ) -> None: ...
 
 class DeleteModel(ModelOperation): ...
@@ -117,8 +117,8 @@ class AlterModelOptions(ModelOptionOperation):
     def __init__(self, name: str, options: dict[str, Any]) -> None: ...
 
 class AlterModelManagers(ModelOptionOperation):
-    managers: Sequence[tuple[str, Manager]]
-    def __init__(self, name: str, managers: Sequence[tuple[str, Manager]]) -> None: ...
+    managers: Sequence[tuple[str, Manager[Any]]]
+    def __init__(self, name: str, managers: Sequence[tuple[str, Manager[Any]]]) -> None: ...
 
 class IndexOperation(Operation):
     option_name: str

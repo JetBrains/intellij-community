@@ -11,7 +11,7 @@ from django.views.generic.detail import BaseDetailView, SingleObjectMixin, Singl
 from typing_extensions import TypeVar, override
 
 _FormT = TypeVar("_FormT", bound=BaseForm)
-_ModelFormT = TypeVar("_ModelFormT", bound=BaseModelForm)
+_ModelFormT = TypeVar("_ModelFormT", bound=BaseModelForm[Any])
 _M = TypeVar("_M", bound=models.Model)
 
 class FormMixin(ContextMixin, Generic[_FormT]):

@@ -1,3 +1,4 @@
+from re import Pattern
 from typing import Any, NamedTuple
 
 from django.db.backends.base.introspection import BaseDatabaseIntrospection
@@ -18,7 +19,7 @@ class FieldInfo(NamedTuple):
     pk: bool
     has_json_constraint: bool
 
-field_size_re: Any
+field_size_re: Pattern[str]
 
 def get_field_size(name: str) -> int | None: ...
 

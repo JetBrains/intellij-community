@@ -116,7 +116,7 @@ class ignore_warnings(TestContextDecorator):
     ignore_kwargs: dict[str, Any]
     filter_func: Callable[..., Any]
     def __init__(self, **kwargs: Any) -> None: ...
-    catch_warnings: AbstractContextManager[list | None]
+    catch_warnings: AbstractContextManager[list[Any] | None]
 
 requires_tz_support: Any
 

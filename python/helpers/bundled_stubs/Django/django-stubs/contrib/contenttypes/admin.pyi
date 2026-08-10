@@ -9,10 +9,10 @@ class GenericInlineModelAdminChecks(InlineModelAdminChecks):
     def _check_exclude_of_parent_model(self, obj: GenericInlineModelAdmin, parent_model: type[Model]) -> list[Any]: ...
     def _check_relation(self, obj: GenericInlineModelAdmin, parent_model: type[Model]) -> list[Any]: ...
 
-class GenericInlineModelAdmin(InlineModelAdmin):
+class GenericInlineModelAdmin(InlineModelAdmin[Any, Any]):
     ct_field: str
     ct_fk_field: str
-    formset: type[BaseGenericInlineFormSet]  # type: ignore[assignment]
+    formset: type[BaseGenericInlineFormSet[Any, Any]]  # type: ignore[assignment]
 
 class GenericStackedInline(GenericInlineModelAdmin):
     template: str

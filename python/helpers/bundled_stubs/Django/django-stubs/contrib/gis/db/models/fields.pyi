@@ -22,9 +22,9 @@ from django.utils.functional import _StrOrPromise
 from typing_extensions import TypeVar, override
 
 # __set__ value type
-_ST = TypeVar("_ST")
+_ST = TypeVar("_ST", contravariant=True)
 # __get__ return type
-_GT = TypeVar("_GT")
+_GT = TypeVar("_GT", covariant=True)
 
 class SRIDCacheEntry(NamedTuple):
     units: Any
@@ -204,7 +204,7 @@ class ExtentField(Field[Any, Any]):
     @override
     def get_internal_type(self) -> str: ...
 
-class RasterField(BaseSpatialField):
+class RasterField(BaseSpatialField[_ST, _GT]):
     @override
     def db_type(self, connection: Any) -> Any: ...
     def from_db_value(self, value: Any, expression: Any, connection: Any) -> Any: ...

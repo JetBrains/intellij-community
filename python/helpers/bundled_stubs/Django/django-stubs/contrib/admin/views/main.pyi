@@ -22,11 +22,11 @@ class ChangeListSearchForm(forms.Form): ...
 class ChangeList:
     search_form_class: type[forms.Form]
     model: type[Model]
-    opts: Options
-    lookup_opts: Options
-    root_queryset: QuerySet
-    list_display: _ListDisplayT
-    list_display_links: _ListDisplayT
+    opts: Options[Any]
+    lookup_opts: Options[Any]
+    root_queryset: QuerySet[Any]
+    list_display: _ListDisplayT[Any]
+    list_display_links: _ListDisplayT[Any]
     list_filter: Sequence[_ListFilterT]
     date_hierarchy: Any
     search_fields: Sequence[str]
@@ -34,7 +34,7 @@ class ChangeList:
     list_select_related: bool | Sequence[str]
     list_per_page: int
     list_max_show_all: int
-    model_admin: ModelAdmin
+    model_admin: ModelAdmin[Any]
     preserved_filters: str
     sortable_by: Sequence[str] | None
     page_num: int
@@ -52,13 +52,13 @@ class ChangeList:
     queryset: Any
     title: str
     pk_attname: str
-    formset: BaseFormSet | None
+    formset: BaseFormSet[Any] | None
     def __init__(
         self,
         request: HttpRequest,
         model: type[Model],
-        list_display: _ListDisplayT,
-        list_display_links: _ListDisplayT,
+        list_display: _ListDisplayT[Any],
+        list_display_links: _ListDisplayT[Any],
         list_filter: Sequence[_ListFilterT],
         date_hierarchy: str | None,
         search_fields: Sequence[str],
@@ -66,7 +66,7 @@ class ChangeList:
         list_per_page: int,
         list_max_show_all: int,
         list_editable: Sequence[str],
-        model_admin: ModelAdmin,
+        model_admin: ModelAdmin[Any],
         sortable_by: Sequence[str] | None,
         search_help_text: str | None,
     ) -> None: ...
@@ -82,14 +82,16 @@ class ChangeList:
     multi_page: bool
     paginator: Any
     def get_results(self, request: HttpRequest) -> None: ...
-    def get_ordering_field(self, field_name: Callable | str) -> _OrderByFieldName | None: ...
-    def get_ordering(self, request: HttpRequest, queryset: QuerySet) -> list[_OrderByFieldName]: ...
+    def get_ordering_field(self, field_name: Callable[..., Any] | str) -> _OrderByFieldName | None: ...
+    def get_ordering(self, request: HttpRequest, queryset: QuerySet[Any]) -> list[_OrderByFieldName]: ...
     def get_ordering_field_columns(self) -> dict[int, Literal["desc", "asc"]]: ...
-    def get_queryset(self, request: HttpRequest, exclude_parameters: list[str | None] | None = ...) -> QuerySet: ...
+    def get_queryset(
+        self, request: HttpRequest, exclude_parameters: list[str | None] | None = ...
+    ) -> QuerySet[Any]: ...
     filter_specs: list[ListFilter]
     has_filters: bool
     has_active_filters: bool
     clear_all_filters_qs: str
-    def apply_select_related(self, qs: QuerySet) -> QuerySet: ...
+    def apply_select_related(self, qs: QuerySet[Any]) -> QuerySet[Any]: ...
     def has_related_field_in_list_display(self) -> bool: ...
     def url_for_result(self, result: Model) -> str: ...
