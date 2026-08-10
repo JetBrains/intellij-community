@@ -13,6 +13,12 @@ object BuildDependenciesConstants {
    */
   const val DOWNLOAD_CACHE_DIR_PROPERTY: String = "intellij.build.download.cache.dir"
 
+  /**
+   * Points to a versioned manifest of checksum-pinned Bazel runfiles which are authoritative for
+   * build-dependency downloads. The value is either an absolute path or a Bazel rlocation path.
+   */
+  const val PRELOADED_DOWNLOADS_MANIFEST_PROPERTY: String = "intellij.build.download.preloaded.manifest"
+
   const val INTELLIJ_DEPENDENCIES_URL: String = "https://cache-redirector.jetbrains.com/intellij-dependencies"
   const val MAVEN_CENTRAL_URL: String = "https://cache-redirector.jetbrains.com/repo.maven.apache.org/maven2"
   const val JPS_AUTH_SPACE_USERNAME: String = "jps.auth.spaceUsername"

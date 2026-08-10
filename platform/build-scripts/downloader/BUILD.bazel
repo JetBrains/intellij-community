@@ -36,6 +36,7 @@ jvm_library(
         "//libraries/opentelemetry-extension-kotlin",
         "//libraries/hash4j",
         "//libraries/ktor/client",
+        "//platform/bazel-runfiles",
         ":libraries_zstd-jni_provided",
     ],
 )
@@ -65,6 +66,7 @@ jvm_library(
         "//libraries/opentelemetry-extension-kotlin:opentelemetry-extension-kotlin_test_lib",
         "//libraries/hash4j:hash4j_test_lib",
         "//libraries/ktor/client:client_test_lib",
+        "//platform/bazel-runfiles:bazel-runfiles_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.buildScripts.downloader` end

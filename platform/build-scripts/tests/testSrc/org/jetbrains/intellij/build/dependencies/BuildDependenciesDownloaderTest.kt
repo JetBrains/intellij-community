@@ -10,6 +10,7 @@ import org.junit.Assert
 import org.junit.Test
 import java.net.InetSocketAddress
 import java.nio.file.Files
+import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicInteger
 
 class BuildDependenciesDownloaderTest {
@@ -71,6 +72,98 @@ class BuildDependenciesDownloaderTest {
       if (!serverStopped) {
         server.stop(0)
       }
+    }
+  }
+
+  @Test
+  fun `preloaded manifest supplies cache and SHA changes its identity`() = runBlocking(Dispatchers.Default) {
+    withPreloadedTestRoot { communityRoot, cache, manifestRoot ->
+      val url = "https://example.invalid/artifact.bin"
+      val source = manifestRoot.resolve("artifact.bin")
+      Files.writeString(source, "first")
+      writeManifest(manifestRoot, "artifact.bin", "1".repeat(64), url)
+
+      val first = downloadFileToCacheLocation(url, communityRoot)
+      Assert.assertTrue(first.startsWith(cache))
+      Assert.assertEquals("first", Files.readString(first))
+      Assert.assertEquals(first, downloadFileToCacheLocation(url, communityRoot))
+
+      Files.writeString(source, "second")
+      writeManifest(manifestRoot, "artifact.bin", "2".repeat(64), url)
+      val repinned = downloadFileToCacheLocation(url, communityRoot)
+      Assert.assertNotEquals(first, repinned)
+      Assert.assertEquals("second", Files.readString(repinned))
+    }
+  }
+
+  @Test
+  fun `preloaded manifest rejects undeclared URL before network or cache lookup`() = runBlocking(Dispatchers.Default) {
+    withPreloadedTestRoot { communityRoot, _, manifestRoot ->
+      Files.writeString(manifestRoot.resolve("declared.bin"), "declared")
+      writeManifest(manifestRoot, "declared.bin", "3".repeat(64), "https://example.invalid/declared.bin")
+
+      val error = Assert.assertThrows(IllegalStateException::class.java) {
+        runBlocking {
+          downloadFileToCacheLocation("http://127.0.0.1:9/not-declared.bin", communityRoot)
+        }
+      }
+      Assert.assertTrue(error.message, error.message!!.contains("not declared in authoritative"))
+    }
+  }
+
+  @Test
+  fun `preloaded manifest rejects malformed metadata and missing runfiles`() = runBlocking(Dispatchers.Default) {
+    withPreloadedTestRoot { communityRoot, _, manifestRoot ->
+      val manifest = manifestRoot.resolve("preloaded-downloads-v1.tsv")
+      Files.writeString(manifest, "wrong-header\n")
+      val malformed = Assert.assertThrows(IllegalStateException::class.java) {
+        runBlocking { downloadFileToCacheLocation("https://example.invalid/missing.bin", communityRoot) }
+      }
+      Assert.assertTrue(malformed.message, malformed.message!!.contains("must start with"))
+
+      writeManifest(manifestRoot, "missing.bin", "4".repeat(64), "https://example.invalid/missing.bin")
+      val missing = Assert.assertThrows(IllegalStateException::class.java) {
+        runBlocking { downloadFileToCacheLocation("https://example.invalid/missing.bin", communityRoot) }
+      }
+      Assert.assertTrue(missing.message, missing.message!!.contains("missing runfile"))
+    }
+  }
+
+  private suspend fun withPreloadedTestRoot(
+    action: suspend (BuildDependenciesCommunityRoot, Path, Path) -> Unit,
+  ) {
+    val root = Files.createTempDirectory("preloaded-downloads-test")
+    val community = root.resolve("community")
+    val cache = root.resolve("cache")
+    val manifestRoot = root.resolve("runfiles")
+    Files.createDirectories(community)
+    Files.createDirectories(manifestRoot)
+    Files.createFile(community.resolve("intellij.idea.community.main.iml"))
+    val manifest = manifestRoot.resolve("preloaded-downloads-v1.tsv")
+    val oldCache = System.getProperty(BuildDependenciesConstants.DOWNLOAD_CACHE_DIR_PROPERTY)
+    val oldManifest = System.getProperty(BuildDependenciesConstants.PRELOADED_DOWNLOADS_MANIFEST_PROPERTY)
+    System.setProperty(BuildDependenciesConstants.DOWNLOAD_CACHE_DIR_PROPERTY, cache.toString())
+    System.setProperty(BuildDependenciesConstants.PRELOADED_DOWNLOADS_MANIFEST_PROPERTY, manifest.toString())
+    try {
+      action(BuildDependenciesCommunityRoot(community), cache, manifestRoot)
+    }
+    finally {
+      restoreProperty(BuildDependenciesConstants.DOWNLOAD_CACHE_DIR_PROPERTY, oldCache)
+      restoreProperty(BuildDependenciesConstants.PRELOADED_DOWNLOADS_MANIFEST_PROPERTY, oldManifest)
+      BuildDependenciesUtil.deleteFileOrFolder(root)
+    }
+  }
+
+  private fun writeManifest(root: Path, name: String, sha256: String, url: String) {
+    Files.writeString(root.resolve("preloaded-downloads-v1.tsv"), "intellij-build-downloads\t1\n$name\t$sha256\t$url\n")
+  }
+
+  private fun restoreProperty(name: String, value: String?) {
+    if (value == null) {
+      System.clearProperty(name)
+    }
+    else {
+      System.setProperty(name, value)
     }
   }
 }

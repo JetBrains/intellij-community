@@ -123,8 +123,18 @@ object BuildDependenciesDownloader {
   }
 
   fun getTargetFile(communityRoot: BuildDependenciesCommunityRoot, uriString: String): Path {
+    return getTargetFile(communityRoot = communityRoot, uriString = uriString, contentSha256 = null)
+  }
+
+  internal fun getTargetFile(communityRoot: BuildDependenciesCommunityRoot, uriString: String, contentSha256: String?): Path {
     val lastNameFromUri = uriString.substring(uriString.lastIndexOf('/') + 1)
-    val hashString = hashString("${uriString}V${DOWNLOAD_CODE_VERSION}").substring(0, 10)
+    val cacheIdentity = if (contentSha256 == null) {
+      "${uriString}V${DOWNLOAD_CODE_VERSION}"
+    }
+    else {
+      "${uriString}V${DOWNLOAD_CODE_VERSION}S${contentSha256}"
+    }
+    val hashString = hashString(cacheIdentity).substring(0, 10)
     return getDownloadCachePath(communityRoot).resolve("${hashString}-${lastNameFromUri}")
   }
 
@@ -178,23 +188,6 @@ object BuildDependenciesDownloader {
   private fun extractFlagFile(target: Path, communityRoot: BuildDependenciesCommunityRoot): Path {
     val hash = hashString(target.toString()).substring(0, 6)
     return getProjectLocalDownloadCache(communityRoot).resolve("${hash}-${target.fileName}.flag.txt")
-  }
-
-  /**
-   * Records that [target] already holds the extracted content of [archiveFile], so a later
-   * [extractFile] call with the same arguments takes the up-to-date fast path instead of cleaning
-   * and re-extracting [target]. For pre-provisioned targets on read-only storage (e.g., a checkout
-   * mounted read-only into a VM), where re-extraction is both destructive and impossible.
-   */
-  suspend fun markExtracted(
-    archiveFile: Path,
-    target: Path,
-    communityRoot: BuildDependenciesCommunityRoot,
-    vararg options: BuildDependenciesExtractOptions,
-  ) {
-    fileLocks.getLock(target.toString()).withLock {
-      Files.write(extractFlagFile(target, communityRoot), getExpectedFlagFileContent(archiveFile, target, options))
-    }
   }
 
   fun cleanUpIfRequired(communityRoot: BuildDependenciesCommunityRoot) {

@@ -4,10 +4,9 @@
 package org.jetbrains.intellij.build.impl
 
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -15,9 +14,9 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesConstants
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
-import org.jetbrains.intellij.build.dependencies.BuildDependenciesExtractOptions
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesManualRunOnly
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil
+import org.jetbrains.intellij.build.dependencies.extractFileToCacheLocation
 import org.jetbrains.intellij.build.downloadFileToCacheLocation
 import java.math.BigInteger
 import java.nio.file.Files
@@ -27,26 +26,17 @@ import java.security.MessageDigest
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.readBytes
 
-private val maven3Libs: List<String> = listOf(
-  "org.apache.maven.archetype:archetype-common:2.2",
-  "org.apache.maven.archetype:archetype-catalog:2.2",
-  "org.apache.maven.archetype:archetype-descriptor:2.2",
-  "org.apache.maven.shared:maven-dependency-tree:1.2",
-  "org.sonatype.nexus:nexus-indexer:3.0.4",
-  "org.sonatype.nexus:nexus-indexer-artifact:1.0.1",
-  "org.apache.lucene:lucene-core:2.4.1",
-)
-
 private val maven4Libs: List<String> = listOf(
   // let's not bundle archetype plugin version 3 with maven version 4
-/*  "org.apache.maven.archetype:archetype-common:3.2.1",
-  "org.apache.maven.archetype:archetype-catalog:3.2.1",
-  "org.apache.maven.archetype:archetype-descriptor:3.2.1",
-  "org.apache.maven.shared:maven-artifact-transfer:0.13.1",
-  "org.jdom:jdom2:2.0.6.1",*/
+  /*  "org.apache.maven.archetype:archetype-common:3.2.1",
+    "org.apache.maven.archetype:archetype-catalog:3.2.1",
+    "org.apache.maven.archetype:archetype-descriptor:3.2.1",
+    "org.apache.maven.shared:maven-artifact-transfer:0.13.1",
+    "org.jdom:jdom2:2.0.6.1",*/
 )
 
-private val mavenTelemetryDependencies = listOf("com.fasterxml.jackson.core:jackson-core:2.16.0")
+private const val MAVEN_3_LIBRARIES_PROPERTY = "bundledMaven3Libraries"
+private const val MAVEN_TELEMETRY_LIBRARIES_PROPERTY = "bundledMavenTelemetryLibraries"
 
 object BundledMavenDownloader {
   private val mutex = Mutex()
@@ -80,7 +70,7 @@ object BundledMavenDownloader {
   }
 
   suspend fun downloadMaven4Libs(communityRoot: BuildDependenciesCommunityRoot): Path {
-    return downloadMavenLibs(communityRoot, "plugins/maven/maven40-server-impl/lib", maven4Libs)
+    return downloadMavenLibs(communityRoot, "maven40-server-impl", maven4Libs)
   }
 
   fun downloadMaven3LibsSync(communityRoot: BuildDependenciesCommunityRoot): Path {
@@ -90,13 +80,15 @@ object BundledMavenDownloader {
   }
 
   suspend fun downloadMaven3Libs(communityRoot: BuildDependenciesCommunityRoot): Path {
-    return downloadMavenLibs(communityRoot, "plugins/maven/maven3-server-common/lib", maven3Libs)
+    val properties = BuildDependenciesDownloader.getDependencyProperties(communityRoot)
+    return downloadMavenLibs(communityRoot, "maven3-server-common", parseLibraries(properties.property(MAVEN_3_LIBRARIES_PROPERTY)))
   }
 
-  @OptIn(ExperimentalCoroutinesApi::class)
   private suspend fun downloadMavenLibs(communityRoot: BuildDependenciesCommunityRoot, path: String, libs: List<String>): Path {
-    val root = communityRoot.communityRoot.resolve(path)
-    Files.createDirectories(root)
+    val root = BuildDependenciesDownloader.getDownloadCacheDirectory(communityRoot).resolve("maven-libraries").resolve(path)
+    withContext(Dispatchers.IO) {
+      Files.createDirectories(root)
+    }
     val targetFileToUris = libs.associate { coordinates ->
       val split = coordinates.split(':')
       check(split.size == 3) {
@@ -113,39 +105,30 @@ object BundledMavenDownloader {
       file to uri
     }
 
-    root.listDirectoryEntries().forEach { file ->
-      if (!targetFileToUris.containsKey(file)) {
-        BuildDependenciesUtil.deleteFileOrFolder(file)
-      }
-    }
-
-    val toDownload = targetFileToUris.filter { !Files.exists(it.key) }
-    if (toDownload.isEmpty()) {
-      return root
-    }
-
     val targetToSourceFiles = coroutineScope {
-      toDownload.map { (targetFile, uri) ->
+      targetFileToUris.map { (targetFile, uri) ->
         async {
           targetFile to downloadFileToCacheLocation(uri.toString(), communityRoot)
         }
-      }
-    }.asSequence().map { it.getCompleted() }.toMap()
+      }.awaitAll().toMap()
+    }
 
     withContext(Dispatchers.IO) {
-      for (targetFile in targetToSourceFiles.keys) {
-        val sourceFile = targetToSourceFiles.getValue(targetFile)
-        launch {
-          mutex.withLock {
-            if (Files.notExists(targetFile)) {
-              Files.copy(sourceFile, targetFile)
+      mutex.withLock {
+        root.listDirectoryEntries().forEach { file ->
+          if (!targetFileToUris.containsKey(file)) {
+            BuildDependenciesUtil.deleteFileOrFolder(file)
+          }
+        }
+        for ((targetFile, sourceFile) in targetToSourceFiles) {
+          if (Files.notExists(targetFile) || fileChecksum(sourceFile) != fileChecksum(targetFile)) {
+            val tempFile = Files.createTempFile(root, targetFile.fileName.toString(), ".tmp")
+            try {
+              Files.copy(sourceFile, tempFile, StandardCopyOption.REPLACE_EXISTING)
+              Files.move(tempFile, targetFile, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
             }
-            else {
-              val sourceCheckSum = fileChecksum(sourceFile)
-              val targetCheckSum = fileChecksum(targetFile)
-              if (sourceCheckSum != targetCheckSum) {
-                Files.copy(sourceFile, targetFile, StandardCopyOption.REPLACE_EXISTING)
-              }
+            finally {
+              Files.deleteIfExists(tempFile)
             }
           }
         }
@@ -161,10 +144,9 @@ object BundledMavenDownloader {
   }
 
   suspend fun downloadMavenDistribution(communityRoot: BuildDependenciesCommunityRoot): Path {
-    val extractDir = communityRoot.communityRoot.resolve("plugins/maven/maven36-server-impl/lib/maven3")
     val properties = BuildDependenciesDownloader.getDependencyProperties(communityRoot)
     val bundledMavenVersion = properties.property("bundledMavenVersion")
-    mutex.withLock {
+    return mutex.withLock {
       val uri = BuildDependenciesDownloader.getUriForMavenArtifact(
         mavenRepository = BuildDependenciesConstants.MAVEN_CENTRAL_URL,
         groupId = "org.apache.maven",
@@ -174,12 +156,22 @@ object BundledMavenDownloader {
         packaging = "zip"
       )
       val zipPath = downloadFileToCacheLocation(uri.toString(), communityRoot)
-      BuildDependenciesDownloader.extractFile(zipPath, extractDir, communityRoot, BuildDependenciesExtractOptions.STRIP_ROOT)
+      extractFileToCacheLocation(archiveFile = zipPath, communityRoot = communityRoot, stripRoot = true)
     }
-    return extractDir
   }
 
   suspend fun downloadMavenTelemetryDependencies(communityRoot: BuildDependenciesCommunityRoot): Path {
-    return downloadMavenLibs(communityRoot, "plugins/maven/maven-server-telemetry/lib", mavenTelemetryDependencies)
+    val properties = BuildDependenciesDownloader.getDependencyProperties(communityRoot)
+    return downloadMavenLibs(
+      communityRoot,
+      "maven-server-telemetry",
+      parseLibraries(properties.property(MAVEN_TELEMETRY_LIBRARIES_PROPERTY)),
+    )
+  }
+
+  private fun parseLibraries(value: String): List<String> {
+    return value.split(',').map { it.trim() }.also { libraries ->
+      check(libraries.isNotEmpty() && libraries.all { it.isNotEmpty() }) { "Maven library list is empty or malformed: '$value'" }
+    }
   }
 }

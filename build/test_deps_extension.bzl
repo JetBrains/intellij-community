@@ -30,10 +30,32 @@ Then BUILD files can use labels like @my_repo_name//:foo.zip or the convenience 
 
 load("@bazel_tools//tools/build_defs/repo:utils.bzl", "get_auth")
 
+_PRELOADED_DOWNLOADS_MANIFEST = "preloaded-downloads-v1.tsv"
+_PRELOADED_DOWNLOADS_MANIFEST_HEADER = "intellij-build-downloads\t1"
+
 def test_deps_repository(repository_name):
     files = []
 
     def download_file(name, url, sha256):
+        if not name or name.startswith("/") or "\\" in name:
+            fail("test_deps_repository requires a non-empty repository-relative name, got: " + name)
+        for part in name.split("/"):
+            if not part or part == "." or part == "..":
+                fail("test_deps_repository requires a normalized repository-relative name, got: " + name)
+        for value in [name, url, sha256]:
+            if "\t" in value or "\n" in value or "\r" in value:
+                fail("test_deps_repository values must not contain tabs or newlines")
+        if len(sha256) != 64:
+            fail("test_deps_repository requires a 64-character sha256 for " + name)
+        for index in range(len(sha256)):
+            char = sha256[index]
+            if char not in "0123456789abcdef":
+                fail("test_deps_repository requires a lowercase hexadecimal sha256 for " + name)
+        for existing in files:
+            if existing.name == name:
+                fail("test_deps_repository has duplicate file name: " + name)
+            if existing.url == url:
+                fail("test_deps_repository has duplicate URL: " + url)
         files.append(struct(name = name, url = url, sha256 = sha256))
 
     def _impl(repository_ctx):
@@ -52,14 +74,22 @@ def test_deps_repository(repository_name):
         for d in downloads:
             d.wait()
 
+        exported_files = [f.name for f in files] + [_PRELOADED_DOWNLOADS_MANIFEST]
+        repository_ctx.file(
+            _PRELOADED_DOWNLOADS_MANIFEST,
+            _PRELOADED_DOWNLOADS_MANIFEST_HEADER + "\n" + "\n".join([
+                "%s\t%s\t%s" % (f.name, f.sha256, f.url)
+                for f in files
+            ]) + "\n",
+        )
         repository_ctx.file(
             "BUILD",
             """
-package(default_visibility = ["//visibility:public"]) 
+package(default_visibility = ["//visibility:public"])
 exports_files([
 {files}
 ])
-""".format(files = ",\n".join(["  \"%s\"" % f.name for f in files])),
+""".format(files = ",\n".join(["  \"%s\"" % name for name in exported_files])),
         )
         return repository_ctx.repo_metadata(reproducible = True)
 
@@ -71,9 +101,13 @@ exports_files([
     def all_targets():
         return ["@%s//:%s" % (repository_name, f.name) for f in files]
 
+    def manifest_target():
+        return "@%s//:%s" % (repository_name, _PRELOADED_DOWNLOADS_MANIFEST)
+
     return struct(
         repository_name = repository_name,
         download_file = download_file,
         make_repository_rule = make_repository_rule,
         all_targets = all_targets,
+        manifest_target = manifest_target,
     )

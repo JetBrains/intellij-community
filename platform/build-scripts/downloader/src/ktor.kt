@@ -44,6 +44,7 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader.Credentials
+import org.jetbrains.intellij.build.dependencies.getPreloadedDownload
 import java.io.IOException
 import java.net.SocketException
 import java.nio.channels.FileChannel
@@ -252,7 +253,8 @@ private suspend fun downloadFileToCacheLocation(
 ): Path = withContext(Dispatchers.IO) {
   BuildDependenciesDownloader.cleanUpIfRequired(communityRoot)
 
-  val target = BuildDependenciesDownloader.getTargetFile(communityRoot, url)
+  val preloaded = getPreloadedDownload(url)
+  val target = BuildDependenciesDownloader.getTargetFile(communityRoot, url, preloaded?.sha256)
   val targetPath = target.toString()
   fileLocks.getLock(targetPath).withLock {
     if (Files.exists(target)) {
@@ -269,6 +271,18 @@ private suspend fun downloadFileToCacheLocation(
       }
       catch (e: IOException) {
         Span.current().addEvent("update asset file modification time failed: $e")
+      }
+      return@withLock target
+    }
+
+    if (preloaded != null) {
+      val tempFile = Files.createTempFile(target.parent, target.fileName.toString(), ".preloaded.tmp")
+      try {
+        Files.copy(preloaded.source, tempFile, StandardCopyOption.REPLACE_EXISTING)
+        Files.move(tempFile, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
+      }
+      finally {
+        Files.deleteIfExists(tempFile)
       }
       return@withLock target
     }
