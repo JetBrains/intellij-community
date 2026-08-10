@@ -33,7 +33,6 @@ class PluginSet internal constructor(
 
   @JvmField val enabledPlugins: List<PluginMainDescriptor> = resolvedPluginSet.candidateSet.plugins.filter { resolvedPluginSet.isResolved(it) }
 
-  private val enabledModuleMap: Map<PluginModuleId, ContentModuleDescriptor>
   private val enabledModules: List<PluginModuleDescriptor>
   private val sortedModulesWithDependencies: ModulesWithDependencies
 
@@ -63,7 +62,6 @@ class PluginSet internal constructor(
         resolvedPluginSet.getDirectResolvedDependencies(it).filterIsInstance<PluginModuleDescriptor>().sortedWith(topologicalComparator)
       }
     )
-    enabledModuleMap = resolvedModules.keys.asSequence().filterIsInstance<ContentModuleDescriptor>().associateBy { it.moduleId }
     enabledModules = resolvedModules.keys.toList()
   }
 
@@ -99,9 +97,12 @@ class PluginSet internal constructor(
     return null
   }
 
-  fun findEnabledModule(moduleId: PluginModuleId): ContentModuleDescriptor? = enabledModuleMap.get(moduleId)
+  fun findEnabledModule(moduleId: PluginModuleId): ContentModuleDescriptor? {
+    return resolvedPluginSet.candidateSet.resolveContentModuleId(moduleId)
+      ?.takeIf { resolvedPluginSet.isResolved(it) }
+  }
 
-  fun isModuleEnabled(id: PluginModuleId): Boolean = enabledModuleMap.containsKey(id)
+  fun isModuleEnabled(id: PluginModuleId): Boolean = findEnabledModule(id) != null
 
   /**
    * Returns a map from plugin ID and plugin aliases to the corresponding plugin or module descriptors from all plugins, not only enabled.
