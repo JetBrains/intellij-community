@@ -26,7 +26,6 @@ class PluginSet internal constructor(
   @JvmField val allPlugins: Set<PluginMainDescriptor>,
   @JvmField val enabledPlugins: List<PluginMainDescriptor>,
   private val enabledModuleMap: Map<PluginModuleId, ContentModuleDescriptor>,
-  private val enabledPluginAndV1ModuleMap: Map<PluginId, PluginModuleDescriptor>,
   private val enabledModules: List<PluginModuleDescriptor>,
   val resolvedPluginSet: ResolvedPluginSet,
   val input: PluginSubsystemInput,
@@ -60,9 +59,17 @@ class PluginSet internal constructor(
 
   fun findInstalledPlugin(id: PluginId): PluginMainDescriptor? = allPlugins.find { it.pluginId == id }
 
-  fun isPluginEnabled(id: PluginId): Boolean = enabledPluginAndV1ModuleMap.containsKey(id)
+  fun isPluginEnabled(id: PluginId): Boolean {
+    return findEnabledPlugin(id) != null
+  }
 
-  fun findEnabledPlugin(id: PluginId): PluginModuleDescriptor? = enabledPluginAndV1ModuleMap.get(id)
+  fun findEnabledPlugin(id: PluginId): PluginModuleDescriptor? {
+    val module = resolvedPluginSet.candidateSet.resolvePluginId(id)
+    if (module != null && resolvedPluginSet.isResolved(module)) {
+      return module
+    }
+    return null
+  }
 
   fun findEnabledModule(moduleId: PluginModuleId): ContentModuleDescriptor? = enabledModuleMap.get(moduleId)
 

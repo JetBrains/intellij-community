@@ -591,13 +591,6 @@ object PluginManagerCore {
     val topologicalComparator = toCoreAwareComparator(Comparator { o1, o2 -> // TODO drop, should have no noticeable effect anymore
       compareValues(resolvedModules[o1]!!, resolvedModules[o2]!!)
     })
-    val enabledPluginAndV1ModuleMap = HashMap<PluginId, PluginModuleDescriptor>()
-    for (pluginId in resolvedPluginSet.candidateSet.sequenceAllPluginIds()) {
-      val module = resolvedPluginSet.candidateSet.resolvePluginId(pluginId)!!
-      if (resolvedPluginSet.isResolved(module)) {
-        enabledPluginAndV1ModuleMap[pluginId] = module
-      }
-    }
     val mostRecentExcludedPlugins = excludedFromCandidateSubset.keys.asSequence()
       .filter { resolvedPluginSet.candidateSet.resolvePluginId(it.pluginId)?.pluginId != it.pluginId }
       .groupBy { it.pluginId }
@@ -616,7 +609,6 @@ object PluginManagerCore {
       allPlugins = allPlugins.toSet(),
       enabledPlugins = resolvedPluginSet.candidateSet.plugins.filter { resolvedPluginSet.isResolved(it) },
       enabledModuleMap = resolvedModules.keys.asSequence().filterIsInstance<ContentModuleDescriptor>().associateBy { it.moduleId },
-      enabledPluginAndV1ModuleMap = enabledPluginAndV1ModuleMap,
       enabledModules = resolvedModules.keys.toList(),
       resolvedPluginSet = resolvedPluginSet,
       input = input,
