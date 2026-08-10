@@ -40,7 +40,10 @@ public abstract class BaseCoverageAnnotator implements CoverageAnnotator {
           request.run();
         },
         () -> dataManager.coverageDataCalculated(suite),
-        () -> dataManager.closeSuitesBundle(suite)
+        () -> {
+          dataManager.coverageDataCalculationFailed(suite);
+          dataManager.closeSuitesBundle(suite);
+        }
       );
     }
   }

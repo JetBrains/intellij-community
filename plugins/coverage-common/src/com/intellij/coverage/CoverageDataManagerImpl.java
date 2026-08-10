@@ -390,12 +390,23 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
     final CoverageSuite coverageSuite = coverageEnabledConfiguration.getCurrentCoverageSuite();
     if (coverageSuite != null) {
       ((BaseCoverageSuite)coverageSuite).setConfiguration(configuration);
-      getInstance(project).coverageGathered(coverageSuite);
+      CoverageDataManagerImpl manager = (CoverageDataManagerImpl)getInstance(project);
+      CoverageAnnotator annotator = takeSuppressedPresentationAnnotator(configuration);
+      if (annotator != null) {
+        manager.fireCoverageGathered(coverageSuite);
+        CoverageSuitesBundle bundle = new CoverageSuitesBundle(coverageSuite);
+        bundle.setAnnotator(annotator);
+        bundle.setShouldActivateToolWindow(false);
+        manager.renewCoverageData(bundle);
+      }
+      else {
+        manager.coverageGathered(coverageSuite);
+      }
     }
   }
 
   protected void renewCoverageData(@NotNull CoverageSuitesBundle suite) {
-    suite.getCoverageEngine().getCoverageAnnotator(myProject).renewCoverageData(suite, this);
+    suite.getAnnotator(myProject).renewCoverageData(suite, this);
   }
 
   @Override
@@ -441,9 +452,20 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
     }
   }
 
+  public void fireCoverageDataCalculationFailed(@NotNull CoverageSuitesBundle suitesBundle) {
+    for (CoverageSuiteListener listener : myListeners) {
+      listener.coverageDataCalculationFailed(suitesBundle);
+    }
+  }
+
   @Override
   public void coverageDataCalculated(@NotNull CoverageSuitesBundle suitesBundle) {
     fireCoverageDataCalculated(suitesBundle);
+  }
+
+  @Override
+  public void coverageDataCalculationFailed(@NotNull CoverageSuitesBundle suitesBundle) {
+    fireCoverageDataCalculationFailed(suitesBundle);
   }
 
   public static class CoverageProjectManagerListener implements ProjectCloseListener {

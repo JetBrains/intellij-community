@@ -9,6 +9,7 @@ import com.intellij.execution.ExecutionResult
 import com.intellij.execution.Executor
 import com.intellij.execution.RunManager
 import com.intellij.execution.RunnerAndConfigurationSettings
+import com.intellij.execution.configurations.ConfigurationInfoProvider
 import com.intellij.execution.configurations.ConfigurationFactory
 import com.intellij.execution.configurations.ConfigurationTypeBase
 import com.intellij.execution.configurations.RunConfiguration
@@ -48,8 +49,10 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import java.lang.reflect.Proxy
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.concurrent.atomic.AtomicReference
 import javax.swing.JPanel
 import kotlin.time.Duration.Companion.seconds
 
@@ -180,6 +183,46 @@ class ExecutionToolsetTest : GeneralMcpToolsetTestBase() {
       },
       "Run configuration 'compound-config' of type 'Compound' doesn't support dynamic launch overrides (programArguments, workingDirectory, envs)."
     )
+  }
+
+  @Test
+  fun execute_run_configuration_with_dynamic_launch_overrides_initializes_runner_settings() = runBlocking(Dispatchers.Default) {
+    val runManager = RunManager.getInstance(project)
+    val observedRunnerSettings = AtomicReference<RunnerSettings?>()
+    val script = TestProcessScript(
+      initialOutput = "started\n",
+      delayBeforeExitMs = 0,
+      finalOutput = "finished\n",
+    )
+    val settings = createExecutableConfiguration(
+      runManager = runManager,
+      name = "overridden-config",
+      script = script,
+    )
+    (settings.configuration as TestRunConfiguration).stateFactory = { _, environment ->
+      observedRunnerSettings.set(environment.runnerSettings)
+      TestRunProfileState(script)
+    }
+
+    runWriteAction {
+      runManager.addConfiguration(settings)
+    }
+
+    withTestProgramRunner {
+      testMcpTool(
+        ExecutionToolset::execute_run_configuration.name,
+        buildJsonObject {
+          put("configurationName", JsonPrimitive("overridden-config"))
+          put("programArguments", JsonPrimitive("--override"))
+          put("timeout", JsonPrimitive(5_000))
+        },
+      ) { result ->
+        val executionResult = Json.parseToJsonElement(result.textContent.text).jsonObject
+        assertThat(executionResult.getValue("exitCode").jsonPrimitive.content.toInt()).isZero()
+        assertThat(observedRunnerSettings.get()).isSameAs(TEST_RUNNER_SETTINGS)
+        cleanupRunningDescriptors()
+      }
+    }
   }
 
   @Test
@@ -574,8 +617,15 @@ class ExecutionToolsetTest : GeneralMcpToolsetTestBase() {
   }
 
   companion object {
+    private val TEST_RUNNER_SETTINGS = Proxy.newProxyInstance(
+      RunnerSettings::class.java.classLoader,
+      arrayOf(RunnerSettings::class.java),
+    ) { _, _, _ -> null } as RunnerSettings
+
     private val TEST_PROGRAM_RUNNER = object : GenericProgramRunner<RunnerSettings>() {
       override fun getRunnerId(): String = "ExecutionToolsetTestProgramRunner"
+
+      override fun createConfigurationData(settingsProvider: ConfigurationInfoProvider): RunnerSettings = TEST_RUNNER_SETTINGS
 
       override fun canRun(executorId: String, profile: RunProfile): Boolean {
         return profile is TestRunConfiguration

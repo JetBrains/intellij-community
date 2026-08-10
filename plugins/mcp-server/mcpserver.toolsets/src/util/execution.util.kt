@@ -307,6 +307,47 @@ suspend fun executeRunConfiguration(
   )
 }
 
+/**
+ * Executes a run configuration with a caller-provided executor and a one-shot configuration customizer.
+ *
+ * The effective run configuration is always cloned before [configurationCustomizer] is invoked, so tool-specific
+ * settings do not leak into the persisted run configuration.
+ */
+@ApiStatus.Internal
+suspend fun executeRunConfiguration(
+  configurationName: String? = null,
+  filePath: String? = null,
+  line: Int? = null,
+  timeout: Int,
+  waitForExit: Boolean,
+  programArguments: String?,
+  workingDirectory: String?,
+  envs: Map<String, String>?,
+  executor: Executor,
+  configurationCustomizer: (RunConfiguration) -> Unit,
+  processCallbackDelegate: ProgramRunner.Callback? = null,
+): RunConfigurationExecutionOutput {
+  return prepareAndExecuteRunConfiguration(
+    configurationName = configurationName,
+    filePath = filePath,
+    line = line,
+    programArguments = programArguments,
+    workingDirectory = workingDirectory,
+    envs = envs,
+    activityMessageKey = "tool.activity.executing.run.configuration",
+    configurationCustomizer = configurationCustomizer,
+  ) { project, resolvedConfiguration ->
+    executeResolvedRunConfiguration(
+      project = project,
+      resolvedConfiguration = resolvedConfiguration,
+      timeout = timeout,
+      waitForExit = waitForExit,
+      executor = executor,
+      processCallbackDelegate = processCallbackDelegate,
+    )
+  }
+}
+
 @ApiStatus.Internal
 suspend fun executeRunConfiguration(
   configurationName: String? = null,
@@ -320,23 +361,55 @@ suspend fun executeRunConfiguration(
   isDebug: Boolean,
   processCallbackDelegate: ProgramRunner.Callback?,
 ): RunConfigurationExecutionOutput {
-  val executionTarget = resolveRunConfigurationExecutionTarget(configurationName = configurationName, filePath = filePath, line = line)
-  currentCoroutineContext().reportToolActivity(
-    McpServerBundle.message(
-      if (isDebug) "tool.activity.starting.debug.run.configuration" else "tool.activity.executing.run.configuration",
-      executionTarget.presentableName,
+  return prepareAndExecuteRunConfiguration(
+    configurationName = configurationName,
+    filePath = filePath,
+    line = line,
+    programArguments = programArguments,
+    workingDirectory = workingDirectory,
+    envs = envs,
+    activityMessageKey = if (isDebug) "tool.activity.starting.debug.run.configuration" else "tool.activity.executing.run.configuration",
+  ) { project, resolvedConfiguration ->
+    executeResolvedRunConfiguration(
+      project = project,
+      resolvedConfiguration = resolvedConfiguration,
+      timeout = timeout,
+      waitForExit = waitForExit,
+      isDebug = isDebug,
+      processCallbackDelegate = processCallbackDelegate,
     )
-  )
-  val project = currentCoroutineContext().project
+  }
+}
 
-  val resolvedConfiguration = resolveRunConfigurationForExecution(
+private suspend fun prepareAndExecuteRunConfiguration(
+  configurationName: String?,
+  filePath: String?,
+  line: Int?,
+  programArguments: String?,
+  workingDirectory: String?,
+  envs: Map<String, String>?,
+  activityMessageKey: String,
+  configurationCustomizer: ((RunConfiguration) -> Unit)? = null,
+  execute: suspend (Project, ResolvedRunConfiguration) -> RunConfigurationExecutionOutput,
+): RunConfigurationExecutionOutput {
+  val executionTarget = resolveRunConfigurationExecutionTarget(configurationName = configurationName, filePath = filePath, line = line)
+  currentCoroutineContext().reportToolActivity(McpServerBundle.message(activityMessageKey, executionTarget.presentableName))
+  val project = currentCoroutineContext().project
+  var resolvedConfiguration = resolveRunConfigurationForExecution(
     project = project,
     executionTarget = executionTarget,
     programArguments = programArguments,
     workingDirectory = workingDirectory,
     envs = envs,
   )
-
+  if (configurationCustomizer != null) {
+    val effectiveConfiguration = resolvedConfiguration.runConfiguration.clone()
+    configurationCustomizer(effectiveConfiguration)
+    resolvedConfiguration = resolvedConfiguration.copy(
+      runConfiguration = effectiveConfiguration,
+      useOriginalSettings = false,
+    )
+  }
   val effectiveName = resolvedConfiguration.settings.name
   val runConfigurationParameters = (resolvedConfiguration.runConfiguration as? CommonProgramRunConfigurationParameters)?.programParameters
   val notificationText = if (runConfigurationParameters != null) {
@@ -346,14 +419,7 @@ suspend fun executeRunConfiguration(
     McpServerBundle.message("label.do.you.want.to.execute.run.configuration", effectiveName)
   }
   checkUserConfirmationIfNeeded(notificationText, command = runConfigurationParameters, project)
-  return executeResolvedRunConfiguration(
-    project = project,
-    resolvedConfiguration = resolvedConfiguration,
-    timeout = timeout,
-    waitForExit = waitForExit,
-    isDebug = isDebug,
-    processCallbackDelegate = processCallbackDelegate,
-  )
+  return execute(project, resolvedConfiguration)
 }
 
 internal suspend fun executeResolvedRunConfiguration(
@@ -370,6 +436,24 @@ internal suspend fun executeResolvedRunConfiguration(
   else {
     DefaultRunExecutor.getRunExecutorInstance() ?: mcpFail("Execution is not supported in this environment or IDE")
   }
+  return executeResolvedRunConfiguration(
+    project = project,
+    resolvedConfiguration = resolvedConfiguration,
+    timeout = timeout,
+    waitForExit = waitForExit,
+    executor = executor,
+    processCallbackDelegate = processCallbackDelegate,
+  )
+}
+
+private suspend fun executeResolvedRunConfiguration(
+  project: Project,
+  resolvedConfiguration: ResolvedRunConfiguration,
+  timeout: Int,
+  waitForExit: Boolean,
+  executor: Executor,
+  processCallbackDelegate: ProgramRunner.Callback? = null,
+): RunConfigurationExecutionOutput {
   val startedExecution = startResolvedRunConfiguration(
     project = project,
     resolvedConfiguration = resolvedConfiguration,
@@ -619,7 +703,7 @@ fun truncateRunConfigurationPreviewLine(line: String): String {
   )
 }
 
-private fun createExecutionEnvironment(
+private suspend fun createExecutionEnvironment(
   project: Project,
   executor: Executor,
   runConfiguration: RunConfiguration,
@@ -635,8 +719,11 @@ private fun createExecutionEnvironment(
     ExecutionEnvironmentBuilder.create(executor, runnerAndConfigurationSettings)
   }
   else {
-    // Use the effective configuration directly when this launch uses a cloned configuration with overrides.
-    ExecutionEnvironmentBuilder.create(project, executor, runConfiguration)
+    // Use temporary settings so the selected program runner can create its RunnerSettings for the cloned configuration.
+    val beforeRunTasks = runConfiguration.beforeRunTasks
+    val temporarySettings = RunManager.getInstanceAsync(project).createConfiguration(runConfiguration, runnerAndConfigurationSettings.factory)
+    runConfiguration.beforeRunTasks = beforeRunTasks
+    ExecutionEnvironmentBuilder.create(executor, temporarySettings)
   }
   if (target != null) builder.target(target)
   builder.build()
