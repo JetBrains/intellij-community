@@ -35,6 +35,14 @@ object MavenClasspathBuilder {
     classpath.addAll(classworldsJars)
   }
 
+  /**
+   * Collects the Maven server classpath from the assembled plugin layout, where each [subdirs] entry is a
+   * `<maven plugin dir>/lib/<subdir>` directory of jars.
+   *
+   * That layout is the contract produced by the Maven `PluginLayout` in `CommunityRepositoryModules.kt`, and it is the
+   * same in a production installation and in a dev build - so this works for both, and only genuine JPS-output runs
+   * (see [org.jetbrains.idea.maven.utils.MavenUtil.isRunningFromSources]) need the module-output-based alternative.
+   */
   @JvmStatic
   fun addMavenServerLibraries(classpath: MutableList<Path>, vararg subdirs: String) {
 

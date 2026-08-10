@@ -98,6 +98,11 @@ private fun buildDevImpl(rawArgs: Array<String>): BuildDevInfo {
       it.addAll(additionalClassPaths)
     }
 
+    // The home path must be pinned explicitly: `runDir` is not self-detectable as an IDE home, because its
+    // `product-info.json` lives in `bin/` and `PathManager.isIdeaHome` looks for it at the root - so the upwards walk
+    // in `PathManager.getHomeDirFor` would run past `runDir` all the way to the checkout root.
+    // Pinning it is what makes a dev build indistinguishable from an installation for `PathManager` and, in turn,
+    // makes `PluginManagerCore.isRunningFromSources` correctly answer `false` here (no `.idea` under `runDir`).
     val systemProperties = getIdeSystemProperties(runDir) +
                            VmProperties(mapOf(PathManager.PROPERTY_HOME_PATH to runDir.invariantSeparatorsPathString))
 

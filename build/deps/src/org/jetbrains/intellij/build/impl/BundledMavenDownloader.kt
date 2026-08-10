@@ -15,15 +15,16 @@ import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesConstants
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesManualRunOnly
-import org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil
 import org.jetbrains.intellij.build.dependencies.extractFileToCacheLocation
 import org.jetbrains.intellij.build.downloadFileToCacheLocation
-import java.math.BigInteger
+import org.jetbrains.intellij.build.resolveFileForReading
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
+import java.nio.file.attribute.FileTime
 import java.security.MessageDigest
-import kotlin.io.path.listDirectoryEntries
+import java.time.Instant
+import java.util.HexFormat
 import kotlin.io.path.readBytes
 
 private val maven4Libs: List<String> = listOf(
@@ -39,7 +40,13 @@ private const val MAVEN_3_LIBRARIES_PROPERTY = "bundledMaven3Libraries"
 private const val MAVEN_TELEMETRY_LIBRARIES_PROPERTY = "bundledMavenTelemetryLibraries"
 
 object BundledMavenDownloader {
-  private val mutex = Mutex()
+  data class MavenLibraryFile(
+    @JvmField val fileName: String,
+    @JvmField val source: Path,
+    @JvmField val sha256: String,
+  )
+
+  private val distributionMutex = Mutex()
 
   @JvmStatic
   fun main(args: Array<String>) {
@@ -57,10 +64,8 @@ object BundledMavenDownloader {
   }
 
   private fun fileChecksum(path: Path): String {
-    val md5 = MessageDigest.getInstance("MD5")
-    md5.update(path.readBytes())
-    val digest = md5.digest()
-    return BigInteger(1, digest).toString(32)
+    val digest = MessageDigest.getInstance("SHA-256").digest(path.readBytes())
+    return HexFormat.of().formatHex(digest)
   }
 
   fun downloadMaven4LibsSync(communityRoot: BuildDependenciesCommunityRoot): Path {
@@ -71,6 +76,10 @@ object BundledMavenDownloader {
 
   suspend fun downloadMaven4Libs(communityRoot: BuildDependenciesCommunityRoot): Path {
     return downloadMavenLibs(communityRoot, "maven40-server-impl", maven4Libs)
+  }
+
+  suspend fun resolveMaven4Libs(communityRoot: BuildDependenciesCommunityRoot): List<MavenLibraryFile> {
+    return resolveMavenLibs(communityRoot, maven4Libs)
   }
 
   fun downloadMaven3LibsSync(communityRoot: BuildDependenciesCommunityRoot): Path {
@@ -84,17 +93,52 @@ object BundledMavenDownloader {
     return downloadMavenLibs(communityRoot, "maven3-server-common", parseLibraries(properties.property(MAVEN_3_LIBRARIES_PROPERTY)))
   }
 
+  suspend fun resolveMaven3Libs(communityRoot: BuildDependenciesCommunityRoot): List<MavenLibraryFile> {
+    val properties = BuildDependenciesDownloader.getDependencyProperties(communityRoot)
+    return resolveMavenLibs(communityRoot, parseLibraries(properties.property(MAVEN_3_LIBRARIES_PROPERTY)))
+  }
+
   private suspend fun downloadMavenLibs(communityRoot: BuildDependenciesCommunityRoot, path: String, libs: List<String>): Path {
-    val root = BuildDependenciesDownloader.getDownloadCacheDirectory(communityRoot).resolve("maven-libraries").resolve(path)
+    val libraryFiles = resolveMavenLibs(communityRoot, libs)
+    val inventoryDigest = MessageDigest.getInstance("SHA-256")
+    for ((fileName, _, sha256) in libraryFiles.sortedBy { it.fileName }) {
+      inventoryDigest.update(fileName.toByteArray())
+      inventoryDigest.update(0.toByte())
+      inventoryDigest.update(sha256.toByteArray())
+      inventoryDigest.update(0.toByte())
+    }
+    val inventoryId = HexFormat.of().formatHex(inventoryDigest.digest())
+    val root = BuildDependenciesDownloader.getDownloadCacheDirectory(communityRoot).resolve("maven-libraries-$path-$inventoryId")
     withContext(Dispatchers.IO) {
       Files.createDirectories(root)
+      Files.setLastModifiedTime(root, FileTime.from(Instant.now()))
     }
-    val targetFileToUris = libs.associate { coordinates ->
+    withContext(Dispatchers.IO) {
+      for ((fileName, source, sha256) in libraryFiles) {
+        val targetFile = root.resolve(fileName)
+        if (Files.notExists(targetFile) || sha256 != fileChecksum(targetFile)) {
+          val tempFile = Files.createTempFile(root, fileName, ".tmp")
+          try {
+            Files.copy(source, tempFile, StandardCopyOption.REPLACE_EXISTING)
+            Files.move(tempFile, targetFile, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
+          }
+          finally {
+            Files.deleteIfExists(tempFile)
+          }
+        }
+      }
+      Files.setLastModifiedTime(root, FileTime.from(Instant.now()))
+    }
+    return root
+  }
+
+  private suspend fun resolveMavenLibs(communityRoot: BuildDependenciesCommunityRoot, libs: List<String>): List<MavenLibraryFile> {
+    val fileNameToUri = libs.associate { coordinates ->
       val split = coordinates.split(':')
       check(split.size == 3) {
         "Expected exactly 3 coordinates: $coordinates"
       }
-      val file = root.resolve("${split[1]}-${split[2]}.jar")
+      val fileName = "${split[1]}-${split[2]}.jar"
       val uri = BuildDependenciesDownloader.getUriForMavenArtifact(
         mavenRepository = BuildDependenciesConstants.MAVEN_CENTRAL_URL,
         groupId = split[0],
@@ -102,39 +146,17 @@ object BundledMavenDownloader {
         version = split[2],
         packaging = "jar"
       )
-      file to uri
+      fileName to uri
     }
 
-    val targetToSourceFiles = coroutineScope {
-      targetFileToUris.map { (targetFile, uri) ->
+    return coroutineScope {
+      fileNameToUri.map { (fileName, uri) ->
         async {
-          targetFile to downloadFileToCacheLocation(uri.toString(), communityRoot)
+          val source = resolveFileForReading(uri.toString(), communityRoot)
+          MavenLibraryFile(fileName = fileName, source = source, sha256 = fileChecksum(source))
         }
-      }.awaitAll().toMap()
+      }.awaitAll()
     }
-
-    withContext(Dispatchers.IO) {
-      mutex.withLock {
-        root.listDirectoryEntries().forEach { file ->
-          if (!targetFileToUris.containsKey(file)) {
-            BuildDependenciesUtil.deleteFileOrFolder(file)
-          }
-        }
-        for ((targetFile, sourceFile) in targetToSourceFiles) {
-          if (Files.notExists(targetFile) || fileChecksum(sourceFile) != fileChecksum(targetFile)) {
-            val tempFile = Files.createTempFile(root, targetFile.fileName.toString(), ".tmp")
-            try {
-              Files.copy(sourceFile, tempFile, StandardCopyOption.REPLACE_EXISTING)
-              Files.move(tempFile, targetFile, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
-            }
-            finally {
-              Files.deleteIfExists(tempFile)
-            }
-          }
-        }
-      }
-    }
-    return root
   }
 
   fun downloadMavenDistributionSync(communityRoot: BuildDependenciesCommunityRoot): Path {
@@ -146,7 +168,7 @@ object BundledMavenDownloader {
   suspend fun downloadMavenDistribution(communityRoot: BuildDependenciesCommunityRoot): Path {
     val properties = BuildDependenciesDownloader.getDependencyProperties(communityRoot)
     val bundledMavenVersion = properties.property("bundledMavenVersion")
-    return mutex.withLock {
+    return distributionMutex.withLock {
       val uri = BuildDependenciesDownloader.getUriForMavenArtifact(
         mavenRepository = BuildDependenciesConstants.MAVEN_CENTRAL_URL,
         groupId = "org.apache.maven",
@@ -167,6 +189,11 @@ object BundledMavenDownloader {
       "maven-server-telemetry",
       parseLibraries(properties.property(MAVEN_TELEMETRY_LIBRARIES_PROPERTY)),
     )
+  }
+
+  suspend fun resolveMavenTelemetryDependencies(communityRoot: BuildDependenciesCommunityRoot): List<MavenLibraryFile> {
+    val properties = BuildDependenciesDownloader.getDependencyProperties(communityRoot)
+    return resolveMavenLibs(communityRoot, parseLibraries(properties.property(MAVEN_TELEMETRY_LIBRARIES_PROPERTY)))
   }
 
   private fun parseLibraries(value: String): List<String> {

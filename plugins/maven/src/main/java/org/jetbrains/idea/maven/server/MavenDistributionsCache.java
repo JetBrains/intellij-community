@@ -191,11 +191,12 @@ public final class MavenDistributionsCache {
   public static @NotNull LocalMavenDistribution resolveEmbeddedMavenHome() {
     PluginDescriptor mavenPlugin = PluginManager.getPluginByClass(MavenDistributionsCache.class);
 
-    if (PluginManagerCore.isRunningFromSources()) { // running from sources
+    if (PluginManagerCore.isRunningFromSources()) { // JPS module outputs only - no assembled plugin layout to read from
       Path mavenPath = mySourcePath.getValue();
       return new LocalMavenDistribution(mavenPath, BundledMaven3.INSTANCE.getTitle());
     }
-    else if (mavenPlugin != null) { // running with production classloading. Use maven3 folder inside maven plugin layout
+    // an installed IDE *and* a dev build: both ship `lib/maven3` inside the maven plugin layout
+    else if (mavenPlugin != null) {
       Path pathToBundledMaven = mavenPlugin.getPluginPath().resolve("lib").resolve("maven3");
       return new LocalMavenDistribution(pathToBundledMaven, BundledMaven3.INSTANCE.getTitle());
     }

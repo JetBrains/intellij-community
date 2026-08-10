@@ -2,6 +2,8 @@
 package org.jetbrains.intellij.build.impl
 
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesConstants
@@ -74,6 +76,17 @@ class BundledMavenDownloaderTest {
     System.setProperty(BuildDependenciesConstants.PRELOADED_DOWNLOADS_MANIFEST_PROPERTY, manifest.toString())
     try {
       val communityRoot = BuildDependenciesCommunityRoot(community)
+      val resolvedMaven3 = BundledMavenDownloader.resolveMaven3Libs(communityRoot)
+      val resolvedTelemetry = BundledMavenDownloader.resolveMavenTelemetryDependencies(communityRoot)
+      val resolvedMaven4 = BundledMavenDownloader.resolveMaven4Libs(communityRoot)
+
+      Assert.assertEquals(setOf("one-1.jar", "two-2.jar"), resolvedMaven3.map { it.fileName }.toSet())
+      Assert.assertTrue(resolvedMaven3.all { it.source.startsWith(runfiles) })
+      Assert.assertEquals(listOf("telemetry-3.jar"), resolvedTelemetry.map { it.fileName })
+      Assert.assertTrue(resolvedTelemetry.single().source.startsWith(runfiles))
+      Assert.assertTrue(resolvedMaven4.isEmpty())
+      Assert.assertFalse("Resolving preloaded inputs must not create $cache", Files.exists(cache))
+
       val distribution = BundledMavenDownloader.downloadMavenDistribution(communityRoot)
       val maven3 = BundledMavenDownloader.downloadMaven3Libs(communityRoot)
       val telemetry = BundledMavenDownloader.downloadMavenTelemetryDependencies(communityRoot)
@@ -86,11 +99,27 @@ class BundledMavenDownloaderTest {
       Assert.assertEquals(setOf("one-1.jar", "two-2.jar"), Files.list(maven3).use { it.map { file -> file.fileName.toString() }.toList().toSet() })
       Assert.assertEquals(setOf("telemetry-3.jar"), Files.list(telemetry).use { it.map { file -> file.fileName.toString() }.toList().toSet() })
       Assert.assertTrue(Files.list(maven4).use { it.findAny().isEmpty })
+      Assert.assertEquals(cache, maven3.parent)
+      Assert.assertTrue(maven3.fileName.toString().startsWith("maven-libraries-maven3-server-common-"))
+      Assert.assertFalse(Files.exists(cache.resolve("maven-libraries")))
       Assert.assertFalse(Files.exists(community.resolve("plugins/maven/maven36-server-impl/lib/maven3")))
       Assert.assertFalse(Files.exists(community.resolve("plugins/maven/maven3-server-common/lib")))
 
       Assert.assertEquals(distribution, BundledMavenDownloader.downloadMavenDistribution(communityRoot))
       Assert.assertEquals(maven3, BundledMavenDownloader.downloadMaven3Libs(communityRoot))
+      val concurrentMaven3 = List(4) {
+        async { BundledMavenDownloader.downloadMaven3Libs(communityRoot) }
+      }.awaitAll()
+      Assert.assertEquals(setOf(maven3), concurrentMaven3.toSet())
+
+      Files.writeString(runfiles.resolve("one-1.jar"), "changed-content")
+      val changedMaven3 = BundledMavenDownloader.downloadMaven3Libs(communityRoot)
+      Assert.assertNotEquals(maven3, changedMaven3)
+      Assert.assertEquals("content-1", Files.readString(maven3.resolve("one-1.jar")))
+      Assert.assertEquals("changed-content", Files.readString(changedMaven3.resolve("one-1.jar")))
+      Assert.assertFalse(
+        Files.walk(cache).use { files -> files.anyMatch { file -> file.fileName.toString().endsWith(".tmp") } }
+      )
     }
     finally {
       restoreProperty(BuildDependenciesConstants.DOWNLOAD_CACHE_DIR_PROPERTY, oldCache)

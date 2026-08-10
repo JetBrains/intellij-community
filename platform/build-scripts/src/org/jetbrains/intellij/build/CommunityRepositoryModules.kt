@@ -22,6 +22,7 @@ import org.jetbrains.intellij.build.impl.patchOsSpecificPluginXml
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectLibraryEntry
 import org.jetbrains.intellij.build.io.copyDir
+import org.jetbrains.intellij.build.io.copyFile
 import org.jetbrains.intellij.build.io.copyFileToDir
 import org.jetbrains.intellij.build.kotlin.CommunityKotlinPluginBuilder
 import org.jetbrains.intellij.build.python.PythonCommunityPluginModules
@@ -88,6 +89,12 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.tasks.compatibility")
       spec.withModule("intellij.tasks.java")
     },
+    // The relative paths below (`lib/maven3`, `lib/intellij.maven.server3`, ...) are a runtime contract, not an
+    // internal packaging detail: the Maven plugin reads them back at runtime through
+    // `MavenClasspathBuilder.addMavenServerLibraries` and `MavenDistributionsCache.resolveEmbeddedMavenHome`.
+    // This layout is produced identically for a release build and a dev build (resource generators run in both -
+    // only `BuildOptions.skipCustomResourceGenerators`, used by build tests, suppresses them), which is why the
+    // runtime has no dev-build-specific branch. Renaming a path here breaks the IDE, not just the distribution.
     plugin("intellij.maven.plugin") { spec ->
 
       spec.doNotCopyModuleLibrariesAutomatically(
@@ -117,10 +124,10 @@ object CommunityRepositoryModules {
 
         spec.withGeneratedResources { targetDir, context ->
           val targetLib = targetDir.resolve("lib")
-          val maven3Libs = BundledMavenDownloader.downloadMaven3Libs(context.paths.communityHomeDirRoot)
-          copyDir(maven3Libs, targetLib.resolve(this))
-          val mavenTelemetryDependencies = BundledMavenDownloader.downloadMavenTelemetryDependencies(context.paths.communityHomeDirRoot)
-          copyDir(mavenTelemetryDependencies, targetLib.resolve(this))
+          val maven3Libs = BundledMavenDownloader.resolveMaven3Libs(context.paths.communityHomeDirRoot)
+          copyMavenLibraries(maven3Libs, targetLib.resolve(this))
+          val mavenTelemetryDependencies = BundledMavenDownloader.resolveMavenTelemetryDependencies(context.paths.communityHomeDirRoot)
+          copyMavenLibraries(mavenTelemetryDependencies, targetLib.resolve(this))
         }
       }
 
@@ -135,10 +142,10 @@ object CommunityRepositoryModules {
 
         spec.withGeneratedResources { targetDir, context ->
           val targetLib = targetDir.resolve("lib")
-          val maven4Libs = BundledMavenDownloader.downloadMaven4Libs(context.paths.communityHomeDirRoot)
-          copyDir(maven4Libs, targetLib.resolve(this))
-          val mavenTelemetryDependencies = BundledMavenDownloader.downloadMavenTelemetryDependencies(context.paths.communityHomeDirRoot)
-          copyDir(mavenTelemetryDependencies, targetLib.resolve(this))
+          val maven4Libs = BundledMavenDownloader.resolveMaven4Libs(context.paths.communityHomeDirRoot)
+          copyMavenLibraries(maven4Libs, targetLib.resolve(this))
+          val mavenTelemetryDependencies = BundledMavenDownloader.resolveMavenTelemetryDependencies(context.paths.communityHomeDirRoot)
+          copyMavenLibraries(mavenTelemetryDependencies, targetLib.resolve(this))
         }
       }
 
@@ -790,6 +797,12 @@ object CommunityRepositoryModules {
       spec.withResource("groovy-psi/resources/conf", "lib")
       addition?.invoke(spec)
     }
+  }
+}
+
+private fun copyMavenLibraries(libraries: List<BundledMavenDownloader.MavenLibraryFile>, targetDir: Path) {
+  for ((fileName, source) in libraries) {
+    copyFile(source, targetDir.resolve(fileName))
   }
 }
 

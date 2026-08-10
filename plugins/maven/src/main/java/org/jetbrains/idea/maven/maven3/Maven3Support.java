@@ -51,10 +51,12 @@ public class Maven3Support implements MavenVersionAwareSupportExtension {
     final List<Path> classpath = new ArrayList<>();
 
     if (MavenUtil.isRunningFromSources()) {
+      // JPS module outputs only - no assembled plugin layout to read from
       MavenLog.LOG.debug("collecting classpath for local run");
       prepareClassPathForLocalRunAndUnitTests(distribution.getVersion(), classpath);
     }
     else {
+      // an installed IDE *and* a dev build: both ship the same plugin layout
       MavenLog.LOG.debug("collecting classpath for production");
       prepareClassPathForProduction(distribution.getVersion(), classpath);
     }

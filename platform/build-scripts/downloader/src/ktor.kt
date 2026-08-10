@@ -204,6 +204,13 @@ suspend fun downloadFileToCacheLocation(url: String, communityRoot: BuildDepende
   return downloadFileToCacheLocation(url = url, communityRoot = communityRoot, authConfigSettings = null)
 }
 
+suspend fun resolveFileForReading(url: String, communityRoot: BuildDependenciesCommunityRoot): Path {
+  val preloaded = withContext(Dispatchers.IO) {
+    getPreloadedDownload(url)
+  }
+  return preloaded?.source ?: downloadFileToCacheLocation(url = url, communityRoot = communityRoot)
+}
+
 suspend fun downloadFileToCacheLocation(url: String, communityRoot: BuildDependenciesCommunityRoot, token: String): Path {
   return downloadFileToCacheLocation(url = url, communityRoot = communityRoot, authConfigSettings = {
     bearer {
