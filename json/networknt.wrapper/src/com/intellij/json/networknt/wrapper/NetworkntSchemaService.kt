@@ -10,6 +10,9 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.jsonSchema.ide.JsonSchemaService
+import com.jetbrains.jsonSchema.remote.http.JsonSchemaRemoteContentService
+import com.jetbrains.jsonSchema.remote.http.RemoteSchemaDownloadListener
+import com.jetbrains.jsonSchema.remote.http.SchemaUrl
 import com.networknt.schema.InputFormat
 import com.networknt.schema.Schema
 import com.networknt.schema.SchemaLocation
@@ -66,16 +69,20 @@ class NetworkntSchemaService(private val project: Project, private val scope: Co
       .buildAsync { key, _ ->
         scope.future(Dispatchers.Default) {
           val file = key.file
-          val schemaText = String(file.contentsToByteArray(), file.charset)
+          val schemaText = loadSchemaText(file)
           val registry = buildRegistry(key.version, file)
-          registry.getSchema(SchemaLocation.of(file.url), schemaText, detectInputFormat(file)).also {
-            LOG.debug("Schema compiled asynchronously: ${file.url}")
+          val iri = JsonSchemaRemoteContentService.getInstance(project).getSchemaIri(file)
+          registry.getSchema(SchemaLocation.of(iri), schemaText, detectInputFormat(file)).also {
+            LOG.debug("Schema compiled asynchronously: $iri")
           }
         }
       }
 
   init {
     schemaService.registerResetAction(schemaServiceResetAction)
+    project.messageBus.connect(this).subscribe(RemoteSchemaDownloadListener.TOPIC, RemoteSchemaDownloadListener {
+      invalidateAllCaches("remote schema download")
+    })
   }
 
   /**
@@ -125,6 +132,24 @@ class NetworkntSchemaService(private val project: Project, private val scope: Co
       "yaml", "yml" -> InputFormat.YAML
       else -> InputFormat.JSON
     }
+  }
+
+  /**
+   * Root schemas configured by URL still reach this service as [VirtualFile]s. Reading an HTTP VFS file here
+   * reintroduces the materialization race that remote `$ref` loading avoids, so use the same cache-first path.
+   * A cache miss compiles an empty schema for current pass; download completion invalidates this cache and restarts highlighting.
+   */
+  private fun loadSchemaText(file: VirtualFile): String {
+    if (!file.url.startsWith("http://") && !file.url.startsWith("https://")) {
+      return String(file.contentsToByteArray(), file.charset)
+    }
+    val url = SchemaUrl.parse(file.url)
+    val remoteContent = JsonSchemaRemoteContentService.getInstance(project)
+    remoteContent.getCached(url)?.let { return String(it.bytes, Charsets.UTF_8) }
+    if (remoteContent.prefetch(url)) {
+      LOG.debug("Remote root schema cache miss: ${url.value}")
+    }
+    return "{}"
   }
 
   private fun buildRegistry(version: SpecificationVersion, schemaFile: VirtualFile): SchemaRegistry {

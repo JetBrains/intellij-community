@@ -74,10 +74,10 @@ public class JsonSchemaUserDefinedProviderFactory implements JsonSchemaProviderF
     @Override
     public @Nullable VirtualFile getSchemaFile() {
       if (myVirtualFile != null && myVirtualFile.isValid()) return myVirtualFile;
-      String path = myFile;
+      if (isHttpPath(myFile)) return null;
 
-      if (isAbsoluteUrl(path)) {
-        myVirtualFile = JsonFileResolver.urlToFile(path);
+      if (isAbsoluteUrl(myFile)) {
+        myVirtualFile = JsonFileResolver.urlToFile(myFile);
       }
       else {
         final VirtualFileSystem lfs = StandardFileSystems.local();

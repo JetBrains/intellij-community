@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.components.ComponentManagerEx;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -31,9 +32,6 @@ import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.impl.http.FileDownloadingAdapter;
-import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
-import com.intellij.openapi.vfs.impl.http.RemoteFileInfo;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.impl.status.EditorBasedStatusBarPopup;
 import com.intellij.util.Alarm;
@@ -48,26 +46,29 @@ import com.jetbrains.jsonSchema.extension.JsonSchemaInfo;
 import com.jetbrains.jsonSchema.extension.JsonWidgetSuppressor;
 import com.jetbrains.jsonSchema.extension.SchemaType;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
+import com.jetbrains.jsonSchema.impl.JsonCachedValues;
+import com.jetbrains.jsonSchema.impl.JsonSchemaByCommentProvider;
 import com.jetbrains.jsonSchema.impl.JsonSchemaServiceImpl;
 import com.jetbrains.jsonSchema.remote.JsonFileResolver;
+import com.jetbrains.jsonSchema.remote.http.JsonSchemaRemoteContentService;
+import com.jetbrains.jsonSchema.remote.http.RemoteDownloadFailure;
+import com.jetbrains.jsonSchema.remote.http.RemoteSchemaDownloadListener;
+import com.jetbrains.jsonSchema.remote.http.SchemaOrigin;
 import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.JComponent;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
-
-import static com.jetbrains.jsonSchema.widget.FailedSchemaLoadingDiagnosticsKt.logSchemaDownloadFailureDiagnostics;
 
 final class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
   public static final String ID = "JSONSchemaSelector";
@@ -77,7 +78,6 @@ final class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
   private final AtomicReference<Pair<VirtualFile, Boolean>> mySuppressInfoRef = new AtomicReference<>();
 
   private volatile Pair<WidgetState, VirtualFile> myLastWidgetStateAndFilePair;
-  private final Map<RemoteFileInfo, FileDownloadingAdapter> myDownloadingListeners = new ConcurrentHashMap<>();
   private ProgressIndicator myCurrentProgress;
 
   private JsonSchemaStatusWidget(@NotNull Project project, @NotNull CoroutineScope scope) {
@@ -244,7 +244,7 @@ final class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
     }
     Collection<VirtualFile> schemaFiles = service.getSchemaFilesForFile(file);
     if (schemaFiles.isEmpty()) {
-      return getNoSchemaState();
+      return getPendingOrNoSchemaState(file, isJsonFile);
     }
 
     if (schemaFiles.size() != 1) {
@@ -266,38 +266,14 @@ final class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
     }
 
     VirtualFile schemaFile = schemaFiles.iterator().next();
-    schemaFile = ((JsonSchemaServiceImpl)service).replaceHttpFileWithBuiltinIfNeeded(schemaFile);
+    return stateForSingleSchemaFile(schemaFile, isJsonFile);
+  }
 
+  private @NotNull WidgetState stateForSingleSchemaFile(@NotNull VirtualFile schemaFile, boolean isJsonFile) {
     String tooltip =
       isJsonFile ? JsonBundle.message("schema.widget.tooltip.json.files") : JsonBundle.message("schema.widget.tooltip.other.files");
     String bar =
       isJsonFile ? JsonBundle.message("schema.widget.prefix.json.files") : JsonBundle.message("schema.widget.prefix.other.files");
-
-    if (schemaFile instanceof HttpVirtualFile httpSchemaFile) {
-      RemoteFileInfo info = httpSchemaFile.getFileInfo();
-      if (info == null) {
-        logSchemaDownloadFailureDiagnostics(httpSchemaFile, getProject());
-        return getDownloadErrorState(null);
-      }
-
-      //noinspection EnumSwitchStatementWhichMissesCases
-      switch (info.getState()) {
-        case DOWNLOADING_NOT_STARTED -> {
-          addDownloadingUpdateListener(info);
-          return new MyWidgetState(tooltip + getSchemaFileDesc(schemaFile), bar + getPresentableNameForFile(schemaFile),
-                                   true);
-        }
-        case DOWNLOADING_IN_PROGRESS -> {
-          addDownloadingUpdateListener(info);
-          return new MyWidgetState(JsonBundle.message("schema.widget.download.in.progress.tooltip"),
-                                   JsonBundle.message("schema.widget.download.in.progress.label"), false);
-        }
-        case ERROR_OCCURRED -> {
-          logSchemaDownloadFailureDiagnostics(httpSchemaFile, getProject());
-          return getDownloadErrorState(info.getErrorMessage());
-        }
-      }
-    }
 
     if (!isValidSchemaFile(schemaFile)) {
       MyWidgetState state =
@@ -306,7 +282,8 @@ final class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
       return state;
     }
 
-    JsonSchemaFileProvider provider = service.getSchemaProvider(schemaFile);
+    JsonSchemaService service = getService();
+    JsonSchemaFileProvider provider = service == null ? null : service.getSchemaProvider(schemaFile);
     if (provider != null) {
       final boolean preferRemoteSchemas = JsonSchemaCatalogProjectConfiguration.getInstance(getProject()).isPreferRemoteSchemas();
       final String remoteSource = provider.getRemoteSource();
@@ -327,6 +304,82 @@ final class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
 
     return new MyWidgetState(tooltip + getSchemaFileDesc(schemaFile), bar + getPresentableNameForFile(schemaFile),
                              true);
+  }
+
+  @NotNull WidgetState getPendingOrNoSchemaState(@NotNull VirtualFile file, boolean isJsonFile) {
+    String url = JsonCachedValues.getSchemaUrlFromSchemaProperty(file, getProject());
+    if (url == null) {
+      url = JsonSchemaByCommentProvider.getCommentSchema(file, getProject());
+    }
+    if (url == null) {
+      JsonSchemaService service = getService();
+      if (service instanceof JsonSchemaServiceImpl) {
+        url = ((JsonSchemaServiceImpl)service).getProvidersForFile(file).stream()
+          .map(JsonSchemaFileProvider::getRemoteSource)
+          .filter(Objects::nonNull)
+          .filter(JsonFileResolver::isHttpPath)
+          .findFirst()
+          .orElse(null);
+      }
+    }
+    if (url == null || !JsonFileResolver.isHttpPath(url)) {
+      return getNoSchemaState();
+    }
+    JsonSchemaRemoteContentService remoteContentService = JsonSchemaRemoteContentService.getInstance(getProject());
+    if (!remoteContentService.isAllowed()) {
+      return getNoSchemaState();
+    }
+    VirtualFile peeked = remoteContentService.peekCachedFile(url);
+    if (peeked != null) {
+      return stateForSingleSchemaFile(peeked, isJsonFile);
+    }
+    if (remoteContentService.hasInFlight(url)) {
+      return new MyWidgetState(JsonBundle.message("schema.widget.download.in.progress.tooltip"),
+                               JsonBundle.message("schema.widget.download.in.progress.label"), false);
+    }
+    RemoteDownloadFailure failure = remoteContentService.lastFailure(url);
+    if (remoteContentService.isUnavailable(url)
+        || failure == RemoteDownloadFailure.Failed
+        || failure == RemoteDownloadFailure.Rejected) {
+      return new MyWidgetState(JsonBundle.message("schema.widget.download.failed.tooltip"),
+                               JsonBundle.message("schema.widget.download.failed.label"), true);
+    }
+    if (JsonSchemaRemoteContentService.isValidUrl(url)) {
+      remoteContentService.prefetch(url);
+    }
+    return new MyWidgetState(JsonBundle.message("schema.widget.download.in.progress.tooltip"),
+                             JsonBundle.message("schema.widget.download.in.progress.label"), false);
+  }
+
+  @TestOnly
+  static final class TestWidgetState {
+    final @NotNull String text;
+
+    private TestWidgetState(@Nullable String text) {
+      this.text = text == null ? "" : text;
+    }
+  }
+
+  @TestOnly
+  static @NotNull TestWidgetState pendingStateForTests(@NotNull Project project, @NotNull VirtualFile file, boolean isJsonFile) {
+    JsonSchemaStatusWidget widget = create(project, ((ComponentManagerEx)project).getCoroutineScope());
+    try {
+      return new TestWidgetState(widget.getPendingOrNoSchemaState(file, isJsonFile).getText());
+    }
+    finally {
+      Disposer.dispose(widget);
+    }
+  }
+
+  @TestOnly
+  static @NotNull TestWidgetState widgetStateForTests(@NotNull Project project, @NotNull VirtualFile file, boolean isJsonFile) {
+    JsonSchemaStatusWidget widget = create(project, ((ComponentManagerEx)project).getCoroutineScope());
+    try {
+      return new TestWidgetState(widget.doGetWidgetState(file, isJsonFile).getText());
+    }
+    finally {
+      Disposer.dispose(widget);
+    }
   }
 
   private void scheduleSuppressCheck(@NotNull VirtualFile file, @NotNull ProgressIndicator globalProgress) {
@@ -363,41 +416,10 @@ final class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
                                                    : JsonBundle.message("schema.widget.prefix.other.files"));
   }
 
-  private void addDownloadingUpdateListener(@NotNull RemoteFileInfo info) {
-    FileDownloadingAdapter listener = new FileDownloadingAdapter() {
-      @Override
-      public void fileDownloaded(@NotNull VirtualFile localFile) {
-        removeDownloadingUpdateListener(info, this);
-        update();
-      }
-
-      @Override
-      public void errorOccurred(@NotNull String errorMessage) {
-        removeDownloadingUpdateListener(info, this);
-        update();
-      }
-
-      @Override
-      public void downloadingCancelled() {
-        removeDownloadingUpdateListener(info, this);
-        update();
-      }
-    };
-    if (myDownloadingListeners.putIfAbsent(info, listener) == null) {
-      info.addDownloadingListener(listener);
-    }
-  }
-
-  private void removeDownloadingUpdateListener(@NotNull RemoteFileInfo info, @NotNull FileDownloadingAdapter listener) {
-    if (myDownloadingListeners.remove(info, listener)) {
-      info.removeDownloadingListener(listener);
-    }
-  }
-
   private boolean isValidSchemaFile(@Nullable VirtualFile schemaFile) {
     // to avoid widget blinking we consider currently loaded schema as valid one
-    if (schemaFile instanceof HttpVirtualFile) return true;
     if (schemaFile == null) return false;
+    if (schemaFile.getUserData(SchemaOrigin.URL_KEY) != null) return true;
     JsonSchemaService service = getService();
     return service != null && service.isSchemaFile(schemaFile) && service.isApplicableToFile(schemaFile);
   }
@@ -425,8 +447,9 @@ final class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
   }
 
   private static @NotNull @Nls String getPresentableNameForFile(@NotNull VirtualFile schemaFile) {
-    if (schemaFile instanceof HttpVirtualFile) {
-      return new JsonSchemaInfo(schemaFile.getUrl()).getDescription();
+    String originUrl = schemaFile.getUserData(SchemaOrigin.URL_KEY);
+    if (originUrl != null) {
+      return new JsonSchemaInfo(originUrl).getDescription();
     }
 
     String nameWithoutExtension = schemaFile.getNameWithoutExtension();
@@ -438,22 +461,15 @@ final class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
     return npmPackageName != null ? npmPackageName : schemaFile.getName();
   }
 
-  private static @NotNull WidgetState getDownloadErrorState(@Nullable @Nls String message) {
-    String s = message == null ? "" : (": " + HtmlChunk.br() + message);
-    MyWidgetState state = new MyWidgetState(JsonBundle.message("schema.widget.error.cant.download") + s,
-                                            JsonBundle.message("schema.widget.error.label"), true);
-    state.setWarning(true);
-    return state;
-  }
-
   private static @NotNull WidgetState getNoSchemaState() {
     return new MyWidgetState(JsonBundle.message("schema.widget.no.schema.tooltip"), JsonBundle.message("schema.widget.no.schema.label"),
                              true);
   }
 
   private static @NotNull @Nls String getSchemaFileDesc(@NotNull VirtualFile schemaFile) {
-    if (schemaFile instanceof HttpVirtualFile) {
-      return schemaFile.getPresentableUrl();
+    String originUrl = schemaFile.getUserData(SchemaOrigin.URL_KEY);
+    if (originUrl != null) {
+      return originUrl;
     }
 
     String npmPackageName = extractNpmPackageName(schemaFile.getPath());
@@ -497,6 +513,7 @@ final class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
 
     myConnection.subscribe(DumbService.DUMB_MODE, new Listener());
     JsonWidgetSuppressor.EXTENSION_POINT_NAME.addChangeListener(scope, this::update);
+    myConnection.subscribe(RemoteSchemaDownloadListener.TOPIC, url -> update());
   }
 
   @Override
@@ -516,11 +533,6 @@ final class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
 
   @Override
   public void dispose() {
-    for (Map.Entry<RemoteFileInfo, FileDownloadingAdapter> entry : myDownloadingListeners.entrySet()) {
-      entry.getKey().removeDownloadingListener(entry.getValue());
-    }
-    myDownloadingListeners.clear();
-
     JsonSchemaService service = myServiceLazy.isInitialized() ? myServiceLazy.getValue() : null;
     if (service != null) {
       service.unregisterRemoteUpdateCallback(myUpdateCallback);
@@ -564,6 +576,9 @@ final class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
     for (JsonSchemaFileProvider provider : providers) {
       if (provider.getSchemaType() != SchemaType.userSchema) continue;
       VirtualFile schemaFile = provider.getSchemaFile();
+      if (schemaFile == null && provider.getRemoteSource() != null) {
+        schemaFile = JsonSchemaRemoteContentService.getInstance(service.getProject()).getCachedFile(provider.getRemoteSource());
+      }
       if (schemaFile != null) {
         files.add(schemaFile);
       }

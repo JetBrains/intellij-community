@@ -6,12 +6,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
-import com.intellij.openapi.vfs.impl.http.RemoteFileInfo;
-import com.intellij.openapi.vfs.impl.http.RemoteFileState;
 import com.intellij.util.containers.FactoryMap;
-import com.jetbrains.jsonSchema.fus.JsonSchemaFusCountedFeature;
-import com.jetbrains.jsonSchema.fus.JsonSchemaHighlightingSessionStatisticsCollector;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
 import com.jetbrains.jsonSchema.impl.JsonSchemaType;
@@ -55,9 +50,8 @@ public final class JsonSchemaObjectReadingUtils {
       service.registerReference(ref);
     }
     else if (value != null) {
-      // our aliases - if http ref actually refers to a local file with specific ID
       VirtualFile virtualFile = service.resolveSchemaFile(value);
-      if (virtualFile != null && !(virtualFile instanceof HttpVirtualFile)) {
+      if (virtualFile != null) {
         service.registerReference(virtualFile.getName());
       }
     }
@@ -105,20 +99,6 @@ public final class JsonSchemaObjectReadingUtils {
   }
 
   public static @Nullable JsonSchemaObject downloadAndParseRemoteSchema(@NotNull JsonSchemaService service, @NotNull VirtualFile refFile) {
-    if (refFile instanceof HttpVirtualFile) {
-      RemoteFileInfo info = ((HttpVirtualFile)refFile).getFileInfo();
-      if (info != null) {
-        RemoteFileState state = info.getState();
-        if (state == RemoteFileState.DOWNLOADING_NOT_STARTED) {
-          JsonSchemaHighlightingSessionStatisticsCollector.getInstance().reportSchemaUsageFeature(JsonSchemaFusCountedFeature.ExecutedHttpVirtualFileDownloadRequest);
-          JsonFileResolver.startFetchingHttpFileIfNeeded(refFile, service.getProject());
-          return NULL_OBJ;
-        }
-        else if (state == RemoteFileState.DOWNLOADING_IN_PROGRESS) {
-          return NULL_OBJ;
-        }
-      }
-    }
     return service.getSchemaObjectForSchemaFile(refFile);
   }
 

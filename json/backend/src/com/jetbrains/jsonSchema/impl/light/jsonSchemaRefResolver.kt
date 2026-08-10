@@ -3,7 +3,6 @@ package com.jetbrains.jsonSchema.impl.light
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vfs.impl.http.HttpVirtualFile
 import com.jetbrains.jsonSchema.fus.JsonSchemaFusCountedFeature
 import com.jetbrains.jsonSchema.fus.JsonSchemaHighlightingSessionStatisticsCollector
 import com.jetbrains.jsonSchema.ide.JsonSchemaService
@@ -78,9 +77,8 @@ private fun resolveRemoteSchemaByUrl(reference: String, schemaNode: JsonSchemaOb
     service.registerReference(reference)
   }
   else if (value != null) {
-    // our aliases - if http ref actually refers to a local file with specific ID
     val virtualFile = service.resolveSchemaFile(value)
-    if (virtualFile != null && virtualFile !is HttpVirtualFile) {
+    if (virtualFile != null) {
       service.registerReference(virtualFile.name)
     }
   }

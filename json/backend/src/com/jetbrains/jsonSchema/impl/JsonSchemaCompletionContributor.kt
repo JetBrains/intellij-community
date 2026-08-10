@@ -35,7 +35,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.impl.http.HttpVirtualFile
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
@@ -73,6 +72,7 @@ import com.jetbrains.jsonSchema.impl.nestedCompletions.navigate
 import com.jetbrains.jsonSchema.impl.nestedCompletions.prefix
 import com.jetbrains.jsonSchema.impl.nestedCompletions.rewindToMeaningfulLeaf
 import com.jetbrains.jsonSchema.impl.tree.JsonSchemaNodeExpansionRequest
+import com.jetbrains.jsonSchema.remote.http.SchemaOrigin
 import one.util.streamex.StreamEx
 import javax.swing.Icon
 
@@ -670,8 +670,7 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
 
     private fun updateStat(provider: JsonSchemaFileProvider?, schemaFile: VirtualFile?) {
       if (provider == null) {
-        if (schemaFile is HttpVirtualFile) {
-          // auto-detected and auto-downloaded JSON schemas
+        if (schemaFile?.getUserData(SchemaOrigin.URL_KEY) != null) {
           JsonSchemaUsageTriggerCollector.trigger(REMOTE_USAGE_KEY)
         }
         return

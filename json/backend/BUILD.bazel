@@ -74,6 +74,9 @@ jvm_library(
         "//platform/util/coroutines",
         "//platform/diagnostic/telemetry",
         "//libraries/opentelemetry",
+        "//platform/eel-nioFs",
+        "//libraries/kotlinx/serialization/core",
+        "//libraries/kotlinx/serialization/json",
     ],
 )
 
@@ -144,6 +147,9 @@ jvm_library(
         "//platform/util/coroutines:coroutines_test_lib",
         "//platform/diagnostic/telemetry:telemetry_test_lib",
         "//libraries/opentelemetry:opentelemetry_test_lib",
+        "//platform/eel-nioFs:eel-nioFs_test_lib",
+        "//libraries/kotlinx/serialization/core:core_test_lib",
+        "//libraries/kotlinx/serialization/json:json_test_lib",
     ],
 )
 ### auto-generated section `build intellij.json.backend` end

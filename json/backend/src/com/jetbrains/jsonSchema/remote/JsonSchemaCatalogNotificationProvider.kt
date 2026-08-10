@@ -30,7 +30,7 @@ class JsonSchemaCatalogNotificationProvider : EditorNotificationProvider, DumbAw
     project.service<JsonSchemaCatalogNotificationUpdateService>().ensureCallbacksRegistered()
 
     val mappingsConfiguration = JsonSchemaMappingsProjectConfiguration.getInstance(project)
-    if (mappingsConfiguration.isIgnoredFile(file)) return null
+    if (mappingsConfiguration.findMappingForFile(file) != null) return null
     if (service.getSchemaFilesForFile(file).isNotEmpty()) return null
 
     val entry = service.catalogManager.getSchemaCatalogEntryForFile(file) ?: return null

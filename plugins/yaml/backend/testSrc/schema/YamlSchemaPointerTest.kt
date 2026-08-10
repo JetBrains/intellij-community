@@ -121,7 +121,6 @@ class YamlSchemaPointerTest : BasePlatformTestCase() {
         """.trimIndent())
 
     val schemaFilesForFile = JsonSchemaService.Impl.get(project).getSchemaFilesForFile(myFixture.file.virtualFile)
-    UsefulTestCase.assertSameElements(schemaFilesForFile.map { it.url }, "https://myexternal-schema-service.com/schemas/def")
+    UsefulTestCase.assertEmpty(schemaFilesForFile)
   }
-
 }

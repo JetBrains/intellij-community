@@ -7,8 +7,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.impl.http.HttpVirtualFile
-import com.intellij.openapi.vfs.impl.http.RemoteFileState
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.containers.ConcurrentFactoryMap
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject
@@ -57,7 +55,6 @@ class JsonSchemaObjectStorage {
 
   private fun isSupportedSchemaFile(maybeSchemaFile: VirtualFile): Boolean {
     return isSupportedSchemaFileType(maybeSchemaFile.fileType)
-           && (maybeSchemaFile !is HttpVirtualFile || isLoadedHttpFile(maybeSchemaFile))
   }
 
   private fun isSupportedSchemaFileType(fileType: FileType): Boolean {
@@ -66,9 +63,6 @@ class JsonSchemaObjectStorage {
 
   private val supportedFileTypeNames = setOf("JSON", "JSON5", "YAML")
 
-  private fun isLoadedHttpFile(maybeHttpFile: VirtualFile): Boolean {
-    return maybeHttpFile is HttpVirtualFile && maybeHttpFile.fileInfo?.state == RemoteFileState.DOWNLOADED
-  }
 
   private fun VirtualFile.asSchemaId(): SchemaId {
     return if (this is LightVirtualFile) {

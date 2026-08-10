@@ -12,6 +12,8 @@
     <module name="intellij.libraries.jackson3.module.kotlin"/>
     <module name="intellij.libraries.kotlinx.collections.immutable"/>
     <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.json"/>
     <module name="intellij.libraries.markdown"/>
     <module name="intellij.libraries.opentelemetry"/>
     <module name="intellij.libraries.stream"/>
@@ -71,9 +73,16 @@
     <registryKey key="json.schema.object.v2" defaultValue="true" description="Use lightweight implementation of JsonSchemaObject"/>
     <registryKey key="json.schema.use.networknt.validation" defaultValue="true" description="Use networknt validator as primary JSON Schema validation engine"/>
 
-    <registryKey key="json.schema.networknt.remote.allow.in.tests" defaultValue="false" description="Allow remote schema downloads in unit test mode (blocked by default to prevent accidental HTTP traffic)"/>
     <registryKey key="json.schema.networknt.show.source.prefix" defaultValue="false" description="Prepend '[networknt] ' prefix to all validation errors produced by the networknt library (demo/diagnostic aid)"/>
     <registryKey key="json.schema.networknt.resolve.remote.refs" defaultValue="true" description="Resolve remote HTTP $ref URLs during networknt validation. When false, all remote $refs return null immediately (no cache lookup, no async fetch). Useful for benchmarking local-only validation overhead."/>
+    <registryKey key="json.schema.remote.http.timeout" defaultValue="10000" restartRequired="true" description="HTTP timeout in milliseconds for remote schema downloads."/>
+    <registryKey key="json.schema.remote.http.max.retries" defaultValue="5" description="Maximum retry attempts for failed remote schema downloads."/>
+    <registryKey key="json.schema.remote.http.backoff.step" defaultValue="1000" description="Backoff step in milliseconds between failed remote schema download attempts."/>
+    <registryKey key="json.schema.remote.http.max.schema.bytes" defaultValue="16777216" description="Maximum size in bytes for a remote schema response."/>
+    <registryKey key="json.schema.remote.http.max.redirects" defaultValue="5" description="Maximum number of redirects for a remote schema download."/>
+    <registryKey key="json.schema.remote.cache.stale.hours" defaultValue="4" description="Hours before a cached remote schema is revalidated."/>
+    <registryKey key="json.schema.remote.cache.error.hours" defaultValue="4" description="Hours to cache a permanently-rejected remote schema response (404, other 4xx, oversized content, redirect-limit exceeded) before retrying."/>
+    <registryKey key="json.schema.remote.max.concurrent.downloads" defaultValue="32" restartRequired="true" description="Maximum concurrent remote schema downloads."/>
     <registryKey key="json.schema.networknt.raw.error.cap" defaultValue="500"
                  description="Threshold for raw networknt errors before composition branch pruning kicks in. Not a cap on final displayed errors — all errors below this threshold are fully mapped."/>
     <registryKey key="json.schema.networknt.max.branch.subvalidations" defaultValue="32"
@@ -136,6 +145,10 @@
                          instance="com.jetbrains.jsonSchema.JsonSchemaCatalogConfigurable" nonDefaultProject="true"/>
     <projectService serviceInterface="com.jetbrains.jsonSchema.ide.JsonSchemaService"
                     serviceImplementation="com.jetbrains.jsonSchema.impl.JsonSchemaServiceImpl"/>
+    <applicationService serviceInterface="com.jetbrains.jsonSchema.remote.http.SchemaContentCache"
+                        serviceImplementation="com.jetbrains.jsonSchema.remote.http.JsonSchemaFileCache"/>
+    <applicationService serviceInterface="com.jetbrains.jsonSchema.remote.http.SchemaHttpTransport"
+                        serviceImplementation="com.jetbrains.jsonSchema.remote.http.JsonSchemaHttpClient"/>
     <completion.contributor order="last, before JsonCompletionContributor" language="JSON"
                             implementationClass="com.jetbrains.jsonSchema.impl.JsonSchemaCompletionContributor"/>
     <lang.documentationProvider language="JSON"
@@ -149,6 +162,8 @@
     <gotoDeclarationHandler id="JsonSchemaGotoDeclarationHandler"
                             implementation="com.jetbrains.jsonSchema.impl.JsonSchemaGotoDeclarationHandler"/>
     <highlightVisitor implementation="com.intellij.json.highlighting.JsonRainbowVisitor"/>
+    <annotator language="JSON" implementationClass="com.jetbrains.jsonSchema.impl.JsonSchemaRemoteDownloadAnnotator"/>
+    <annotator language="yaml" implementationClass="com.jetbrains.jsonSchema.impl.JsonSchemaRemoteDownloadAnnotator"/>
     <intentionAction>
       <language>JSON</language>
       <className>com.intellij.json.intentions.JsonSortPropertiesIntention</className>
@@ -172,7 +187,6 @@
 
     <pluginSuggestionProvider implementation="com.jetbrains.jsonSchema.wiremock.WireMockSuggestionProvider"/>
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.jsonSchema.fus.JsonFeatureUsageCollector"/>
-    <statistics.counterUsagesCollector implementationClass="com.jetbrains.jsonSchema.fus.JsonHttpFileLoadingUsageCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.jsonSchema.fus.JsonSchemaCatalogNotificationUsageCollector"/>
     <statistics.validation.customValidationRule implementation="com.jetbrains.jsonSchema.fus.JsonSchemaIdValidationRule"/>
     <projectSettings service="com.jetbrains.jsonSchema.JsonSchemaCatalogProjectConfiguration"/>

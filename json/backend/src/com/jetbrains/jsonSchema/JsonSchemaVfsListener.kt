@@ -28,6 +28,7 @@ import com.intellij.psi.PsiTreeAnyChangeAbstractAdapter
 import com.intellij.util.messages.Topic
 import com.jetbrains.jsonSchema.ide.JsonSchemaService
 import com.jetbrains.jsonSchema.impl.JsonSchemaServiceImpl
+import com.jetbrains.jsonSchema.remote.http.RemoteSchemaDownloadListener
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -46,6 +47,8 @@ private class JsonSchemaUpdater(project: Project, scope: CoroutineScope) : Dispo
 
   private val myDirtySchemas = ConcurrentHashMap.newKeySet<VirtualFile>()
   private val myDirtySchemasChanged: Channel<Unit> = Channel(Channel.CONFLATED)
+  private val myDownloadedSchemas = ConcurrentHashMap.newKeySet<String>()
+  private val myDownloadedSchemasChanged: Channel<Unit> = Channel(Channel.CONFLATED)
 
   private val DELAY_MS = 200L
 
@@ -62,6 +65,17 @@ private class JsonSchemaUpdater(project: Project, scope: CoroutineScope) : Dispo
       }
     }
 
+    scope.launch(CoroutineName("JsonSchemaUpdater remote download consumer")) {
+      while (isActive) {
+        try {
+          consumeDownloadedSchemas(project)
+        }
+        catch (e: Exception) {
+          if (e is CancellationException) throw e
+          logger<JsonSchemaUpdater>().error(e)
+        }
+      }
+    }
   }
 
   private suspend fun consumeDirtySchemas(project: Project) {
@@ -128,6 +142,45 @@ private class JsonSchemaUpdater(project: Project, scope: CoroutineScope) : Dispo
     }
   }
 
+  private suspend fun consumeDownloadedSchemas(project: Project) {
+    val batch = drainDownloadedSchemasWithDebounce()
+    (JsonSchemaService.Impl.get(project) as JsonSchemaServiceImpl).catalogManager.updateIfDownloaded(batch)
+    JsonSchemaService.Impl.get(project).reset()
+    project.messageBus.syncPublisher(JSON_SCHEMA_CHANGED).run()
+  }
+
+  private suspend fun drainDownloadedSchemasWithDebounce(): Set<String> {
+    myDownloadedSchemasChanged.receive()
+    val batch = HashSet<String>()
+    drainDownloadedSchemas(batch)
+    while (currentCoroutineContext().isActive) {
+      val hasMoreDownloads = if (ApplicationManager.getApplication().isUnitTestMode()) {
+        myDownloadedSchemasChanged.tryReceive().getOrNull() != null
+      }
+      else {
+        withTimeoutOrNull(DELAY_MS.milliseconds) {
+          myDownloadedSchemasChanged.receive()
+        } != null
+      }
+      if (!hasMoreDownloads) break
+      drainDownloadedSchemas(batch)
+    }
+    return batch
+  }
+
+  private fun drainDownloadedSchemas(batch: MutableSet<String>) {
+    val iterator = myDownloadedSchemas.iterator()
+    while (iterator.hasNext()) {
+      batch.add(iterator.next())
+      iterator.remove()
+    }
+  }
+
+  fun onSchemaDownloaded(url: String) {
+    myDownloadedSchemas.add(url)
+    myDownloadedSchemasChanged.trySend(Unit)
+  }
+
   fun onFileChange(schemaFile: VirtualFile) {
     if (JsonFileType.DEFAULT_EXTENSION == schemaFile.getExtension()) {
       myDirtySchemas.add(schemaFile)
@@ -147,7 +200,8 @@ private class JsonSchemaUpdater(project: Project, scope: CoroutineScope) : Dispo
 }
 
 @JvmField
-internal val JSON_SCHEMA_CHANGED: Topic<Runnable> =
+@ApiStatus.Internal
+val JSON_SCHEMA_CHANGED: Topic<Runnable> =
   Topic.create("JsonSchemaVfsListener.Json.Schema.Changed", Runnable::class.java)
 
 @JvmField
@@ -156,7 +210,9 @@ val JSON_DEPS_CHANGED: Topic<Runnable> = Topic.create("JsonSchemaVfsListener.Jso
 
 internal fun startListening(project: Project) {
   val updater = project.service<JsonSchemaUpdater>()
-  project.messageBus.connect(updater).subscribe<BulkFileListenerBackgroundable>(
+  val connection = project.messageBus.connect(updater)
+  connection.subscribe(RemoteSchemaDownloadListener.TOPIC, RemoteSchemaDownloadListener(updater::onSchemaDownloaded))
+  connection.subscribe<BulkFileListenerBackgroundable>(
     VirtualFileManager.VFS_CHANGES_BG,
     BulkVirtualFileListenerAdapterBackgroundable(object : VirtualFileContentsChangedAdapter() {
       override fun onFileChange(schemaFile: VirtualFile) {

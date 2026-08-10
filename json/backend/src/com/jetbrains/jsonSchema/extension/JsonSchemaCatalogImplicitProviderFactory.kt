@@ -8,7 +8,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.jsonSchema.JsonSchemaCatalogEntry
 import com.jetbrains.jsonSchema.JsonSchemaCatalogProjectConfiguration
 import com.jetbrains.jsonSchema.impl.JsonCachedValues
-import com.jetbrains.jsonSchema.remote.JsonFileResolver
 import com.jetbrains.jsonSchema.remote.JsonSchemaCatalogEntryFileMatcher
 
 class JsonSchemaCatalogImplicitProviderFactory : JsonSchemaProviderFactory, DumbAware {
@@ -27,7 +26,6 @@ class JsonSchemaCatalogImplicitProviderFactory : JsonSchemaProviderFactory, Dumb
     private val entry: JsonSchemaCatalogEntry,
   ) : JsonSchemaFileProvider {
     private val matcher = JsonSchemaCatalogEntryFileMatcher(entry)
-    private var schemaFile: VirtualFile? = null
 
     override fun isAvailable(file: VirtualFile): Boolean {
       return file.isValid && !file.isDirectory && matcher.matches(file, project)
@@ -35,12 +33,7 @@ class JsonSchemaCatalogImplicitProviderFactory : JsonSchemaProviderFactory, Dumb
 
     override fun getName(): String = presentableName
 
-    override fun getSchemaFile(): VirtualFile? {
-      if (schemaFile == null || !schemaFile!!.isValid) {
-        schemaFile = JsonFileResolver.urlToFile(entry.url)
-      }
-      return schemaFile
-    }
+    override fun getSchemaFile(): VirtualFile? = null
 
     override fun getSchemaType(): SchemaType = SchemaType.remoteSchema
 

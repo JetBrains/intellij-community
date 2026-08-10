@@ -3,8 +3,8 @@ package com.jetbrains.jsonSchema.impl.light
 
 import com.intellij.json.JsonFileType
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightVirtualFile
 import com.jetbrains.jsonSchema.ide.JsonSchemaService
@@ -13,9 +13,8 @@ import com.jetbrains.jsonSchema.impl.light.legacy.JsonSchemaObjectReadingUtils
 import com.jetbrains.jsonSchema.impl.light.legacy.JsonSchemaObjectReadingUtils.NULL_OBJ
 import com.jetbrains.jsonSchema.impl.light.nodes.JacksonSchemaNodeAccessor
 import com.jetbrains.jsonSchema.impl.light.nodes.JsonSchemaObjectBackedByJacksonBase
+import com.jetbrains.jsonSchema.remote.http.JsonSchemaRemoteContentService
 import java.io.IOException
-import java.net.MalformedURLException
-import java.net.URL
 
 internal fun resolveVocabulary(searchedVocabularyId: String,
                                currentSchemaNode: JsonSchemaObjectBackedByJacksonBase,
@@ -27,7 +26,7 @@ internal fun resolveVocabulary(searchedVocabularyId: String,
                          ?: findRemoteVocabulary(searchedVocabularyId, instanceVocabularyIds)
                          ?: return null
 
-  val vocabularyVirtualFile = vocabularyToLoad.load() ?: return null
+  val vocabularyVirtualFile = vocabularyToLoad.load(jsonSchemaService.project) ?: return null
   return JsonSchemaObjectReadingUtils.downloadAndParseRemoteSchema(jsonSchemaService, vocabularyVirtualFile)
     ?.takeIf { it != NULL_OBJ } // todo get rid of this
 }
@@ -51,7 +50,7 @@ private fun findBundledVocabulary(maybeVocabularyId: String,
 internal sealed class StandardJsonSchemaVocabulary(
   val id: String
 ) {
-  abstract fun load(): VirtualFile?
+  abstract fun load(project: Project): VirtualFile?
 
   class Bundled(id: String,
                 val remoteUrl: String,
@@ -66,7 +65,7 @@ internal sealed class StandardJsonSchemaVocabulary(
       }
     }
 
-    override fun load(): VirtualFile? {
+    override fun load(project: Project): VirtualFile? {
       return loadedVocabularyFile
     }
 
@@ -83,15 +82,7 @@ internal sealed class StandardJsonSchemaVocabulary(
   }
 
   class Remote(id: String, val url: String) : StandardJsonSchemaVocabulary(id) {
-    override fun load(): VirtualFile? {
-      val remoteSchemaUrl = try {
-        URL(url)
-      }
-      catch (exception: MalformedURLException) {
-        thisLogger().warn("Unable to parse URL for json schema vocabulary", exception)
-        return null
-      }
-      return VfsUtil.findFileByURL(remoteSchemaUrl)
-    }
+    override fun load(project: Project): VirtualFile? =
+      JsonSchemaRemoteContentService.getInstance(project).getCachedFile(url)
   }
 }

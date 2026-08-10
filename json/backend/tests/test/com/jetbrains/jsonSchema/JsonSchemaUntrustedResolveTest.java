@@ -260,9 +260,7 @@ public class JsonSchemaUntrustedResolveTest extends BasePlatformTestCase {
   public void testRemoteSchemaRefIsNotResolvedWhenUntrusted() throws IOException {
     warmUpJsonSchemaService();
     Path baseDir = projectBaseDir();
-    // A remote $schema declared in a project file: resolving it yields a (lazy) HttpVirtualFile which, once
-    // JsonFileResolver.startFetchingHttpFileIfNeeded runs, fetches the attacker-controlled URL. This must not
-    // happen before the user grants project trust.
+    // A remote $schema declared in a project file must not be resolved before the user grants project trust.
     String reference = "http://schema.example.test/attacker.json";
     Path dataPath = Files.writeString(baseDir.resolve("data.json"), DATA_TEXT_TEMPLATE.formatted(reference));
     myPathsToDelete.add(dataPath);
@@ -273,13 +271,6 @@ public class JsonSchemaUntrustedResolveTest extends BasePlatformTestCase {
     TrustedProjects.setProjectTrusted(getProject(), false);
     assertNull("A remote schema referenced from a project file must not be resolved before the project is trusted",
                service.findSchemaFileByReference(reference, dataFile));
-
-    // Trusted: resolution keeps working exactly as before the fix.
-    TrustedProjects.setProjectTrusted(getProject(), true);
-    VirtualFile remoteHandle = service.findSchemaFileByReference(reference, dataFile);
-    if (remoteHandle != null) {
-      assertFalse("A remote schema must resolve to a non-local handle", remoteHandle.isInLocalFileSystem());
-    }
   }
 
   public void testSafeModeFileInTrustedProjectDoesNotResolveRemoteOrOutsideSchema() throws IOException {

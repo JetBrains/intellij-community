@@ -9,6 +9,8 @@ import com.jetbrains.jsonSchema.UserDefinedJsonSchemaConfiguration
 import com.jetbrains.jsonSchema.ide.JsonSchemaService
 import com.jetbrains.jsonSchema.impl.JsonSchemaServiceImpl
 import com.jetbrains.jsonSchema.impl.JsonSchemaVersion
+import com.jetbrains.jsonSchema.remote.http.SchemaOrigin
+import com.jetbrains.jsonSchema.remote.http.SchemaUrl
 import java.util.Collections
 import java.util.TreeMap
 
@@ -28,16 +30,18 @@ class JsonSchemaCatalogImplicitProviderFactoryTest : BasePlatformTestCase() {
 
   fun testPyprojectTomlGetsImplicitSchema() {
     val file = myFixture.addFileToProject("pyproject.toml", "[project]\nname = \"demo\"\n").virtualFile
+    val provider = getImplicitProvider(file)
 
-    assertEquals(listOf(PYPROJECT_SCHEMA_URL), getSchemaUrls(file))
-    assertEquals(listOf(PYPROJECT_SCHEMA_URL), getSingleSchemaUrls(file))
+    assertEquals(PYPROJECT_SCHEMA_URL, provider.remoteSource)
+    assertNull(provider.schemaFile)
   }
 
   fun testStandaloneToolConfigGetsImplicitSchema() {
     val file = myFixture.addFileToProject("ruff.toml", "[lint]\nselect = [\"E4\"]\n").virtualFile
+    val provider = getImplicitProvider(file)
 
-    assertEquals(listOf(RUFF_SCHEMA_URL), getSchemaUrls(file))
-    assertEquals(listOf(RUFF_SCHEMA_URL), getSingleSchemaUrls(file))
+    assertEquals(RUFF_SCHEMA_URL, provider.remoteSource)
+    assertNull(provider.schemaFile)
   }
 
   fun testIgnoredFileDisablesImplicitSchema() {
@@ -75,21 +79,84 @@ class JsonSchemaCatalogImplicitProviderFactoryTest : BasePlatformTestCase() {
     JsonSchemaMappingsProjectConfiguration.getInstance(project).setState(state)
     JsonSchemaService.Impl.get(project).reset()
 
-    assertContainsElements(getSchemaUrls(file), localSchema.url, PYPROJECT_SCHEMA_URL)
+    assertEquals(listOf(localSchema.url), getSchemaUrls(file))
     assertEquals(listOf(localSchema.url), getSingleSchemaUrls(file))
   }
 
+  fun testCachedFileResolvesBackToImplicitProvider() {
+    val file = myFixture.addFileToProject("pyproject.toml", "[project]\nname = \"demo\"\n").virtualFile
+    val implicitProvider = getImplicitProvider(file)
+    val cachedFile = myFixture.addFileToProject("cached/pyproject.json", "{\"type\":\"object\"}").virtualFile
+    markAsCachedContent(cachedFile, PYPROJECT_SCHEMA_URL, PYPROJECT_SCHEMA_REDIRECT_URL)
+
+    val service = JsonSchemaService.Impl.get(project) as JsonSchemaServiceImpl
+    val provider = service.getSchemaProvider(cachedFile)
+    assertNotNull(provider)
+    assertEquals(implicitProvider.name, provider?.name)
+    assertEquals(PYPROJECT_SCHEMA_URL, provider?.remoteSource)
+    assertTrue(service.isMappedSchema(cachedFile))
+  }
+
+  fun testCachedFileResolvesBackToUserMappingWithUnnormalizedUrl() {
+    val file = myFixture.addFileToProject("config/settings.json", "{}").virtualFile
+    val cachedFile = myFixture.addFileToProject("cached/user.json", "{\"type\":\"object\"}").virtualFile
+    markAsCachedContent(cachedFile, "http://json.schemastore.org/user", "https://cdn.example.com/user.json")
+
+    val mapping = UserDefinedJsonSchemaConfiguration(
+      "user",
+      JsonSchemaVersion.SCHEMA_7,
+      "http://json.schemastore.org/user",
+      false,
+      Collections.singletonList(UserDefinedJsonSchemaConfiguration.Item(file.url, false, false)),
+    )
+    val state = TreeMap<String, UserDefinedJsonSchemaConfiguration>()
+    state[mapping.name] = mapping
+    JsonSchemaMappingsProjectConfiguration.getInstance(project).setState(state)
+    JsonSchemaService.Impl.get(project).reset()
+
+    val service = JsonSchemaService.Impl.get(project) as JsonSchemaServiceImpl
+    val provider = service.getSchemaProvider(cachedFile)
+    assertEquals("user", provider?.name)
+    assertEquals(JsonSchemaVersion.SCHEMA_7, provider?.schemaVersion)
+    assertTrue(service.isMappedSchema(cachedFile))
+  }
+
+  fun testIsMappedSchemaDoesNotRecomputeWhenNotAllowed() {
+    val cachedFile = myFixture.addFileToProject("cached/pyproject.json", "{\"type\":\"object\"}").virtualFile
+    markAsCachedContent(cachedFile, PYPROJECT_SCHEMA_URL, PYPROJECT_SCHEMA_REDIRECT_URL)
+
+    val service = JsonSchemaService.Impl.get(project) as JsonSchemaServiceImpl
+    service.reset()
+
+    assertFalse(service.isMappedSchema(cachedFile, false))
+    assertTrue(service.isMappedSchema(cachedFile, true))
+    assertTrue(service.isMappedSchema(cachedFile, false))
+
+    service.reset()
+    assertFalse(service.isMappedSchema(cachedFile, false))
+  }
+
+  private fun markAsCachedContent(file: VirtualFile, requestUrl: String, retrievalUrl: String) {
+    file.putUserData(SchemaOrigin.REQUEST_URL_KEY, SchemaUrl.parse(requestUrl).value)
+    file.putUserData(SchemaOrigin.URL_KEY, SchemaUrl.parse(retrievalUrl).value)
+  }
+
+  private fun getImplicitProvider(file: VirtualFile): JsonSchemaFileProvider {
+    return JsonSchemaCatalogImplicitProviderFactory().getProviders(project).single { it.isAvailable(file) }
+  }
+
   private fun getSchemaUrls(file: VirtualFile): List<String> {
-    return JsonSchemaService.Impl.get(project).getSchemaFilesForFile(file).map(VirtualFile::getUrl)
+    return JsonSchemaService.Impl.get(project).getSchemaFilesForFile(file).map { it.url }
   }
 
   private fun getSingleSchemaUrls(file: VirtualFile): List<String> {
     val files = (JsonSchemaService.Impl.get(project) as JsonSchemaServiceImpl).getSchemasForFile(file, true, false)
-    return files.map(VirtualFile::getUrl)
+    return files.map { it.url }
   }
 
   companion object {
     private const val PYPROJECT_SCHEMA_URL = "https://json.schemastore.org/pyproject.json"
+    private const val PYPROJECT_SCHEMA_REDIRECT_URL = "https://www.schemastore.org/pyproject.json"
     private const val RUFF_SCHEMA_URL = "https://www.schemastore.org/ruff.json"
   }
 }

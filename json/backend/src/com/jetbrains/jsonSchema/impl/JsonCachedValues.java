@@ -39,7 +39,6 @@ import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.light.legacy.JsonSchemaObjectReadingUtils;
 import com.jetbrains.jsonSchema.impl.light.nodes.JsonSchemaObjectStorage;
-import com.jetbrains.jsonSchema.remote.JsonFileResolver;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,7 +54,6 @@ public final class JsonCachedValues {
   private static final Key<CachedValue<JsonSchemaObject>> JSON_OBJECT_CACHE_KEY = Key.create("JsonSchemaObjectCache");
 
   public static @Nullable JsonSchemaObject getSchemaObject(@NotNull VirtualFile schemaFile, @NotNull Project project) {
-    JsonFileResolver.startFetchingHttpFileIfNeeded(schemaFile, project);
     return JsonSchemaObjectStorage.getInstance(project).getOrComputeSchemaRootObject(schemaFile);
   }
 

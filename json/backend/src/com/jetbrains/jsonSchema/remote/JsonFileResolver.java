@@ -4,42 +4,51 @@ package com.jetbrains.jsonSchema.remote;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
-import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
-import com.intellij.openapi.vfs.impl.http.RemoteFileInfo;
-import com.intellij.openapi.vfs.impl.http.RemoteFileState;
+import com.intellij.testFramework.TestModeFlags;
 import com.intellij.util.PathUtil;
 import com.intellij.util.Url;
 import com.intellij.util.Urls;
 import com.intellij.util.concurrency.SameThreadExecutor;
 import com.jetbrains.jsonSchema.JsonSchemaCatalogProjectConfiguration;
+import com.jetbrains.jsonSchema.remote.http.JsonSchemaRemoteContentService;
+import com.jetbrains.jsonSchema.remote.http.SchemaOrigin;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.VisibleForTesting;
 
-import java.io.File;
+import java.net.URI;
 import java.util.concurrent.TimeUnit;
 
 public final class JsonFileResolver {
 
-  private static final Key<Boolean> DOWNLOAD_STARTED = Key.create("DOWNLOAD_STARTED");
+  private static final String STORE_URL_PREFIX_HTTP = "http://json.schemastore.org";
+  private static final Logger LOG = Logger.getInstance(JsonFileResolver.class);
+
+  /** Allows remote schema activity in unit test mode. Set it with {@link TestModeFlags}. */
+  @ApiStatus.Internal
+  public static final Key<Boolean> REMOTE_ENABLED_IN_TESTS = Key.create("json.schema.remote.enabled.in.tests");
 
   public static boolean isRemoteEnabled(Project project) {
-    return !ApplicationManager.getApplication().isUnitTestMode() &&
+    return (!ApplicationManager.getApplication().isUnitTestMode() || TestModeFlags.is(REMOTE_ENABLED_IN_TESTS)) &&
            JsonSchemaCatalogProjectConfiguration.getInstance(project).isRemoteActivityEnabled();
   }
 
   public static @Nullable VirtualFile urlToFile(@NotNull String urlString) {
-    if (urlString.startsWith(TEMP_URL)) {
-      return TempFileSystem.getInstance().findFileByPath(urlString.substring(TEMP_URL.length() - 1));
+    String tempPath = tempVfsPath(urlString);
+    if (tempPath != null) {
+      return TempFileSystem.getInstance().findFileByPath(tempPath);
     }
     return VirtualFileManager.getInstance().findFileByUrl(PathUtil.toSystemIndependentName(replaceUnsafeSchemaStoreUrls(urlString)));
   }
@@ -50,49 +59,82 @@ public final class JsonFileResolver {
     if (urlString.equals(JsonSchemaCatalogManager.DEFAULT_CATALOG)) {
       return JsonSchemaCatalogManager.DEFAULT_CATALOG_HTTPS;
     }
-    if (StringUtil.startsWithIgnoreCase(urlString, JsonSchemaRemoteContentProvider.STORE_URL_PREFIX_HTTP)) {
+    if (StringUtil.startsWithIgnoreCase(urlString, STORE_URL_PREFIX_HTTP)) {
       String newUrl = StringUtil.replace(urlString, "http://json.schemastore.org/", "https://schemastore.azurewebsites.net/schemas/json/");
       return newUrl.endsWith(".json") ? newUrl : newUrl + ".json";
     }
     return urlString;
   }
 
+  @TestOnly
   public static @Nullable VirtualFile resolveSchemaByReference(@Nullable VirtualFile currentFile,
                                                                @Nullable String schemaUrl) {
+    return resolveSchemaByReference(currentFile, schemaUrl, null);
+  }
+
+  public static @Nullable VirtualFile resolveSchemaByReference(@Nullable VirtualFile currentFile,
+                                                               @Nullable String schemaUrl,
+                                                               @Nullable Project project) {
     schemaUrl = resolveSchemaUrlByReference(currentFile, schemaUrl);
     if (schemaUrl == null) return null;
 
     if (!schemaUrl.startsWith("http")) {
       return urlToFile(schemaUrl);
     }
-    else {
-      return getOrComputeVirtualFileForValidUrlOrNull(schemaUrl);
+    if (project != null) {
+      return JsonSchemaRemoteContentService.getInstance(project).getCachedFile(schemaUrl);
     }
+    return getOrComputeVirtualFileForValidUrlOrNull(schemaUrl);
   }
 
   @ApiStatus.Internal
   public static @Nullable String resolveSchemaUrlByReference(@Nullable VirtualFile currentFile,
-                                                              @Nullable String schemaUrl) {
+                                                             @Nullable String schemaUrl) {
     if (schemaUrl == null || StringUtil.isEmpty(schemaUrl)) return null;
 
     if (isAbsoluteUrl(schemaUrl)) return schemaUrl;
 
-    if (currentFile instanceof HttpVirtualFile) {
-      // relative http paths
-      String url = StringUtil.trimEnd(currentFile.getUrl(), "/");
-      int lastSlash = url.lastIndexOf('/');
-      assert lastSlash != -1;
-      schemaUrl = url.substring(0, lastSlash) + "/" + schemaUrl;
+    if (currentFile == null) return schemaUrl;
+
+    String originUrl = currentFile.getUserData(SchemaOrigin.URL_KEY);
+    if (originUrl == null && isHttpPath(currentFile.getUrl())) {
+      originUrl = currentFile.getUrl();
+    }
+    String resolved = originUrl != null ? resolveAgainstRemoteUrl(originUrl, schemaUrl) : resolveAgainstFile(currentFile, schemaUrl);
+    return StringUtil.isEmpty(resolved) ? null : resolved;
+  }
+
+  private static @Nullable String resolveAgainstRemoteUrl(@NotNull String originUrl, @NotNull String reference) {
+    try {
+      // URI rejects a literal space, but a hand-written $ref can contain one.
+      return URI.create(originUrl).resolve(StringUtil.replace(reference, " ", "%20")).normalize().toString();
+    }
+    catch (IllegalArgumentException e) {
+      LOG.debug("Unable to resolve schema reference '" + reference + "' against origin '" + originUrl + "'", e);
+      return null;
+    }
+  }
+
+  /**
+   * Resolves on the VFS path instead of a {@link URI}.
+   * A VFS URL is not URI-encoded, so a space in a directory name breaks {@link URI#create},
+   * and {@link URI#getPath} drops the Windows drive of {@code file://C:/...}.
+   */
+  private static @NotNull String resolveAgainstFile(@NotNull VirtualFile file, @NotNull String reference) {
+    int fragmentStart = reference.indexOf('#');
+    String referencePath = fragmentStart < 0 ? reference : reference.substring(0, fragmentStart);
+    String path;
+    if (referencePath.isEmpty()) {
+      path = file.getPath();
+    }
+    else if (referencePath.startsWith("/")) {
+      path = FileUtil.toCanonicalPath(referencePath);
     }
     else {
-      // relative path
-      VirtualFile parent = currentFile == null ? null : currentFile.getParent();
-      schemaUrl = parent == null ? null :
-                  parent.getUrl().startsWith(TEMP_URL) ? ("temp:///" + parent.getPath() + "/" + schemaUrl) :
-                  VfsUtilCore.pathToUrl(parent.getPath() + File.separator + schemaUrl);
+      path = FileUtil.toCanonicalPath(PathUtil.getParentPath(file.getPath()) + "/" + referencePath);
     }
-
-    return StringUtil.isEmpty(schemaUrl) ? null : schemaUrl;
+    String url = VirtualFileManager.constructUrl(file.getFileSystem().getProtocol(), path);
+    return fragmentStart < 0 ? url : url + reference.substring(fragmentStart);
   }
 
   private static @Nullable VirtualFile getOrComputeVirtualFileForValidUrlOrNull(@NotNull String maybeUrl) {
@@ -115,21 +157,6 @@ public final class JsonFileResolver {
     return urlToFile(url);
   }
 
-  public static void startFetchingHttpFileIfNeeded(@Nullable VirtualFile path, Project project) {
-    if (!(path instanceof HttpVirtualFile)) return;
-
-    // don't resolve http paths in tests
-    if (!isRemoteEnabled(project)) return;
-
-    RemoteFileInfo info = ((HttpVirtualFile)path).getFileInfo();
-    if (info == null || info.getState() == RemoteFileState.DOWNLOADING_NOT_STARTED) {
-      if (path.getUserData(DOWNLOAD_STARTED) != Boolean.TRUE) {
-        path.putUserData(DOWNLOAD_STARTED, Boolean.TRUE);
-        path.refresh(true, false);
-      }
-    }
-  }
-
   public static boolean isHttpPath(@NotNull String schemaFieldText) {
     return schemaFieldText.startsWith("http://") || schemaFieldText.startsWith("https://");
   }
@@ -140,6 +167,17 @@ public final class JsonFileResolver {
 
   private static final String MOCK_URL = "mock:///";
   public static final String TEMP_URL = "temp:///";
+  private static final String TEMP_SCHEME_PREFIX = "temp:";
+
+  private static @Nullable String tempVfsPath(@NotNull String urlString) {
+    if (!urlString.startsWith(TEMP_SCHEME_PREFIX)) return null;
+    String path = urlString.substring(TEMP_SCHEME_PREFIX.length());
+    int fragment = path.indexOf('#');
+    if (fragment >= 0) {
+      path = path.substring(0, fragment);
+    }
+    return "/" + StringUtil.trimStart(path, "/");
+  }
 
   public static boolean isTempOrMockUrl(@NotNull String path) {
     return path.startsWith(TEMP_URL) || path.startsWith(MOCK_URL);

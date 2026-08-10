@@ -12,7 +12,6 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.impl.JsonSchemaType;
 import com.jetbrains.jsonSchema.impl.JsonSchemaVersion;
@@ -72,10 +71,6 @@ public class JsonSchemaInfo {
 
       VirtualFile schemaFile = myProvider.getSchemaFile();
       if (schemaFile == null) return "";
-
-      if (schemaFile instanceof HttpVirtualFile) {
-        return schemaFile.getUrl();
-      }
 
       if (schemaFile.getFileSystem() instanceof JarFileSystem) {
         return schemaFile.getUrl();
