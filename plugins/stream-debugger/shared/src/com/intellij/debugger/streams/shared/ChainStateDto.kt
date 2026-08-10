@@ -6,14 +6,17 @@ import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * @see com.intellij.debugger.streams.core.StreamChainInlayState
+ * @see com.intellij.debugger.streams.core.ChainStatus
  */
 @ApiStatus.Internal
 @Serializable
-sealed interface StreamChainInlayStateDto {
+sealed interface ChainStateDto {
   @Serializable
-  data class Visible(val position: XSourcePositionDto) : StreamChainInlayStateDto
-
+  data object LanguageNotSupported : ChainStateDto
   @Serializable
-  data object Hidden : StreamChainInlayStateDto
+  data object Computing : ChainStateDto
+  @Serializable
+  data object NotFound : ChainStateDto
+  @Serializable
+  data class Found(val position: XSourcePositionDto) : ChainStateDto
 }

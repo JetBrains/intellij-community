@@ -8,7 +8,7 @@ import com.intellij.codeInsight.hints.presentation.PresentationRenderer
 import com.intellij.codeInsight.hints.presentation.mouseButton
 import com.intellij.debugger.streams.shared.StreamChainInlayStateDto
 import com.intellij.debugger.streams.shared.StreamDebuggerApi
-import com.intellij.debugger.streams.shared.TraceEntryPointDto
+import com.intellij.debugger.streams.shared.TraceEntryPoint
 import com.intellij.debugger.streams.shared.icons.DebuggerStreamsSharedIcons
 import com.intellij.java.debugger.impl.shared.SharedJavaDebuggerSession
 import com.intellij.openapi.actionSystem.ActionGroup
@@ -106,7 +106,7 @@ private class ClickHandler(private val session: XDebugSessionProxy) : InlayPrese
   override fun onClick(event: MouseEvent, translated: Point) {
     when (event.mouseButton) {
       MouseButton.Left -> session.coroutineScope.launch {
-        StreamDebuggerApi.getInstance().showTraceDebuggerDialog(session.id, TraceEntryPointDto.INLAY_HINT)
+        StreamDebuggerApi.getInstance().showTraceDebuggerDialog(session.id, TraceEntryPoint.INLAY_HINT)
       }
       MouseButton.Right -> showByEvent(event, "StreamDebuggerInlayPopup",
                                        ActionManager.getInstance().getAction("StreamDebuggerInlayPopup") as ActionGroup)

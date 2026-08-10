@@ -4,12 +4,9 @@ package com.intellij.debugger.streams.shared
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 
-/**
- * @see com.intellij.debugger.streams.core.statistics.TraceEntryPoint
- */
 @ApiStatus.Internal
 @Serializable
-enum class TraceEntryPointDto {
+enum class TraceEntryPoint {
   TOOLBAR_ACTION,
-  INLAY_HINT
+  INLAY_HINT,
 }

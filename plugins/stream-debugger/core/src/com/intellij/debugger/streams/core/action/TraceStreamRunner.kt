@@ -8,7 +8,6 @@ import com.intellij.debugger.streams.core.diagnostic.ex.TraceCompilationExceptio
 import com.intellij.debugger.streams.core.diagnostic.ex.TraceEvaluationException
 import com.intellij.debugger.streams.core.lib.LibrarySupportProvider
 import com.intellij.debugger.streams.core.statistics.StreamDebuggerStatisticsCollector
-import com.intellij.debugger.streams.core.statistics.TraceEntryPoint
 import com.intellij.debugger.streams.core.trace.StreamTracer
 import com.intellij.debugger.streams.core.trace.formatResolvedTrace
 import com.intellij.debugger.streams.core.trace.formatTrace
@@ -17,6 +16,7 @@ import com.intellij.debugger.streams.core.ui.ElementChooser
 import com.intellij.debugger.streams.core.ui.impl.ElementChooserImpl
 import com.intellij.debugger.streams.core.ui.impl.EvaluationAwareTraceWindow
 import com.intellij.debugger.streams.core.wrapper.StreamChain
+import com.intellij.debugger.streams.shared.TraceEntryPoint
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
