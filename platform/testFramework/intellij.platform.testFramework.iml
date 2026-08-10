@@ -9,7 +9,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="jetCheck" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jetcheck" />
     <orderEntry type="module" module-name="intellij.libraries.junit5" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.libraries.junit5.params" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.libraries.assertj.core" />

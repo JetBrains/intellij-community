@@ -6,6 +6,7 @@
   <content namespace="jetbrains">
     <module name="intellij.java.rt"/>
     <module name="intellij.libraries.hamcrest"/>
+    <module name="intellij.libraries.jetcheck"/>
     <module name="intellij.libraries.junit4"/>
     <module name="intellij.libraries.junit5"/>
     <module name="intellij.libraries.junit5.jupiter"/>

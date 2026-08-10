@@ -75,7 +75,7 @@ jvm_library(
     runtime_deps = ["//images"],
     deps = [
         # do not sort,
-        "@lib//:jet_check",
+        "//libraries/jetcheck",
         "//libraries/assertj-core",
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/coroutines/core",
@@ -176,6 +176,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":testFramework",
+        "//libraries/jetcheck:jetcheck_test_lib",
         "//libraries/junit5",
         "//libraries/junit5:junit5_test_lib",
         "//libraries/junit5-params",
@@ -354,7 +355,8 @@ jvm_library(
     ],
     deps = [
         # do not sort,
-        "@lib//:jet_check",
+        "//libraries/jetcheck",
+        "//libraries/jetcheck:jetcheck_test_lib",
         "//libraries/junit5",
         "//libraries/junit5:junit5_test_lib",
         "//libraries/junit5-params",

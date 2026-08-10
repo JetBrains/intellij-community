@@ -5286,20 +5286,6 @@ http_file(
 )
 
 http_file(
-    name = "org_jetbrains-jetCheck-0_2_2_http",
-    downloaded_file_path = "jetCheck-0.2.2.jar",
-    sha256 = "c5f95c97171311066a13eb750a6bb999fa7eeb43c1394705034926336c0b7b0f",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/jetCheck/0.2.2/jetCheck-0.2.2.jar",
-)
-
-http_file(
-    name = "org_jetbrains-jetCheck-0_2_2-sources_http",
-    downloaded_file_path = "jetCheck-0.2.2-sources.jar",
-    sha256 = "a469f5da34cc1b8797cb017bc7a3c8253b441d441c39224c86fcd8183bcdff1f",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/jetCheck/0.2.2/jetCheck-0.2.2-sources.jar",
-)
-
-http_file(
     name = "org_jetbrains_compose_components-components-ui-tooling-preview-desktop-1_9_0_http",
     downloaded_file_path = "components-ui-tooling-preview-desktop-1.9.0.jar",
     sha256 = "ca0857dcde7cffff8eea3cce2940a285f219f673829f7f9a3381f767d224f411",
@@ -9126,6 +9112,20 @@ http_file(
     downloaded_file_path = "annotations-26.0.2-sources.jar",
     sha256 = "a3bea3ada0af186437f8f3a089e6b0f52ac5aa068c1cb829058fb8a5069f6b0f",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/annotations/26.0.2/annotations-26.0.2-sources.jar",
+)
+
+http_file(
+    name = "org_jetbrains-jetCheck-0_2_2_http",
+    downloaded_file_path = "jetCheck-0.2.2.jar",
+    sha256 = "c5f95c97171311066a13eb750a6bb999fa7eeb43c1394705034926336c0b7b0f",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/jetCheck/0.2.2/jetCheck-0.2.2.jar",
+)
+
+http_file(
+    name = "org_jetbrains-jetCheck-0_2_2-sources_http",
+    downloaded_file_path = "jetCheck-0.2.2-sources.jar",
+    sha256 = "a469f5da34cc1b8797cb017bc7a3c8253b441d441c39224c86fcd8183bcdff1f",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/jetCheck/0.2.2/jetCheck-0.2.2-sources.jar",
 )
 
 http_file(

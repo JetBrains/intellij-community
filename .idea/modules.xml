@@ -1079,6 +1079,7 @@
       <module fileurl="file://$PROJECT_DIR$/libraries/jediterm-core/intellij.libraries.jediterm.core.iml" filepath="$PROJECT_DIR$/libraries/jediterm-core/intellij.libraries.jediterm.core.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/jediterm-ui/intellij.libraries.jediterm.ui.iml" filepath="$PROJECT_DIR$/libraries/jediterm-ui/intellij.libraries.jediterm.ui.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/jetbrains/annotations/intellij.libraries.jetbrains.annotations.iml" filepath="$PROJECT_DIR$/libraries/jetbrains/annotations/intellij.libraries.jetbrains.annotations.iml" />
+      <module fileurl="file://$PROJECT_DIR$/libraries/jetcheck/intellij.libraries.jetcheck.iml" filepath="$PROJECT_DIR$/libraries/jetcheck/intellij.libraries.jetcheck.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/jettison/intellij.libraries.jettison.iml" filepath="$PROJECT_DIR$/libraries/jettison/intellij.libraries.jettison.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/jgit-ssh/intellij.libraries.jgit.ssh.iml" filepath="$PROJECT_DIR$/libraries/jgit-ssh/intellij.libraries.jgit.ssh.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/jgoodies/common/intellij.libraries.jgoodies.common.iml" filepath="$PROJECT_DIR$/libraries/jgoodies/common/intellij.libraries.jgoodies.common.iml" />

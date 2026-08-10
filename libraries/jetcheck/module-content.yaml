@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.jetcheck.jar
+  modules:
+  - name: intellij.libraries.jetcheck
+    libraries:
+      jetCheck:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/jetCheck/0/jetCheck-0.jar

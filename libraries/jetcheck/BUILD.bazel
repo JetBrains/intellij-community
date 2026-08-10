@@ -1,0 +1,42 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.libraries.jetcheck` start
+jvm_library(
+    name = "jetcheck",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.jetcheck",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-jetcheck-jet_check"],
+    runtime_deps = ["@lib//:libraries-jetcheck-jet_check"],
+)
+
+jvm_library(
+    name = "jetcheck_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.libraries.jetcheck",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-jetcheck-jet_check"],
+    runtime_deps = [":jetcheck"],
+)
+### auto-generated section `build intellij.libraries.jetcheck` end
+
+### auto-generated section `iml intellij.libraries.jetcheck` start
+exports_files(
+    [
+        "intellij.libraries.jetcheck.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.jetcheck` end

@@ -410,7 +410,7 @@
     <orderEntry type="module" module-name="intellij.libraries.assertj.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.tools.ide.metrics.benchmark" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="jetCheck" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jetcheck" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.images.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.regexp.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl.tests" scope="TEST" />

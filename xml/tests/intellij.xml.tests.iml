@@ -59,7 +59,7 @@
     <orderEntry type="module" module-name="intellij.platform.syntax.util" scope="TEST" />
     <orderEntry type="module" module-name="intellij.xml.syntax" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.rt" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="jetCheck" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jetcheck" scope="TEST" />
     <orderEntry type="module" module-name="intellij.xml.analysis" scope="TEST" />
     <orderEntry type="module" module-name="intellij.xml.emmet" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.fastutil" scope="TEST" />

@@ -96,6 +96,8 @@
     <!-- chain: moduleSet platform.testFrameworks.core -->
     <module name="intellij.codeowners.runtime.resolver"/>
     <!-- chain: moduleSet platform.testFrameworks.core -->
+    <module name="intellij.libraries.jetcheck"/>
+    <!-- chain: moduleSet platform.testFrameworks.core -->
     <module name="intellij.platform.testFramework"/>
     <!-- chain: moduleSet platform.testFrameworks.core -->
     <module name="intellij.platform.testFramework.common"/>

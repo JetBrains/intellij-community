@@ -6698,21 +6698,6 @@ jvm_import(
 )
 
 copy_file(
-    name = "org.jetbrains/jetCheck-0.2.2.jar_copy",
-    src = "@org_jetbrains-jetCheck-0_2_2_http//file",
-    out = "org.jetbrains/jetCheck-0.2.2.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "jet_check",
-    jar = "@org_jetbrains-jetCheck-0_2_2_http//file",
-    source_jar = "@org_jetbrains-jetCheck-0_2_2-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
     name = "org.jetbrains.compose.components/components-ui-tooling-preview-desktop-1.9.0.jar_copy",
     src = "@org_jetbrains_compose_components-components-ui-tooling-preview-desktop-1_9_0_http//file",
     out = "org.jetbrains.compose.components/components-ui-tooling-preview-desktop-1.9.0.jar",
@@ -11627,6 +11612,21 @@ jvm_import(
     name = "libraries-jetbrains-annotations-jetbrains-annotations",
     jar = "@org_jetbrains-annotations-26_0_2_http//file",
     source_jar = "@org_jetbrains-annotations-26_0_2-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "org.jetbrains/jetCheck-0.2.2.jar_copy",
+    src = "@org_jetbrains-jetCheck-0_2_2_http//file",
+    out = "org.jetbrains/jetCheck-0.2.2.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-jetcheck-jet_check",
+    jar = "@org_jetbrains-jetCheck-0_2_2_http//file",
+    source_jar = "@org_jetbrains-jetCheck-0_2_2-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
