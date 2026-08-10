@@ -4,7 +4,6 @@
 package com.jetbrains.python.sdk
 
 import com.intellij.openapi.diagnostic.fileLogger
-import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
@@ -12,8 +11,6 @@ import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.entities
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.jetbrains.python.sdk.internal.PYTHON_MODULE_ID
 import org.jetbrains.annotations.ApiStatus
 
@@ -51,12 +48,3 @@ suspend fun Project.getModuleRoots(): Set<VirtualFile> {
     roots
   }
 }
-
-/**
- * Blocking bridge for Java callers and other non-suspend contexts. Must be called from a
- * background thread; internally delegates to [getModuleRoots] via [runBlockingMaybeCancellable].
- */
-@ApiStatus.Internal
-@RequiresBackgroundThread
-@RequiresBlockingContext
-fun getModuleRootsBlocking(project: Project): Set<VirtualFile> = runBlockingMaybeCancellable { project.getModuleRoots() }
