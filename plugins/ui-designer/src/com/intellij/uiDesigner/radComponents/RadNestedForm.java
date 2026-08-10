@@ -15,8 +15,6 @@ import com.intellij.uiDesigner.ModuleProvider;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.XmlReader;
 import com.intellij.uiDesigner.XmlWriter;
-import com.intellij.uiDesigner.compiler.Utils;
-import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
 import com.intellij.uiDesigner.lw.LwRootContainer;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,8 +39,9 @@ public class RadNestedForm extends RadComponent {
       throw new IllegalArgumentException("Couldn't find virtual file for nested form " + formFileName);
     }
     Document doc = FileDocumentManager.getInstance().getDocument(formFile);
-    final ClassLoader classLoader = LoaderFactory.getInstance(getProject()).getLoader(formFile);
-    final LwRootContainer rootContainer = Utils.getRootContainer(doc.getText(), new CompiledClassPropertiesProvider(classLoader));
+    LoaderFactory loaderFactory = LoaderFactory.getInstance(getProject());
+    final ClassLoader classLoader = loaderFactory.getLoader(formFile);
+    final LwRootContainer rootContainer = loaderFactory.readRootContainer(formFile, doc.getText());
     myRootContainer = XmlReader.createRoot(module, rootContainer, classLoader, null);
     if (myRootContainer.getComponentCount() > 0) {
       getDelegee().setLayout(new BorderLayout());

@@ -41,15 +41,25 @@ public final class AsmClassPropertiesProvider implements PropertiesProvider {
       return null;
     }
 
-    HashMap<String, LwIntrospectedProperty> result = new HashMap<>();
+    PseudoClass componentClass;
     try {
-      PseudoClass componentClass = myFinder.loadClass(className);
+      componentClass = myFinder.loadClass(className);
       PseudoClass jComponentClass = myFinder.loadClass("javax.swing.JComponent");
       if (!jComponentClass.isAssignableFrom(componentClass)) {
         myCache.put(className, null);
         return null;
       }
+    }
+    catch (Exception e) {
+      // The class is not on the classpath, or its hierarchy is incomplete. Report it the same way
+      // CompiledClassPropertiesProvider does, so that the caller can render an error placeholder for
+      // this component instead of treating it as a component without properties.
+      myCache.put(className, null);
+      return null;
+    }
 
+    HashMap<String, LwIntrospectedProperty> result = new HashMap<>();
+    try {
       LinkedHashMap<String, GetterInfo> getters = new LinkedHashMap<>();
       for (PseudoClass c = componentClass; c != null; c = c.getSuperClass()) {
         collectGetters(c, getters);
@@ -78,7 +88,7 @@ public final class AsmClassPropertiesProvider implements PropertiesProvider {
     String declaringClassName = cls.getName().replace('/', '.');
     List<PseudoMethod> methods = cls.getMethods();
     for (PseudoMethod method : methods) {
-      if ((method.getModifiers() & Opcodes.ACC_BRIDGE) != 0) {
+      if (!isAccessorCandidate(method)) {
         continue;
       }
       String name = method.getName();
@@ -108,6 +118,16 @@ public final class AsmClassPropertiesProvider implements PropertiesProvider {
     }
   }
 
+  /**
+   * {@code java.beans.Introspector} only ever reports public instance methods as property accessors.
+   */
+  private static boolean isAccessorCandidate(PseudoMethod method) {
+    int modifiers = method.getModifiers();
+    return (modifiers & Opcodes.ACC_BRIDGE) == 0 &&
+           (modifiers & Opcodes.ACC_STATIC) == 0 &&
+           (modifiers & Opcodes.ACC_PUBLIC) != 0;
+  }
+
   private static boolean hasMatchingSetter(PseudoClass componentClass, String propName, String typeDescriptor) throws IOException, ClassNotFoundException {
     String setterName = "set" + Character.toUpperCase(propName.charAt(0)) + propName.substring(1);
     // For properties where decapitalize preserved the original case (e.g., URL), use the name as-is
@@ -118,7 +138,7 @@ public final class AsmClassPropertiesProvider implements PropertiesProvider {
     String expectedDescriptor = "(" + typeDescriptor + ")V";
     for (PseudoClass c = componentClass; c != null; c = c.getSuperClass()) {
       for (PseudoMethod method : c.getMethods()) {
-        if ((method.getModifiers() & Opcodes.ACC_BRIDGE) != 0) {
+        if (!isAccessorCandidate(method)) {
           continue;
         }
         if (method.getName().equals(setterName) && method.getSignature().equals(expectedDescriptor)) {
@@ -153,13 +173,7 @@ public final class AsmClassPropertiesProvider implements PropertiesProvider {
       // Enum check
       PseudoClass superClass = propClass.getSuperClass();
       if (superClass != null && "java/lang/Enum".equals(superClass.getName())) {
-        try {
-          Class<?> enumClass = Class.forName(typeName, false, myFinder.getLoader());
-          return new LwIntroEnumProperty(propName, enumClass);
-        }
-        catch (Exception ignored) {
-          // Can't load enum class — skip this property
-        }
+        return new LwIntroEnumProperty(propName, typeName);
       }
     }
     catch (Exception ignored) {

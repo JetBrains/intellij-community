@@ -13,21 +13,21 @@ import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
 
 
-public class EnumEditor extends PropertyEditor<Enum> {
+public class EnumEditor extends PropertyEditor<Enum<?>> {
   private final JComboBox myCbx;
 
-  public EnumEditor(final Class enumClass) {
+  public EnumEditor(final Class<?> enumClass) {
     myCbx = new JComboBox(enumClass.getEnumConstants());
     myCbx.setBorder(BorderFactory.createEmptyBorder());
   }
 
   @Override
-  public Enum getValue() throws Exception {
-    return (Enum) myCbx.getSelectedItem();
+  public Enum<?> getValue() throws Exception {
+    return (Enum<?>)myCbx.getSelectedItem();
   }
 
   @Override
-  public JComponent getComponent(final RadComponent component, final Enum value, final InplaceContext inplaceContext) {
+  public JComponent getComponent(final RadComponent component, final Enum<?> value, final InplaceContext inplaceContext) {
     if (value == null) {
       return myCbx;
     }

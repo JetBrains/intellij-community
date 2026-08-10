@@ -37,10 +37,6 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.JavaSdk;
-import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
@@ -49,12 +45,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.GuiFormFileType;
+import com.intellij.uiDesigner.LoaderFactory;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
 import com.intellij.uiDesigner.compiler.FormErrorInfo;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
-import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
+import com.intellij.uiDesigner.lw.AsmClassPropertiesProvider;
 import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.lw.LwComponent;
 import com.intellij.uiDesigner.lw.LwRootContainer;
@@ -72,14 +69,10 @@ import javax.swing.Icon;
 import javax.swing.SwingUtilities;
 import java.io.File;
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
-import java.util.StringTokenizer;
 
 public final class PreviewFormAction extends AnAction {
   private static final Logger LOG = Logger.getInstance(PreviewFormAction.class);
@@ -92,21 +85,6 @@ public final class PreviewFormAction extends AnAction {
   private static final String CLASS_TO_BIND_RESOURCE_NAME = "com/intellij/uiDesigner/FormPreviewFrame";
   private static final @NonNls String RUNTIME_BUNDLE_PREFIX = "messages.RuntimeBundle";
   public static final @NonNls String PREVIEW_BINDING_FIELD = "myComponent";
-
-  public static @NotNull InstrumentationClassFinder createClassFinder(URL @Nullable [] platformUrls, final @NotNull String classPath) {
-    final ArrayList<URL> urls = new ArrayList<>();
-    for (StringTokenizer tokenizer = new StringTokenizer(classPath, File.pathSeparator); tokenizer.hasMoreTokens();) {
-      final String s = tokenizer.nextToken();
-      try {
-        urls.add(new File(s).toURI().toURL());
-      }
-      catch (Exception exc) {
-        throw new RuntimeException(exc);
-      }
-    }
-    URL[] zero = new URL[0];
-    return new InstrumentationClassFinder(platformUrls == null ? zero : platformUrls, urls.toArray(zero));
-  }
 
   @Override
   public void actionPerformed(final @NotNull AnActionEvent e) {
@@ -155,27 +133,17 @@ public final class PreviewFormAction extends AnAction {
       return;
     }
 
-    URL[] platformUrls = null;
-    Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
-    if (sdk != null && sdk.getHomePath() != null && JavaSdk.getInstance().isOfVersionOrHigher(sdk, JavaSdkVersion.JDK_1_9)) {
-      try {
-        platformUrls = new URL[]{InstrumentationClassFinder.createJDKPlatformUrl(sdk.getHomePath())};
-      }
-      catch (MalformedURLException ignore) {
-      }
-    }
-
     final PathsList sources = OrderEnumerator.orderEntries(module).withoutSdk().withoutLibraries().withoutDepModules().getSourcePathsList();
     final String classPath = OrderEnumerator.orderEntries(module).recursively().getPathsList().getPathsString() + File.pathSeparator +
       sources.getPathsString() + File.pathSeparator + /* resources bundles */
       tempPath;
-    final InstrumentationClassFinder finder = createClassFinder(platformUrls, classPath);
+    final InstrumentationClassFinder finder = LoaderFactory.createClassFinder(LoaderFactory.getPlatformUrls(module), classPath);
 
     try {
       final Document doc = FileDocumentManager.getInstance().getDocument(formFile);
       final LwRootContainer rootContainer;
       try {
-        rootContainer = Utils.getRootContainer(doc.getText(), new CompiledClassPropertiesProvider(finder.getLoader()));
+        rootContainer = Utils.getRootContainer(doc.getText(), new AsmClassPropertiesProvider(finder));
       }
       catch (Exception e) {
         Messages.showErrorDialog(

@@ -91,6 +91,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class AsmCodeGeneratorTest extends JpsBuildTestCase {
   private MyNestedFormLoader myNestedFormLoader;
   private MyClassFinder myClassFinder;
+  /**
+   * Output of the testData sources a test compiles. On the class finder's classpath, so that a form can name a
+   * component class of its own rather than only classes the IDE itself is built from.
+   */
+  private Path myCompileDir;
 
   @Override
   protected void setUp() throws Exception {
@@ -107,7 +112,10 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
       url = new File(swingPath).toURI().toURL();
     }
 
+    myCompileDir = FileUtilRt.createTempDirectory("asmCodeGeneratorOut", "", false).toPath();
+
     List<URL> cp = new ArrayList<>();
+    appendPath(cp, myCompileDir.toString());
     appendPath(cp, com.github.benmanes.caffeine.cache.Caffeine.class);
     appendPath(cp, JBTabbedPane.class);
     appendPath(cp, TitledSeparator.class);
@@ -153,6 +161,10 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
         classFinder.releaseResources();
         myClassFinder = null;
       }
+      if (myCompileDir != null) {
+        FileUtilRt.deleteRecursively(myCompileDir);
+        myCompileDir = null;
+      }
     }
     catch (Throwable e) {
       addSuppressedException(e);
@@ -163,15 +175,34 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
   }
 
   private AsmCodeGenerator initCodeGenerator(String formFileName, String className) throws Exception {
+    return initCodeGenerator(formFileName, className, List.of());
+  }
+
+  private AsmCodeGenerator initCodeGenerator(String formFileName, String className, List<String> extraSources) throws Exception {
     String testDataPath = PluginPathManager.getPluginHomePath("ui-designer") + "/testData/";
-    return initCodeGenerator(formFileName, className, testDataPath);
+    return initCodeGenerator(formFileName, className, testDataPath, extraSources);
   }
 
   private AsmCodeGenerator initCodeGenerator(String formFileName, String className, String testDataPath) throws Exception {
-    String tmpPath = System.getProperty("java.io.tmpdir");
+    return initCodeGenerator(formFileName, className, testDataPath, List.of());
+  }
+
+  /**
+   * @param extraSources testData sources, relative to {@code testDataPath}, that the bound class or the form needs -
+   *                     compiled together with the bound class, so that they can reference each other
+   */
+  private AsmCodeGenerator initCodeGenerator(String formFileName,
+                                             String className,
+                                             String testDataPath,
+                                             List<String> extraSources) throws Exception {
+    String tmpPath = myCompileDir.toString();
     String formPath = testDataPath + formFileName;
     String javaPath = testDataPath + className + ".java";
-    int rc = Main.compile(new String[]{"-d", tmpPath, javaPath});
+    List<String> args = new ArrayList<>(List.of("-d", tmpPath, javaPath));
+    for (String extraSource : extraSources) {
+      args.add(testDataPath + extraSource);
+    }
+    int rc = Main.compile(ArrayUtilRt.toStringArray(args));
 
     assertEquals(0, rc);
 
@@ -203,7 +234,11 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
   }
 
   private Class<?> loadAndPatchClass(String formFileName, String className) throws Exception {
-    AsmCodeGenerator codeGenerator = initCodeGenerator(formFileName, className);
+    return loadAndPatchClass(formFileName, className, List.of());
+  }
+
+  private Class<?> loadAndPatchClass(String formFileName, String className, List<String> extraSources) throws Exception {
+    AsmCodeGenerator codeGenerator = initCodeGenerator(formFileName, className, extraSources);
     byte[] patchedData = getVerifiedPatchedData(codeGenerator);
     myClassFinder.addClassDefinition(className, patchedData);
     return myClassFinder.getLoader().loadClass(className);
@@ -226,7 +261,12 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
   }
 
   private JComponent getInstrumentedRootComponent(String formFileName, String className) throws Exception {
-    Class<?> cls = loadAndPatchClass(formFileName, className);
+    return getInstrumentedRootComponent(formFileName, className, List.of());
+  }
+
+  private JComponent getInstrumentedRootComponent(String formFileName, String className, List<String> extraSources)
+    throws Exception {
+    Class<?> cls = loadAndPatchClass(formFileName, className, extraSources);
     Field rootComponentField = cls.getField("myRootComponent");
     rootComponentField.setAccessible(true);
     Object instance = cls.getConstructor().newInstance();
@@ -236,6 +276,30 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
   public void testSimple() throws Exception {
     JComponent rootComponent = getInstrumentedRootComponent("TestSimple.form", "BindingTest");
     assertNotNull(rootComponent);
+  }
+
+  /**
+   * An enum-typed property whose constant has a class body. The field is declared in the enum class, while the
+   * constant is an instance of an anonymous subclass of it, so the generated {@code getStatic} has to name the
+   * enum class - deriving the type from the value would produce {@code Alignment$1.RIGHT : Alignment$1}, which
+   * does not exist.
+   */
+  public void testEnumPropertyWithConstantBody() throws Exception {
+    JComponent rootComponent =
+      getInstrumentedRootComponent("enumProperty/TestEnumPropertyCodeGen.form", "EnumPropertyBindingTest",
+                                   List.of("enumProperty/Alignment.java", "enumProperty/EnumPropertyComponent.java",
+                                           "beanInfoSafety/Payload.java"));
+
+    JComponent component = (JComponent)rootComponent.getComponent(0);
+    Object alignment = component.getClass().getMethod("getAlignment").invoke(component);
+    assertNotNull(alignment);
+    assertEquals("RIGHT", alignment.toString());
+
+    // the constant is an instance of the anonymous subclass, while the field that was read is declared in the enum
+    Class<?> enumClass = ((Enum<?>)alignment).getDeclaringClass();
+    assertEquals("Alignment", enumClass.getName());
+    assertEquals("Alignment$1", alignment.getClass().getName());
+    assertEquals(1, ((Integer)enumClass.getMethod("weight").invoke(alignment)).intValue());
   }
 
   public void testNoSuchField() throws Exception {

@@ -38,9 +38,7 @@ import com.intellij.uiDesigner.LoaderFactory;
 import com.intellij.uiDesigner.ModuleProvider;
 import com.intellij.uiDesigner.XmlReader;
 import com.intellij.uiDesigner.XmlWriter;
-import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.inspections.FormElementProblemDescriptor;
-import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
 import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.lw.IContainer;
 import com.intellij.uiDesigner.lw.IProperty;
@@ -196,8 +194,7 @@ public final class I18nizeFormBatchFix implements LocalQuickFix, BatchQuickFix {
 
       final RadRootContainer rootContainer = containerMap.computeIfAbsent(virtualFile, f -> {
         try {
-          final ClassLoader classLoader = LoaderFactory.getInstance(project).getLoader(virtualFile);
-          LwRootContainer lwRootContainer = Utils.getRootContainer(containingFile.getText(), new CompiledClassPropertiesProvider(classLoader));
+          LwRootContainer lwRootContainer = LoaderFactory.getInstance(project).readRootContainer(virtualFile, containingFile.getText());
           Module module = ModuleUtilCore.findModuleForFile(virtualFile, project);
 
           ModuleProvider moduleProvider = new ModuleProvider() {

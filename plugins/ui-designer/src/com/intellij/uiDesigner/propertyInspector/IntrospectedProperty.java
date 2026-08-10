@@ -81,6 +81,20 @@ public abstract class IntrospectedProperty<V> extends Property<RadComponent, V> 
     invokeSetter(component, value);
   }
 
+  /**
+   * Converts a value as it was read from the form file by
+   * {@link com.intellij.uiDesigner.lw.LwIntrospectedProperty#read} into a value that can be passed to
+   * {@link #setValue}. The two are the same for almost every property; a property whose value has to be bound to
+   * a class of the design time class loader converts it here, where that class is known.
+   *
+   * @return {@code null} if the value cannot be represented, in which case it is not applied
+   * @see com.intellij.uiDesigner.propertyInspector.properties.IntroEnumProperty
+   */
+  public V fromLwValue(final Object lwValue) {
+    //noinspection unchecked
+    return (V)lwValue;
+  }
+
   protected void invokeSetter(final RadComponent component, final Object value) throws IllegalAccessException, InvocationTargetException {
     if (myStoreAsClient) {
       component.putClientProperty(INTRO_PREFIX + getName(), value);
