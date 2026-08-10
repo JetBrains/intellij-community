@@ -143,7 +143,6 @@
     <action id="PrevInlineCompletionSuggestionAction" class="com.intellij.codeInsight.inline.completion.SwitchInlineCompletionVariantAction$Prev">
       <keyboard-shortcut first-keystroke="alt OPEN_BRACKET" keymap="$default"/>
     </action>
-    <action id="Generate" class="com.intellij.codeInsight.generation.actions.GenerateAction"/>
     <group id="CodeCompletionGroup" class="com.intellij.codeInsight.completion.actions.CodeCompletionGroup" popup="true">
       <action id="CodeCompletion" class="com.intellij.codeInsight.completion.actions.CodeCompletionAction"/>
       <action id="SmartTypeCompletion" class="com.intellij.codeInsight.completion.actions.SmartCodeCompletionAction">
@@ -546,8 +545,6 @@
       <override-text place="GoToAction"/>
     </action>
     <action id="NewElementSamePlace" class="com.intellij.ide.actions.NewElementSamePlaceAction"/>
-    <action id="MethodDown" class="com.intellij.codeInsight.navigation.actions.MethodDownAction"/>
-    <action id="MethodUp" class="com.intellij.codeInsight.navigation.actions.MethodUpAction"/>
     <action id="OptimizeImports" class="com.intellij.codeInsight.actions.OptimizeImportsAction"/>
     <action id="RearrangeCode" class="com.intellij.application.options.codeStyle.arrangement.action.RearrangeCodeAction"/>
   </actions>

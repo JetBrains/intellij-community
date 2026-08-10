@@ -9,7 +9,6 @@
     <action id="CodeFloatingToolbar.GotoNextMenu" class="com.intellij.ui.codeFloatingToolbar.GotoNextFloatingToolbarMenu" />
     <action id="CodeFloatingToolbar.GotoPrevMenu" class="com.intellij.ui.codeFloatingToolbar.GotoPreviousFloatingToolbarMenu" />
     <action id="Floating.CodeToolbar.Disable" class="com.intellij.ui.codeFloatingToolbar.DisableCodeFloatingToolbarAction" />
-    <action id="ProjectViewEditSource" use-shortcut-of="EditSource" class="com.intellij.ide.actions.ProjectViewEditSourceAction"/>
     <action id="RemoveBom" class="com.intellij.openapi.editor.actions.RemoveBomAction"/>
     <action id="AddBom" class="com.intellij.openapi.editor.actions.AddBomAction"/>
     <action id="FileChooser.LightEditGotoOpenedFile"
@@ -404,6 +403,7 @@
       <action id="StatusTextModeAction" class="com.intellij.openapi.wm.impl.status.StatusTextModeAction"/>
     </group>
     <action id="EditSource" class="com.intellij.ide.actions.EditSourceAction" icon="AllIcons.Actions.EditSource"/>
+    <action id="ProjectViewEditSource" use-shortcut-of="EditSource" class="com.intellij.ide.actions.ProjectViewEditSourceAction"/>
     <action id="OpenInRightSplit" class="com.intellij.ide.actions.OpenInRightSplitAction" icon="AllIcons.Actions.SplitVertically"/>
     <action id="ViewSource" class="com.intellij.ide.actions.ViewSourceAction"/>
     <action id="RecentLocations" class="com.intellij.ide.actions.RecentLocationsAction"/>

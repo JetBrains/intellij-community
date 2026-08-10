@@ -1,4 +1,9 @@
-<!-- these must be declared before standard EnterAction and TabAction to prioritize the shortcut -->
+<!--
+These must be declared before standard actions (EnterAction, TabAction)
+and before same-stroke partners registered in content modules:
+the first registered enabled action wins keymap dispatch
+(e.g. Generate must beat NewElement on its shortcuts)
+-->
 <idea-plugin>
   <actions>
     <group id="LookupActions">
@@ -19,11 +24,16 @@
       <action id="PrevParameter" class="com.intellij.codeInsight.hint.actions.PrevParameterAction"/>
     </group>
 
+    <action id="Generate" class="com.intellij.codeInsight.generation.actions.GenerateAction"/>
     <action id="EditorIndentSelection" class="com.intellij.openapi.editor.actions.LangIndentSelectionAction"/>
 
     <action id="EditorLookupUp" class="com.intellij.codeInsight.lookup.impl.LookupActionHandler$UpAction"/>
     <action id="EditorLookupDown" class="com.intellij.codeInsight.lookup.impl.LookupActionHandler$DownAction"/>
     <action id="EditorLookupSelectionUp" class="com.intellij.codeInsight.lookup.impl.LookupActionHandler$UpInLookupAction"/>
     <action id="EditorLookupSelectionDown" class="com.intellij.codeInsight.lookup.impl.LookupActionHandler$DownInLookupAction"/>
+
+    <!-- must stay after the lookup actions: they share ctrl+down/up in the legacy Mac OS X keymap -->
+    <action id="MethodDown" class="com.intellij.codeInsight.navigation.actions.MethodDownAction"/>
+    <action id="MethodUp" class="com.intellij.codeInsight.navigation.actions.MethodUpAction"/>
   </actions>
 </idea-plugin>
