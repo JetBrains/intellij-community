@@ -15,9 +15,14 @@ import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.childrenOfType
 import com.intellij.psi.util.lastLeaf
 import com.intellij.psi.util.siblings
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
+import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
 import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
@@ -33,7 +38,6 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.utils.collectReferencesInFile
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.CommentSaver
-import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtElement
@@ -49,17 +53,17 @@ import org.jetbrains.kotlin.psi.KtVisitor
 import org.jetbrains.kotlin.psi.propertyVisitor
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
-import org.jetbrains.kotlin.psi.psiUtil.isAbstract
 import org.jetbrains.kotlin.psi.psiUtil.isPrivate
 
 /**
  * This is an experimental feature and has to be explicitly turned on. Then this inspection will be enabled by default.
  * See [feature discussion](https://github.com/Kotlin/KEEP/blob/main/proposals/KEEP-0430-explicit-backing-fields.md) for more details.
  */
-internal class ConvertToExplicitBackingFieldsInspection :
+@ApiStatus.Internal
+class ConvertToExplicitBackingFieldsInspection :
     KotlinApplicableInspectionBase.Simple<KtProperty, ConvertToExplicitBackingFieldsInspection.Context>() {
 
-    internal data class Context(val backingProperty: SmartPsiElementPointer<KtProperty>)
+    data class Context(val backingProperty: SmartPsiElementPointer<KtProperty>)
 
     override fun getProblemDescription(
         element: KtProperty,
@@ -119,7 +123,6 @@ internal class ConvertToExplicitBackingFieldsInspection :
 
     override fun isApplicableByPsi(element: KtProperty): Boolean {
         if (element.isVar) return false
-        if (element.isMember && element.containingClass()?.isAbstract() == true && !element.hasModifier(KtTokens.FINAL_KEYWORD)) return false
         return !element.isPrivate() && element.getter != null
     }
 
@@ -127,6 +130,8 @@ internal class ConvertToExplicitBackingFieldsInspection :
 
     context(session: KaSession)
     override fun prepareContext(element: KtProperty): Context? {
+        if (!element.isEffectivelyFinal()) return null
+
         val returnedProperty = getReturnedPropertyFromGetter(element.getter) ?: return null
 
         val allProperties = (element.parent as? KtElement)
@@ -143,6 +148,14 @@ internal class ConvertToExplicitBackingFieldsInspection :
         if (!returnedType.isSubtypeOf(propertyType)) return null
 
         return Context(returnedProperty.createSmartPointer())
+    }
+
+    context(_: KaSession)
+    private fun KtProperty.isEffectivelyFinal(): Boolean {
+        if (symbol.modality == KaSymbolModality.FINAL) return true
+
+        val containingClass = symbol.containingDeclaration as? KaNamedClassSymbol ?: return false
+        return containingClass.modality == KaSymbolModality.FINAL && containingClass.classKind != KaClassKind.ENUM_CLASS
     }
 
     context(_: KaSession)

@@ -1,0 +1,10 @@
+// COMPILER_ARGUMENTS: -Xexplicit-backing-fields
+package com.example
+
+annotation class Entity
+
+@Entity
+class Person {
+    val firstName: CharSequence
+        field: String = "firstName"
+}

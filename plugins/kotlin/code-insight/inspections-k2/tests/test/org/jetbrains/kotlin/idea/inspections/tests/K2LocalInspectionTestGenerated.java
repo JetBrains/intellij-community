@@ -16302,6 +16302,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 runTest("testData/inspectionsLocal/convertToExplicitBackingFields/mutableBackingField.kt");
             }
 
+            @TestMetadata("nonJpaEntityAnnotation.kt")
+            public void testNonJpaEntityAnnotation() throws Exception {
+                runTest("testData/inspectionsLocal/convertToExplicitBackingFields/nonJpaEntityAnnotation.kt");
+            }
+
             @TestMetadata("nonPrivateBackingField.kt")
             public void testNonPrivateBackingField() throws Exception {
                 runTest("testData/inspectionsLocal/convertToExplicitBackingFields/nonPrivateBackingField.kt");
@@ -16310,6 +16315,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             @TestMetadata("openProperty.kt")
             public void testOpenProperty() throws Exception {
                 runTest("testData/inspectionsLocal/convertToExplicitBackingFields/openProperty.kt");
+            }
+
+            @TestMetadata("openProperty2.kt")
+            public void testOpenProperty2() throws Exception {
+                runTest("testData/inspectionsLocal/convertToExplicitBackingFields/openProperty2.kt");
             }
 
             @TestMetadata("override.kt")
@@ -16340,6 +16350,16 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             @TestMetadata("scopeIsNotClass.kt")
             public void testScopeIsNotClass() throws Exception {
                 runTest("testData/inspectionsLocal/convertToExplicitBackingFields/scopeIsNotClass.kt");
+            }
+
+            @TestMetadata("sealedProperty.kt")
+            public void testSealedProperty() throws Exception {
+                runTest("testData/inspectionsLocal/convertToExplicitBackingFields/sealedProperty.kt");
+            }
+
+            @TestMetadata("sealedProperty2.kt")
+            public void testSealedProperty2() throws Exception {
+                runTest("testData/inspectionsLocal/convertToExplicitBackingFields/sealedProperty2.kt");
             }
 
             @TestMetadata("simple.kt")
