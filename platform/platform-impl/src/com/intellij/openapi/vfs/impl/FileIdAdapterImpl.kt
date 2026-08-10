@@ -12,7 +12,10 @@ import com.intellij.platform.fileEditor.FileEntry
 
 internal class FileIdAdapterImpl : FileIdAdapter {
 
-  override fun getFile(id: Int, fileEntry: FileEntry?): VirtualFile? = VirtualFileManager.getInstance().findFileById(id)
+  override fun getFile(fileEntry: FileEntry, virtualFileManager: VirtualFileManager): VirtualFile? {
+    return virtualFileManager.findFileByUrl(fileEntry.url)
+           ?: virtualFileManager.refreshAndFindFileByUrl(fileEntry.url)
+  }
 
   override fun getId(file: VirtualFile): Int? = (file as? VirtualFileWithId)?.id
   override fun getManagingFsCreationTimestamp(file: VirtualFile): Long {
@@ -20,8 +23,6 @@ internal class FileIdAdapterImpl : FileIdAdapter {
   }
 
   override fun getProtocol(file: VirtualFile): String? = null
-
-  override fun getFile(protocol: String, path: String, fileEntry: FileEntry?): VirtualFile? = null
 
   override fun shouldSaveEditorState(file: VirtualFile): Boolean = true
 

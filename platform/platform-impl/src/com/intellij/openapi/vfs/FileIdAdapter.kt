@@ -13,17 +13,12 @@ interface FileIdAdapter {
     fun getInstance(): FileIdAdapter = application.service()
   }
 
-  fun getFile(id: Int, fileEntry: FileEntry?): VirtualFile?
-
-  @ApiStatus.Experimental
-  fun getFileWithTimestamp(id: Int, fileEntry: FileEntry?, managingFsCreationTimestamp: Long): VirtualFile? = getFile(id, fileEntry)
+  fun getFile(fileEntry: FileEntry, virtualFileManager: VirtualFileManager): VirtualFile?
 
   fun getId(file: VirtualFile): Int?
   fun getManagingFsCreationTimestamp(file: VirtualFile): Long
 
   fun getProtocol(file: VirtualFile): String?
-
-  fun getFile(protocol: String, path: String, fileEntry: FileEntry?): VirtualFile?
 
   fun shouldSaveEditorState(file: VirtualFile): Boolean
 
