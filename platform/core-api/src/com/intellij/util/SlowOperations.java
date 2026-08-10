@@ -172,19 +172,29 @@ public final class SlowOperations {
   ///
   /// @see #assertSlowOperationsAreAllowed()
   public static void assertNonCancelableSlowOperationsAreAllowed() {
-    if (isAlwaysAllowed()) {
+    if (isAlwaysAllowed() || isSlowNonCancellableOperationAllowed()) {
       return;
     }
     if (EDT.isCurrentThreadEdt()) {
-      if (isSlowOperationAllowed()) {
-        return;
-      }
       logError(ERROR_EDT);
     }
     else if (ApplicationManager.getApplication().isReadAccessAllowed()) {
       logError(ERROR_RA);
     }
   }
+
+  private static boolean isSlowNonCancellableOperationAllowed() {
+    Application application = ApplicationManager.getApplication();
+    if (application == null || application.isHeadlessEnvironment()) return true;
+
+    // not allowed in WA compared to regular slow operations
+    if (!Registry.is("ide.slow.operations.assertion", true)) {
+      return true;
+    }
+
+    return false;
+  }
+
 
   private static boolean isSlowOperationAllowed() {
     boolean forceAssert = isInSection(FORCE_ASSERT);
