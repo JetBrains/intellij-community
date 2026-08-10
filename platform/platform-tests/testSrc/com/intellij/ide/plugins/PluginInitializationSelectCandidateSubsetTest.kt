@@ -1266,11 +1266,9 @@ class PluginInitializationSelectCandidateSubsetTest {
       val resolvedPluginSet = initContext.resolveConstraints(candidateSubset)
       val nonLoadReasons = mutableListOf<PluginNonLoadReason>()
 
-      PluginManagerCore.adaptResolvedPluginSetAsOldPluginSet(
-        input = PluginSubsystemInput(initContext, discoveryResult),
+      PluginManagerCore.adaptDescriptorExclusionReasonAsPluginNonLoadReason(
         resolvedPluginSet = resolvedPluginSet,
         registerLoadingError = nonLoadReasons::add,
-        excludedFromCandidateSubset = excludedFromCandidateSubset,
       )
 
       assertThat(nonLoadReasons).hasSize(1)

@@ -515,11 +515,14 @@ object PluginManagerCore {
     }
 
     initStagesActivity = initStagesActivity?.endAndStart("adapt plugin set")
-    val (pluginSet, cycleErrors) = adaptResolvedPluginSetAsOldPluginSet(
+    val pluginSet = PluginSet(
       input = PluginSubsystemInput(initContext, discoveredPlugins),
+      excludedFromCandidateSubset = excludedFromCandidateSubset,
+      resolvedPluginSet = resolvedPluginSet,
+    )
+    val cycleErrors = adaptDescriptorExclusionReasonAsPluginNonLoadReason(
       resolvedPluginSet = resolvedPluginSet,
       registerLoadingError = ::registerLoadingError,
-      excludedFromCandidateSubset = excludedFromCandidateSubset,
     )
 
     initStagesActivity = initStagesActivity?.endAndStart("error reporting")
@@ -554,12 +557,10 @@ object PluginManagerCore {
   }
 
   @ApiStatus.Internal
-  fun adaptResolvedPluginSetAsOldPluginSet(
-    input: PluginSubsystemInput,
+  fun adaptDescriptorExclusionReasonAsPluginNonLoadReason(
     resolvedPluginSet: ResolvedPluginSet,
     registerLoadingError: (PluginNonLoadReason) -> Unit,
-    excludedFromCandidateSubset: Map<PluginMainDescriptor, DescriptorExclusionReason>,
-  ): Pair<PluginSet, List<PluginLoadingError>> {
+  ): List<PluginLoadingError> {
     val cycleErrors = ArrayList<PluginLoadingError>()
     for (plugin in resolvedPluginSet.candidateSet.plugins) {
       for (descriptor in plugin.sequenceAllDescriptors()) {
@@ -581,12 +582,7 @@ object PluginManagerCore {
         }
       }
     }
-    val pluginSet = PluginSet(
-      input = input,
-      excludedFromCandidateSubset = excludedFromCandidateSubset,
-      resolvedPluginSet = resolvedPluginSet,
-    )
-    return pluginSet to cycleErrors
+    return cycleErrors
   }
 
   private fun adaptExclusionReasonAsCycleError(

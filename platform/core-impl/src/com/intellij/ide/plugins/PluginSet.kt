@@ -15,7 +15,7 @@ class PluginSubsystemInput(
 )
 
 @ApiStatus.Internal
-class PluginSet internal constructor(
+class PluginSet(
   val input: PluginSubsystemInput,
   /**
    * Contains plugins that were filtered out early and are not part of the [candidate subset][ResolvedPluginSet.candidateSet].
