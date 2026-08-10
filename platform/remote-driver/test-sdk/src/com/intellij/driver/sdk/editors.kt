@@ -6,6 +6,8 @@ import com.intellij.driver.client.service
 import com.intellij.driver.model.OnDispatcher
 import com.intellij.driver.model.RdTarget
 import com.intellij.driver.sdk.remoteDev.FrontendGuestNavigationService
+import com.intellij.driver.sdk.remoteDev.isLightSession
+import com.intellij.driver.sdk.remoteDev.openFileInLightSession
 import com.intellij.driver.sdk.ui.remote.ColorRef
 import java.awt.Point
 import java.awt.Rectangle
@@ -233,6 +235,9 @@ fun Driver.openFile(relativePath: String, project: Project = singleProject(), wa
 
       openEditor(fileToOpen!!, project)
       fileToOpen
+    }
+    else if (isLightSession()) {
+      openFileInLightSession(relativePath, project, isTextEditor)
     }
     else {
       val service = service(FrontendGuestNavigationService::class, project)
