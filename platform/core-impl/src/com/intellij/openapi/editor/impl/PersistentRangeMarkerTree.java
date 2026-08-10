@@ -19,6 +19,6 @@ final class PersistentRangeMarkerTree extends RangeMarkerTree<RangeMarkerEx> {
   @Override
   protected boolean keepIntervalOnWeakReference(@NotNull RangeMarkerEx interval) {
     // prevent guarded blocks to be collected by gc
-    return !GuardedBlock.isGuarded(interval);
+    return !GuardBlock.isGuard(interval);
   }
 }

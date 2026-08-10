@@ -7,22 +7,21 @@ import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
-final class GuardedBlock extends PersistentRangeMarker {
-
-  static @NotNull Processor<RangeMarkerEx> processor(Processor<? super RangeMarkerEx> processor) {
+final class GuardBlock extends PersistentRangeMarker {
+  static @NotNull Processor<RangeMarkerEx> filterGuards(@NotNull Processor<? super RangeMarkerEx> processor) {
     return rangeMarker -> {
-      if (isGuarded(rangeMarker)) {
+      if (isGuard(rangeMarker)) {
         return processor.process(rangeMarker);
       }
       return true;
     };
   }
 
-  static boolean isGuarded(@NotNull RangeMarker rangeMarker) {
-    return rangeMarker instanceof GuardedBlock;
+  static boolean isGuard(@NotNull RangeMarker rangeMarker) {
+    return rangeMarker instanceof GuardBlock;
   }
 
-  GuardedBlock(DocumentEx document, int startOffset, int endOffset) {
+  GuardBlock(@NotNull DocumentEx document, int startOffset, int endOffset) {
     super(document, startOffset, endOffset, true);
   }
 

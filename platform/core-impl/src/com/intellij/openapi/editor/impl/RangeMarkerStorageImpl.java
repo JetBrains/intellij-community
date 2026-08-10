@@ -85,14 +85,14 @@ final class RangeMarkerStorageImpl implements RangeMarkerStorage {
   @Override
   public @NotNull RangeMarkerEx createGuardedBlock(@NotNull DocumentEx hostDocument, int startOffset, int endOffset) {
     LOG.assertTrue(startOffset <= endOffset, "Should be startOffset <= endOffset");
-    GuardedBlock block = new GuardedBlock(hostDocument, startOffset, endOffset);
+    GuardBlock block = new GuardBlock(hostDocument, startOffset, endOffset);
     myCachedGuardedBlocks.set(null);
     return block;
   }
 
   @Override
   public void removeGuardedBlock(@NotNull RangeMarker block) {
-    if (!GuardedBlock.isGuarded(block)) {
+    if (!GuardBlock.isGuard(block)) {
       throw new IllegalArgumentException("range markers is not a guarded block");
     }
     block.dispose();
@@ -120,7 +120,7 @@ final class RangeMarkerStorageImpl implements RangeMarkerStorage {
   @Override
   public @Nullable RangeMarkerEx getOffsetGuard(int offset) {
     Ref<RangeMarkerEx> blockRef = new Ref<>();
-    myPersistentRangeMarkers.processContaining(offset, GuardedBlock.processor(block -> {
+    myPersistentRangeMarkers.processContaining(offset, GuardBlock.filterGuards(block -> {
       blockRef.set(block);
       return false;
     }));
@@ -133,7 +133,7 @@ final class RangeMarkerStorageImpl implements RangeMarkerStorage {
     myPersistentRangeMarkers.processOverlappingWith(
       start,
       end,
-      GuardedBlock.processor(block -> {
+      GuardBlock.filterGuards(block -> {
         if (rangesIntersect(start, end, true, true,
                             block.getStartOffset(), block.getEndOffset(), block.isGreedyToLeft(), block.isGreedyToRight())) {
           blockRef.set(block);
@@ -159,7 +159,7 @@ final class RangeMarkerStorageImpl implements RangeMarkerStorage {
 
   private @NotNull @UnmodifiableView List<RangeMarker> collectGuardedBlocks() {
     List<RangeMarker> blocks = new ArrayList<>();
-    myPersistentRangeMarkers.processAll(GuardedBlock.processor(block -> {
+    myPersistentRangeMarkers.processAll(GuardBlock.filterGuards(block -> {
       blocks.add(block);
       return true;
     }));

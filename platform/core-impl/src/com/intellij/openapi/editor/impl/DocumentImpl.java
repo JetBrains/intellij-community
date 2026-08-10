@@ -16,6 +16,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -467,7 +468,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
   }
 
   private @NotNull DocumentImpl hostDocument() {
-    return hostDocument != null ? hostDocument : this;
+    return ObjectUtils.notNull(hostDocument, this);
   }
 
   @Override
