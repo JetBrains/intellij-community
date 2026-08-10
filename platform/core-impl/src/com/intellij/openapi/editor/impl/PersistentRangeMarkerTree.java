@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
  * Otherwise, there will be a chain of hard references {@code file -> tree -> document} and gc won't collect the document
  */
 final class PersistentRangeMarkerTree extends RangeMarkerTree<RangeMarkerEx> {
+  static final byte GUARD_BLOCK_FLAVOR_FLAG = nextAvailableFlavorFlag();
 
   PersistentRangeMarkerTree(@NotNull DocumentEventDispatcher dispatcher) {
     super(dispatcher);
@@ -19,6 +20,10 @@ final class PersistentRangeMarkerTree extends RangeMarkerTree<RangeMarkerEx> {
   @Override
   protected boolean keepIntervalOnWeakReference(@NotNull RangeMarkerEx interval) {
     // prevent guarded blocks to be collected by gc
-    return !GuardBlock.isGuard(interval);
+    return !GuardedBlock.isGuard(interval);
+  }
+  @Override
+  protected byte getFlavorFlags(@NotNull RangeMarkerEx marker) {
+    return GuardedBlock.isGuard(marker) ? GUARD_BLOCK_FLAVOR_FLAG : 0;
   }
 }

@@ -22,6 +22,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.UnmodifiableView;
 
 import java.beans.PropertyChangeListener;
 import java.util.List;
@@ -296,27 +297,27 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
 
   @Override
   public @NotNull RangeMarker createGuardedBlock(int startOffset, int endOffset) {
-    return impl.rangeMarkers().createGuardedBlock(hostDocument(), startOffset, endOffset);
+    return impl.guardedBlocks().createGuardedBlock(hostDocument(), startOffset, endOffset);
   }
 
   @Override
   public void removeGuardedBlock(@NotNull RangeMarker block) {
-    impl.rangeMarkers().removeGuardedBlock(block);
+    impl.guardedBlocks().removeGuardedBlock(block);
   }
 
   @Override
-  public @NotNull List<RangeMarker> getGuardedBlocks() {
-    return impl.rangeMarkers().getGuardedBlocks();
+  public @NotNull @UnmodifiableView List<RangeMarker> getGuardedBlocks() {
+    return impl.guardedBlocks().getGuardedBlocks();
   }
 
   @Override
   public @Nullable RangeMarker getOffsetGuard(int offset) {
-    return impl.rangeMarkers().getOffsetGuard(offset);
+    return impl.guardedBlocks().getOffsetGuard(offset);
   }
 
   @Override
   public @Nullable RangeMarker getRangeGuard(int start, int end) {
-    return impl.rangeMarkers().getRangeGuard(start, end);
+    return impl.guardedBlocks().getRangeGuard(start, end);
   }
 
   @Override

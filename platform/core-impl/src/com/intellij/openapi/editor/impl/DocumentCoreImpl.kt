@@ -18,8 +18,9 @@ internal class DocumentCoreImpl private constructor(
   @Volatile private var snapshot: DocumentSnapshot, // mutable via SNAPSHOT_UPDATER
   private val settings: DocumentSettings,
   private val dispatcher: DocumentEventDispatcherImpl,
-  private val tree: RangeMarkerStorage,
+  private val rangeMarkers: RangeMarkerStorage,
 ) : DocumentCore {
+  private val guardedBlocks: GuardedBlocks = GuardedBlocksImpl(rangeMarkers as RangeMarkerStorageImpl)
   private val live: CharSequence = LiveCharSequence()
   private val mutator: DocumentMutator = MutatorImpl()
   @Volatile private var frozen: FrozenDocument? = null
@@ -33,7 +34,11 @@ internal class DocumentCoreImpl private constructor(
   }
 
   override fun rangeMarkers(): RangeMarkerStorage {
-    return tree
+    return rangeMarkers
+  }
+
+  override fun guardedBlocks(): GuardedBlocks {
+    return guardedBlocks
   }
 
   override fun dispatcher(): DocumentEventDispatcher {
@@ -83,7 +88,7 @@ internal class DocumentCoreImpl private constructor(
     }
   }
 
-  private inner class MutatorImpl : DocumentMutatorImpl(settings, dispatcher, tree) {
+  private inner class MutatorImpl : DocumentMutatorImpl(settings, dispatcher, guardedBlocks) {
     override fun getSnapshot(): DocumentSnapshot {
       return this@DocumentCoreImpl.snapshot
     }

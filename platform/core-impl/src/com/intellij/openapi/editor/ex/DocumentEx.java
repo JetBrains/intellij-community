@@ -7,6 +7,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.UnmodifiableView;
 
 import java.util.Collections;
 import java.util.List;
@@ -107,7 +108,7 @@ public interface DocumentEx extends Document {
                            boolean greedyToRight,
                            int layer);
 
-  default @NotNull List<RangeMarker> getGuardedBlocks() {
+  default @NotNull @UnmodifiableView List<RangeMarker> getGuardedBlocks() {
     return Collections.emptyList();
   }
 

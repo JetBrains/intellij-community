@@ -11,7 +11,6 @@ import com.intellij.openapi.editor.ReadOnlyFragmentModificationException
 import com.intellij.openapi.editor.actionSystem.DocCommandGroupId
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.ex.DocumentMutator
-import com.intellij.openapi.editor.ex.RangeMarkerStorage
 import com.intellij.openapi.editor.ex.DocumentSettings
 import com.intellij.openapi.editor.ex.DocumentSnapshot
 import com.intellij.openapi.editor.ex.DocumentTextPatch
@@ -23,9 +22,9 @@ import java.util.function.UnaryOperator
 import kotlin.concurrent.Volatile
 
 internal abstract class DocumentMutatorImpl(
-    private val settings: DocumentSettings,
-    private val dispatcher: DocumentEventDispatcherImpl,
-    private val tree: RangeMarkerStorage,
+  private val settings: DocumentSettings,
+  private val dispatcher: DocumentEventDispatcherImpl,
+  private val guardedBlocks: GuardedBlocks,
 ) : DocumentMutator {
   @Volatile private var textChangeInProgress = false
 
@@ -380,7 +379,7 @@ internal abstract class DocumentMutatorImpl(
 
   private fun assertFragmentNotGuarded(changeEvent: DocumentEvent, endOffset: Int) {
     if (settings.isGuardCheckEnabled(changeEvent.isWholeTextReplaced)) {
-      val marker: RangeMarker? = tree.getRangeGuard(changeEvent.getOffset(), endOffset)
+      val marker: RangeMarker? = guardedBlocks.getRangeGuard(changeEvent.getOffset(), endOffset)
       if (marker != null) {
         throw ReadOnlyFragmentModificationException(changeEvent, marker)
       }

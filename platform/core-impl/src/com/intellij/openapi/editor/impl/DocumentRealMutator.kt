@@ -5,7 +5,6 @@ import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.elf.Elf
 import com.intellij.openapi.editor.event.DocumentEvent
-import com.intellij.openapi.editor.ex.RangeMarkerStorage
 import com.intellij.openapi.editor.ex.DocumentSettings
 import com.intellij.openapi.editor.ex.DocumentSnapshot
 import com.intellij.openapi.editor.ex.DocumentTextPatch
@@ -26,10 +25,10 @@ import kotlin.concurrent.Volatile
  * and undo-transparent metadata captured when the elf edit was made.
  */
 internal abstract class DocumentRealMutator(
-    settings: DocumentSettings,
-    private val dispatcher: DocumentMagicEventDispatcher,
-    tree: RangeMarkerStorage,
-) : DocumentMutatorImpl(settings, dispatcher, tree) {
+  settings: DocumentSettings,
+  private val dispatcher: DocumentMagicEventDispatcher,
+  guardedBlocks: GuardedBlocks,
+) : DocumentMutatorImpl(settings, dispatcher, guardedBlocks) {
   @Volatile private var textChangeInProgress = false
   @Volatile private var isApplyingElfChangesToReal = false
 

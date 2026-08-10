@@ -42,23 +42,6 @@ interface RangeMarkerStorage {
 
   fun removeRangeMarker(rangeMarker: RangeMarkerEx): Boolean
 
-  fun createGuardedBlock(
-    hostDocument: DocumentEx,
-    startOffset: Int,
-    endOffset: Int,
-  ): RangeMarkerEx
-
-  fun removeGuardedBlock(block: RangeMarker)
-
-  @Contract(pure = true)
-  fun getGuardedBlocks(): List<RangeMarker>
-
-  @Contract(pure = true)
-  fun getOffsetGuard(offset: Int): RangeMarkerEx?
-
-  @Contract(pure = true)
-  fun getRangeGuard(start: Int, end: Int): RangeMarkerEx?
-
   fun restoreRangeMarkersFromFile(
     source: VirtualFile,
     target: DocumentEx,

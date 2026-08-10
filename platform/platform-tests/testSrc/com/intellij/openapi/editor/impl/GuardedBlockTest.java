@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class GuardBlockTest extends BasePlatformTestCase {
+public class GuardedBlockTest extends BasePlatformTestCase {
   private RangeMarker createGuard(final int start, final int end) {
     final Document document = myFixture.getEditor().getDocument();
     return document.createGuardedBlock(start, end);
@@ -194,10 +194,10 @@ public class GuardBlockTest extends BasePlatformTestCase {
   public void testGetGuardedBlockByOffset() {
     myFixture.configureByText("x.txt", "0123456789");
     DocumentEx document = getDocument();
-    RangeMarker guard = createGuard(1, 2);
+    RangeMarker guard = createGuard(1, 3);
     assertNull("no guarded block expected covering the offset", document.getOffsetGuard(0));
-    assertNull("no guarded block expected covering the offset", document.getOffsetGuard(2));
-    assertEquals("guarded block expected covering the offset", guard, document.getOffsetGuard(1));
+    assertNull("no guarded block expected covering the offset", document.getOffsetGuard(4));
+    assertEquals("guarded block expected covering the offset", guard, document.getOffsetGuard(2));
   }
 
   public void testGetRangeGuardInRange() {
@@ -243,8 +243,11 @@ public class GuardBlockTest extends BasePlatformTestCase {
   public void testGuardedBlockApiIsNotBypassed() {
     myFixture.configureByText("x.txt", "0123456789");
     RangeMarker guard = createGuard(0, 1);
+    //noinspection DataFlowIssue
     assertThrows(Exception.class, () -> getGuardedBlocks().add(guard));
+    //noinspection DataFlowIssue
     assertThrows(Exception.class, () -> getGuardedBlocks().clear());
+    //noinspection DataFlowIssue
     assertThrows(Exception.class, () -> getGuardedBlocks().remove(guard));
     assertEquals("guarded block list must not be modified directly", 1, getGuardedBlocks().size());
     assertNotEmpty(getGuardedBlocks());

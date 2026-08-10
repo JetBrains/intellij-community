@@ -469,6 +469,12 @@ c:com.intellij.openapi.editor.impl.EditorTextFieldRendererDocument
 - com.intellij.openapi.editor.ex.DocumentEx
 - <init>():V
 - setText(java.lang.CharSequence):V
+com.intellij.openapi.editor.impl.GuardedBlocks
+- a:createGuardedBlock(com.intellij.openapi.editor.ex.DocumentEx,I,I):com.intellij.openapi.editor.ex.RangeMarkerEx
+- a:getGuardedBlocks():java.util.List
+- a:getOffsetGuard(I):com.intellij.openapi.editor.RangeMarker
+- a:getRangeGuard(I,I):com.intellij.openapi.editor.RangeMarker
+- a:removeGuardedBlock(com.intellij.openapi.editor.RangeMarker):V
 a:com.intellij.openapi.editor.impl.PsiBasedStripTrailingSpacesFilter
 - com.intellij.openapi.editor.StripTrailingSpacesFilter
 - p:<init>(com.intellij.openapi.editor.Document):V
