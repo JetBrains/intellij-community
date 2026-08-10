@@ -27,11 +27,9 @@
       - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-feedback-jvm/0/model-feedback-jvm-0.jar
       - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-indexing-jvm/0/model-indexing-jvm-0.jar
       - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-llm-jvm/0/model-llm-jvm-0.jar
-      - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-bdg-jvm/0/model-bdg-jvm-0.jar
       - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-nlp-jvm/0/model-nlp-jvm-0.jar
       - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-quota-jvm/0/model-quota-jvm-0.jar
       - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-license-jvm/0/model-license-jvm-0.jar
-      - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-tone-formality-jvm/0/model-tone-formality-jvm-0.jar
       - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-gateway-jvm/0/model-gateway-jvm-0.jar
       - name: $MAVEN_REPOSITORY$/ai/grazie/auth/auth-model-jvm/0/auth-model-jvm-0.jar
       - name: $MAVEN_REPOSITORY$/ai/grazie/auth/product/auth-product-model-jvm/0/auth-product-model-jvm-0.jar
@@ -48,14 +46,13 @@
       - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-cloud-jvm/0/model-cloud-jvm-0.jar
       - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-nmt-jvm/0/model-nmt-jvm-0.jar
       - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-nlc-jvm/0/model-nlc-jvm-0.jar
+      - name: $MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-common-jvm/0/nlp-common-jvm-0.jar
       - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-qa-jvm/0/model-qa-jvm-0.jar
       - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-emb-jvm/0/model-emb-jvm-0.jar
       - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-task-jvm/0/model-task-jvm-0.jar
       - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-jet-jvm/0/model-jet-jvm-0.jar
-      - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-chat-jvm/0/model-chat-jvm-0.jar
       - name: $MAVEN_REPOSITORY$/ai/grazie/tasks/provider/model/tasks-provider-jet-completion-model-jvm/0/tasks-provider-jet-completion-model-jvm-0.jar
       - name: $MAVEN_REPOSITORY$/ai/grazie/tasks/provider/tasks-provider-task-schema/0/tasks-provider-task-schema-0.jar
-      - name: $MAVEN_REPOSITORY$/ai/grazie/tasks/provider/llm/completion/tasks-provider-llm-completion-model-jvm/0/tasks-provider-llm-completion-model-jvm-0.jar
       - name: $MAVEN_REPOSITORY$/ai/grazie/tasks/provider/model/tasks-provider-proxy-model-jvm/0/tasks-provider-proxy-model-jvm-0.jar
       - name: $MAVEN_REPOSITORY$/ai/grazie/utils/utils-common-jvm/0/utils-common-jvm-0.jar
       - name: $MAVEN_REPOSITORY$/ai/grazie/utils/utils-multiplatform-jvm/0/utils-multiplatform-jvm-0.jar
@@ -100,8 +97,6 @@
       - name: $MAVEN_REPOSITORY$/com/vdurmont/emoji-java/5/emoji-java-5.jar
       org.json:json:
       - name: $MAVEN_REPOSITORY$/org/json/json/20240205/json-20240205.jar
-      ai.grazie.model.tree.jvm:
-      - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-tree-jvm/0/model-tree-jvm-0.jar
       ai.grazie.model.ner.jvm:
       - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-ner-jvm/0/model-ner-jvm-0.jar
 - name: lib/intellij.libraries.ai.grazie.spell.gec.engine.local.jar
