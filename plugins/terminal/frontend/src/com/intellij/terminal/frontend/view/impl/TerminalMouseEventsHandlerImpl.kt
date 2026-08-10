@@ -36,6 +36,12 @@ internal class TerminalMouseEventsHandlerImpl(
     if (event is MouseWheelEvent) {
       editor.selectionModel.removeSelection()
     }
+    if (event.id == MouseEvent.MOUSE_PRESSED) {
+      // Editor selection can be active at this moment only if the user holds Shift.
+      // Support the case of removing the selection here, because editor logic won't be able to do it
+      // (we consume the event).
+      editor.selectionModel.removeSelection()
+    }
 
     // Consume the mouse event to avoid double processing:
     // by the terminal process and the editor logic (for example, text selection).
