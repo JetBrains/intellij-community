@@ -649,7 +649,7 @@ internal class TerminalHyperlinksProcessingTest : BasePlatformTestCase() {
     private val hyperlinkFacade = installHyperlinksProcessing(
       project = project,
       outputModel = outputModel,
-      decorationApplier = createEditorTextDecorationApplier(editor, coroutineScope.asDisposable(), consumeOnlyOnCtrlClick = true),
+      decorationApplier = createEditorTextDecorationApplier(editor, coroutineScope.asDisposable()) { consumeOnlyOnCtrlClick = true },
       sessionModel = createSessionModel(),
       eelDescriptor = LocalEelDescriptor,
       coroutineScope = coroutineScope.childScope("HyperlinksProcessing")
