@@ -9,6 +9,7 @@ import com.intellij.lang.jvm.actions.modifierRequest
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch
+import com.intellij.util.PerformanceAssertions
 import com.intellij.util.xml.DomManager
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.devkit.DevKitBundle
@@ -63,8 +64,11 @@ internal class ExtensionClassShouldBeFinalAndNonPublicInspection : DevKitJvmInsp
 @ApiStatus.Internal
 fun isServiceImplementationRegisteredInPluginXml(aClass: PsiClass): Boolean {
   val domManager = DomManager.getDomManager(aClass.project)
+  val candidates = PerformanceAssertions.suppressAssertDoesNotAffectHighlighting("IJPL-252911").use {
+    locateExtensionsByPsiClass(aClass)
+  }
 
-  for (candidate in locateExtensionsByPsiClass(aClass)) {
+  for (candidate in candidates) {
     val tag = candidate.pointer.element ?: continue
     val extension = domManager.getDomElement(tag) as? Extension ?: continue
     if (ExtensionUtil.hasServiceBeanFqn(extension)) {

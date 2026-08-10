@@ -27,6 +27,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.ReferenceSetBase;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.PerformanceAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.CustomReferenceConverter;
@@ -192,7 +193,10 @@ public final class ExtensionOrderConverter implements CustomReferenceConverter<S
       }
 
       ExtensionLocator epAndIdLocator = locateExtensionsByExtensionPointAndId(extensionPoint, myReferencedId);
-      List<ExtensionCandidate> candidates = epAndIdLocator.findCandidates();
+      final List<ExtensionCandidate> candidates;
+      try (var ignored = PerformanceAssertions.suppressAssertDoesNotAffectHighlighting("IJPL-252911")) {
+        candidates = epAndIdLocator.findCandidates();
+      }
       if (candidates.isEmpty()) {
         return null;
       }

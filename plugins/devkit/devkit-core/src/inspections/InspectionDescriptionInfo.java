@@ -24,6 +24,7 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.uast.UastModificationTracker;
+import com.intellij.util.PerformanceAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomService;
@@ -124,8 +125,9 @@ public final class InspectionDescriptionInfo {
       SearchScope searchScope = new LocalSearchScope(filteredFileElements.stream().map(DomFileElement::getFile).toArray(PsiElement[]::new));
 
       Ref<Extension> result = Ref.create();
-      processExtensionDeclarations(Objects.requireNonNull(psiClass.getQualifiedName()), module.getProject(),
-                                   true, searchScope, (extension, tag) -> {
+      try (var ignored = PerformanceAssertions.suppressAssertDoesNotAffectHighlighting("IJPL-252911")) {
+        processExtensionDeclarations(Objects.requireNonNull(psiClass.getQualifiedName()), module.getProject(),
+                                     true, searchScope, (extension, tag) -> {
           ExtensionPoint extensionPoint = extension.getExtensionPoint();
           if (extensionPoint != null &&
               InheritanceUtil.isInheritor(extensionPoint.getBeanClass().getValue(), InspectionEP.class.getName())) {
@@ -134,6 +136,7 @@ public final class InspectionDescriptionInfo {
           }
           return true;
         });
+      }
       Extension extension = result.get();
       if (extension != null) return extension;
 

@@ -6,6 +6,7 @@ import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.psi.PsiClass
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiUtil
+import com.intellij.util.PerformanceAssertions
 import com.intellij.util.xml.DomElement
 import com.intellij.util.xml.DomUtil
 import com.intellij.util.xml.GenericDomValue
@@ -29,7 +30,10 @@ object ExtensionUtil {
    * the predicate [shouldSkip] returns `false` on this extension.
    */
   fun isInstantiatedExtension(extensionClass: PsiClass, shouldSkip: (Extension) -> Boolean): Boolean {
-    for (candidate in locateExtensionsByPsiClass(extensionClass)) {
+    val candidates = PerformanceAssertions.suppressAssertDoesNotAffectHighlighting("IJPL-252911").use {
+      locateExtensionsByPsiClass(extensionClass)
+    }
+    for (candidate in candidates) {
       val extension = DomUtil.findDomElement(candidate.pointer.element, Extension::class.java, false) ?: continue
       if (shouldSkip(extension)) continue
       val classNameDomValues = extension.getClassNameDomValues()

@@ -6,6 +6,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.PerformanceAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -54,15 +55,17 @@ public final class StatisticsCollectorNotRegisteredInspection extends DevKitJvmI
       return;
     }
     AtomicBoolean isCollectorRegistered = new AtomicBoolean(false);
-    processExtensionDeclarations(getNameToSearch(checkedClass, qualifiedName), project, false, (extension, tag) -> {
-      ExtensionPoint point = extension.getExtensionPoint();
-      if (point != null && point.getEffectiveQualifiedName().equals(collectorType.getExtensionPoint()) &&
-          ContainerUtil.exists(tag.getAttributes(), it -> Objects.equals(it.getValue(), qualifiedName))) {
-        isCollectorRegistered.set(true);
-        return false;
-      }
-      return true;
-    });
+    try (var ignored = PerformanceAssertions.suppressAssertDoesNotAffectHighlighting("IJPL-252911")) {
+      processExtensionDeclarations(getNameToSearch(checkedClass, qualifiedName), project, false, (extension, tag) -> {
+        ExtensionPoint point = extension.getExtensionPoint();
+        if (point != null && point.getEffectiveQualifiedName().equals(collectorType.getExtensionPoint()) &&
+            ContainerUtil.exists(tag.getAttributes(), it -> Objects.equals(it.getValue(), qualifiedName))) {
+          isCollectorRegistered.set(true);
+          return false;
+        }
+        return true;
+      });
+    }
 
     if (isCollectorRegistered.get()) {
       return;

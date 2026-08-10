@@ -10,13 +10,11 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.psi.PsiFile;
-import com.intellij.testFramework.LoggedErrorProcessor;
 import com.intellij.util.PerformanceAssertions;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicReference;
+import static com.intellij.testFramework.TestLoggerKt.assertErrorLogged;
+import static com.intellij.testFramework.TestLoggerKt.assertNoErrorLogged;
 
 /**
  * Regression guard for IJPL-251903.
@@ -31,7 +29,38 @@ public class PerformanceAssertionInsideHighlightingPassTest extends DaemonAnalyz
   private static final String EXPECTED_MESSAGE = "the expensive method should not be called inside the highlighting pass";
 
   public void testAssertReportsErrorWhenCalledInsideHighlightingPass() {
-    // A highlighting pass that invokes the assertion from doCollectInformation, i.e. while a pass is running.
+    assertErrorLoggedInHighlightingPass(PerformanceAssertions::assertDoesNotAffectHighlighting);
+  }
+
+  public void testSuppressionIsNestedAndScopedInsideHighlightingPass() {
+    assertErrorLoggedInHighlightingPass(() -> {
+      try (var ignored = PerformanceAssertions.suppressAssertDoesNotAffectHighlighting("IJPL-251903")) {
+        PerformanceAssertions.assertDoesNotAffectHighlighting();
+        try (var nestedIgnored = PerformanceAssertions.suppressAssertDoesNotAffectHighlighting("IJPL-251903")) {
+          PerformanceAssertions.assertDoesNotAffectHighlighting();
+        }
+        PerformanceAssertions.assertDoesNotAffectHighlighting();
+      }
+      PerformanceAssertions.assertDoesNotAffectHighlighting();
+    });
+  }
+
+  public void testAssertIsSilentOutsideHighlightingPass() {
+    // Control: outside of a running pass the assertion must NOT report the highlighting error, otherwise the guard
+    // above would pass even for a broken "always report" implementation.
+    configureByText(PlainTextFileType.INSTANCE, "no pass is running here");
+
+    assertNoErrorLogged(PerformanceAssertions::assertDoesNotAffectHighlighting);
+  }
+
+  private void assertErrorLoggedInHighlightingPass(@NotNull Runnable action) {
+    runInHighlightingPass(() -> {
+      Throwable error = assertErrorLogged(Throwable.class, action::run);
+      assertEquals(EXPECTED_MESSAGE, error.getMessage());
+    });
+  }
+
+  private void runInHighlightingPass(@NotNull Runnable action) {
     class AssertingPass extends EditorBoundHighlightingPass {
       AssertingPass(@NotNull Editor editor, @NotNull PsiFile psiFile) {
         super(editor, psiFile, false);
@@ -39,7 +68,7 @@ public class PerformanceAssertionInsideHighlightingPassTest extends DaemonAnalyz
 
       @Override
       public void doCollectInformation(@NotNull ProgressIndicator progress) {
-        PerformanceAssertions.assertDoesNotAffectHighlighting();
+        action.run();
       }
 
       @Override
@@ -56,45 +85,6 @@ public class PerformanceAssertionInsideHighlightingPassTest extends DaemonAnalyz
     registrar.registerTextEditorHighlightingPass(new Fac(), null, null, false, -1);
 
     configureByText(PlainTextFileType.INSTANCE, "highlighting performance assertion probe");
-
-    AtomicReference<String> reportedError = new AtomicReference<>();
-    LoggedErrorProcessor.executeWith(new LoggedErrorProcessor() {
-      @Override
-      public @NotNull Set<Action> processError(@NotNull String category, @NotNull String message, String @NotNull [] details, @Nullable Throwable t) {
-        if (message.contains(EXPECTED_MESSAGE)) {
-          reportedError.set(message);
-          return Action.NONE; // swallow the expected error so it does not fail the surrounding test
-        }
-        return super.processError(category, message, details, t);
-      }
-    }, () -> doHighlighting());
-
-    assertNotNull(
-      "PerformanceAssertions.assertDoesNotAffectHighlighting() must report an error when called inside a running highlighting pass. " +
-      "If this assertion is null, the check in PerformanceAssertionsImpl.checkDoesNotAffectHighlighting() (IJPL-251903) was disabled, " +
-      "or PassExecutorService.PASS_RUNNING is no longer tracked around ScheduledPass.run().",
-      reportedError.get());
-  }
-
-  public void testAssertIsSilentOutsideHighlightingPass() {
-    // Control: outside of a running pass the assertion must NOT report the highlighting error, otherwise the guard
-    // above would pass even for a broken "always report" implementation.
-    configureByText(PlainTextFileType.INSTANCE, "no pass is running here");
-
-    AtomicReference<String> reportedError = new AtomicReference<>();
-    LoggedErrorProcessor.executeWith(new LoggedErrorProcessor() {
-      @Override
-      public @NotNull Set<Action> processError(@NotNull String category, @NotNull String message, String @NotNull [] details, @Nullable Throwable t) {
-        if (message.contains(EXPECTED_MESSAGE)) {
-          reportedError.set(message);
-          return Action.NONE;
-        }
-        return super.processError(category, message, details, t);
-      }
-    }, () -> PerformanceAssertions.assertDoesNotAffectHighlighting());
-
-    assertNull("The highlighting performance assertion must not fire outside of a highlighting pass, but it reported: " +
-               reportedError.get(),
-               reportedError.get());
+    doHighlighting();
   }
 }
