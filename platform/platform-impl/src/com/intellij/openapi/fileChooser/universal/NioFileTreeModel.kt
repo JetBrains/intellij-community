@@ -34,16 +34,12 @@ import kotlin.io.path.invariantSeparatorsPathString
 class NioFileTreeModel(
   descriptor: FileChooserDescriptor,
   sortDirectories: Boolean = true,
+  internal val contributor: UniversalFileChooserContributor? = null,
 ) : AbstractTreeModel(), InvokerSupplier {
 
   companion object {
 
     private val LOG = Logger.getInstance(NioFileTreeModel::class.java)
-
-    private fun fileName(path: Path): String {
-      val contributor = UniversalFileChooserContributor.findOwner(path)
-      return contributor?.getFileName(path) ?: path.fileName?.toString() ?: path.toString()
-    }
   }
 
   private val invoker: Invoker = Invoker.forBackgroundThreadWithoutReadAction(this)
@@ -177,7 +173,7 @@ class NioFileTreeModel(
       if (sortDirectories) {
         if (one.isDirectory != two.isDirectory) return if (one.isDirectory) -1 else 1
       }
-      return StringUtil.naturalCompare(fileName(one.path), fileName(two.path))
+      return StringUtil.naturalCompare(model.contributor.fileName(one.path), model.contributor.fileName(two.path))
     }
 
     fun isVisible(entry: ChildEntry): Boolean {
@@ -237,13 +233,13 @@ class NioFileTreeModel(
       if (descriptorRoots != null) {
         val files = descriptorRoots
         if (files.isEmpty()) return emptyList()
-        return files.map { file -> Root(this, file, contributorRoot = null) }
+        return files.map { file -> Root(this, model.contributor, file, contributorRoot = null) }
       }
       val realRoots = model.contributorRoots.filter { it.path != null }
       val virtualRoots = model.contributorRoots.filter { it.path == null }
       if (realRoots.isEmpty() && virtualRoots.isEmpty()) return emptyList()
-      val realRootNodes = realRoots.map { root -> Root(this, root.path!!, contributorRoot = root) }
-      val virtualRootNodes = virtualRoots.map { root -> VirtualRoot(this, root) }
+      val realRootNodes = realRoots.map { root -> Root(this, model.contributor, root.path!!, contributorRoot = root) }
+      val virtualRootNodes = virtualRoots.map { root -> VirtualRoot(this, model.contributor, root) }
       return realRootNodes + virtualRootNodes
     }
 
@@ -271,7 +267,13 @@ class NioFileTreeModel(
     }
   }
 
-  private open class Node(path: Path?, attrs: BasicFileAttributes? = null, isDirectory: Boolean? = null) : NioFileNode(path) {
+  private open class Node(
+    protected val contributor: UniversalFileChooserContributor?,
+    path: Path?,
+    attrs: BasicFileAttributes? = null,
+    isDirectory: Boolean? = null,
+  ) : NioFileNode(path) {
+
     init {
       updateContent(attrs, isDirectory)
     }
@@ -279,7 +281,7 @@ class NioFileTreeModel(
     protected open fun updateContent(attrs: BasicFileAttributes?, isDirectory: Boolean?) {
       val p = path
       check(p != null)
-      updateName(fileName(p))
+      updateName(contributor.fileName(p))
       if (attrs != null) {
         val directory = isDirectory ?: attrs.isDirectory
         var icon: Icon? =
@@ -321,12 +323,13 @@ class NioFileTreeModel(
 
   private open class Root(
     state: State,
+    contributor: UniversalFileChooserContributor?,
     path: Path?,
     attrs: BasicFileAttributes? = null,
     isDirectory: Boolean? = null,
     contributorRoot: UniversalFileChooserContributor.Root? = null,
   ) :
-    Node(path, attrs, isDirectory) {
+    Node(contributor, path, attrs, isDirectory) {
     val tree: MapBasedTree<Path, Node> = MapBasedTree(false, { it.path }, state.path)
 
     init {
@@ -351,15 +354,16 @@ class NioFileTreeModel(
           if (existing != null && parent === existing.parentPath)
             Pair.create(existing.node, !entry.isDirectory)
           else
-            Pair.create(Node(entry.path, entry.attrs, entry.isDirectory), !entry.isDirectory)
+            Pair.create(Node(contributor, entry.path, entry.attrs, entry.isDirectory), !entry.isDirectory)
         })
     }
   }
 
   private class VirtualRoot(
     state: State,
+    contributor: UniversalFileChooserContributor?,
     val contributorRoot: UniversalFileChooserContributor.Root,
-  ) : Root(state, null) {
+  ) : Root(state, contributor, null) {
     init {
       updateName(contributorRoot.presentation.presentableName)
       updateComment(contributorRoot.presentation.comment)
@@ -377,3 +381,9 @@ class NioFileTreeModel(
     override fun toString(): String = name ?: ""
   }
 }
+
+/**
+ * Resolves a path's display name via the owning contributor.
+ */
+internal fun UniversalFileChooserContributor?.fileName(path: Path): String =
+  this?.getFileName(path) ?: path.fileName?.toString() ?: path.toString()

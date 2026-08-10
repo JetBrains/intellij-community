@@ -19,8 +19,6 @@ interface UniversalFileChooserContributor {
     @JvmField
     val EP_NAME: ExtensionPointName<UniversalFileChooserContributor> = ExtensionPointName("com.intellij.universalFileChooserContributor")
 
-    fun findOwner(path: Path): UniversalFileChooserContributor? = EP_NAME.findFirstSafe { ext -> ext.ownsPath(path) }
-
     fun getFilteredSystemRoots(predicate: (Path) -> Boolean): List<Root> {
       return FileSystems.getDefault().getRootDirectories().filter(predicate).map { asDefaultRoot(it) }
     }
@@ -85,5 +83,9 @@ class SingleRootContributor(
 ) : UniversalFileChooserContributor by delegate {
   override suspend fun getRoots(): List<UniversalFileChooserContributor.Root> = delegate.getFilteredRoots(rootPath)
 }
+
+@ApiStatus.Internal
+fun Collection<UniversalFileChooserContributor>.findOwner(path: Path): UniversalFileChooserContributor? =
+  firstOrNull { runCatching { it.ownsPath(path) }.getOrDefault(false) }
 
 

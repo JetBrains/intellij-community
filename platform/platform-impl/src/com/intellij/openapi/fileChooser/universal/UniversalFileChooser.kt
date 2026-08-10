@@ -201,7 +201,7 @@ object UniversalFileChooser {
     private val project: Project,
     okAction: Runnable,
     private val okEnabledUpdater: (Boolean) -> Unit = {},
-    contributors: Collection<UniversalFileChooserContributor> = UniversalFileChooserContributor.EP_NAME.extensionList,
+    private val contributors: Collection<UniversalFileChooserContributor> = UniversalFileChooserContributor.EP_NAME.extensionList,
     private val extraToolbarActions: ActionGroup = DefaultActionGroup(),
     private val extraPopupActions: ActionGroup = DefaultActionGroup(),
     preselectPath: Path? = null
@@ -241,7 +241,7 @@ object UniversalFileChooser {
         minOf(screenSize.height / 2, JBUI.scale(defaultHeight)),
       )
       tabbedPane = JBTabbedPane()
-      val projectContrib = projectContributor(project)
+      val projectContrib = projectContributor(project, contributors)
       val localContrib = localContributor(contributors)
       val restrictedContributors: Set<UniversalFileChooserContributor>
       effectiveContributors = if (descriptor.isEnvironmentRestricted) {
@@ -452,10 +452,13 @@ object UniversalFileChooser {
       return toolbar to actionGroup
     }
 
-    private fun projectContributor(project: Project): UniversalFileChooserContributor? {
+    private fun projectContributor(
+      project: Project,
+      contributors: Collection<UniversalFileChooserContributor> = this.contributors,
+    ): UniversalFileChooserContributor? {
       if (project.isDefault) return null
       val basePath = project.basePath ?: project.projectFilePath ?: return null
-      return UniversalFileChooserContributor.findOwner(Path.of(basePath))
+      return contributors.findOwner(Path.of(basePath))
     }
 
     private fun localContributor(contributors: Collection<UniversalFileChooserContributor>): UniversalFileChooserContributor? {
@@ -465,7 +468,7 @@ object UniversalFileChooser {
 
     private fun preselectProjectTab(project: Project) {
       if (fileViews.size <= 1) return
-      val projectContributor = projectContributor(project)
+      val projectContributor = projectContributor(project, contributors)
       projectContributor?.let { contributor ->
         tabbedPane.indexOfTab(contributor.tabTitle)
           .takeIf { it >= 0 }?.let { tabbedPane.selectedIndex = it }
@@ -1221,7 +1224,7 @@ object FileBrowser {
      * in that case the builder is left unchanged so callers can decide how to react.
      */
     fun root(root: Path): Boolean {
-      val contributor = UniversalFileChooserContributor.findOwner(root) ?: return false
+      val contributor = contributors.findOwner(root) ?: return false
       this.contributors = listOf(SingleRootContributor(contributor, root))
       return true
     }

@@ -6,12 +6,10 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileSystemTree
 import com.intellij.openapi.fileChooser.universal.NioFileChooserUtil.toNioPathSafe
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.ui.popup.Balloon
@@ -69,7 +67,7 @@ class NioFileSystemTree(
 ) : Disposable {
 
   private val okActions: MutableList<Runnable> = ArrayList(2)
-  private val fileTreeModel: NioFileTreeModel = NioFileTreeModel(descriptor)
+  private val fileTreeModel: NioFileTreeModel = NioFileTreeModel(descriptor, contributor = contributor)
   private val asyncTreeModel: AsyncTreeModel = AsyncTreeModel(fileTreeModel, this)
   private val listeners: MutableList<Listener> = ContainerUtil.createLockFreeCopyOnWriteList()
   private val subscriptionJobs: ConcurrentHashMap<Path, Job> = ConcurrentHashMap()
