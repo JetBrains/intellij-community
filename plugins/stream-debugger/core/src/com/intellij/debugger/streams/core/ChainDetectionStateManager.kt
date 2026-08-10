@@ -62,7 +62,7 @@ private val SESSION_FINISHED: StateFlow<ChainDetectionState> =
 class ChainDetectionStateManager(private val cs: CoroutineScope) {
   private val sessionStates = ConcurrentHashMap<XDebugSession, SessionState>()
 
-  fun chainStateFlow(session: XDebugSession): Flow<ChainDetectionState> = sessionState(session)?.status ?: SESSION_FINISHED
+  fun chainStateFlow(session: XDebugSession): Flow<ChainDetectionState> = sessionStates[session]?.status ?: SESSION_FINISHED
 
   fun inlayStateFlow(session: XDebugSession): Flow<StreamChainInlayState> =
     chainStateFlow(session).map { state ->
@@ -75,26 +75,14 @@ class ChainDetectionStateManager(private val cs: CoroutineScope) {
       }
     }.distinctUntilChanged()
 
+  // Both events are published with `syncPublisher`, and `processStopped` always comes strictly after `processStarted`,
+  // so the state is created once per session and is always canceled.
   internal fun onProcessStarted(session: XDebugSession) {
-    sessionState(session)
+    sessionStates.computeIfAbsent(session) { SessionState(it, cs.childScope("StreamDebugger session state")) }
   }
 
   internal fun onProcessStopped(session: XDebugSession) {
     sessionStates.remove(session)?.cancel()
-  }
-
-  /**
-   * Returns null for an already finished session
-   */
-  private fun sessionState(session: XDebugSession): SessionState? {
-    if (session.isStopped) return null
-    val state = sessionStates.computeIfAbsent(session) { SessionState(it, cs.childScope("StreamDebugger session state")) }
-    if (session.isStopped) { // the session has finished concurrently with computeIfAbsent
-      sessionStates.remove(session, state)
-      state.cancel()
-      return null
-    }
-    return state
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)
