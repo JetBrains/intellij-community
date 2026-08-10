@@ -25,11 +25,12 @@ public class GroovyHighlighting60Test extends LightGroovyTestCase implements Hig
   public void testSimpleVal() {
     highlightingTest("""
                        val x = 1
+                       val (a, b) = [-1, 0]
                        for (val y : [1, 2, 3]) {
                          println y
                        }
                        class X {
-                         var
+                         val
                            x = 2
                        }
                        """);

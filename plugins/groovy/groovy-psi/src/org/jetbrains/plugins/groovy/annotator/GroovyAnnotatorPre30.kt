@@ -17,7 +17,6 @@ import org.jetbrains.plugins.groovy.GroovyBundle.message
 import org.jetbrains.plugins.groovy.annotator.intentions.ConvertLambdaToClosureIntention
 import org.jetbrains.plugins.groovy.annotator.intentions.ReplaceDotFix
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GrRemoveModifierFix
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_DEF
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_ELVIS_ASSIGN
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_ID
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_METHOD_CLOSURE
@@ -96,10 +95,6 @@ internal class GroovyAnnotatorPre30(private val holder: AnnotationHolder) : Groo
 
   override fun visitVariableDeclaration(variableDeclaration: GrVariableDeclaration) {
     super.visitVariableDeclaration(variableDeclaration)
-    checkTupleVariableIsNotAllowed(variableDeclaration,
-                                   holder,
-                                   message("tuple.declaration.should.end.with.def.modifier"),
-                                   setOf(KW_DEF))
 
     if (variableDeclaration.parent is GrTraditionalForClause) {
       if (variableDeclaration.isTuple) {

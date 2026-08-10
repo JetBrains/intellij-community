@@ -230,12 +230,12 @@ public class Groovy25HighlightingTest extends LightGroovyTestCase implements Hig
          """
          void f() {
              def x = 0
-             def y = 1
+             <error descr="'var' declarations are available in Groovy 3.0 or later">var</error> y = 1
              (x, y) = [-1, 0]
-             <error descr="Tuple declaration should end with 'def' modifier">var</error> (Integer a, b) = [1, 2]
+             <error descr="'var' declarations are available in Groovy 3.0 or later">var</error> (Integer a, b) = [1, 2]
              def (Integer c, d) = [3, 4]
      
-             <error descr="Tuple declaration should end with 'def' modifier">final</error> (Integer e, f) = [5, 6]
+             <error descr="Multiple assignment needs 'def' keyword">final</error> (Integer e, f) = [5, 6]
          }
          """
     );

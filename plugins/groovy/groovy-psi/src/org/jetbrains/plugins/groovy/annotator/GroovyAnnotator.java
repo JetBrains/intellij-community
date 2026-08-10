@@ -377,6 +377,27 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
         myHolder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("type.parameters.are.unexpected")).range(typeParameterList).create();
       }
     }
+    else {
+      GrModifierList list = variableDeclaration.getModifierList();
+      for (PsiElement modifier : list.getModifiers()) {
+        String text = modifier.getText();
+        if (PsiModifier.FINAL.equals(text)) {
+          if (!list.hasModifierProperty(GrModifier.DEF) && !GroovyConfigUtils.isAtLeastGroovy30(list)) {
+            myHolder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("invalid.multiple.assignment")).range(modifier).create();
+          }
+        }
+        else if (GrModifier.VAR.equals(text)) {
+          if (!GroovyConfigUtils.isAtLeastGroovy30(list)) {
+            myHolder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("unsupported.var.declaration")).range(modifier).create();
+          }
+        }
+        else if (GrModifier.VAL.equals(text)) {
+          if (!GroovyConfigUtils.isAtLeastGroovy60(list)) {
+            myHolder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("unsupported.val.declaration")).range(modifier).create();
+          }
+        }
+      }
+    }
   }
 
   private boolean checkExceptionUsed(List<PsiType> usedExceptions, GrParameter parameter, GrTypeElement typeElement, PsiType type) {
