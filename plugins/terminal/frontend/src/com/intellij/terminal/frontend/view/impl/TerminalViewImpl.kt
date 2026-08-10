@@ -255,9 +255,9 @@ class TerminalViewImpl(
 
     // Should be created before "configureOutputEditor" is called where mouse reporting is configured (TerminalMouseEventsHandlerImpl).
     // To make mouse events first handled by hyperlinks logic and only then reported to the process.
-    val alternateBufferDecorationApplier = createEditorTextDecorationApplier(
-      alternateBufferEditor, coroutineScope.asDisposable(), consumeOnlyOnCtrlClick = true,
-    )
+    val alternateBufferDecorationApplier = createEditorTextDecorationApplier(alternateBufferEditor, coroutineScope.asDisposable()) {
+      consumeOnlyOnCtrlClick = true
+    }
     configureOutputEditor(
       project,
       editor = alternateBufferEditor,
@@ -307,9 +307,9 @@ class TerminalViewImpl(
 
     // Should be created before "configureOutputEditor" is called where mouse reporting is configured (TerminalMouseEventsHandlerImpl).
     // To make mouse events first handled by hyperlinks logic and only then reported to the process.
-    outputEditorDecorationApplier = createEditorTextDecorationApplier(
-      outputEditor, coroutineScope.asDisposable(), consumeOnlyOnCtrlClick = true,
-    )
+    outputEditorDecorationApplier = createEditorTextDecorationApplier(outputEditor, coroutineScope.asDisposable()) {
+      consumeOnlyOnCtrlClick = true
+    }
     configureOutputEditor(
       project,
       editor = outputEditor,

@@ -60,19 +60,43 @@ sealed interface EditorTextDecorationApplier {
  * Creates a new decoration applier for the given editor.
  *
  * A parent disposable ensures that the applier unsubscribes from the editor listeners.
- *
- * @param consumeOnlyOnCtrlClick if `true`, a hyperlink click only consumes the mouse
- * event when the modifier key (Cmd on macOS, Ctrl elsewhere) is pressed.
- * Plain click on a visible link won't consume the mouse event and it will reach other listeners.
- * Defaults to `false` - consume the mouse event it was somehow handled (either open the link or show the hint).
  */
 @ApiStatus.Experimental
 fun createEditorTextDecorationApplier(
   editor: EditorEx,
   parentDisposable: Disposable,
-  consumeOnlyOnCtrlClick: Boolean = false,
-): EditorTextDecorationApplier =
-  EditorTextDecorationApplierImpl(editor, parentDisposable, consumeOnlyOnCtrlClick)
+  builder: (EditorTextDecorationApplierBuilder.() -> Unit)? = null,
+): EditorTextDecorationApplier = EditorTextDecorationApplierBuilderImpl(editor, parentDisposable).run {
+  builder?.invoke(this)
+  build()
+}
+
+/**
+ * A builder to set optional attributes of an [EditorTextDecorationApplier] being created.
+ *
+ * An instance of a builder is passed to the function passed to [createEditorTextDecorationApplier] as the last parameter.
+ */
+@ApiStatus.Experimental
+sealed interface EditorTextDecorationApplierBuilder {
+  /**
+   * If `true`, a hyperlink click only consumes the mouse
+   * event when the modifier key (Cmd on macOS, Ctrl elsewhere) is pressed.
+   * Plain click on a visible link won't consume the mouse event and it will reach other listeners.
+   * Defaults to `false` - consume the mouse event if it was somehow handled (either open the link or show the hint).
+   */
+  var consumeOnlyOnCtrlClick: Boolean
+}
+
+private class EditorTextDecorationApplierBuilderImpl(
+  private val editor: EditorEx,
+  private val parentDisposable: Disposable,
+) : EditorTextDecorationApplierBuilder {
+  override var consumeOnlyOnCtrlClick: Boolean = false
+
+  fun build(): EditorTextDecorationApplier {
+    return EditorTextDecorationApplierImpl(editor, parentDisposable, consumeOnlyOnCtrlClick)
+  }
+}
 
 /** The base interface for editor decorations. */
 @ApiStatus.Experimental
