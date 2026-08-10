@@ -3,6 +3,7 @@ package org.intellij.plugins.markdown.editor.tables
 
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixture4TestCase
 import org.intellij.plugins.markdown.MarkdownBundle
+import org.intellij.plugins.markdown.lang.formatter.settings.TableStyle
 import org.junit.Test
 
 @Suppress("MarkdownIncorrectTableFormatting")
@@ -67,6 +68,44 @@ class MarkdownInsertTableColumnIntentionTest: LightPlatformCodeInsightFixture4Te
     doTest(before, after, insertRight = false)
   }
 
+  @Test
+  fun `insert column to the right in compact table intention`() {
+    withTableStyle(project, TableStyle.COMPACT) {
+      doTest(
+        """
+        | a | b |
+        | --- | --- |
+        | 1<caret> | 2 |
+        """.trimIndent(),
+        """
+        | a | | b |
+        | --- | :--- | --- |
+        | 1 | | 2 |
+        """.trimIndent(),
+        insertRight = true
+      )
+    }
+  }
+
+  @Test
+  fun `insert column to the left in tight table intention`() {
+    withTableStyle(project, TableStyle.TIGHT) {
+      doTest(
+        """
+        |a|<caret>b|
+        |---|---|
+        |1|2|
+        """.trimIndent(),
+        """
+        |a||b|
+        |---|:---|---|
+        |1||2|
+        """.trimIndent(),
+        insertRight = false
+      )
+    }
+  }
+
   private fun doTest(content: String, after: String, insertRight: Boolean) {
     myFixture.configureByText("some.md", content)
     val key = when {
@@ -77,4 +116,5 @@ class MarkdownInsertTableColumnIntentionTest: LightPlatformCodeInsightFixture4Te
     myFixture.launchAction(intention)
     assertEquals(after, myFixture.editor.document.text)
   }
+
 }

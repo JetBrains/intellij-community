@@ -10,6 +10,7 @@ import com.intellij.psi.PsiFile
 import org.intellij.plugins.markdown.editor.tables.TableFormattingUtils
 import org.intellij.plugins.markdown.editor.tables.TableModificationUtils.isCorrectlyFormatted
 import org.intellij.plugins.markdown.editor.tables.TableUtils
+import org.intellij.plugins.markdown.editor.tables.TableUtils.getTableStyle
 
 internal class MarkdownTableTypedHandler: TypedHandlerDelegate() {
   override fun charTyped(char: Char, project: Project, editor: Editor, file: PsiFile): Result {
@@ -26,11 +27,13 @@ internal class MarkdownTableTypedHandler: TypedHandlerDelegate() {
     if (table == null) {
       return super.charTyped(char, project, editor, file)
     }
+    val tableStyle = getTableStyle(file)
     executeCommand(project) {
-      if (!table.isCorrectlyFormatted(checkAlignment = false)) {
+      if (!table.isCorrectlyFormatted(tableStyle, checkAlignment = false)) {
         TableFormattingUtils.reformatAllColumns(
           table,
           editor.document,
+          tableStyle,
           trimToMaxContent = true,
           carets = editor.caretModel.allCarets
         )

@@ -3,9 +3,9 @@ package org.intellij.plugins.markdown.editor.tables
 
 import com.intellij.application.options.CodeStyle
 import com.intellij.application.options.codeStyle.excludedFiles.GlobPatternDescriptor
-import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
+import org.intellij.plugins.markdown.lang.formatter.settings.TableStyle
 import org.intellij.plugins.markdown.settings.MarkdownCodeInsightSettings
 import org.junit.Before
 import org.junit.Test
@@ -17,10 +17,7 @@ import org.junit.runners.JUnit4
 class MarkdownTableTypingTest: LightPlatformCodeInsightTestCase() {
   @Before
   fun enableTableReformatting() {
-    val settings = MarkdownCodeInsightSettings.getInstance()
-    val old = settings.state.reformatTablesOnType
-    settings.state.reformatTablesOnType = true
-    Disposer.register(testRootDisposable) { settings.state.reformatTablesOnType = old }
+    setupTableReformatting(testRootDisposable)
   }
 
   @Test
@@ -57,6 +54,66 @@ class MarkdownTableTypingTest: LightPlatformCodeInsightTestCase() {
     | 1 | y         | 2x |
     """.trimIndent()
     doTest(before, after, 1, "x")
+  }
+
+  @Test
+  fun `test typing in compact table`() {
+    withTableStyle(project, TableStyle.COMPACT) {
+      doTest(
+        """
+        | a |malformed| c |
+        |---|---|---|
+        | 1<caret> |y| 2 |
+        """.trimIndent(),
+        """
+        | a | malformed | c |
+        | --- | --- | --- |
+        | 1x | y | 2 |
+        """.trimIndent(),
+        string = "x"
+      )
+    }
+  }
+
+  @Test
+  fun `test backspacing last content in compact empty cell`() {
+    withTableStyle(project, TableStyle.COMPACT) {
+      configureFromFileText(
+        "some.md",
+        """
+        | a |
+        | --- |
+        | x<caret> |
+        """.trimIndent()
+      )
+      backspace()
+      checkResultByText(
+        """
+        | a |
+        | --- |
+        | <caret>|
+        """.trimIndent()
+      )
+    }
+  }
+
+  @Test
+  fun `test typing in tight table`() {
+    withTableStyle(project, TableStyle.TIGHT) {
+      doTest(
+        """
+        | a |malformed| c |
+        |---|---|---|
+        | 1<caret> |y| 2 |
+        """.trimIndent(),
+        """
+        |a|malformed|c|
+        |---|---|---|
+        |1x|y|2|
+        """.trimIndent(),
+        string = "x"
+      )
+    }
   }
 
   @Test

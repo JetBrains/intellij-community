@@ -7,6 +7,8 @@ import com.intellij.markdown.backend.inspections.MarkdownIncorrectTableFormattin
 import com.intellij.testFramework.InspectionTestUtil
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixture4TestCase
 import org.intellij.plugins.markdown.MarkdownBundle
+import org.intellij.plugins.markdown.editor.tables.withTableStyle
+import org.intellij.plugins.markdown.lang.formatter.settings.TableStyle
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -155,6 +157,42 @@ class MarkdownIncorrectTableFormattingInspectionQuickFixTest: LightPlatformCodeI
     doTest(before, after)
   }
 
+  @Test
+  fun `reformats to compact style`() {
+    withTableStyle(project, TableStyle.COMPACT) {
+      doTest(
+        """
+        | a |longer|
+        |---|---|
+        | 1 |2|
+        """.trimIndent(),
+        """
+        | a | longer |
+        | --- | --- |
+        | 1 | 2 |
+        """.trimIndent()
+      )
+    }
+  }
+
+  @Test
+  fun `reformats to tight style`() {
+    withTableStyle(project, TableStyle.TIGHT) {
+      doTest(
+        """
+        | a | longer |
+        | --- | --- |
+        | 1 | 2 |
+        """.trimIndent(),
+        """
+        |a|longer|
+        |---|---|
+        |1|2|
+        """.trimIndent()
+      )
+    }
+  }
+
   private fun doTest(content: String, after: String) {
     myFixture.configureByText("some.md", content)
     myFixture.enableInspections(MarkdownIncorrectTableFormattingInspection())
@@ -163,4 +201,5 @@ class MarkdownIncorrectTableFormattingInspectionQuickFixTest: LightPlatformCodeI
     myFixture.launchAction(fix!!)
     myFixture.checkResult(after)
   }
+
 }

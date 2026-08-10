@@ -2,6 +2,7 @@
 package org.intellij.plugins.markdown.editor.tables
 
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
+import org.intellij.plugins.markdown.lang.formatter.settings.TableStyle
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -47,9 +48,88 @@ class MarkdownInsertRowActionTest: LightPlatformCodeInsightTestCase() {
     )
   }
 
-  private fun doTest(content: String, expected: String) {
+  @Test
+  fun `insert row below in compact table`() {
+    withTableStyle(project, TableStyle.COMPACT) {
+      doTest(
+        """
+        | A | B | C |
+        | --- | --- | --- |
+        | 11<caret> | 12 | 13 |
+        """.trimIndent(),
+        """
+        | A | B | C |
+        | --- | --- | --- |
+        | 11 | 12 | 13 |
+        | | | |
+        """.trimIndent()
+      )
+    }
+  }
+
+  @Test
+  fun `insert row above in compact table`() {
+    withTableStyle(project, TableStyle.COMPACT) {
+      doTest(
+        """
+        | A | B | C |
+        | --- | --- | --- |
+        | 11<caret> | 12 | 13 |
+        """.trimIndent(),
+        """
+        | A | B | C |
+        | --- | --- | --- |
+        | | | |
+        | 11 | 12 | 13 |
+        """.trimIndent(),
+        actionId = "Markdown.Table.InsertRow.InsertAbove",
+      )
+    }
+  }
+
+  @Test
+  fun `insert row below in tight table`() {
+    withTableStyle(project, TableStyle.TIGHT) {
+      doTest(
+        """
+        |A|B|C|
+        |---|---|---|
+        |11<caret>|12|13|
+        """.trimIndent(),
+        """
+        |A|B|C|
+        |---|---|---|
+        |11|12|13|
+        ||||
+        """.trimIndent()
+      )
+    }
+  }
+
+  @Test
+  fun `insert row above in tight table`() {
+    withTableStyle(project, TableStyle.TIGHT) {
+      doTest(
+        """
+        |A|B|C|
+        |---|---|---|
+        |11<caret>|12|13|
+        """.trimIndent(),
+        """
+        |A|B|C|
+        |---|---|---|
+        ||||
+        |11|12|13|
+        """.trimIndent(),
+        actionId = "Markdown.Table.InsertRow.InsertAbove",
+      )
+    }
+  }
+
+  private fun doTest(content: String, expected: String, actionId: String = "Markdown.Table.InsertRow.InsertBelow") {
     configureFromFileText("some.md", content)
-    executeAction("Markdown.Table.InsertRow.InsertBelow")
+    executeAction(actionId)
     checkResultByText(expected)
   }
+
 }

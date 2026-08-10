@@ -62,4 +62,11 @@ class MarkdownCustomCodeStyleSettings(settings: CodeStyleSettings) : CustomCodeS
 
   @JvmField
   var FORMAT_TABLES = true
+
+  @JvmField
+  var TABLE_STYLE: Int = TableStyle.ALIGNED.ordinal
+
+  var tableStyle: TableStyle
+    get() = TableStyle.entries[TABLE_STYLE]
+    set(value) { TABLE_STYLE = value.ordinal }
 }

@@ -7,6 +7,7 @@ import org.intellij.plugins.markdown.formatter.MarkdownFormatterTest.Companion.p
 import org.intellij.plugins.markdown.formatter.MarkdownFormatterTest.Companion.runWithTemporaryStyleSettings
 import org.intellij.plugins.markdown.lang.MarkdownLanguage
 import org.intellij.plugins.markdown.lang.formatter.settings.MarkdownCustomCodeStyleSettings
+import org.intellij.plugins.markdown.lang.formatter.settings.TableStyle
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -37,6 +38,40 @@ class MarkdownTablePostFormatProcessorTest: LightPlatformCodeInsightTestCase() {
 
   @Test
   fun `table inside list item`() = doTest()
+
+  @Test
+  fun `compact table`() = doStyleTest(
+    TableStyle.COMPACT,
+    """
+    |Character|Meaning|
+    |---------|-------|
+    |Y|Yes|
+    |N|No|
+    """.trimIndent(),
+    """
+    | Character | Meaning |
+    | --- | --- |
+    | Y | Yes |
+    | N | No |
+    """.trimIndent()
+  )
+
+  @Test
+  fun `tight table`() = doStyleTest(
+    TableStyle.TIGHT,
+    """
+    | Character | Meaning |
+    | --- | --- |
+    | Y | Yes |
+    | N | No |
+    """.trimIndent(),
+    """
+    |Character|Meaning|
+    |---|---|
+    |Y|Yes|
+    |N|No|
+    """.trimIndent()
+  )
 
   @Test
   fun `reformat table after wrapped block quote does not throw`() {
@@ -76,6 +111,19 @@ class MarkdownTablePostFormatProcessorTest: LightPlatformCodeInsightTestCase() {
       //check idempotence of formatter
       performReformatting(project, file)
       checkResultByFile(after)
+    }
+  }
+
+  private fun doStyleTest(style: TableStyle, before: String, after: String) {
+    runWithTemporaryStyleSettings(project) { settings ->
+      settings.getCustomSettings(MarkdownCustomCodeStyleSettings::class.java).FORMAT_TABLES = true
+      withTableStyle(project, style) {
+        configureFromFileText("some.md", before)
+        performReformatting(project, file)
+        checkResultByText(after)
+        performReformatting(project, file)
+        checkResultByText(after)
+      }
     }
   }
 

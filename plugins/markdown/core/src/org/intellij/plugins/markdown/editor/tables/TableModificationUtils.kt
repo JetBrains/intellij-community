@@ -13,6 +13,7 @@ import org.intellij.plugins.markdown.editor.tables.TableUtils.getColumnAlignment
 import org.intellij.plugins.markdown.editor.tables.TableUtils.getColumnCells
 import org.intellij.plugins.markdown.editor.tables.TableUtils.separatorRow
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
+import org.intellij.plugins.markdown.lang.formatter.settings.TableStyle
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableCell
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableRow
@@ -31,6 +32,7 @@ object TableModificationUtils {
   fun MarkdownTable.modifyColumn(
     document: Document,
     columnIndex: Int,
+    tableStyle: TableStyle,
     transformSeparator: (TextRange) -> Unit,
     transformCell: (MarkdownTableCell) -> Unit
   ): Boolean {
@@ -40,11 +42,29 @@ object TableModificationUtils {
     DocumentUtil.executeInBulk(document, cells.size > 100) {
       for (cell in cells.asReversed()) {
         transformCell.invoke(cell)
+        cell.normalizeContent(document, tableStyle)
       }
     }
     transformSeparator.invoke(separatorRange)
     transformCell.invoke(headerCell)
+    headerCell.normalizeContent(document, tableStyle)
     return true
+  }
+
+  private fun MarkdownTableCell.normalizeContent(document: Document, tableStyle: TableStyle) {
+    if (tableStyle == TableStyle.ALIGNED) {
+      return
+    }
+    val range = textRange
+    val content = document.charsSequence.subSequence(range.startOffset, range.endOffset).trim(' ')
+    val replacement = when (tableStyle) {
+      TableStyle.COMPACT -> if (content.isEmpty()) " " else " $content "
+      TableStyle.TIGHT -> content
+      TableStyle.ALIGNED -> error("Unreachable")
+    }
+    if (document.charsSequence.subSequence(range.startOffset, range.endOffset).toString() != replacement) {
+      document.replaceString(range.startOffset, range.endOffset, replacement)
+    }
   }
 
   private fun getCellPotentialWidth(cellText: String): Int {
@@ -64,42 +84,53 @@ object TableModificationUtils {
     return separatorCellPattern.matches(cellText.trim())
   }
 
-  fun MarkdownTableCell.hasCorrectPadding(): Boolean {
+  fun MarkdownTableCell.hasCorrectPadding(tableStyle: TableStyle): Boolean {
     val cellText = text
-    return cellText.startsWith(" ") && cellText.endsWith(" ")
+    return when (tableStyle) {
+      TableStyle.ALIGNED -> cellText.startsWith(" ") && cellText.endsWith(" ")
+      TableStyle.COMPACT -> cellText == " " ||
+                            (cellText.startsWith(" ") && cellText.endsWith(" ") &&
+                             cellText.getOrNull(1) != ' ' && cellText.getOrNull(cellText.lastIndex - 1) != ' ')
+      TableStyle.TIGHT -> !cellText.startsWith(' ') && !cellText.endsWith(' ')
+    }
   }
 
-  @Suppress("MemberVisibilityCanBePrivate")
-  fun MarkdownTable.isColumnCorrectlyFormatted(columnIndex: Int, checkAlignment: Boolean = true): Boolean {
+  fun MarkdownTable.isColumnCorrectlyFormatted(columnIndex: Int, tableStyle: TableStyle, checkAlignment: Boolean = true): Boolean {
     val cells = getColumnCells(columnIndex, withHeader = true)
     if (cells.isEmpty()) {
       return true
     }
-    if (checkAlignment && !validateColumnAlignment(columnIndex)) {
+    if (tableStyle == TableStyle.ALIGNED && checkAlignment && !validateColumnAlignment(columnIndex, tableStyle)) {
       return false
     }
     val separatorCellText = separatorRow?.getCellText(columnIndex)!!
+    if (tableStyle != TableStyle.ALIGNED) {
+      val alignment = separatorRow?.getCellAlignment(columnIndex) ?: return false
+      return separatorCellText == buildSeparatorCellContent(alignment, 0, tableStyle) && cells.all { it.hasCorrectPadding(tableStyle) }
+    }
     val width = getCellPotentialWidth(cells.first().text)
-    if (separatorCellText.length != width || !isSeparatorCellCorrectlyFormatted(separatorCellText)) {
-      return false
-    }
-    return cells.all {
-      val selfWidth = getCellPotentialWidth(it.text)
-      it.hasCorrectPadding() && selfWidth == TableCharacterWidthUtils.calculateDisplayWidth(it.text) && selfWidth == width
-    }
+    return separatorCellText.length == width &&
+           isSeparatorCellCorrectlyFormatted(separatorCellText) &&
+           cells.all {
+             val selfWidth = getCellPotentialWidth(it.text)
+             it.hasCorrectPadding(tableStyle) && selfWidth == TableCharacterWidthUtils.calculateDisplayWidth(it.text) && selfWidth == width
+           }
   }
 
-  fun MarkdownTable.isCorrectlyFormatted(checkAlignment: Boolean = true): Boolean {
-    return (0 until columnsCount).all { isColumnCorrectlyFormatted(it, checkAlignment) }
+  fun MarkdownTable.isCorrectlyFormatted(tableStyle: TableStyle, checkAlignment: Boolean = true): Boolean {
+    return (0 until columnsCount).all { isColumnCorrectlyFormatted(it, tableStyle, checkAlignment) }
   }
 
-  fun MarkdownTableCell.hasValidAlignment(): Boolean {
+  fun MarkdownTableCell.hasValidAlignment(tableStyle: TableStyle): Boolean {
     val table = parentTable ?: return true
     val columnAlignment = table.getColumnAlignment(columnIndex)
-    return hasValidAlignment(columnAlignment)
+    return hasValidAlignment(columnAlignment, tableStyle)
   }
 
-  fun MarkdownTableCell.hasValidAlignment(expected: CellAlignment): Boolean {
+  fun MarkdownTableCell.hasValidAlignment(expected: CellAlignment, tableStyle: TableStyle): Boolean {
+    if (tableStyle != TableStyle.ALIGNED) {
+      return true
+    }
     val content = text
     if (content.isBlank()) {
       return true
@@ -125,15 +156,24 @@ object TableModificationUtils {
     }
   }
 
-  fun MarkdownTable.validateColumnAlignment(columnIndex: Int): Boolean {
+  fun MarkdownTable.validateColumnAlignment(columnIndex: Int, tableStyle: TableStyle): Boolean {
+    if (tableStyle != TableStyle.ALIGNED) {
+      return true
+    }
     val expected = separatorRow!!.getCellAlignment(columnIndex)
     if (expected == CellAlignment.NONE) {
       return true
     }
-    return getColumnCells(columnIndex, true).all { it.hasValidAlignment(expected) }
+    return getColumnCells(columnIndex, true).all { it.hasValidAlignment(expected, tableStyle) }
   }
 
-  fun buildSeparatorCellContent(alignment: CellAlignment, cellContentWidth: Int): String {
+  fun buildSeparatorCellContent(alignment: CellAlignment, cellContentWidth: Int, tableStyle: TableStyle): String {
+    if (tableStyle == TableStyle.COMPACT) {
+      return " ${buildCompactSeparatorCellContent(alignment)} "
+    }
+    if (tableStyle == TableStyle.TIGHT) {
+      return buildCompactSeparatorCellContent(alignment)
+    }
     return when (alignment) {
       CellAlignment.NONE -> "-".repeat(cellContentWidth)
       CellAlignment.LEFT -> ":${"-".repeat((cellContentWidth - 1).coerceAtLeast(1))}"
@@ -142,7 +182,21 @@ object TableModificationUtils {
     }
   }
 
-  fun buildRealignedCellContent(cellContent: String, wholeCellWidth: Int, alignment: CellAlignment): String {
+  private fun buildCompactSeparatorCellContent(alignment: CellAlignment): String {
+    return when (alignment) {
+      CellAlignment.NONE -> "---"
+      CellAlignment.LEFT -> ":---"
+      CellAlignment.RIGHT -> "---:"
+      CellAlignment.CENTER -> ":---:"
+    }
+  }
+
+  fun buildRealignedCellContent(cellContent: String, wholeCellWidth: Int, alignment: CellAlignment, tableStyle: TableStyle): String {
+    when (tableStyle) {
+      TableStyle.COMPACT -> return buildCompactCellContent(cellContent)
+      TableStyle.TIGHT -> return cellContent
+      TableStyle.ALIGNED -> Unit
+    }
     val contentDisplayWidth = TableCharacterWidthUtils.calculateDisplayWidth(cellContent)
     check(wholeCellWidth >= contentDisplayWidth)
     val paddingNeeded = wholeCellWidth - contentDisplayWidth
@@ -166,20 +220,55 @@ object TableModificationUtils {
     }
   }
 
+  private fun buildCompactCellContent(cellContent: String): String {
+    if (cellContent.isEmpty()) {
+      return " "
+    }
+    if (cellContent.all { it == TableProps.CARET_REPLACE_CHAR }) {
+      return " $cellContent"
+    }
+    return " $cellContent "
+  }
+
   fun MarkdownTableCell.getContentWithoutWhitespaces(document: Document): String {
     val range = textRange
     val content = document.charsSequence.substring(range.startOffset, range.endOffset)
     return content.trim(' ')
   }
 
-  fun MarkdownTableSeparatorRow.updateAlignment(document: Document, columnIndex: Int, alignment: CellAlignment) {
+  fun MarkdownTableSeparatorRow.updateAlignment(document: Document, columnIndex: Int, alignment: CellAlignment, tableStyle: TableStyle) {
     val cellRange = getCellRange(columnIndex)!!
     val width = cellRange.length
-    val replacement = buildSeparatorCellContent(alignment, width)
+    val replacement = buildSeparatorCellContent(alignment, width, tableStyle)
     document.replaceString(cellRange.startOffset, cellRange.endOffset, replacement)
   }
 
-  fun MarkdownTableCell.updateAlignment(document: Document, alignment: CellAlignment) {
+  fun MarkdownTable.updateSeparatorAfterCharacterDeletion(document: Document, columnIndex: Int, width: Int, tableStyle: TableStyle) {
+    val separatorRow = separatorRow ?: return
+    val separatorRange = separatorRow.getCellRange(columnIndex) ?: return
+    val minWidth = width.coerceAtLeast(1)
+    if (tableStyle != TableStyle.ALIGNED) {
+      document.replaceString(
+        separatorRange.startOffset,
+        separatorRange.endOffset,
+        buildSeparatorCellContent(separatorRow.getCellAlignment(columnIndex), minWidth, tableStyle),
+      )
+      return
+    }
+    if (separatorRange.length <= minWidth) {
+      return
+    }
+    val text = document.charsSequence
+    val endOffset = separatorRange.endOffset
+    val offset = when {
+      text[endOffset - 1] == '-' -> endOffset - 1
+      text[endOffset - 2] == '-' -> endOffset - 2
+      else -> return
+    }
+    document.deleteString(offset, offset + 1)
+  }
+
+  fun MarkdownTableCell.updateAlignment(document: Document, alignment: CellAlignment, tableStyle: TableStyle) {
     if (alignment == CellAlignment.NONE) {
       return
     }
@@ -187,27 +276,34 @@ object TableModificationUtils {
     val cellRange = textRange
     val cellText = documentText.substring(cellRange.startOffset, cellRange.endOffset)
     val actualContent = cellText.trim(' ')
-    val replacement = buildRealignedCellContent(actualContent, TableCharacterWidthUtils.calculateDisplayWidth(cellText), alignment)
+    val replacement = buildRealignedCellContent(
+      actualContent,
+      TableCharacterWidthUtils.calculateDisplayWidth(cellText),
+      alignment,
+      tableStyle
+    )
     document.replaceString(cellRange.startOffset, cellRange.endOffset, replacement)
   }
 
-  fun MarkdownTable.updateColumnAlignment(document: Document, columnIndex: Int, alignment: CellAlignment) {
+  fun MarkdownTable.updateColumnAlignment(document: Document, columnIndex: Int, alignment: CellAlignment, tableStyle: TableStyle) {
     modifyColumn(
       document,
-      columnIndex,
-      transformSeparator = { separatorRow?.updateAlignment(document, columnIndex, alignment) },
-      transformCell = { it.updateAlignment(document, alignment) }
+      columnIndex = columnIndex,
+      tableStyle = tableStyle,
+      transformSeparator = { separatorRow?.updateAlignment(document, columnIndex, alignment, tableStyle) },
+      transformCell = { it.updateAlignment(document, alignment, tableStyle) }
     )
   }
 
-  fun MarkdownTable.updateColumnAlignment(document: Document, columnIndex: Int) {
+  fun MarkdownTable.updateColumnAlignment(document: Document, columnIndex: Int, tableStyle: TableStyle) {
     val alignment = separatorRow?.getCellAlignment(columnIndex) ?: return
-    updateColumnAlignment(document, columnIndex, alignment)
+    updateColumnAlignment(document, columnIndex, alignment, tableStyle)
   }
 
   fun MarkdownTable.insertColumn(
     document: Document,
     columnIndex: Int,
+    tableStyle: TableStyle,
     after: Boolean = true,
     alignment: CellAlignment = CellAlignment.NONE,
     columnWidth: Int = 3
@@ -215,7 +311,11 @@ object TableModificationUtils {
     val cells = getColumnCells(columnIndex, withHeader = false)
     val headerCell = headerRow?.getCell(columnIndex)!!
     val separatorCell = separatorRow?.getCellRange(columnIndex)!!
-    val cellContent = " ".repeat(columnWidth)
+    val cellContent = when (tableStyle) {
+      TableStyle.ALIGNED -> " ".repeat(columnWidth)
+      TableStyle.COMPACT -> " "
+      TableStyle.TIGHT -> ""
+    }
     for (cell in cells.asReversed()) {
       when {
         after -> document.insertString(cell.endOffset + 1, "${cellContent}${TableProps.SEPARATOR_CHAR}")
@@ -223,8 +323,14 @@ object TableModificationUtils {
       }
     }
     when {
-      after -> document.insertString(separatorCell.endOffset + 1, "${buildSeparatorCellContent(alignment, columnWidth)}${TableProps.SEPARATOR_CHAR}")
-      else -> document.insertString(separatorCell.startOffset - 1, "${TableProps.SEPARATOR_CHAR}${buildSeparatorCellContent(alignment, columnWidth)}")
+      after -> document.insertString(
+        separatorCell.endOffset + 1,
+        "${buildSeparatorCellContent(alignment, columnWidth, tableStyle)}${TableProps.SEPARATOR_CHAR}"
+      )
+      else -> document.insertString(
+        separatorCell.startOffset - 1,
+        "${TableProps.SEPARATOR_CHAR}${buildSeparatorCellContent(alignment, columnWidth, tableStyle)}"
+      )
     }
     when {
       after -> document.insertString(headerCell.endOffset + 1, "${cellContent}${TableProps.SEPARATOR_CHAR}")

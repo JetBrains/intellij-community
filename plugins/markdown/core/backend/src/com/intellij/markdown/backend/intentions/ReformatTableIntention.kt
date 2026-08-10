@@ -9,6 +9,7 @@ import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.editor.tables.TableFormattingUtils
 import org.intellij.plugins.markdown.editor.tables.TableModificationUtils.isCorrectlyFormatted
 import org.intellij.plugins.markdown.editor.tables.TableUtils
+import org.intellij.plugins.markdown.editor.tables.TableUtils.getTableStyle
 
 internal class ReformatTableIntention: BaseElementAtCaretIntentionAction() {
   override fun getFamilyName(): String = text
@@ -22,11 +23,11 @@ internal class ReformatTableIntention: BaseElementAtCaretIntentionAction() {
     if (table == null) {
       return false
     }
-    return !table.isCorrectlyFormatted()
+    return !table.isCorrectlyFormatted(getTableStyle(table.containingFile))
   }
 
   override fun invoke(project: Project, editor: Editor, element: PsiElement) {
     val table = TableUtils.findTable(element)!!
-    TableFormattingUtils.reformatAllColumns(table, editor.document, trimToMaxContent = true)
+    TableFormattingUtils.reformatAllColumns(table, editor.document, getTableStyle(table.containingFile), trimToMaxContent = true)
   }
 }

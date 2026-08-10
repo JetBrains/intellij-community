@@ -60,6 +60,14 @@ internal class MarkdownCodeStyleSettingsProvider : LanguageCodeStyleSettingsProv
           MarkdownBundle.message("markdown.style.settings.format.tables"),
           MarkdownBundle.message("markdown.style.settings.group.when.reformatting")
         )
+        consumer.showCustomOption(
+          MarkdownCustomCodeStyleSettings::class.java,
+          MarkdownCustomCodeStyleSettings::TABLE_STYLE.name,
+          MarkdownBundle.message("markdown.style.settings.table.style"),
+          MarkdownBundle.message("markdown.style.settings.group.when.reformatting"),
+          TableStyle.entries.map { MarkdownBundle.message(it.messageKey) }.toTypedArray(),
+          TableStyle.entries.map { it.ordinal }.toIntArray()
+        )
       }
       SettingsType.BLANK_LINES_SETTINGS -> {
         consumer.showCustomOption(

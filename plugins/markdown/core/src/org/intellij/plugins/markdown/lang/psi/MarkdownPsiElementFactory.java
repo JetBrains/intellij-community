@@ -14,6 +14,7 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.plugins.markdown.lang.MarkdownLanguage;
+import org.intellij.plugins.markdown.lang.formatter.settings.TableStyle;
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence;
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile;
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownHeader;
@@ -200,9 +201,24 @@ public final class MarkdownPsiElementFactory {
     }
   }
 
+  /**
+   * @deprecated Use {@link #createTableEmptyRow(Project, Collection, TableStyle)} instead
+   */
   @ApiStatus.Experimental
+  @Deprecated(forRemoval = true)
   public static @NotNull MarkdownTableRow createTableEmptyRow(@NotNull Project project, @NotNull Collection<Integer> widths) {
-    final var contents = ContainerUtil.map(widths, width -> " ".repeat(width));
+    return createTableEmptyRow(project, widths, TableStyle.ALIGNED);
+  }
+
+  @ApiStatus.Experimental
+  public static @NotNull MarkdownTableRow createTableEmptyRow(@NotNull Project project,
+                                                              @NotNull Collection<Integer> widths,
+                                                              @NotNull TableStyle tableStyle) {
+    final var contents = ContainerUtil.map(widths, width -> switch (tableStyle) {
+      case ALIGNED -> " ".repeat(width);
+      case COMPACT -> " ";
+      case TIGHT -> "";
+    });
     return createTableRow(project, contents);
   }
 

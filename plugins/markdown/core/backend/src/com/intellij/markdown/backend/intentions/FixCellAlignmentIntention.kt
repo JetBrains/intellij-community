@@ -11,6 +11,7 @@ import org.intellij.plugins.markdown.editor.tables.TableModificationUtils.hasVal
 import org.intellij.plugins.markdown.editor.tables.TableModificationUtils.updateAlignment
 import org.intellij.plugins.markdown.editor.tables.TableUtils
 import org.intellij.plugins.markdown.editor.tables.TableUtils.getColumnAlignment
+import org.intellij.plugins.markdown.editor.tables.TableUtils.getTableStyle
 
 internal class FixCellAlignmentIntention: BaseElementAtCaretIntentionAction() {
   override fun getFamilyName(): String = text
@@ -24,12 +25,13 @@ internal class FixCellAlignmentIntention: BaseElementAtCaretIntentionAction() {
     if (cell == null || cell.parentTable == null) {
       return false
     }
-    return !cell.hasCorrectPadding() || !cell.hasValidAlignment()
+    val tableStyle = getTableStyle(cell.containingFile)
+    return !cell.hasCorrectPadding(tableStyle) || !cell.hasValidAlignment(tableStyle)
   }
 
   override fun invoke(project: Project, editor: Editor, element: PsiElement) {
     val cell = TableUtils.findCell(element) ?: return
     val expectedAlignment = cell.parentTable?.getColumnAlignment(cell.columnIndex) ?: return
-    cell.updateAlignment(editor.document, expectedAlignment)
+    cell.updateAlignment(editor.document, expectedAlignment, getTableStyle(cell.containingFile))
   }
 }

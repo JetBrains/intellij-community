@@ -1,9 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.editor.tables
 
-import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
-import org.intellij.plugins.markdown.settings.MarkdownCodeInsightSettings
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -14,10 +12,7 @@ import org.junit.runners.JUnit4
 class MarkdownTableColumnShrinkWithFullWidthTest: LightPlatformCodeInsightTestCase() {
   @Before
   fun enableTableReformatting() {
-    val settings = MarkdownCodeInsightSettings.getInstance()
-    val old = settings.state.reformatTablesOnType
-    settings.state.reformatTablesOnType = true
-    Disposer.register(testRootDisposable) { settings.state.reformatTablesOnType = old }
+    setupTableReformatting(testRootDisposable)
   }
 
   @Test
