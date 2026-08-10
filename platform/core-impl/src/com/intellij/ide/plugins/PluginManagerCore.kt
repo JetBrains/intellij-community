@@ -570,7 +570,6 @@ object PluginManagerCore {
         else it.value.maxWith { o1, o2 -> VersionComparatorUtil.compare(o1.version, o2.version) } // take the latest version among excluded disregarding compatibility
       }
     val allPlugins = resolvedPluginSet.candidateSet.plugins + mostRecentExcludedPlugins.values
-    val broadResolveContext = lazy { AmbiguousPluginSet.build(allPlugins) }
     for (plugin in resolvedPluginSet.candidateSet.plugins) {
       for (descriptor in plugin.sequenceAllDescriptors()) {
         if (!resolvedPluginSet.isResolved(descriptor)) {
@@ -579,7 +578,7 @@ object PluginManagerCore {
       }
       val exclusionReason = resolvedPluginSet.getExclusionReason(plugin)
       if (exclusionReason != null) {
-        adaptExclusionReasonAsNonLoadReason(exclusionReason, plugin, resolvedPluginSet, registerLoadingError, broadResolveContext)
+        adaptExclusionReasonAsNonLoadReason(exclusionReason, plugin, resolvedPluginSet, registerLoadingError, resolvedPluginSet.candidateSet)
       }
       else {
         // TODO do we want to somehow report conflicts for optional content modules? or message in the log is enough?
@@ -689,28 +688,18 @@ object PluginManagerCore {
     plugin: PluginMainDescriptor,
     resolvedPluginSet: ResolvedPluginSet,
     registerLoadingError: (PluginNonLoadReason) -> Unit,
-    broadResolveContext: Lazy<AmbiguousPluginSet>,
+    candidateSet: UnambiguousPluginSet,
   ) {
     val shouldNotifyUser = !plugin.isImplementationDetail && !pluginRequiresUltimatePluginButItsDisabled(
       initContext = resolvedPluginSet.initContext,
-      ambiguousPluginSet = broadResolveContext.value,
+      ambiguousPluginSet = candidateSet.asAmbiguousPluginSet(),
       plugin
     )
 
     fun processRootCause(exclusionReason: DescriptorExclusionReason) {
       when (exclusionReason) {
         is DependencyIsNotResolved -> {
-          // TODO maybe leave disabled plugins in the [originalPluginSet] so we don't have to do this here
-          val dependency = exclusionReason.dependency
-          val possibleDependencies = broadResolveContext.value.resolveReference(dependency)
-          val initContext = resolvedPluginSet.initContext
-          val disabledPlugin = possibleDependencies.firstOrNull { initContext.isPluginDisabled(it.pluginId) }
-          if (disabledPlugin != null) {
-            registerLoadingError(PluginDependencyIsDisabled(plugin, disabledPlugin.pluginId, shouldNotifyUser))
-          }
-          else {
-            registerLoadingError(PluginDependencyIsNotInstalled(plugin, exclusionReason.dependency.getIdString(), shouldNotifyUser))
-          }
+          registerLoadingError(PluginDependencyIsNotInstalled(plugin, exclusionReason.dependency.getIdString(), shouldNotifyUser))
         }
         is DependencyIsNotVisible -> {
           // TODO bad mapping
