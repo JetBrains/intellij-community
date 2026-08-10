@@ -624,7 +624,8 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
       if (duration.inWholeMilliseconds > 50 && EDT.isCurrentThreadEdt()) {
         val listenerSource = (listener as? ExtensionPointListenerOrigin)?.getOriginObject() ?: listener
         val pluginId = (listenerSource::class.java.classLoader as? PluginAwareClassLoader)?.pluginId?.toString()
-        val msg = "(EDT) ExtensionPoint listener `${listenerSource::class.java}` notification took too long: $duration ${adapter?.let {"for $it"}?:""}" +
+        val msg = "(EDT) ExtensionPoint listener `${listenerSource::class.java}` notification took too long: $duration" +
+                  (adapter?.let {" for extension '$it'"} ?: "") +
                   (pluginId?.let { " (plugin: $it)" } ?: "")
         if (duration.inWholeMilliseconds > 500) {
           LOG.error(msg)
