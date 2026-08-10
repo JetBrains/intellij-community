@@ -526,7 +526,7 @@ object PluginManagerCore {
     }
 
     val resolvedPluginSet = initContext.resolveConstraints(candidateSubset)
-    PluginInitializationDiagnosticUtils.logExclusionTree(logger, resolvedPluginSet, incompletePlugins)
+    PluginInitializationDiagnosticUtils.logExclusionTree(logger, resolvedPluginSet)
     val (pluginSet, cycleErrors) = adaptResolvedPluginSetAsOldPluginSet(
       input = PluginSubsystemInput(initContext, discoveredPlugins),
       resolvedPluginSet = resolvedPluginSet,

@@ -189,7 +189,7 @@ object PluginAutoUpdater {
       }
       if (pluginSet.isExcluded(plugin)) {
         rejectedUpdates[id] = "plugin ${updateDesc.shortLogDescription} would not load after the update:\n" +
-          PluginInitializationDiagnosticUtils.buildSingleExclusionChainMessage(pluginSet, emptyMap(), plugin)
+          PluginInitializationDiagnosticUtils.buildSingleExclusionChainMessage(pluginSet, plugin)
         continue
       }
       updatesToApply.add(id)

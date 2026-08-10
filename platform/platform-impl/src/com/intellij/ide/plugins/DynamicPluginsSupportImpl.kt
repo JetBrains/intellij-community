@@ -78,11 +78,7 @@ internal class DynamicPluginsSupportImpl(
       withContext(Dispatchers.Default) {
         if (LOG.isDebugEnabled) {
           LOG.debug("validating dynamic reconfiguration to $targetState (disabled plugins may appear as unresolved)")
-          PluginInitializationDiagnosticUtils.logExclusionTree(
-            LOG,
-            targetState.resolvedPluginSet,
-            emptyMap() // FIXME IJPL-246161 may cause "id is not resolved" messages instead of "is marked disabled"
-          )
+          PluginInitializationDiagnosticUtils.logExclusionTree(LOG, targetState.resolvedPluginSet)
         }
         reportSequentialProgress { reporter ->
           val target = targetState.resolvedPluginSet
@@ -103,11 +99,7 @@ internal class DynamicPluginsSupportImpl(
           val current = getCurrentlyLoadedPluginSet()
           val target = targetState.resolvedPluginSet
           LOG.info("performing dynamic reconfiguration to $targetState (disabled plugins may appear as unresolved)")
-          PluginInitializationDiagnosticUtils.logExclusionTree(
-            LOG,
-            target,
-            emptyMap() // FIXME IJPL-246161 may cause "id is not resolved" messages instead of "is marked disabled"
-          )
+          PluginInitializationDiagnosticUtils.logExclusionTree(LOG, target)
           val sequence = buildTransitionSequence(current, target).also {
             LOG.info(it.getExplanationLogMessage())
           }

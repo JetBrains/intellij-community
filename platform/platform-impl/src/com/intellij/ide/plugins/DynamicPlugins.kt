@@ -130,8 +130,8 @@ object DynamicPlugins {
         return@validator "plugin $id was expected to be loaded but is not found in the target plugin state"
       }
       if (state.isExcluded(plugin)) {
-        return@validator "${plugin.shortLogDescription} was expected to be loaded but was excluded (disabled plugins may appear as unresolved):\n" + // FIXME IJPL-246161
-                         "${PluginInitializationDiagnosticUtils.buildSingleExclusionChainMessage(state, emptyMap(), plugin)}"
+        return@validator "${plugin.shortLogDescription} was expected to be loaded but was excluded:\n" +
+                         "${PluginInitializationDiagnosticUtils.buildSingleExclusionChainMessage(state, plugin)}"
       }
     }
     for (id in expectNotToLoad) {
