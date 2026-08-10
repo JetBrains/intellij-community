@@ -37,9 +37,6 @@ class PluginSet internal constructor(
    */
   val excludedFromCandidateSubset: Map<PluginMainDescriptor, DescriptorExclusionReason>,
 ) {
-  /**
-   * You must not use this method before [ClassLoaderConfigurator.configure].
-   */
   fun getEnabledModules(): List<PluginModuleDescriptor> = enabledModules
 
   internal fun getSortedDependencies(moduleDescriptor: IdeaPluginDescriptorImpl): List<PluginModuleDescriptor> {
