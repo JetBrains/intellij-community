@@ -15,7 +15,6 @@ class PluginSubsystemInput(
 
 @ApiStatus.Internal
 class PluginSet internal constructor(
-  val resolvedPluginSet: ResolvedPluginSet,
   val input: PluginSubsystemInput,
   /**
    * Contains plugins that were filtered out early and are not part of the [candidate subset][ResolvedPluginSet.candidateSet].
@@ -23,6 +22,7 @@ class PluginSet internal constructor(
    * other exclusions too.
    */
   val excludedFromCandidateSubset: Map<PluginMainDescriptor, DescriptorExclusionReason>,
+  val resolvedPluginSet: ResolvedPluginSet,
 ) {
   /**
    * Historically, this property only contained one version of each plugin id that is available, while there can be multiple.

@@ -582,9 +582,9 @@ object PluginManagerCore {
       }
     }
     val pluginSet = PluginSet(
-      resolvedPluginSet = resolvedPluginSet,
       input = input,
       excludedFromCandidateSubset = excludedFromCandidateSubset,
+      resolvedPluginSet = resolvedPluginSet,
     )
     return pluginSet to cycleErrors
   }
