@@ -1,4 +1,4 @@
-load("@rules_kotlin//kotlin/internal:opts.bzl", _kt_javac_options = "kt_javac_options")
+load("@rules_kotlin//kotlin:jvm.bzl", _kt_javac_options = "kt_javac_options")
 load("//:rules/impl/kotlinc-options.bzl", _kt_kotlinc_options = "kt_kotlinc_options")
 load(
     "//:rules/impl/transitions.bzl",

@@ -59,13 +59,24 @@ common:windows --disk_cache=~/AppData/Local/Temp/JetBrains/monorepo-bazel-cache
 ### The option was removed due to https://github.com/bazelbuild/bazel/issues/26361
 ### One experimental option less and also it looks like it won't enabled by default in the future
 
-common --@rules_jvm//:default-javac-opts=@community//:default-javac-opts
 common --@rules_jvm//:default-kotlinc-opts=@community//:k25
+
+# The rules_jvm worker runs javac with its default compile policy. The default javac options of rules_java pass
+# -XDcompilePolicy=simple, and javac takes the last -XD value. The bta compile therefore restores the default, so
+# both backends write the same line tables for a synthesized constructor.
+common:bta --javacopt=-XDcompilePolicy=bytodo
 
 # rules_jvm / rules_kotlin compilation backend switch (see rules_jvm backend_config.bzl). Default = JPS / rules_jvm.
 # Use --config=bta to compile with the rules_kotlin (BTA) backend instead.
 common:jps --repo_env=IJ_JVM_USE_RULES_KOTLIN_BACKEND=0
-common:bta --repo_env=IJ_JVM_USE_RULES_KOTLIN_BACKEND=1 --extra_toolchains=@rules_jvm//:kotlin_toolchain
+common:bta --repo_env=IJ_JVM_USE_RULES_KOTLIN_BACKEND=1
+
+# Every target that compiles through the rules_kotlin rules uses the rules_jvm toolchain (the
+# Build Tools API with the embeddable compiler), which MODULE.bazel registers. A standalone module
+# such as @jps_to_bazel takes the compiler plugin that matches this toolchain's compiler through its
+# flag below; the plugin it bundles for its own default toolchain (the rules_kotlin CLI distribution)
+# does not match this compiler.
+common --@jps_to_bazel//:serialization_plugin=@lib//:kotlin-serialization-plugin
 
 # kup — Kotlin User Project (KQA-3473): render the internal diagnostic names and report all warnings even when errors are found.
 common:kup --@community//build/kotlinc-opts-override:x_render_internal_diagnostic_names=true
@@ -241,6 +252,9 @@ common --experimental_propagate_custom_flag=@rules_kotlin//kotlin/settings:jvm_e
 common --experimental_propagate_custom_flag=@rules_kotlin//kotlin/settings:experimental_prune_transitive_deps
 common --experimental_propagate_custom_flag=@rules_jvm//:default-javac-opts
 common --experimental_propagate_custom_flag=@rules_jvm//:default-kotlinc-opts
+# The exported compiler plugins of a library resolve in the exec configuration, so the plugin flag of
+# @jps_to_bazel needs the propagation.
+common --experimental_propagate_custom_flag=@jps_to_bazel//:serialization_plugin
 common --experimental_propagate_custom_flag=@rules_python//python/config_settings:bootstrap_impl
 common --experimental_propagate_custom_flag=@rules_go//go/config:pure
 

@@ -4,7 +4,7 @@ module(
 )
 
 bazel_dep(name = "bazel_skylib", version = "1.9.0")
-bazel_dep(name = "bazel_worker_api", version = "0.0.10")
+bazel_dep(name = "bazel_worker_api", version = "0.0.11")
 bazel_dep(name = "platforms", version = "1.1.0")
 bazel_dep(name = "llvm", version = "0.8.25")
 bazel_dep(name = "rules_apple", version = "4.3.3")  # added explicitly to fix `No 'swiftc' executable found in $PATH` error
@@ -21,6 +21,22 @@ single_version_override(
     version = "6.10",
 )
 
+# The Maven install of bazel_worker_java, pinned here: rules_jvm_external takes the lock_file a module
+# declares for a dependency's install (the root module's wins), so the module stays unpatched. An
+# unpinned install does not load on Windows (its generated BUILD file names the jars by absolute path),
+# and this build downloads every Maven artifact from a lock file. The test workspace of jvm-inc-builder-tests
+# takes this pin from the rules_jvm archive, which carries the lock file; the monorepo and community roots,
+# whose graphs also hold the jps_to_bazel copy, declare the pin themselves. Regenerate on Linux or macOS with
+# `bazel run @@rules_jvm_external++maven+unpinned_bazel_worker_maven//:pin`.
+maven = use_extension("@rules_jvm_external//:extensions.bzl", "maven")
+maven.install(
+    name = "bazel_worker_maven",
+    fail_if_repin_required = True,
+    known_contributing_modules = ["bazel_worker_java"],
+    lock_file = "//:bazel_worker_maven_install.json",
+    use_credentials_from_home_netrc_file = True,
+)
+
 single_version_override(
     module_name = "rules_android",
     patches = [
@@ -29,20 +45,12 @@ single_version_override(
     version = "0.7.1",
 )
 
-single_version_override(
-    module_name = "bazel_worker_java",
-    patches = [
-        "worker-java-0.0.9-pin-bazel-worker-maven.patch",
-    ],
-    version = "0.0.10",
-)
-
 bazel_dep(name = "rules_kotlin", version = "2.2.2")
 archive_override(
     module_name = "rules_kotlin",
-    sha256 = "f9e4ad312589048535bf9bdbbc9b0c8df22727d3d2b0bd224f9aba10f3069230",
-    strip_prefix = "rules_kotlin-f67028ddfa868b004432036d712bc8a79c9a1f30",
-    url = "https://github.com/JetBrains/rules_kotlin/archive/f67028ddfa868b004432036d712bc8a79c9a1f30.zip",
+    sha256 = "13d7877c30ef8b33306c5ca94623d8ab2e8f2f10ab2dc2cf85e54e67bbc845a8",
+    strip_prefix = "rules_kotlin-b67b5261efc935f15b7bc3f4206930c836863d19",
+    url = "https://github.com/JetBrains/rules_kotlin/archive/b67b5261efc935f15b7bc3f4206930c836863d19.zip",
 )
 
 bazel_dep(name = "rules_pkg", version = "1.2.0")
@@ -80,7 +88,6 @@ single_version_override(
     patch_strip = 1,
     patches = [
         "protobuf-33.4-reuse-win64-for-arm.patch",
-        "protobuf-33.4-fail-on-java-core-source-build.patch",
     ],
     version = protobuf_version,
 )
@@ -154,7 +161,8 @@ osx.from_archive(
 # toolchain, or they compile `@protobuf//java/core` from source.
 register_toolchains("//:protoc_java_toolchain_toolchain")
 
-register_toolchains("//:kotlin_multiplex_toolchain")
+# The Kotlin toolchain of this workspace.
+register_toolchains("//:kotlin_toolchain")
 
 http_file(
     name = "protobuf-java_http",
@@ -308,6 +316,13 @@ http_file(
     downloaded_file_path = "kotlin-tooling-core-%s.jar" % _KOTLIN_VERSION,
     sha256 = "4dc5ec54a924c0d66d6f918e67aa28a569275a64cdfdaab11061c9eb9bb16b67",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-tooling-core/%s/kotlin-tooling-core-%s.jar" % (_KOTLIN_VERSION, _KOTLIN_VERSION),
+)
+
+http_file(
+    name = "kotlin-annotation-processing-embeddable_http",
+    downloaded_file_path = "kotlin-annotation-processing-embeddable-%s.jar" % _KOTLIN_VERSION,
+    sha256 = "58d6961bddcddd7c201b8dc0b78ae49add83199204be18425646392b2139182c",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-annotation-processing-embeddable/%s/kotlin-annotation-processing-embeddable-%s.jar" % (_KOTLIN_VERSION, _KOTLIN_VERSION),
 )
 
 http_file(
@@ -772,6 +787,7 @@ WASMJS_TEST_HARNESS_JARS = {
     "kotlinx-io-core-jvm": ("org/jetbrains/kotlinx/kotlinx-io-core-jvm/0.8.0/kotlinx-io-core-jvm-0.8.0.jar", "610770cc855edf1c57d9fcd7c69fd040af57adaf8834505f91805de680783d13"),
     "kotlinx-io-bytestring-jvm": ("org/jetbrains/kotlinx/kotlinx-io-bytestring-jvm/0.8.0/kotlinx-io-bytestring-jvm-0.8.0.jar", "3da805e9da2ff3cb119f744dcd11de6a18e32a5b933518f17418ba5795cfa775"),
     # Serialization family aligned to 1.10.0 (chrome-devtools-kotlin's pin; ktor declares 1.9.0).
+    # The Build Tools API runtime of BUILD.bazel takes the core and json jvm jars as well.
     "kotlinx-serialization-core-jvm": ("org/jetbrains/kotlinx/kotlinx-serialization-core-jvm/1.10.0/kotlinx-serialization-core-jvm-1.10.0.jar", "14d6f27ce28f61ebc4a516d562f911b7bc01cfbe5397fb884c45ea0db044c635"),
     "kotlinx-serialization-json-jvm": ("org/jetbrains/kotlinx/kotlinx-serialization-json-jvm/1.10.0/kotlinx-serialization-json-jvm-1.10.0.jar", "af1e3e1e8ee3176468e1ec729df853b2066071de94a84c412ad9fa135cb37f3a"),
     "kotlinx-serialization-json-io-jvm": ("org/jetbrains/kotlinx/kotlinx-serialization-json-io-jvm/1.10.0/kotlinx-serialization-json-io-jvm-1.10.0.jar", "6fc1a9f0e2bbc2d48c6602ce5ad2d83ef6ed6cf3a349c90f5691e824cf0b4821"),

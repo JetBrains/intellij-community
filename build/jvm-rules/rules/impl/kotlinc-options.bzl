@@ -112,11 +112,28 @@ def _merge_dicts(left, right):
     result.update(right)
     return result
 
+# rules_kotlin (bta-incremental, based on upstream master) spells two kt_kotlinc_options attrs
+# differently from the fork this repo was originally written against. Callers (including the
+# generated community/build/compiler-options.bzl) keep the original spellings; translate here.
+_RENAMED_RK_OPTIONS = {
+    "opt_in": "x_optin",
+    "x_explicit_api": "x_explicit_api_mode",
+}
+
+def _to_rk_option(option_name, value):
+    renamed = _RENAMED_RK_OPTIONS.get(option_name, option_name)
+    if renamed == "x_explicit_api_mode" and value == "disable":
+        # Upstream spells "no enforcement" as "off" (renders no flag), which matches what the
+        # fork's "disable" produced.
+        value = "off"
+    return renamed, value
+
 def kt_kotlinc_options(name, **kwargs):
     """Define Kotlin compiler options with standard rules_kotlin providers.
 
     Standard options are delegated to rules_kotlin's kt_kotlinc_options.
-    rules_jvm-specific options are carried via KotlincExtraOptionsInfo.
+    rules_jvm-specific options are carried via KotlincExtraOptionsInfo, which by design only the
+    JPS backend reads; their delivery on the rules_kotlin (BTA) backend is handled separately.
     """
     rule_attrs = _extract_rule_attrs(kwargs)
 
@@ -126,7 +143,8 @@ def kt_kotlinc_options(name, **kwargs):
         if option_name in _EXTRA_OPTION_FIELDS:
             extra_kwargs[option_name] = value
         else:
-            rk_kwargs[option_name] = value
+            rk_option_name, rk_value = _to_rk_option(option_name, value)
+            rk_kwargs[rk_option_name] = rk_value
 
     rk_options_name = name + "_rules_kotlin_options"
 
@@ -227,9 +245,22 @@ def _kotlinc_worker_option_value(name, kotlinc_options, kotlinc_extra_options):
     if not kotlinc_options:
         return None
 
-    if not hasattr(kotlinc_options, name):
+    # The worker flag names predate the rules_kotlin attr renames; read the renamed provider
+    # fields while keeping the worker wire format unchanged.
+    field = _RENAMED_RK_OPTIONS.get(name, name)
+    if not hasattr(kotlinc_options, field):
         return None
-    return getattr(kotlinc_options, name, None)
+    value = getattr(kotlinc_options, field, None)
+    if name == "x_explicit_api" and value == "off":
+        # "off" is the attr's no-enforcement default; the worker's default is the same, so emit
+        # nothing (the previous pin's attr used "" for this case).
+        return None
+    if name == "jvm_default" and value == "off":
+        # "off" is the attr's render-no-flag default (value_to_flag maps it to None); the stable
+        # -jvm-default flag rejects "off" as a mode, so emit nothing (the previous pin's attr
+        # used "" for this case).
+        return None
+    return value
 
 def kotlinc_options_to_args(kotlinc_options, args, kotlinc_extra_options = None):
     """Translate Kotlinc options to worker flags.

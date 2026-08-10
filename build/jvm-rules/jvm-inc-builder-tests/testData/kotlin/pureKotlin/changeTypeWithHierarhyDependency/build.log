@@ -1,6 +1,5 @@
 ================ Step #1 =================
 Cleaning output files:
-  Foo$DefaultImpls.class
   Foo.class
   FooImpl.class
   META-INF/kotlin_pureKotlin_changeTypeWithHierarhyDependency-a.kotlin_module

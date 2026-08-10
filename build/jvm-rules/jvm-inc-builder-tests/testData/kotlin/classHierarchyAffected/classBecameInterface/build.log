@@ -32,7 +32,6 @@ Exit code: ERROR
 ================ Step #2 =================
 Cleaning output files:
   META-INF/kotlin_classHierarchyAffected_classBecameInterface-a.kotlin_module
-  foo/A$DefaultImpls.class
   foo/A.class
 End of files
 Compiling files:

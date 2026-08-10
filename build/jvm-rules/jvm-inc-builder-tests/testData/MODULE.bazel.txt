@@ -21,15 +21,22 @@ single_version_override(
 bazel_dep(name = "rules_kotlin", version = "2.2.2")
 archive_override(
     module_name = "rules_kotlin",
-    sha256 = "f9e4ad312589048535bf9bdbbc9b0c8df22727d3d2b0bd224f9aba10f3069230",
-    strip_prefix = "rules_kotlin-f67028ddfa868b004432036d712bc8a79c9a1f30",
-    url = "https://github.com/JetBrains/rules_kotlin/archive/f67028ddfa868b004432036d712bc8a79c9a1f30.zip",
+    sha256 = "13d7877c30ef8b33306c5ca94623d8ab2e8f2f10ab2dc2cf85e54e67bbc845a8",
+    strip_prefix = "rules_kotlin-b67b5261efc935f15b7bc3f4206930c836863d19",
+    url = "https://github.com/JetBrains/rules_kotlin/archive/b67b5261efc935f15b7bc3f4206930c836863d19.zip",
 )
 
 # the module is supposed to always be overridden with the local version
 bazel_dep(name = "rules_jvm", version = "")
 
-register_toolchains("@rules_jvm//:kotlin_multiplex_toolchain")
+# Root registration outranks the dependency order, so the prebuilt protobuf-java
+# toolchain always wins over the source toolchain of @protobuf.
+# Do not remove: without it @protobuf//java/core compiles from source.
+register_toolchains("@rules_jvm//:protoc_java_toolchain_toolchain")
+
+# The Kotlin toolchain of every target, the Build Tools API toolchain of rules_jvm. A root registration
+# outranks the default toolchain of rules_kotlin.
+register_toolchains("@rules_jvm//:kotlin_toolchain")
 
 archive_override(
     module_name = "rules_jvm",
@@ -57,14 +64,6 @@ single_version_override(
         "rules-android-0.7.1-pin-maven-installs.patch",
     ],
     version = "0.7.1",
-)
-
-single_version_override(
-    module_name = "bazel_worker_java",
-    patches = [
-        "worker-java-0.0.9-pin-bazel-worker-maven.patch",
-    ],
-    version = "0.0.10",
 )
 
 # hermetic_cc_toolchain (zig) is used in rules_jvm but marked as dev_dependency there.

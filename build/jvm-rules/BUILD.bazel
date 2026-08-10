@@ -1,7 +1,7 @@
 load("@bazel_skylib//rules:common_settings.bzl", "bool_flag")
 load("@protobuf//bazel/toolchains:proto_lang_toolchain.bzl", "proto_lang_toolchain")
 load("@rules_java//java:defs.bzl", "java_import", "java_library")
-load("@rules_kotlin//kotlin:core.bzl", "define_kt_toolchain")
+load("@rules_kotlin//kotlin:core.bzl", "define_kt_toolchain", "kt_btapi_runtime")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_import")
 load("@rules_pkg//pkg:mappings.bzl", "pkg_filegroup", "pkg_files", "strip_prefix")
 load("@rules_pkg//pkg:pkg.bzl", "pkg_zip")
@@ -30,10 +30,16 @@ proto_lang_toolchain(
 
 kt_kotlinc_options(
     name = "rules_jvm_bootstrap_kotlinc_options",
+    api_version = "2.5",
     include_stdlibs = "none",
     jvm_target = "25",
+    # The language level of the tool targets of rules_jvm: 2.5, the level of the monorepo modules. The
+    # toolchain rule defaults to 2.4.
+    language_version = "2.5",
     visibility = ["//visibility:public"],
     x_jdk_release = "25",
+    # The pinned rules_kotlin emits -Xlambdas=class by default; the monorepo modules compile with indy.
+    x_lambdas = "indy",
 )
 
 # Controls IC for the custom rules_jvm Kotlin toolchain.
@@ -54,24 +60,57 @@ bool_flag(
 #   removePrivateClasses=true                    -> experimental_remove_private_classes_in_abi_jars
 #   removeDebugInfo=false                        -> experimental_remove_debug_info_in_abi_jars (default False)
 #   treatInternalAsPrivate (not set)             -> experimental_treat_internal_as_private_in_abi_jars (default False)
-#   removeDataClassCopyIfConstructorIsPrivate=true,
-#   preserveDeclarationOrder=true                -> hard-coded in BtapiCompiler.buildAbiGenPlugin
-#                                                   (upstream rules_kotlin doesn't expose these via
-#                                                   toolchain attrs).
+#   removeDataClassCopyIfConstructorIsPrivate=true -> experimental_remove_data_class_copy_if_constructor_is_private
+#   preserveDeclarationOrder=true                -> experimental_preserve_declaration_order
+# The Build Tools API compilation runtime of the toolchain below: the _KOTLIN_VERSION artifacts,
+# every one in the embeddable dialect. It sets every artifact, so nothing is inherited from the
+# rules_kotlin default runtime of the bundled Kotlin release.
+kt_btapi_runtime(
+    name = "kotlin_btapi_runtime",
+    build_tools_impl = [":kotlin-build-tools-impl_import"],
+    compiler = [":kotlin-compiler-embeddable_import"],
+    # jdeps-gen comes from the rules_kotlin repository: its embeddable variant.
+    jdeps_gen = ["@rules_kotlin//src/main/kotlin:jdeps-gen-embeddable"],
+    jvm_abi_gen = [":jvm-abi-gen-embeddable_import"],
+    # The kapt plugin of the release of the compiler: the runtime loads them together.
+    kapt = [":kotlin-annotation-processing-embeddable_import"],
+    # The libraries the implementation and the compiler need. The kotlinx-serialization runtime
+    # the Build Tools implementation needs is listed explicitly.
+    libraries = [
+        ":kotlin-daemon-client_import",
+        ":kotlin-stdlib_import",
+        ":kotlin-reflect_import",
+        ":kotlinx-coroutines-core_import",
+        ":annotations_import",
+        ":kotlin-tooling-core_import",
+        "@kotlinx-serialization-core-jvm_http//file",
+        "@kotlinx-serialization-json-jvm_http//file",
+    ],
+)
+
+# The Kotlin toolchain of every target that compiles through the rules_kotlin rules. Each MODULE.bazel registers it;
+# a root registration outranks the default toolchain of rules_kotlin, the compiler distribution with the legacy
+# invocation.
 define_kt_toolchain(
     name = "kotlin_toolchain",
-    api_version = "2.3",
-    btapi_annotations = ":annotations_import",
-    btapi_build_tools_impl = ":kotlin-build-tools-impl_import",
-    btapi_kotlin_compiler_embeddable = ":kotlin-compiler-embeddable_import",
-    btapi_kotlin_coroutines = ":kotlinx-coroutines-core_import",
-    btapi_kotlin_daemon_client = ":kotlin-daemon-client_import",
-    btapi_kotlin_reflect = ":kotlin-reflect_import",
-    btapi_kotlin_stdlib = ":kotlin-stdlib_import",
-    btapi_kotlin_tooling_core = ":kotlin-tooling-core_import",
+    # The language and api version of a target whose kotlinc options set none: the highest value the toolchain
+    # rule accepts. The modules and the generated defaults set 2.5 in their options, which override these
+    # attributes.
+    api_version = "2.4",
+    # The runtime enables the Build Tools API compilation; the legacy invocation stays available
+    # upstream but this toolchain never uses it.
+    btapi_runtime = ":kotlin_btapi_runtime",
     # Run the BTA Kotlin worker in multiplex mode (concurrency-safe), on par with the JPS JvmCompile path.
     experimental_multiplex_workers = True,
+    experimental_preserve_declaration_order = True,
+    experimental_remove_data_class_copy_if_constructor_is_private = True,
     experimental_remove_private_classes_in_abi_jars = True,
+    # Generate ABI jars with jvm-abi-gen. Without this switch the options above are inert and
+    # the .abi.jar is a fold of the full class jar.
+    experimental_use_abi_jars = True,
+    # The javac options of a target that sets none: the default-javac-opts flag, the fallback the rules_jvm rules
+    # take too.
+    javac_options = ":default-javac-opts",
     jvm_runtime = [
         ":kotlin-stdlib_import",
     ],
@@ -83,24 +122,10 @@ define_kt_toolchain(
         ":annotations_import",
         ":kotlin-stdlib_import",
     ],
-    language_version = "2.3",
-)
-
-# Default Kotlin toolchain: `@rules_kotlin//kotlin/internal:default_toolchain` plus multiplex mode, so one worker
-# process serves every `KotlinCompile` action. Each `MODULE.bazel` registers it, and a root-module registration wins
-# over the one from `rules_kotlin`. `--extra_toolchains` overrides it.
-#
-# BAZEL-3397 Also, it sets proper version of annotations library (instead of default one v23) so it properly resolves when monorepo is opened with Bazel plugin
-define_kt_toolchain(
-    name = "kotlin_multiplex_toolchain",
-    experimental_multiplex_workers = True,
-    jvm_runtime = [
-        ":kotlin-stdlib_import",
-    ],
-    jvm_stdlibs = [
-        ":annotations_import",
-        ":kotlin-stdlib_import",
-    ],
+    # The kotlinc options of a target that sets none: the default-kotlinc-opts flag, the fallback the rules_jvm
+    # rules take too. A root build points the flag to the generated module defaults (community/common.bazelrc).
+    kotlinc_options = ":default-kotlinc-opts",
+    language_version = "2.4",
 )
 
 # --@rules_jvm//:trace
@@ -275,6 +300,12 @@ jvm_import(
 jvm_import(
     name = "kotlin-tooling-core_import",
     jar = "@kotlin-tooling-core_http//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "kotlin-annotation-processing-embeddable_import",
+    jar = "@kotlin-annotation-processing-embeddable_http//file",
     visibility = ["//visibility:public"],
 )
 
@@ -521,15 +552,36 @@ jvm_import(
     jar = "@junit-junit-4_13_2_http//file",
 )
 
+# The javac options of every target that sets none, in every workspace: the default of the default-javac-opts
+# flag, which no root redirects. The JPS backend never runs ErrorProne, so disable it here for behavior parity:
+# the golden behavior is "whatever compiles under --config=jps compiles under --config=bta". No `warn` here:
+# rules_kotlin derives the javac warning mode from the effective Kotlin `warn` option when the javac options set
+# none, matching the JPS worker's single WARN flag driving both compilers.
 kt_javac_options(
     name = "default-javac-opts-value",
+    no_proc = True,
     visibility = ["//visibility:public"],
+    x_ep_disable_all_checks = True,
 )
 
+# The default of the default-kotlinc-opts flag: the kotlinc options of every target that sets none, in a build
+# without the flag, the standalone workspace and the test workspaces. They are the defaults of the generated
+# modules (create_kotlinc_options in community/build/compiler-options.bzl), which a root build selects through
+# the flag (community/common.bazelrc). The language and api version are not set here: a target without options
+# takes them from the toolchain attributes.
 kt_kotlinc_options(
     name = "default-kotlinc-opts-value",
+    jvm_default = "no-compatibility",
+    jvm_target = "25",
+    progressive = True,
     visibility = ["//visibility:public"],
-    x_lambdas = "class",
+    warn = "off",
+    x_lambdas = "indy",
+    x_sam_conversions = "indy",
+    x_xlanguage = [
+        "+AllowEagerSupertypeAccessibilityChecks",
+        "-WrapContinuationForTailCallFunctions",
+    ],
 )
 
 label_flag(
@@ -594,6 +646,7 @@ pkg_zip(
         "*.bazel",
         "*.bazel.lock",
         "*.patch",
+        "*_install.json",
     ]) + [
         ":rules_to_zip",
         "//dependency-graph:files_to_zip",

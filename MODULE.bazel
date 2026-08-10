@@ -6,9 +6,9 @@ bazel_dep(name = "platforms", version = "1.1.0")
 bazel_dep(name = "rules_kotlin", version = "2.2.2")
 archive_override(
     module_name = "rules_kotlin",
-    sha256 = "f9e4ad312589048535bf9bdbbc9b0c8df22727d3d2b0bd224f9aba10f3069230",
-    strip_prefix = "rules_kotlin-f67028ddfa868b004432036d712bc8a79c9a1f30",
-    url = "https://github.com/JetBrains/rules_kotlin/archive/f67028ddfa868b004432036d712bc8a79c9a1f30.zip",
+    sha256 = "13d7877c30ef8b33306c5ca94623d8ab2e8f2f10ab2dc2cf85e54e67bbc845a8",
+    strip_prefix = "rules_kotlin-b67b5261efc935f15b7bc3f4206930c836863d19",
+    url = "https://github.com/JetBrains/rules_kotlin/archive/b67b5261efc935f15b7bc3f4206930c836863d19.zip",
 )
 
 bazel_dep(name = "rules_java", version = "9.6.1")
@@ -21,7 +21,6 @@ single_version_override(
     patch_strip = 1,
     patches = [
         "//:build/jvm-rules/protobuf-33.4-reuse-win64-for-arm.patch",
-        "//:build/jvm-rules/protobuf-33.4-fail-on-java-core-source-build.patch",
     ],
     version = "33.4",
 )
@@ -31,7 +30,9 @@ single_version_override(
 # Do not remove: without it @protobuf//java/core compiles from source.
 register_toolchains("@rules_jvm//:protoc_java_toolchain_toolchain")
 
-register_toolchains("@rules_jvm//:kotlin_multiplex_toolchain")
+# The Kotlin toolchain of every target, the Build Tools API toolchain of rules_jvm. A root registration
+# outranks the default toolchain of rules_kotlin.
+register_toolchains("@rules_jvm//:kotlin_toolchain")
 
 bazel_dep(name = "buildifier_prebuilt", version = "10.1.0")
 single_version_override(
@@ -44,6 +45,7 @@ single_version_override(
     ],
 )
 
+bazel_dep(name = "rules_jvm_external", version = "6.10")
 single_version_override(
     module_name = "rules_jvm_external",
     patches = [
@@ -55,20 +57,26 @@ single_version_override(
     version = "6.10",
 )
 
+# The Maven install of bazel_worker_java, pinned from this root module: its graph holds two modules that pin
+# the install, rules_jvm and jps_to_bazel, and rules_jvm_external accepts one lock file per install, the
+# root module's first. An unpinned install does not load on Windows (its generated BUILD file names the
+# jars by absolute path), and this build downloads every Maven artifact from a lock file. Regenerate on
+# Linux or macOS with `bazel run @@rules_jvm_external++maven+unpinned_bazel_worker_maven//:pin`.
+maven = use_extension("@rules_jvm_external//:extensions.bzl", "maven")
+maven.install(
+    name = "bazel_worker_maven",
+    fail_if_repin_required = True,
+    known_contributing_modules = ["bazel_worker_java"],
+    lock_file = "//:build/jvm-rules/bazel_worker_maven_install.json",
+    use_credentials_from_home_netrc_file = True,
+)
+
 single_version_override(
     module_name = "rules_android",
     patches = [
         "//:build/jvm-rules/rules-android-0.7.1-pin-maven-installs.patch",
     ],
     version = "0.7.1",
-)
-
-single_version_override(
-    module_name = "bazel_worker_java",
-    patches = [
-        "//:build/jvm-rules/worker-java-0.0.9-pin-bazel-worker-maven.patch",
-    ],
-    version = "0.0.10",
 )
 
 bazel_dep(name = "xml.bzl", version = "0.2.3")

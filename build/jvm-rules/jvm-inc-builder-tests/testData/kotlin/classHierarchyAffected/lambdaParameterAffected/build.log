@@ -10,9 +10,7 @@ Cleaning output files:
   ConsumeBExtLambdaKt.class
   ConsumeBLambdaKt.class
   META-INF/kotlin_classHierarchyAffected_lambdaParameterAffected-a.kotlin_module
-  UseConsumeBExtLambdaKt$useConsumeBExtLambda$1.class
   UseConsumeBExtLambdaKt.class
-  UseConsumeBLambdaKt$useConsumeBLambda$1.class
   UseConsumeBLambdaKt.class
 End of files
 Compiling files:

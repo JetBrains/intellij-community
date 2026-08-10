@@ -265,12 +265,24 @@ def jvm_library(
         # rules_kotlin's kt_jvm_library only accepts .kt/.java/.srcjar in srcs. IntelliJ GUI
         # Designer .form files are still allowed in srcs for compatibility with generated
         # BUILD files, but no backend compiles them, so filter them out here.
+        kt_srcs = [s for s in srcs if not s.endswith(".form")] if type(srcs) == "list" else srcs
+
+        # A sourceless module's plain dependencies are runtime-visible to dependents but not
+        # compile-visible, both in IntelliJ/JPS (only exported dependencies of a sourceless
+        # module reach dependents' compile classpath, which the generator emits as `exports`)
+        # and in rules_kotlin (which rejects deps without srcs). Spell them as runtime_deps.
+        effective_deps = deps
+        effective_runtime_deps = runtime_deps
+        if type(kt_srcs) == "list" and not kt_srcs and deps:
+            effective_runtime_deps = runtime_deps + [d for d in deps if d not in runtime_deps]
+            effective_deps = []
+
         kt_jvm_library(
             name = name,
-            srcs = [s for s in srcs if not s.endswith(".form")] if type(srcs) == "list" else srcs,
-            deps = deps,
+            srcs = kt_srcs,
+            deps = effective_deps,
             exports = exports,
-            runtime_deps = runtime_deps,
+            runtime_deps = effective_runtime_deps,
             resources = resources,
             resource_strip_prefix = resource_strip_prefix,
             resource_jars = resource_jars,

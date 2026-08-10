@@ -1,5 +1,5 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", compiler_plugin_jvm_library = "jvm_library")
-load("@rules_kotlin//kotlin:kotlin.bzl", "kt_compiler_plugin")
+load("@rules_kotlin//kotlin:core.bzl", "kt_compiler_plugin")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 compiler_plugin_jvm_library(
@@ -15,6 +15,8 @@ compiler_plugin_jvm_library(
 kt_compiler_plugin(
     name = "rpc-plugin",
     id = "com.jetbrains.fleet.rpc-compiler-plugin",
+    # The plugin jar is the embeddable dialect.
+    target_embedded_compiler = True,
     visibility = ["//visibility:public"],
     deps = [":rpc-compiler-plugin"],
 )

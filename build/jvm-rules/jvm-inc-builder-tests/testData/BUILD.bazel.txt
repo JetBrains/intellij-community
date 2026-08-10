@@ -1,5 +1,6 @@
 load("@bazel_skylib//rules:common_settings.bzl", "string_list_flag")
 load("@rules_jvm//:jvm-args.bzl", "get_jvm_flags")
+load("@rules_jvm//:jvm.bzl", "kt_javac_options")
 
 _TEST_WORKER_FLAGS = [
 
@@ -23,6 +24,14 @@ string_list_flag(
     name = "jvm-inc-builder-test_jvm_flags",
     build_setting_default = get_jvm_flags(_TEST_WORKER_FLAGS),
     visibility = ["//visibility:public"],
+)
+
+# The javac options of every test project: annotation processing on, and ErrorProne off on the rules_kotlin
+# backend. The .bazelrc points the default-javac-opts flag of rules_jvm here.
+kt_javac_options(
+    name = "test_javac_options",
+    visibility = ["//visibility:public"],
+    x_ep_disable_all_checks = True,
 )
 
 # One flag list per crash point. A kill-recovery test selects one list for the crash build.

@@ -1,7 +1,7 @@
 load("@buildifier_prebuilt//:rules.bzl", "buildifier")
 load("@community//build:bazel_targets_json.bzl", "current_bazel_targets_json")
 load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "kt_javac_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 BAZEL_TARGETS_JSON = current_bazel_targets_json()
@@ -45,11 +45,6 @@ filegroup(
         ".idea/modules.xml",
     ] + glob([".idea/libraries/*.xml"]),
     visibility = ["//visibility:public"],
-)
-
-kt_javac_options(
-    name = "default-javac-opts",
-    no_proc = True,
 )
 
 create_kotlinc_options(

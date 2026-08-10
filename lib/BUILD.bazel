@@ -1,11 +1,13 @@
 load("@bazel_skylib//rules:copy_file.bzl", "copy_file")
 load("@rules_java//java:defs.bzl", "java_import", "java_library")
 load("@rules_jvm//:jvm.bzl", "jvm_import")
-load("@rules_kotlin//kotlin:kotlin.bzl", "kt_compiler_plugin")
+load("@rules_kotlin//kotlin:core.bzl", "kt_compiler_plugin")
 
 kt_compiler_plugin(
     name = "kotlin-serialization-plugin",
     id = "org.jetbrains.kotlin.kotlin-serialization-compiler-plugin",
+    # The plugin jar is the embeddable dialect.
+    target_embedded_compiler = True,
     visibility = ["//visibility:public"],
     deps = ["@rules_jvm//:kotlin-serialization-compiler-plugin-embeddable_import"],
 )
@@ -13,6 +15,8 @@ kt_compiler_plugin(
 kt_compiler_plugin(
     name = "compose-plugin",
     id = "org.jetbrains.kotlin.kotlin-compose-compiler-plugin",
+    # The plugin jar is the embeddable dialect.
+    target_embedded_compiler = True,
     visibility = ["//visibility:public"],
     deps = ["@rules_jvm//:kotlin-compose-compiler-plugin-embeddable_import"],
 )

@@ -160,7 +160,7 @@ def wasmjs_compile_actions(ctx):
     compiler_plugins_classpath = depset([], transitive = [classpath for _, classpath in plugins.compile_phase.classpath.items()])
     compile_args.add_all(["-Xplugin=%s" % jar.path for jar in compiler_plugins_classpath.to_list()])
     for id, options in plugins.compile_phase.options.items():
-        compile_args.add_all(["-Pplugin:%s:%s=%s" % id % opt.id % opt.value for opt in options])
+        compile_args.add_all(["-Pplugin:%s:%s=%s" % (id, opt.key, opt.value) for opt in options])
     compile_args.add_all(srcs)
 
     java_runtime = ctx.attr._tool_java_runtime[java_common.JavaRuntimeInfo]

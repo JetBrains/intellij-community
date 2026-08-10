@@ -7,7 +7,6 @@ Compiling files:
 End of files
 Cleaning output files:
   META-INF/kotlin_withJava_javaUsedInKotlin_samConversions_methodSignatureChanged-a.kotlin_module
-  UsageWithFunctionExpressionKt$usageWithFunctionExpression$a$1.class
   UsageWithFunctionExpressionKt.class
   UsageWithFunctionLiteralKt.class
 End of files

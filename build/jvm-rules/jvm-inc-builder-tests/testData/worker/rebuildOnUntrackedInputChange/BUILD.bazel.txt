@@ -1,5 +1,5 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
-load("@rules_kotlin//kotlin:kotlin.bzl", "kt_compiler_plugin")
+load("@rules_kotlin//kotlin:core.bzl", "kt_compiler_plugin")
 
 jvm_library(
     name = "mock-plugin_lib",

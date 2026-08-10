@@ -43,8 +43,17 @@ native_binary(
     src = "noop_proguard_allowlister.sh",
 )
 
-kt_compiler_plugin(
+# The serialization compiler plugin of this workspace. The default is the plugin the pinned rules_kotlin bundles,
+# which matches the rules_kotlin default toolchain of a standalone build. A root module that selects another Kotlin
+# toolchain sets the flag to the plugin that matches that toolchain's compiler: the monorepo roots set
+# @lib//:kotlin-serialization-plugin in community/common.bazelrc, next to the toolchain.
+label_flag(
     name = "serialization_plugin",
+    build_setting_default = ":bundled_serialization_plugin",
+)
+
+kt_compiler_plugin(
+    name = "bundled_serialization_plugin",
     compile_phase = True,
     id = "org.jetbrains.kotlin.serialization",
     stubs_phase = True,
@@ -64,7 +73,13 @@ kt_jvm_library(
 
 kt_kotlinc_options(
     name = "jps_to_bazel_kotlinc_options",
+    # The sources use features up to Kotlin 2.2 (multi-dollar string interpolation). The level is
+    # stated here instead of taken from the default of the toolchain rule.
+    api_version = "2.4",
     jvm_target = "17",
+    language_version = "2.4",
+    # The pinned rules_kotlin emits -Xlambdas=class by default; the monorepo modules compile with indy.
+    x_lambdas = "indy",
 )
 
 kt_jvm_library(

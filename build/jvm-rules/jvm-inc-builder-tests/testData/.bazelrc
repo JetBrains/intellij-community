@@ -1,6 +1,10 @@
 # In tests run the worker with test flags
 build --@rules_jvm//:jvm-builder-jvm_flags=//:jvm-inc-builder-test_jvm_flags
 
+# The javac options of a test project that names none: annotation processing on, as the annotation processor
+# scenarios need. The default of rules_jvm, default-javac-opts-value, turns processing off.
+build --@rules_jvm//:default-javac-opts=//:test_javac_options
+
 # https://bazel.build/docs/bazel-and-java#hermetic-testing
 # The code is compiled for, executed, and tested on this JVM.
 build --java_language_version=25
