@@ -2,8 +2,8 @@
 package com.intellij.terminal.frontend.view.impl
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.codePointAt
@@ -69,7 +69,7 @@ internal class TerminalCursorPainter private constructor(
   init {
     updateCursor(curCursorState)
 
-    coroutineScope.awaitCancellationAndInvoke(Dispatchers.EDT) {
+    coroutineScope.awaitCancellationAndInvoke(Dispatchers.UI) {
       curHighlighter?.dispose()
       curHighlighter = null
     }
@@ -86,7 +86,7 @@ internal class TerminalCursorPainter private constructor(
       }
     })
 
-    coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+    coroutineScope.launch(Dispatchers.UI + ModalityState.any().asContextElement()) {
       sessionModel.terminalState.collect { state ->
         var stateChanged = false
 
@@ -130,7 +130,7 @@ internal class TerminalCursorPainter private constructor(
     curHighlighter = null
     cursorPaintingJob?.cancel()
 
-    cursorPaintingJob = coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement(), CoroutineStart.UNDISPATCHED) {
+    cursorPaintingJob = coroutineScope.launch(Dispatchers.UI + ModalityState.any().asContextElement(), CoroutineStart.UNDISPATCHED) {
       paintCursor(state)
     }
   }
