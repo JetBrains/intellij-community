@@ -966,7 +966,7 @@ open class EditorComposite internal constructor(
     }
     return with(FileIdAdapter.getInstance()) {
       FileEntry(
-        url = file.url,
+        url = getUrl(file),
         id = getId(file),
         selectedProvider = (selectedEditorWithProvider.value ?: fileEditorWithProviderList.first()).provider.editorTypeId,
         isPreview = isPreview,
@@ -985,8 +985,8 @@ open class EditorComposite internal constructor(
   internal fun writeCurrentStateAsHistoryEntry(project: Project): Element {
     val selectedEditorWithProvider = selectedEditorWithProvider.value
     val element = Element(TAG)
-    element.setAttribute(FILE_ATTRIBUTE, file.url)
     with(FileIdAdapter.getInstance()) {
+      element.setAttribute(FILE_ATTRIBUTE, getUrl(file))
       getId(file)?.let { element.setAttribute(FILE_ID_ATTRIBUTE, it.toString()) }
       getManagingFsCreationTimestamp(file).let { element.setAttribute(MANAGING_FS_ATTRIBUTE, it.toString()) }
       getProtocol(file)?.let { element.setAttribute(PROTOCOL_ATTRIBUTE, it) }

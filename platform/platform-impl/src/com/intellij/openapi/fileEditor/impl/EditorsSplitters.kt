@@ -1442,7 +1442,7 @@ private class UiBuilder(private val splitters: EditorsSplitters, private val isL
     val virtualFileManager = VirtualFileManager.getInstance()
     if (session != null && !session.isLocal) {
       for ((index, fileEntry) in fileEntries.withIndex()) {
-        val file = resolveFileOrLogError(fileEntry, virtualFileManager) ?: return
+        val file = resolveFileOrLogError(fileEntry, virtualFileManager, fileEditorManager.project) ?: return
         session.serviceOrNull<ClientFileEditorManager>()?.openFileAsync(
           file = file,
           options = FileEditorOpenOptions(
@@ -1539,7 +1539,7 @@ private fun computeFileEntry(
 ): FileToOpen? {
   val compositeCoroutineScope = splitters.coroutineScope.childScope("EditorComposite(file=${fileEntry.url})")
 
-  val notFullyPreparedFile = resolveFileOrLogError(fileEntry, virtualFileManager) ?: return null
+  val notFullyPreparedFile = resolveFileOrLogError(fileEntry, virtualFileManager, fileEditorManager.project) ?: return null
 
   // do not expose `file` variable to avoid using it instead of `fileProvider`
   val fileProviderDeferred =
@@ -1745,13 +1745,13 @@ data class FileToOpen(
   @JvmField val customizer: (TabInfo) -> Unit,
 )
 
-private fun resolveFileOrLogError(fileEntry: FileEntry, virtualFileManager: VirtualFileManager): VirtualFile? {
+private fun resolveFileOrLogError(fileEntry: FileEntry, virtualFileManager: VirtualFileManager, project: Project): VirtualFile? {
   val fileIdAdapter = FileIdAdapter.getInstance()
 
   // In the case of the JetBrains client, it's better to get the file by its ID to avoid a blocking protocol call inside
   // [VirtualFileManager.findFileByUrl]
   val file = LOG.runAndLogException {
-    fileIdAdapter.getFile(fileEntry, virtualFileManager)
+    fileIdAdapter.getFile(fileEntry, virtualFileManager, project)
   }
   if (file != null && file.isValid) {
     return file
