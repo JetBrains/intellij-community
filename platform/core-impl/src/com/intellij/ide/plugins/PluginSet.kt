@@ -18,6 +18,11 @@ class PluginSubsystemInput(
 @ApiStatus.Internal
 class PluginSet internal constructor(
   private val sortedModulesWithDependencies: ModulesWithDependencies,
+  /**
+   * Historically, this property only contained one version of each plugin id that is available, while there can be multiple.
+   * This contract is preserved. True `allPlugins` can be obtained through [input].
+   * TODO deprecate and provide alternative API
+   */
   @JvmField val allPlugins: Set<PluginMainDescriptor>,
   @JvmField val enabledPlugins: List<PluginMainDescriptor>,
   private val enabledModuleMap: Map<PluginModuleId, ContentModuleDescriptor>,

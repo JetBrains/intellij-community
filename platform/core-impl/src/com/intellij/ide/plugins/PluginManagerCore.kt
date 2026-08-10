@@ -561,15 +561,6 @@ object PluginManagerCore {
     excludedFromCandidateSubset: Map<PluginMainDescriptor, DescriptorExclusionReason>,
   ): Pair<PluginSet, List<PluginLoadingError>> {
     val cycleErrors = ArrayList<PluginLoadingError>()
-    val mostRecentExcludedPlugins = input.discoveryResult.pluginLists.asSequence()
-      .flatMap { it.plugins }
-      .filter { resolvedPluginSet.candidateSet.resolvePluginId(it.pluginId) == null }
-      .groupBy { it.pluginId }
-      .mapValues {
-        if (it.value.size == 1) it.value.first()
-        else it.value.maxWith { o1, o2 -> VersionComparatorUtil.compare(o1.version, o2.version) } // take the latest version among excluded disregarding compatibility
-      }
-    val allPlugins = resolvedPluginSet.candidateSet.plugins + mostRecentExcludedPlugins.values
     for (plugin in resolvedPluginSet.candidateSet.plugins) {
       for (descriptor in plugin.sequenceAllDescriptors()) {
         if (!resolvedPluginSet.isResolved(descriptor)) {
@@ -607,6 +598,14 @@ object PluginManagerCore {
         enabledPluginAndV1ModuleMap[pluginId] = module
       }
     }
+    val mostRecentExcludedPlugins = excludedFromCandidateSubset.keys.asSequence()
+      .filter { resolvedPluginSet.candidateSet.resolvePluginId(it.pluginId)?.pluginId != it.pluginId }
+      .groupBy { it.pluginId }
+      .mapValues {
+        if (it.value.size == 1) it.value.first()
+        else it.value.maxWith { o1, o2 -> VersionComparatorUtil.compare(o1.version, o2.version) } // take the latest version among excluded disregarding compatibility
+      }
+    val allPlugins = resolvedPluginSet.candidateSet.plugins + mostRecentExcludedPlugins.values
     val pluginSet = PluginSet(
       sortedModulesWithDependencies = ModulesWithDependencies(
         modules = resolvedModules.keys.toList(),
