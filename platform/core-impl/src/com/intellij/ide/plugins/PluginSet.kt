@@ -2,6 +2,7 @@
 @file:Suppress("ReplaceGetOrSet")
 package com.intellij.ide.plugins
 
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.util.text.VersionComparatorUtil
 import org.jetbrains.annotations.ApiStatus
@@ -34,7 +35,6 @@ class PluginSet internal constructor(
   @JvmField val enabledPlugins: List<PluginMainDescriptor> = resolvedPluginSet.candidateSet.plugins.filter { resolvedPluginSet.isResolved(it) }
 
   private val enabledModules: List<PluginModuleDescriptor>
-  private val sortedModulesWithDependencies: ModulesWithDependencies
 
   init {
     val mostRecentExcludedPlugins = excludedFromCandidateSubset.keys.asSequence()
@@ -46,14 +46,7 @@ class PluginSet internal constructor(
       }
     allPlugins = (resolvedPluginSet.candidateSet.plugins + mostRecentExcludedPlugins.values).toSet()
 
-    val resolvedModules = resolvedPluginSet.sortedResolvedDescriptors.filterIsInstance<PluginModuleDescriptor>()
-    sortedModulesWithDependencies = ModulesWithDependencies(
-      modules = resolvedModules,
-      directDependencies = resolvedModules.associateWith {
-        resolvedPluginSet.getDirectResolvedDependencies(it).filterIsInstance<PluginModuleDescriptor>()
-      }
-    )
-    enabledModules = resolvedModules
+    enabledModules = resolvedPluginSet.sortedResolvedDescriptors.filterIsInstance<PluginModuleDescriptor>()
   }
 
   fun getEnabledModules(): List<PluginModuleDescriptor> = enabledModules
@@ -69,7 +62,13 @@ class PluginSet internal constructor(
         .filter { it !== main }
         .toList()
     }
-    return sortedModulesWithDependencies.directDependencies.getOrDefault(moduleDescriptor, Collections.emptyList())
+    val dependencies = resolvedPluginSet.getDirectResolvedDependencies(moduleDescriptor)
+    if (dependencies.any { it !is PluginModuleDescriptor }) { // expected to always be false, see method's doc
+      logger<PluginSet>().error("Module ${moduleDescriptor} contains non-module dependencies: $dependencies")
+      return dependencies.filterIsInstance<PluginModuleDescriptor>()
+    }
+    @Suppress("UNCHECKED_CAST")
+    return dependencies as List<PluginModuleDescriptor>
   }
 
   fun isPluginInstalled(id: PluginId): Boolean = findInstalledPlugin(id) != null
