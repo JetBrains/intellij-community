@@ -3,10 +3,8 @@
 package com.intellij.ide.plugins
 
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.util.containers.Java11Shim
 import com.intellij.util.text.VersionComparatorUtil
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.TestOnly
 import java.util.Collections
 
 @ApiStatus.Internal
@@ -84,9 +82,6 @@ class PluginSet internal constructor(
     }
     return sortedModulesWithDependencies.directDependencies.getOrDefault(moduleDescriptor, Collections.emptyList())
   }
-
-  @TestOnly
-  fun getUnsortedEnabledModules(): Collection<ContentModuleDescriptor> = Java11Shim.INSTANCE.copyOf(enabledModuleMap.values)
 
   fun isPluginInstalled(id: PluginId): Boolean = findInstalledPlugin(id) != null
 

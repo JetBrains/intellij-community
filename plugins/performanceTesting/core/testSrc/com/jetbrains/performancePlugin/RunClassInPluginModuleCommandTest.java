@@ -2,6 +2,7 @@
 package com.jetbrains.performancePlugin;
 
 import com.intellij.ide.plugins.ContentModuleDescriptor;
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.PluginModuleId;
 import com.intellij.openapi.application.PathManager;
@@ -14,9 +15,9 @@ import org.junit.Assert;
 public class RunClassInPluginModuleCommandTest extends HeavyPlatformTestCase {
   public void test_execute_script_in_module_classloader() throws Exception {
     ContentModuleDescriptor module = null;
-    for (ContentModuleDescriptor candidate : PluginManagerCore.getPluginSet().getUnsortedEnabledModules()) {
-      if (candidate.getPluginClassLoader() != null) {
-        module = candidate;
+    for (IdeaPluginDescriptorImpl candidate : PluginManagerCore.getPluginSet().getResolvedPluginSet().getSortedResolvedDescriptors()) {
+      if (candidate instanceof ContentModuleDescriptor candidateModule && candidate.getPluginClassLoader() != null) {
+        module = candidateModule;
         break;
       }
     }
