@@ -5,13 +5,12 @@ package org.jetbrains.kotlin.idea.codeinsight.intentions
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
+import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.psi.KtConstantExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.psi.stubs.ConstantValueKind
-import org.jetbrains.kotlin.psi.stubs.elements.KtConstantExpressionElementType
 
 internal class AddUnderscoresToNumericLiteralIntention : KotlinApplicableModCommandAction<KtConstantExpression, Unit>(
     KtConstantExpression::class
@@ -68,8 +67,8 @@ internal class RemoveUnderscoresFromNumericLiteralIntention : KotlinApplicableMo
 private fun KtConstantExpression.isNumeric(): Boolean = elementType in numericConstantKinds
 
 private val numericConstantKinds = listOf(
-    KtConstantExpressionElementType.kindToConstantElementType(ConstantValueKind.INTEGER_CONSTANT),
-    KtConstantExpressionElementType.kindToConstantElementType(ConstantValueKind.FLOAT_CONSTANT)
+    KtNodeTypes.INTEGER_CONSTANT,
+    KtNodeTypes.FLOAT_CONSTANT,
 )
 
 private fun String.hasUnderscore(): Boolean = indexOf('_') != -1

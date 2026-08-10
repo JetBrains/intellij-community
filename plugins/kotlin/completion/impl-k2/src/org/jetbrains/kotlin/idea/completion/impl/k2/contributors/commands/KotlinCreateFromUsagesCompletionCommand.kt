@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands
 
 import com.intellij.analysis.AnalysisBundle.message
@@ -27,6 +27,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.elementType
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.scopes.memberScope
 import org.jetbrains.kotlin.analysis.api.session.analyze
@@ -42,7 +43,6 @@ import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
-import org.jetbrains.kotlin.psi.stubs.elements.KtNameReferenceExpressionElementType
 
 
 internal class KotlinCreateFromUsagesCommandProvider : CommandProvider {
@@ -59,7 +59,7 @@ internal class KotlinCreateFromUsagesCommandProvider : CommandProvider {
             elementType == KtTokens.IDENTIFIER
         ) {
             psiElement = psiElement?.parent
-            if (psiElement.elementType is KtNameReferenceExpressionElementType) {
+            if (psiElement.elementType == KtNodeTypes.REFERENCE_EXPRESSION) {
                 psiElement = psiElement?.parent
             }
         }
