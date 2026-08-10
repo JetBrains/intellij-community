@@ -105,12 +105,10 @@ public final class GrFinalVariableAccessInspection extends BaseInspection {
           processLocalVars(initializer);
         }
 
-        if (field.hasModifierProperty(PsiModifier.FINAL)) {
-          if (!isFieldInitialized(field)) {
-            registerError(field.getNameIdentifierGroovy(),
-                          GroovyBundle.message("variable.0.might.not.have.been.initialized", field.getName()), LocalQuickFix.EMPTY_ARRAY,
-                          ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
-          }
+        if (field.hasModifierProperty(PsiModifier.FINAL) && !isFieldInitialized(field)) {
+          registerError(field.getNameIdentifierGroovy(),
+                        GroovyBundle.message("variable.0.might.not.have.been.initialized", field.getName()), LocalQuickFix.EMPTY_ARRAY,
+                        ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
         }
       }
 
@@ -156,19 +154,16 @@ public final class GrFinalVariableAccessInspection extends BaseInspection {
         final GrTypeDefinition clazz = (GrTypeDefinition)constructor.getContainingClass();
         if (clazz == null) return;
 
-        final GrClassInitializer[] initializers = clazz.getInitializers();
         final List<GrField> fields = getFinalFields(clazz);
-
         Set<GrVariable> initializedFields = new HashSet<>();
         appendFieldInitializedInDeclaration(false, fields, initializedFields);
-        appendFieldsInitializedInClassInitializer(initializers, null, false, fields, initializedFields);
+        appendFieldsInitializedInClassInitializer(clazz.getInitializers(), null, false, fields, initializedFields);
         appendInitializationFromChainedConstructors(constructor, fields, initializedFields);
 
         final GroovyControlFlow flow = buildFlowForField(block);
         final Set<GrVariable> variables = buildVarSet(fields, false);
 
         highlightInvalidWriteAccess(flow, variables, initializedFields);
-
       }
 
       private void processFieldsInClassInitializer(@NotNull GrClassInitializer initializer) {
@@ -177,12 +172,10 @@ public final class GrFinalVariableAccessInspection extends BaseInspection {
 
         final boolean isStatic = initializer.isStatic();
 
-        final GrClassInitializer[] initializers = clazz.getInitializers();
         final List<GrField> fields = getFinalFields(clazz);
-
         Set<GrVariable> initializedFields = new HashSet<>();
         appendFieldInitializedInDeclaration(isStatic, fields, initializedFields);
-        appendFieldsInitializedInClassInitializer(initializers, initializer, isStatic, fields, initializedFields);
+        appendFieldsInitializedInClassInitializer(clazz.getInitializers(), initializer, isStatic, fields, initializedFields);
 
         final GroovyControlFlow flow = buildFlowForField(initializer.getBlock());
         final Set<GrVariable> variables = buildVarSet(fields, isStatic);
@@ -328,18 +321,14 @@ public final class GrFinalVariableAccessInspection extends BaseInspection {
   private static boolean isFieldInitialized(@NotNull GrField field) {
     if (field instanceof GrEnumConstant) return true;
     if (field.getInitializerGroovy() != null) return true;
-
     if (isImmutableField(field)) return true;
-
     if (isInitializedInTupleConstructor(field)) return true;
-
-    final boolean isStatic = field.hasModifierProperty(PsiModifier.STATIC);
 
     final GrTypeDefinition aClass = ((GrTypeDefinition)field.getContainingClass());
     if (aClass == null) return true;
-
-    GrClassInitializer[] initializers = aClass.getInitializers();
-    for (GrClassInitializer initializer : initializers) {
+    
+    final boolean isStatic = field.hasModifierProperty(PsiModifier.STATIC);
+    for (GrClassInitializer initializer : aClass.getInitializers()) {
       if (initializer.isStatic() != isStatic) continue;
 
       final GrOpenBlock block = initializer.getBlock();
@@ -431,7 +420,6 @@ public final class GrFinalVariableAccessInspection extends BaseInspection {
   private static @NotNull GroovyControlFlow buildFlowForField(@NotNull GrOpenBlock block) {
     return ControlFlowBuilder.buildControlFlow(block, GrFieldControlFlowPolicy.getInstance());
   }
-
 
   /**
    * @return map: scope -> variables defined in the scope

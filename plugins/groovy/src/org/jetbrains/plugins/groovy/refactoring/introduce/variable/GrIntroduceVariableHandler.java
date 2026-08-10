@@ -98,11 +98,11 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
     if (parent instanceof GrClosableBlock) {
       return false;
     }
-    if (parent instanceof GrField && expr == ((GrField)parent).getInitializerGroovy()) {
+    else if (parent instanceof GrField field && expr == field.getInitializerGroovy()) {
       return true;
     }
-    if (parent instanceof GrExpression) {
-      return checkInFieldInitializer(((GrExpression)parent));
+    else if (parent instanceof GrExpression expression) {
+      return checkInFieldInitializer(expression);
     }
     return false;
   }
@@ -111,7 +111,7 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
    * Inserts new variable declarations and replaces occurrences
    */
   @Override
-  public GrVariable runRefactoring(final @NotNull GrIntroduceContext context, final @NotNull GroovyIntroduceVariableSettings settings) {
+  public GrVariable runRefactoring(@NotNull GrIntroduceContext context, @NotNull GroovyIntroduceVariableSettings settings) {
     // Generating variable declaration
 
     GrVariable insertedVar = processExpression(context, settings);
@@ -212,21 +212,21 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
 
     if (context.getStringPart() != null) {
       final GrExpression ref = context.getStringPart().replaceLiteralWithConcatenation(DUMMY_NAME);
-      return doProcessExpression(context, settings, varDecl, new PsiElement[]{ref}, ref, true);
+      return doProcessExpression(context, settings, varDecl, new PsiElement[]{ref}, ref);
     }
     else {
       final GrExpression expression = context.getExpression();
       assert expression != null;
-      return doProcessExpression(context, settings, varDecl, context.getOccurrences(), expression, true);
+      return doProcessExpression(context, settings, varDecl, context.getOccurrences(), expression);
     }
   }
 
-  private GrVariable doProcessExpression(final @NotNull GrIntroduceContext context,
+  private GrVariable doProcessExpression(@NotNull GrIntroduceContext context,
                                          @NotNull GroovyIntroduceVariableSettings settings,
                                          @NotNull GrVariableDeclaration varDecl,
                                          PsiElement @NotNull [] elements,
-                                         @NotNull GrExpression expression, boolean processUsages) {
-    return new GrIntroduceLocalVariableProcessor(context, settings, elements, expression, processUsages) {
+                                         @NotNull GrExpression expression) {
+    return new GrIntroduceLocalVariableProcessor(context, settings, elements, expression, true) {
       @Override
       protected void refreshPositionMarker(PsiElement e) {
         GrIntroduceVariableHandler.this.refreshPositionMarker(context.getEditor().getDocument().createRangeMarker(e.getTextRange()));

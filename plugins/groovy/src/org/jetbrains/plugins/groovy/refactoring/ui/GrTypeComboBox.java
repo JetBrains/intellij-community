@@ -62,8 +62,8 @@ public final class GrTypeComboBox extends ComboBox {
   public static GrTypeComboBox createTypeComboBoxFromExpression(@NotNull GrExpression expression, 
                                                                 GroovyApplicationSettings.Type selectType) {
     PsiType type = expression.getType();
-    if (expression instanceof GrReferenceExpression) {
-      PsiElement resolved = ((GrReferenceExpression)expression).resolve();
+    if (expression instanceof GrReferenceExpression ref) {
+      PsiElement resolved = ref.resolve();
       if (resolved instanceof PsiClass) {
         type = TypesUtil.createJavaLangClassType(type, expression);
       }
@@ -93,12 +93,9 @@ public final class GrTypeComboBox extends ComboBox {
     LOG.assertTrue(min == null || context != null);
     LOG.assertTrue(type == null || context != null);
 
-    if (type instanceof PsiDisjunctionType) type = ((PsiDisjunctionType)type).getLeastUpperBound();
+    if (type instanceof PsiDisjunctionType disjunction) type = disjunction.getLeastUpperBound();
 
-    Map<String, PsiType> types = Collections.emptyMap();
-    if (type != null) {
-      types = getCompatibleTypeNames(type, min, context);
-    }
+    Map<String, PsiType> types = type != null ? getCompatibleTypeNames(type, min, context) : Collections.emptyMap();
 
     int count = 0;
     if (createDef || types.isEmpty()) {
@@ -124,9 +121,8 @@ public final class GrTypeComboBox extends ComboBox {
       types.remove(GroovyCommonClassNames.JAVA_MATH_BIG_DECIMAL);
       addItem(new PsiTypeItem(PsiTypes.doubleType()));
     }
-
-    for (String typeName : types.keySet()) {
-      addItem(new PsiTypeItem(types.get(typeName)));
+    for (PsiType t : types.values()) {
+      addItem(new PsiTypeItem(t));
     }
 
     if (createDef && getItemCount() > selectType.ordinal() && count >= selectType.ordinal()) {
@@ -136,13 +132,9 @@ public final class GrTypeComboBox extends ComboBox {
 
   public void addClosureTypesFrom(@Nullable PsiType type, @NotNull PsiElement context) {
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(context.getProject());
-    final PsiType cl;
-    if (type == null || type == PsiTypes.nullType()) {
-      cl = factory.createTypeFromText(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, context);
-    }
-    else {
-      cl = factory.createTypeFromText(GroovyCommonClassNames.GROOVY_LANG_CLOSURE + '<' + type.getCanonicalText() + '>', context);
-    }
+    final PsiType cl = type == null || type == PsiTypes.nullType()
+                       ? factory.createTypeFromText(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, context)
+                       : factory.createTypeFromText(GroovyCommonClassNames.GROOVY_LANG_CLOSURE + '<' + type.getCanonicalText() + '>', context);
     addItem(new PsiTypeItem(cl, true));
   }
 
@@ -157,22 +149,19 @@ public final class GrTypeComboBox extends ComboBox {
   }
 
 
-  private static Map<String, PsiType> getCompatibleTypeNames(@NotNull PsiType type,
-                                                             @Nullable PsiType min,
-                                                             @NotNull PsiElement context) {
-    if (type instanceof PsiDisjunctionType) type = ((PsiDisjunctionType)type).getLeastUpperBound();
-
+  private static Map<String, PsiType> getCompatibleTypeNames(@NotNull PsiType type, @Nullable PsiType min, @NotNull PsiElement context) {
+    if (type instanceof PsiDisjunctionType disjunction) type = disjunction.getLeastUpperBound();
 
     // if initial type is not assignable to min type we don't take into consideration min type.
     if (min != null && !TypesUtil.isAssignable(min, type, context)) {
       min = null;
     }
 
-    Map<String, PsiType> map = new LinkedHashMap<>();
     final PsiPrimitiveType unboxed = PsiPrimitiveType.getUnboxedType(type);
     if (unboxed != null) type = unboxed;
     final Set<PsiType> set = new LinkedHashSet<>();
     set.add(type);
+    Map<String, PsiType> map = new LinkedHashMap<>();
     while (!set.isEmpty()) {
       PsiType cur = set.iterator().next();
       set.remove(cur);
@@ -196,17 +185,15 @@ public final class GrTypeComboBox extends ComboBox {
   }
 
   private static boolean isPartiallySubstituted(PsiType type) {
-    if (!(type instanceof PsiClassType)) return false;
-    PsiType[] parameters = ((PsiClassType)type).getParameters();
+    if (!(type instanceof PsiClassType classType)) return false;
+    PsiType[] parameters = classType.getParameters();
 
-    PsiClassType.ClassResolveResult classResolveResult = ((PsiClassType)type).resolveGenerics();
+    PsiClassType.ClassResolveResult classResolveResult = classType.resolveGenerics();
     PsiClass clazz = classResolveResult.getElement();
-    if (clazz == null) return false;
-
-    return clazz.getTypeParameters().length != parameters.length;
+    return clazz != null && clazz.getTypeParameters().length != parameters.length;
   }
 
-  public static void registerUpDownHint(JComponent component, final GrTypeComboBox combo) {
+  public static void registerUpDownHint(JComponent component, GrTypeComboBox combo) {
     final AnAction arrow = new AnAction() {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
