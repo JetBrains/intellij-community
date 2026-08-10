@@ -67,7 +67,6 @@ jvm_library(
         "//platform/editor-ui-api:editor-ui_test_lib",
         "//platform/util/coroutines",
         "//platform/util/coroutines:coroutines_test_lib",
-        "@lib//:jetbrains-annotations",
         "@lib//:kotlin-stdlib",
         "//libraries/junit5",
         "//libraries/junit5:junit5_test_lib",

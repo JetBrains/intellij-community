@@ -411,9 +411,15 @@
     <action id="ChooseRuntime" class="com.intellij.openapi.projectRoots.impl.jdkDownloader.RuntimeChooserAction">
       <synonym text="Choose Runtime"/>
     </action>
-    <action id="SelectInProjectView" icon="AllIcons.General.Locate" class="com.intellij.ide.projectView.impl.SelectFileAction">
+    <action id="SelectInProjectView" icon="AllIcons.General.Locate" class="com.intellij.ide.projectView.actions.SelectFileAction">
       <synonym key="action.SelectOpenedFileInProjectView.text"/>
     </action>
+    <action id="ViewInplaceComments" class="com.intellij.ide.actions.ViewInplaceCommentsAction"/>
+    <action id="ProjectView.CustomizeTrees"
+            class="com.intellij.ide.projectView.impl.CustomizeTreesAction"/>
+    <action id="ScopeView.EditScopes"
+            class="com.intellij.ide.scopeView.EditScopesAction"
+            icon="AllIcons.Ide.LocalScope"/>
     <action id="SetShortcutAction" class="com.intellij.ide.actions.SetShortcutAction" use-shortcut-of="ShowIntentionActions"/>
     <group id="ShowFilterPopup" class="com.intellij.find.editorHeaderActions.ShowFilterPopupGroup" popup="true"
            icon="AllIcons.General.Filter">
@@ -557,12 +563,9 @@
       <reference ref="CallHierarchy"/>
     </group>
     <group id="ProjectView.RelatedActions">
-      <action id="ViewInplaceComments" class="com.intellij.ide.actions.ViewInplaceCommentsAction"/>
-      <action id="ProjectView.CustomizeTrees"
-              class="com.intellij.ide.projectView.impl.CustomizeTreesAction"/>
-      <action id="ScopeView.EditScopes"
-              class="com.intellij.ide.scopeView.EditScopesAction"
-              icon="AllIcons.Ide.LocalScope"/>
+      <reference ref="ViewInplaceComments" />
+      <reference ref="ProjectView.CustomizeTrees" />
+      <reference ref="ScopeView.EditScopes" />
     </group>
     <group id="Structure.ViewOptions" searchable="false" popup="true" icon="AllIcons.Actions.GroupBy"/>
     <group id="StructureViewToolbar"/>

@@ -22,7 +22,6 @@ jvm_library(
         # do not sort,
         "//platform/platform-frontend:frontend",
         "//platform/analysis-api:analysis",
-        "@lib//:jetbrains-annotations",
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/coroutines/core",
         "//platform/projectView/shared:projectView",

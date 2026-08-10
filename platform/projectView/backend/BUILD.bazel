@@ -21,7 +21,6 @@ jvm_library(
     deps = [
         # do not sort,
         "//platform/platform-impl/rpc",
-        "@lib//:jetbrains-annotations",
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/coroutines/core",
         "//platform/projectView/shared:projectView",

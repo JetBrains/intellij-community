@@ -20,8 +20,8 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
+        "//platform/refactoring",
         "//platform/lang-core",
-        "@lib//:jetbrains-annotations",
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/coroutines/core",
         "//platform/platform-api:ide",
@@ -58,6 +58,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":projectView",
+        "//platform/refactoring:refactoring_test_lib",
         "//platform/lang-core:lang-core_test_lib",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//platform/platform-api:ide_test_lib",
