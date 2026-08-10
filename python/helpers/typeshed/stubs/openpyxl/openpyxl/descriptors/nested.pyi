@@ -200,7 +200,7 @@ class NestedNoneSet(Nested[_T | None], NoneSet[_T]):
 class NestedSet(Nested[_T], Set[_T]):
     def __init__(self, name: str | None = None, *, values: Iterable[_T]) -> None: ...
 
-class NestedMinMax(Nested[_M], MinMax[_M, _N]):  # type: ignore[misc]
+class NestedMinMax(Nested[_M], MinMax[_M, _N]):  # type: ignore[misc]  # pyrefly: ignore [inconsistent-inheritance]
     @overload
     def __init__(
         self: NestedMinMax[int, Literal[True]],
@@ -269,7 +269,7 @@ class NestedMinMax(Nested[_M], MinMax[_M, _N]):  # type: ignore[misc]
         value: _HasTagAndGet[ConvertibleToFloat] | ConvertibleToFloat,
     ) -> None: ...
 
-class EmptyTag(Nested[bool], Bool[_N]):  # type: ignore[misc]
+class EmptyTag(Nested[bool], Bool[_N]):  # type: ignore[misc]  # pyrefly: ignore [inconsistent-inheritance]
     @overload
     def __init__(self: EmptyTag[Literal[True]], name: str | None = None, *, allow_none: Literal[True]) -> None: ...
     @overload

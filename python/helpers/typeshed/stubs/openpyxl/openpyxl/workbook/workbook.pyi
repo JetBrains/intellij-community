@@ -25,7 +25,7 @@ _WorkbookSheet: TypeAlias = _WorkbookWorksheet | Chartsheet
 # from Worksheet works great here. Allowing instance type check, even if direct
 # type comparison might be wrong.
 @type_check_only
-class _WorksheetLike(  # type: ignore[misc] # Incompatible definitions, favor Worksheet
+class _WorksheetLike(  # type: ignore[misc] # Incompatible definitions, favor Worksheet  # pyrefly: ignore [inconsistent-inheritance]
     Worksheet, WriteOnlyWorksheet, ReadOnlyWorksheet
 ): ...
 

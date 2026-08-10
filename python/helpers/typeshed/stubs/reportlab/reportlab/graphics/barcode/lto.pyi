@@ -10,7 +10,7 @@ class BaseLTOLabel(Standard39):
     CODENOMINALWIDTH: Incomplete
     CODEBARHEIGHT: Incomplete
     CODEBARWIDTH: Incomplete
-    CODEGAP = CODEBARWIDTH
+    CODEGAP = CODEBARWIDTH  # pyrefly: ignore [unknown-name]
     CODELQUIET: Incomplete
     CODERQUIET: Incomplete
     height: Incomplete

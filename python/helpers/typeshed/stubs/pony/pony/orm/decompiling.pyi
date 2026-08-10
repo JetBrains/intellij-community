@@ -37,7 +37,7 @@ class Decompiler:
     BINARY_AND: Incomplete
     BINARY_XOR: Incomplete
     BINARY_OR: Incomplete
-    BINARY_TRUE_DIVIDE = BINARY_DIVIDE
+    BINARY_TRUE_DIVIDE = BINARY_DIVIDE  # pyrefly: ignore [unknown-name]
     BINARY_MODULO: Incomplete
     def BINARY_OP(decompiler, opcode): ...
     def BINARY_SLICE(decompiler): ...

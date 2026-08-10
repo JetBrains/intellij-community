@@ -5,7 +5,7 @@ from braintree.validation_error_collection import ValidationErrorCollection
 
 class Errors:
     errors: ValidationErrorCollection
-    size = errors.deep_size
+    size = errors.deep_size  # pyrefly: ignore [unknown-name]
     def __init__(self, data: dict[str, Incomplete]) -> None: ...
     @property
     def deep_errors(self) -> list[ValidationError]: ...

@@ -46,7 +46,7 @@ class StickyPartitionAssignor(AbstractPartitionAssignor):
     name: str
     version: int
     member_assignment: Incomplete
-    generation = DEFAULT_GENERATION_ID
+    generation = DEFAULT_GENERATION_ID  # pyrefly: ignore [unknown-name]
     @classmethod
     def assign(cls, cluster, members): ...
     @classmethod
