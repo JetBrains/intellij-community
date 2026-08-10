@@ -454,7 +454,6 @@ object PluginManagerCore {
 
   @ApiStatus.Internal
   fun initializePlugins(
-    descriptorLoadingErrors: List<PluginDescriptorLoadingError>,
     initContext: PluginInitializationContext,
     discoveredPlugins: PluginsDiscoveryResult,
     coreLoader: ClassLoader,
@@ -525,7 +524,13 @@ object PluginManagerCore {
 
     initStagesActivity = initStagesActivity?.endAndStart("error reporting")
     pluginsState.addPluginNonLoadReasons(pluginNonLoadReasons)
-    val loadingErrors = preparePluginErrors(pluginNonLoadReasons, descriptorLoadingErrors, cycleErrors, initContext, reportingPolicy)
+    val loadingErrors = preparePluginErrors(
+      pluginNonLoadReasons,
+      discoveredPlugins.descriptorLoadingErrors,
+      cycleErrors,
+      initContext,
+      reportingPolicy,
+    )
 
     if (initContext.checkEssentialPlugins) {
       initStagesActivity = initStagesActivity?.endAndStart("check essential plugins")
@@ -830,7 +835,6 @@ object PluginManagerCore {
   }
 
   internal suspend fun initializeAndSetPlugins(
-    descriptorLoadingErrors: List<PluginDescriptorLoadingError>,
     initContext: PluginInitializationContext,
     discoveredPlugins: PluginsDiscoveryResult,
   ): PluginManagerState {
@@ -838,7 +842,6 @@ object PluginManagerCore {
     return tracerShim.span("plugin initialization") {
       val coreLoader = PluginManagerCore::class.java.classLoader
       val initResult = initializePlugins(
-        descriptorLoadingErrors = descriptorLoadingErrors,
         initContext = initContext,
         discoveredPlugins = discoveredPlugins,
         coreLoader = coreLoader,

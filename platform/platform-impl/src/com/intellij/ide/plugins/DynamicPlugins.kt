@@ -431,7 +431,8 @@ object DynamicPlugins {
     }
 
     val newDiscoveryResult = PluginsDiscoveryResult.build(
-      newPluginLists
+      discoveredPluginLists = newPluginLists,
+      descriptorLoadingErrors = currentSet.input.discoveryResult.descriptorLoadingErrors,
     )
 
     val excludedFromCandidateSubset = mutableMapOf<PluginMainDescriptor, DescriptorExclusionReason>()

@@ -87,7 +87,7 @@ object PluginAutoUpdater {
         loadDescriptors(
           zipPoolDeferred = CompletableDeferred(pool),
           mainClassLoaderDeferred = CompletableDeferred(PluginAutoUpdateRepository::class.java.classLoader),
-        ).second.pluginLists
+        ).pluginLists
       }
     }
     // shadowing intended

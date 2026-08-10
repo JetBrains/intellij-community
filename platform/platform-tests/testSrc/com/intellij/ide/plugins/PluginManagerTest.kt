@@ -465,10 +465,12 @@ class PluginManagerTest {
       }
       loadingContext.close()
       val discoveredPlugins = PluginsDiscoveryResult.build(
-        listOf(DiscoveredPluginsList(plugins, if (isBundled) PluginsSourceContext.Bundled else PluginsSourceContext.Custom))
+        discoveredPluginLists = listOf(
+          DiscoveredPluginsList(plugins, if (isBundled) PluginsSourceContext.Bundled else PluginsSourceContext.Custom)
+        ),
+        descriptorLoadingErrors = loadingContext.copyDescriptorLoadingErrors(),
       )
       return PluginManagerCore.initializePlugins(
-        descriptorLoadingErrors = loadingContext.copyDescriptorLoadingErrors(),
         initContext = initContext,
         discoveredPlugins = discoveredPlugins,
         coreLoader = PluginManagerTest::class.java.getClassLoader(),
