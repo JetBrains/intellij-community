@@ -47,6 +47,11 @@ internal class TerminalMouseEventsHandlerImpl(
         code = applyModifierKeys(event, code)
         terminalInput.sendBytes(mouseReport(code, x + 1, y + 1))
 
+        // Editor selection can be active at this moment only if the user holds Shift.
+        // Support the case of removing the selection here, because editor logic won't be able to do it
+        // (we consume the event).
+        editor.selectionModel.removeSelection()
+
         // Consume the mouse event to avoid double processing:
         // by the terminal process and the editor logic (for example, text selection).
         event.consume()

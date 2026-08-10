@@ -331,6 +331,12 @@ fun setupMouseEventsHandling(
   //  But it is not clear how to track the screen start. Need to investigate.
   editor.addEditorMouseListener(object : EditorMouseListener {
     override fun mousePressed(event: EditorMouseEvent) {
+      // Editor moves the caret to the position of the mouse press on its own,
+      // but we need to do it additionally to support the case when the user holds Shift.
+      // To make text selection start from the mouse position even if Shift is held.
+      editor.caretModel.removeSecondaryCarets()
+      editor.caretModel.moveToOffset(event.offset)
+
       if (settings.enableMouseReporting() && isRemoteMouseAction(event.mouseEvent)) {
         val cell = editor.mousePointToGridCell(event.mouseEvent.point, event.visualPosition.line)
         eventsHandler.mousePressed(cell.column, cell.line, event.mouseEvent)
