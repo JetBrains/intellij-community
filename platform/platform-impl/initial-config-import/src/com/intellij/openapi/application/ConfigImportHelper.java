@@ -11,10 +11,10 @@ import com.intellij.ide.ImportOldConfigsUsagesCollector;
 import com.intellij.ide.SpecialConfigFiles;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.ide.plugins.BrokenPluginFileKt;
+import com.intellij.ide.plugins.DescriptorExclusionReason;
 import com.intellij.ide.plugins.DisabledPluginsState;
 import com.intellij.ide.plugins.ExpiredPluginsState;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.IdeaPluginDescriptorImplKt;
 import com.intellij.ide.plugins.PluginDescriptorLoader;
 import com.intellij.ide.plugins.PluginInitContextFactory;
 import com.intellij.ide.plugins.PluginInitContextSelectCandidateSubsetKt;
@@ -67,7 +67,6 @@ import com.intellij.util.io.Decompressor;
 import com.intellij.util.system.OS;
 import com.intellij.util.text.VersionComparatorUtil;
 import com.intellij.util.ui.IoErrorText;
-import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -1073,21 +1072,21 @@ public final class ConfigImportHelper {
         options.compatibleBuildNumber, Collections.emptySet(), Collections.emptySet(), brokenPluginVersions
       );
       var nonLoadablePlugins = new HashMap<PluginId, PluginMainDescriptor>();
+      var excludedPlugins = new HashMap<PluginMainDescriptor, DescriptorExclusionReason>();
       var selectedCandidates = PluginInitContextSelectCandidateSubsetKt.selectCandidateSubset(
         initContext,
         oldIdePlugins,
-        reason -> {
-          if (reason instanceof PluginVersionIsSuperseded) {
-            return Unit.INSTANCE;
-          }
-          var plugin = IdeaPluginDescriptorImplKt.getMainDescriptor(reason.getDescriptor());
+        excludedPlugins
+      ).getPlugins();
+      for (var entry : excludedPlugins.entrySet()) {
+        if (!(entry.getValue() instanceof PluginVersionIsSuperseded)) {
+          var plugin = entry.getKey();
           var previousNonLoadable = nonLoadablePlugins.get(plugin.getPluginId());
           if (previousNonLoadable == null || VersionComparatorUtil.compare(plugin.getVersion(), previousNonLoadable.getVersion()) > 0) {
             nonLoadablePlugins.put(plugin.getPluginId(), plugin);
           }
-          return Unit.INSTANCE;
         }
-      ).getPlugins();
+      }
       // additionally filter the selected candidates by compatibility
       var candidatePlugins = new ArrayList<PluginMainDescriptor>(selectedCandidates.size());
       for (var plugin : selectedCandidates) {

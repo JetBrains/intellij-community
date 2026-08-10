@@ -25,13 +25,14 @@ import org.jetbrains.annotations.ApiStatus
  * - Loads only the CORE plugin, all others are excluded
  * - Resolves ID conflicts (though typically only CORE remains)
  *
- * @param onPluginExcluded Callback invoked for each excluded [PluginMainDescriptor]
+ * @param excludedPluginsCollector Map populated with the exclusion reason for each excluded [PluginMainDescriptor], or `null` if exclusion
+ * reasons do not need to be collected
  * @return [UnambiguousPluginSet] containing the candidate subset with all ID conflicts resolved
  */
 @ApiStatus.Internal
 fun PluginInitializationContext.selectCandidateSubset(
   discoveryResult: PluginsDiscoveryResult,
-  onPluginExcluded: (DescriptorExclusionReason) -> Unit,
+  excludedPluginsCollector: MutableMap<PluginMainDescriptor, DescriptorExclusionReason>?,
 ): UnambiguousPluginSet {
   val discoveredPlugins = discoveryResult.pluginLists
   if (discoveredPlugins.isEmpty()) {
@@ -39,15 +40,15 @@ fun PluginInitializationContext.selectCandidateSubset(
   }
   val candidatePlugins = if (explicitPluginSubsetToLoad != null) {
     // does not care about disabled plugins and incompatible-with for essential plugins
-    selectFromExplicitSubset(discoveredPlugins, onPluginExcluded)
+    selectFromExplicitSubset(discoveredPlugins, excludedPluginsCollector)
   }
   else if (disablePluginLoadingCompletely) {
-    selectOnlyCorePlugin(discoveredPlugins, onPluginExcluded)
+    selectOnlyCorePlugin(discoveredPlugins, excludedPluginsCollector)
   }
   else {
-    selectMostRecentCompatibleOrJustMostRecentPerPluginId(discoveredPlugins, onPluginExcluded)
+    selectMostRecentCompatibleOrJustMostRecentPerPluginId(discoveredPlugins, excludedPluginsCollector)
   }
-  return resolveIdConflicts(candidatePlugins, onPluginExcluded)
+  return resolveIdConflicts(candidatePlugins, excludedPluginsCollector)
 }
 
 /**
@@ -55,7 +56,7 @@ fun PluginInitializationContext.selectCandidateSubset(
  */
 private fun PluginInitializationContext.selectMostRecentCompatibleOrJustMostRecentPerPluginId(
   discoveredPlugins: List<DiscoveredPluginsList>,
-  onPluginExcluded: (DescriptorExclusionReason) -> Unit,
+  excludedPluginsCollector: MutableMap<PluginMainDescriptor, DescriptorExclusionReason>?,
 ): List<PluginMainDescriptor> {
   val selectedPluginsByPluginId = LinkedHashMap<PluginId, PluginMainDescriptor>()
   for (pluginList in discoveredPlugins) {
@@ -70,23 +71,23 @@ private fun PluginInitializationContext.selectMostRecentCompatibleOrJustMostRece
       val existingIncompatibility = validatePluginIsCompatible(existingPlugin)
       val pluginIncompatibility = validatePluginIsCompatible(plugin)
       if (existingIncompatibility != null && pluginIncompatibility == null) {
-        onPluginExcluded(existingIncompatibility)
+        excludedPluginsCollector?.put(existingPlugin, existingIncompatibility)
         selectedPluginsByPluginId[pluginId] = plugin
         continue
       }
       if (existingIncompatibility == null && pluginIncompatibility != null) {
-        onPluginExcluded(pluginIncompatibility)
+        excludedPluginsCollector?.put(plugin, pluginIncompatibility)
         continue
       }
 
       // plugins added via property shouldn't be overridden to avoid plugin root detection issues when running external plugin tests
       if (VersionComparatorUtil.compare(plugin.version, existingPlugin.version) > 0 ||
           pluginList.source is PluginsSourceContext.SystemPropertyProvided) {
-        onPluginExcluded(PluginVersionIsSuperseded(existingPlugin, plugin))
+        excludedPluginsCollector?.put(existingPlugin, PluginVersionIsSuperseded(existingPlugin, plugin))
         selectedPluginsByPluginId[pluginId] = plugin
       }
       else {
-        onPluginExcluded(PluginVersionIsSuperseded(plugin, existingPlugin))
+        excludedPluginsCollector?.put(plugin, PluginVersionIsSuperseded(plugin, existingPlugin))
       }
     }
   }
@@ -98,9 +99,9 @@ private fun PluginInitializationContext.selectMostRecentCompatibleOrJustMostRece
 
 private fun PluginInitializationContext.selectFromExplicitSubset(
   discoveredPlugins: List<DiscoveredPluginsList>,
-  onPluginExcluded: (DescriptorExclusionReason) -> Unit,
+  excludedPluginsCollector: MutableMap<PluginMainDescriptor, DescriptorExclusionReason>?,
 ): List<PluginMainDescriptor> {
-  val plugins = selectMostRecentCompatibleOrJustMostRecentPerPluginId(discoveredPlugins, onPluginExcluded)
+  val plugins = selectMostRecentCompatibleOrJustMostRecentPerPluginId(discoveredPlugins, excludedPluginsCollector)
   val explicitSubset = explicitPluginSubsetToLoad ?: emptySet()
   val pluginIdsSubset = essentialPlugins + explicitSubset // TODO consider explicit subset as essential and exclude everything non-essential, move this logic into constraint resolver
   val pluginSubset = plugins.filter { it.pluginId in pluginIdsSubset }
@@ -114,7 +115,7 @@ private fun PluginInitializationContext.selectFromExplicitSubset(
     if (plugin in requiredModules) {
       true
     } else {
-      onPluginExcluded(ProductRulesImposedExclusion(plugin, PluginIsNotContainedInTheExplicitlyConfiguredSubsetOfPluginsForLoading))
+      excludedPluginsCollector?.put(plugin, ProductRulesImposedExclusion(plugin, PluginIsNotContainedInTheExplicitlyConfiguredSubsetOfPluginsForLoading))
       false
     }
   }
@@ -123,7 +124,7 @@ private fun PluginInitializationContext.selectFromExplicitSubset(
 
 private fun selectOnlyCorePlugin(
   discoveredPlugins: List<DiscoveredPluginsList>,
-  onPluginExcluded: (DescriptorExclusionReason) -> Unit,
+  excludedPluginsCollector: MutableMap<PluginMainDescriptor, DescriptorExclusionReason>?,
 ): List<PluginMainDescriptor> {
   return discoveredPlugins.flatMap { pluginsList ->
     pluginsList.plugins.filter { plugin ->
@@ -131,7 +132,7 @@ private fun selectOnlyCorePlugin(
         true
       }
       else {
-        onPluginExcluded(ProductRulesImposedExclusion(plugin, PluginLoadingIsDisabledCompletelyExceptCore))
+        excludedPluginsCollector?.put(plugin, ProductRulesImposedExclusion(plugin, PluginLoadingIsDisabledCompletelyExceptCore))
         false
       }
     }

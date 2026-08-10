@@ -9,23 +9,20 @@ import org.jetbrains.annotations.ApiStatus
  * This method resolves id conflicts between plugins and returns an [UnambiguousPluginSet].
  * Conflict resolution tries to account for such hints as essential plugins, disabled plugins, compatibility, `incompatible-with` statements.
  *
- * @param onPluginExcluded Callback invoked for each excluded plugin
+ * @param excludedPluginsCollector Map to collect excluded plugins and their exclusion reasons
  * @return Unambiguous plugin set with all id conflicts resolved
  */
 @ApiStatus.Internal
 fun PluginInitializationContext.resolveIdConflicts(
   plugins: List<PluginMainDescriptor>,
-  onPluginExcluded: (DescriptorExclusionReason) -> Unit,
+  excludedPluginsCollector: MutableMap<PluginMainDescriptor, DescriptorExclusionReason>?,
 ): UnambiguousPluginSet {
   UnambiguousPluginSet.tryBuild(plugins)
     ?.let { return it }
   // slow path: there are conflicts
-  val toExclude = HashSet<PluginMainDescriptor>()
-  resolveConflicts(plugins) { reason ->
-    onPluginExcluded(reason)
-    toExclude.add(reason.descriptor.getMainDescriptor())
-  }
-  val filteredPlugins = plugins.filter { it !in toExclude }
+  val localCollector = excludedPluginsCollector ?: hashMapOf()
+  resolveConflicts(plugins, localCollector)
+  val filteredPlugins = plugins.filter { it !in localCollector }
   return UnambiguousPluginSet.tryBuild(filteredPlugins)
          ?: error("failed to build unambiguous plugin set after conflict resolution")
 }
@@ -48,13 +45,13 @@ private fun PluginMainDescriptor.getLastKeyDeclarationOrigin(key: Any): PluginMo
 
 private fun PluginInitializationContext.resolveConflicts(
   plugins: List<PluginMainDescriptor>,
-  exclude: (DescriptorExclusionReason) -> Unit,
+  excludedPluginsCollector: MutableMap<PluginMainDescriptor, DescriptorExclusionReason>?,
 ) {
   val resolutionMapBuilder = ResolutionMapBuilder<Any, PluginMainDescriptor>(getKeys = PluginMainDescriptor::sequenceAllKeys) { existing, candidate, key ->
     if (existing === candidate) {
       val firstDecl = existing.getKeyDeclarationOrigin(key)
       val lastDecl = existing.getLastKeyDeclarationOrigin(key)
-      exclude(createIdConflictReason(existing, firstDecl, lastDecl, key))
+      excludedPluginsCollector?.put(existing, createIdConflictReason(existing, firstDecl, lastDecl, key))
       return@ResolutionMapBuilder null
     }
     val existingDecl = existing.getKeyDeclarationOrigin(key)
@@ -63,49 +60,49 @@ private fun PluginInitializationContext.resolveConflicts(
     val existingEssential = existing.pluginId in essentialPlugins
     val candidateEssential = candidate.pluginId in essentialPlugins
     if (existingEssential && !candidateEssential) {
-      exclude(createIdConflictReason(candidate, candidateDecl, existingDecl, key))
+      excludedPluginsCollector?.put(candidate, createIdConflictReason(candidate, candidateDecl, existingDecl, key))
       return@ResolutionMapBuilder existing
     }
     if (!existingEssential && candidateEssential) {
-      exclude(createIdConflictReason(existing, existingDecl, candidateDecl, key))
+      excludedPluginsCollector?.put(existing, createIdConflictReason(existing, existingDecl, candidateDecl, key))
       return@ResolutionMapBuilder candidate
     }
 
     val disabledExisting = isPluginDisabled(existing.pluginId)
     val disabledCandidate = isPluginDisabled(candidate.pluginId)
     if (disabledExisting && !disabledCandidate) {
-      exclude(PluginIsMarkedDisabled(existing))
+      excludedPluginsCollector?.put(existing, PluginIsMarkedDisabled(existing))
       return@ResolutionMapBuilder candidate
     }
     if (!disabledExisting && disabledCandidate) {
-      exclude(PluginIsMarkedDisabled(candidate))
+      excludedPluginsCollector?.put(candidate, PluginIsMarkedDisabled(candidate))
       return@ResolutionMapBuilder existing
     }
 
     val incompatibilityExisting = validatePluginIsCompatible(existing)
     val incompatibilityCandidate = validatePluginIsCompatible(candidate)
     if (incompatibilityExisting != null && incompatibilityCandidate == null) {
-      exclude(incompatibilityExisting)
+      excludedPluginsCollector?.put(existing, incompatibilityExisting)
       return@ResolutionMapBuilder candidate
     }
     if (incompatibilityExisting == null && incompatibilityCandidate != null) {
-      exclude(incompatibilityCandidate)
+      excludedPluginsCollector?.put(candidate, incompatibilityCandidate)
       return@ResolutionMapBuilder existing
     }
 
     val existingIncompatibleWithCandidate = existing.incompatiblePlugins.contains(candidate.pluginId)
     val candidateIncompatibleWithExisting = candidate.incompatiblePlugins.contains(existing.pluginId)
     if (existingIncompatibleWithCandidate && !candidateIncompatibleWithExisting) {
-      exclude(IncompatibleWithAnotherModule(existing, candidate))
+      excludedPluginsCollector?.put(existing, IncompatibleWithAnotherModule(existing, candidate))
       return@ResolutionMapBuilder candidate
     }
     if (!existingIncompatibleWithCandidate && candidateIncompatibleWithExisting) {
-      exclude(IncompatibleWithAnotherModule(candidate, existing))
+      excludedPluginsCollector?.put(candidate, IncompatibleWithAnotherModule(candidate, existing))
       return@ResolutionMapBuilder existing
     }
 
-    exclude(createIdConflictReason(existing, existingDecl, candidateDecl, key))
-    exclude(createIdConflictReason(candidate, candidateDecl, existingDecl, key))
+    excludedPluginsCollector?.put(existing, createIdConflictReason(existing, existingDecl, candidateDecl, key))
+    excludedPluginsCollector?.put(candidate, createIdConflictReason(candidate, candidateDecl, existingDecl, key))
     null
   }
   for (plugin in plugins) {

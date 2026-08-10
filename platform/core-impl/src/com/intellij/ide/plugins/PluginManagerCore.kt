@@ -464,12 +464,7 @@ object PluginManagerCore {
   ): PluginManagerState {
     var initStagesActivity = parentActivity?.startChild("selectCandidateSubset") // no safe end() call, because if it fails, it won't matter
     val excludedFromCandidateSubset = IdentityHashMap<PluginMainDescriptor, DescriptorExclusionReason>()
-    val candidateSubset = initContext.selectCandidateSubset(discoveredPlugins) { reason ->
-      if (reason.descriptor !is PluginMainDescriptor) {
-        logger.error("Non-main descriptor passed to selectCandidateSubset: ${reason.descriptor}")
-      }
-      excludedFromCandidateSubset[reason.descriptor.getMainDescriptor()] = reason
-    }
+    val candidateSubset = initContext.selectCandidateSubset(discoveredPlugins, excludedFromCandidateSubset)
 
     initStagesActivity = initStagesActivity?.endAndStart("initContext startup configuration")
     initContext.runConfigurationDuringStartup(candidateSubset)

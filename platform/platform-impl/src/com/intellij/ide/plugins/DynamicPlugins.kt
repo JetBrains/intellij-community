@@ -434,9 +434,10 @@ object DynamicPlugins {
       newPluginLists
     )
 
-    val incompletePlugins = mutableMapOf<PluginId, PluginMainDescriptor> ()
-    val candidateSubset = newInitContext.selectCandidateSubset(newDiscoveryResult) { reason ->
-      val plugin = reason.descriptor.getMainDescriptor()
+    val excludedPlugins = mutableMapOf<PluginMainDescriptor, DescriptorExclusionReason>()
+    val candidateSubset = newInitContext.selectCandidateSubset(newDiscoveryResult, excludedPlugins)
+    val incompletePlugins = mutableMapOf<PluginId, PluginMainDescriptor>()
+    for (plugin in excludedPlugins.keys) {
       incompletePlugins[plugin.pluginId] = plugin
     }
     val resolvedSet = newInitContext.resolveConstraints(candidateSubset)

@@ -11,7 +11,6 @@ import com.intellij.ide.plugins.PluginMainDescriptor
 import com.intellij.ide.plugins.PluginVersionIsSuperseded
 import com.intellij.ide.plugins.PluginsDiscoveryResult
 import com.intellij.ide.plugins.PluginsSourceContext
-import com.intellij.ide.plugins.getMainDescriptor
 import com.intellij.ide.plugins.isExcluded
 import com.intellij.ide.plugins.loadDescriptorFromArtifact
 import com.intellij.ide.plugins.loadDescriptors
@@ -151,11 +150,7 @@ object PluginAutoUpdater {
       discoveredPlugins + DiscoveredPluginsList(updates.values.toList(), PluginsSourceContext.Custom)
     )
     val excludedDescriptors = mutableMapOf<PluginMainDescriptor, DescriptorExclusionReason>()
-    val candidateSubset = initContext.selectCandidateSubset(composedDiscoveryResult) { reason ->
-      if (reason !is PluginVersionIsSuperseded) {
-        excludedDescriptors[reason.descriptor.getMainDescriptor()] = reason
-      }
-    }
+    val candidateSubset = initContext.selectCandidateSubset(composedDiscoveryResult, excludedDescriptors)
     val pluginSet = initContext.resolveConstraints(candidateSubset)
     for ((id, updateDesc) in updates) {
       // no third-party plugin check, settings are not available at this point; that check must be done when downloading the updates
@@ -181,7 +176,7 @@ object PluginAutoUpdater {
       // bit more formalized and a bit more flexible to be reused here (TODO).
       val plugin = pluginSet.candidateSet.resolvePluginId(id)
       if (plugin == null || plugin !== updateDesc) {
-        val nonLoadReason = excludedDescriptors[updateDesc]
+        val nonLoadReason = excludedDescriptors[updateDesc].takeUnless { it is PluginVersionIsSuperseded }
         rejectedUpdates[id] = "plugin ${updateDesc.shortLogDescription} would not load after the update" +
                               (nonLoadReason?.let { ": ${PluginInitializationDiagnosticUtils.getLogMessageForRootExclusionReason(it)}" } ?:
                                plugin?.let { ": version ${it.version} is selected for loading instead" }.orEmpty())
