@@ -269,6 +269,10 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator implements Disp
     return myClassCoverageInfos;
   }
 
+  public final Map<String, PackageAnnotator.PackageCoverageInfo> getPackagesCoverage() {
+    return myPackageCoverageInfos;
+  }
+
   public final @Nullable VirtualFile getClassSourceFile(@NotNull String classFQName) {
     return myClassSourceFiles.get(classFQName);
   }

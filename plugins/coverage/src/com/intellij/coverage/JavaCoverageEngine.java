@@ -45,6 +45,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.TestSourcesFilter;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.NioFiles;
@@ -69,6 +70,7 @@ import com.intellij.task.impl.ProjectTaskManagerImpl;
 import com.intellij.testIntegration.TestFramework;
 import com.intellij.util.containers.ContainerUtil;
 import jetbrains.coverage.report.ReportGenerationFailedException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -93,6 +95,22 @@ import java.util.stream.IntStream;
  */
 public class JavaCoverageEngine extends CoverageEngine {
   private static final Logger LOG = Logger.getInstance(JavaCoverageEngine.class.getName());
+  private static final Key<TemporaryOverrides> TEMPORARY_OVERRIDES = Key.create("java.coverage.overrides");
+
+  private record TemporaryOverrides(@NotNull CoverageRunner runner,
+                                    boolean branchCoverage,
+                                    boolean testTracking,
+                                    boolean trackTestFolders) { }
+
+  @ApiStatus.Internal
+  public static void setTemporaryOverrides(@NotNull RunConfigurationBase<?> configuration,
+                                           @NotNull CoverageRunner runner,
+                                           boolean branchCoverage,
+                                           boolean testTracking,
+                                           boolean trackTestFolders) {
+    configuration.putUserData(TEMPORARY_OVERRIDES,
+                              new TemporaryOverrides(runner, branchCoverage, testTracking, trackTestFolders));
+  }
   private static final String indent = "  ";
   private static final int MAX_EXPRESSION_LENGTH = 100;
 
@@ -270,7 +288,11 @@ public class JavaCoverageEngine extends CoverageEngine {
   @Override
   public @Nullable CoverageSuite createCoverageSuite(@NotNull CoverageEnabledConfiguration config) {
     Project project = config.getConfiguration().getProject();
-    CoverageRunner runner = JavaCoverageOptionsProvider.getInstance(project).getCoverageRunner();
+    TemporaryOverrides overrides = config.getConfiguration().getUserData(TEMPORARY_OVERRIDES);
+    CoverageRunner runner = overrides == null ? null : overrides.runner();
+    if (runner == null) {
+      runner = JavaCoverageOptionsProvider.getInstance(project).getCoverageRunner();
+    }
     if (runner == null) return null;
     // set here for correct createFileProvider call
     config.setCoverageRunner(runner);
@@ -286,14 +308,16 @@ public class JavaCoverageEngine extends CoverageEngine {
                                                      @NotNull CoverageEnabledConfiguration config) {
     if (config instanceof JavaCoverageEnabledConfiguration javaConfig) {
       JavaCoverageOptionsProvider optionsProvider = JavaCoverageOptionsProvider.getInstance(project);
+      TemporaryOverrides overrides = config.getConfiguration().getUserData(TEMPORARY_OVERRIDES);
       return createSuite(runner,
                          name, fileProvider,
                          javaConfig.getPatterns(),
                          javaConfig.getExcludePatterns(),
                          timestamp,
-                         optionsProvider.getTestTracking() && canHavePerTestCoverage(config.getConfiguration()),
-                         optionsProvider.getBranchCoverage(),
-                         optionsProvider.getTestModulesCoverage(),
+                         (overrides == null ? optionsProvider.getTestTracking() : overrides.testTracking()) &&
+                         canHavePerTestCoverage(config.getConfiguration()),
+                         overrides == null ? optionsProvider.getBranchCoverage() : overrides.branchCoverage(),
+                         overrides == null ? optionsProvider.getTestModulesCoverage() : overrides.trackTestFolders(),
                          project);
     }
     return null;

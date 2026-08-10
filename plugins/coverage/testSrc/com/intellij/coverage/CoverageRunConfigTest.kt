@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage
 
+import com.intellij.coverage.analysis.JavaCoverageAnnotator
 import com.intellij.coverage.view.CoverageViewManager
 import com.intellij.coverage.view.CoverageViewTreeStructure
 import com.intellij.coverage.view.JavaCoverageNode
@@ -14,14 +15,18 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.PluginPathManager
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.rt.coverage.data.LineCoverage
 import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.ui.classFilter.ClassFilter
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import org.jdom.Element
 import org.junit.Assert
 import org.junit.Test
@@ -29,6 +34,7 @@ import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.time.Duration.Companion.milliseconds
 
 
 @RunWith(JUnit4::class)
@@ -106,6 +112,122 @@ class CoverageRunConfigTest : CoverageIntegrationBaseTest() {
     suite.readExternal(element)
 
     Assert.assertTrue(suite.runner is JaCoCoCoverageRunner)
+  }
+
+  @Test
+  fun `test one-shot coverage overrides do not change persisted options`() {
+    val runConfig = RunManager.getInstance(project).findConfigurationByName("foo in integration")?.configuration as RunConfigurationBase<*>
+    val optionsProvider = JavaCoverageOptionsProvider.getInstance(project)
+    val jacocoRunner = CoverageRunner.getInstance(JaCoCoCoverageRunner::class.java)
+    val ideaRunner = CoverageRunner.getInstance(IDEACoverageRunner::class.java)
+    val persistedRunner = optionsProvider.coverageRunner
+    val persistedBranchCoverage = optionsProvider.branchCoverage
+    val persistedTestTracking = optionsProvider.testTracking
+    val persistedTestModulesCoverage = optionsProvider.testModulesCoverage
+
+    try {
+      optionsProvider.coverageRunner = jacocoRunner
+      optionsProvider.branchCoverage = true
+      optionsProvider.testTracking = true
+      optionsProvider.testModulesCoverage = false
+      val effectiveRunConfig = runConfig.clone() as RunConfigurationBase<*>
+      val effectiveCoverageConfig = CoverageEnabledConfiguration.getOrCreate(effectiveRunConfig)
+      JavaCoverageEngine.setTemporaryOverrides(effectiveRunConfig, ideaRunner, false, false, true)
+      val overriddenSuite = JavaCoverageEngine.getInstance().createCoverageSuite(effectiveCoverageConfig)
+      val persistedSuite = JavaCoverageEngine.getInstance().createCoverageSuite(CoverageEnabledConfiguration.getOrCreate(runConfig))
+
+      Assert.assertTrue(overriddenSuite?.runner is IDEACoverageRunner)
+      Assert.assertFalse(overriddenSuite!!.isBranchCoverage)
+      Assert.assertFalse(overriddenSuite.isCoverageByTestEnabled)
+      Assert.assertTrue(overriddenSuite.isTrackTestFolders)
+      Assert.assertTrue(persistedSuite?.runner is JaCoCoCoverageRunner)
+      Assert.assertTrue(persistedSuite!!.isBranchCoverage)
+      Assert.assertFalse(persistedSuite.isTrackTestFolders)
+      Assert.assertTrue(optionsProvider.coverageRunner is JaCoCoCoverageRunner)
+      Assert.assertTrue(optionsProvider.branchCoverage)
+      Assert.assertTrue(optionsProvider.testTracking)
+      Assert.assertFalse(optionsProvider.testModulesCoverage)
+    }
+    finally {
+      optionsProvider.coverageRunner = persistedRunner
+      optionsProvider.branchCoverage = persistedBranchCoverage
+      optionsProvider.testTracking = persistedTestTracking
+      optionsProvider.testModulesCoverage = persistedTestModulesCoverage
+    }
+  }
+
+  @Test
+  fun `test explicit coverage report path is used only for the configured run`() {
+    val runConfig = RunManager.getInstance(project).findConfigurationByName("foo in integration")?.configuration as RunConfigurationBase<*>
+    val persistedCoverageConfig = CoverageEnabledConfiguration.getOrCreate(runConfig)
+    val originalPath = persistedCoverageConfig.coverageFilePath
+    val mcpReportPath = Path.of(requireNotNull(project.basePath), "mcp-coverage.ic")
+    val effectiveRunConfig = runConfig.clone() as RunConfigurationBase<*>
+    val effectiveCoverageConfig = JavaCoverageEnabledConfiguration(effectiveRunConfig)
+    effectiveRunConfig.putCopyableUserData(CoverageEnabledConfiguration.COVERAGE_KEY, effectiveCoverageConfig)
+    effectiveCoverageConfig.coverageRunner = persistedCoverageConfig.coverageRunner
+    effectiveCoverageConfig.setCoverageFilePathOverride(mcpReportPath.toString())
+
+    val suite = JavaCoverageEngine.getInstance().createCoverageSuite(effectiveCoverageConfig)
+
+    Assert.assertEquals(mcpReportPath.toString(), suite?.coverageDataFileName)
+    Assert.assertEquals(originalPath, persistedCoverageConfig.coverageFilePath)
+
+    effectiveCoverageConfig.setCoverageFilePathOverride(null)
+    val pathBeforeRename = effectiveCoverageConfig.coverageFilePath
+    effectiveRunConfig.name = "renamed coverage configuration"
+    effectiveCoverageConfig.coverageRunner = effectiveCoverageConfig.coverageRunner
+
+    Assert.assertNotEquals(pathBeforeRename, effectiveCoverageConfig.coverageFilePath)
+  }
+
+  @Test
+  fun `test MCP coverage processing leaves active suite unchanged when option is ask`() = runBlocking {
+    val runModule = requireNotNull(ModuleManager.getInstance(project).findModuleByName("integration"))
+    val runConfig = ApplicationConfiguration("MCP coverage integration test", project).apply {
+      setModule(runModule)
+      mainClassName = "foo.CoverageApp"
+      alternativeJrePath = requireNotNull(JavaAwareProjectJdkTableImpl.getInstanceEx().internalJdk.homePath)
+      isAlternativeJrePathEnabled = true
+    }
+    val coverageConfig = CoverageEnabledConfiguration.getOrCreate(runConfig) as JavaCoverageEnabledConfiguration
+    val runner = requireNotNull(CoverageRunner.getInstance(IDEACoverageRunner::class.java))
+    coverageConfig.coverageRunner = runner
+    JavaCoverageEngine.setTemporaryOverrides(runConfig, runner, true, false, false)
+    val isolatedAnnotator = JavaCoverageAnnotator(project)
+    CoverageDataManager.setSuppressedPresentation(runConfig, isolatedAnnotator)
+    val options = CoverageOptionsProvider.getInstance(project)
+    val previousOption = options.optionToReplace
+    val activeBundle = loadIJSuite()
+    openSuiteAndWait(activeBundle)
+    val activeAnnotator = JavaCoverageAnnotator.getInstance(project)
+    val activeClassCoverage = activeAnnotator.classesCoverage.toMap()
+    val completed = CompletableDeferred<CoverageSuitesBundle>()
+    manager.addSuiteListener(object : CoverageSuiteListener {
+      override fun coverageDataCalculated(bundle: CoverageSuitesBundle) {
+        completed.complete(bundle)
+      }
+    }, testRootDisposable)
+    try {
+      options.setOptionsToReplace(CoverageOptionsProvider.ASK_ON_NEW_SUITE)
+      withContext(Dispatchers.EDT) {
+        PlatformTestUtil.executeConfigurationAndWait(runConfig, CoverageExecutor.EXECUTOR_ID)
+      }
+      val completedBundle = withTimeout(10_000.milliseconds) { completed.await() }
+
+      Assert.assertSame(activeBundle, manager.currentSuitesBundle)
+      Assert.assertSame(isolatedAnnotator, completedBundle.getAnnotator(project))
+      Assert.assertEquals(activeClassCoverage, activeAnnotator.classesCoverage)
+      Assert.assertTrue(isolatedAnnotator.classesCoverage.isNotEmpty())
+      Assert.assertFalse(completedBundle.shouldActivateToolWindow())
+      Assert.assertEquals(CoverageOptionsProvider.ASK_ON_NEW_SUITE, options.optionToReplace)
+    }
+    finally {
+      Disposer.dispose(isolatedAnnotator)
+      coverageConfig.currentCoverageSuite?.let(manager::removeCoverageSuite)
+      closeSuite(activeBundle)
+      options.setOptionsToReplace(previousOption)
+    }
   }
 
   private fun doTestRunWithCoverage(coverageRunner: CoverageRunner): Unit = runBlocking {
