@@ -6,6 +6,7 @@
   <technology name="alibaba-sentinel" class="com.alibaba.csp.sentinel.SphU"/>
   <technology name="allure1" class="ru.yandex.qatools.allure.annotations.Step"/>
   <technology name="allure2" class="io.qameta.allure.Step"/>
+  <technology name="anthropic-java" class="com.anthropic.client.AnthropicClient"/>
   <technology name="apache-bval" class="org.apache.bval.jsr.ApacheValidationProvider"/>
   <technology name="apache-camel" class="org.apache.camel.Processor"/>
   <technology name="apache-commons-lang3" class="org.apache.commons.lang3.ArrayUtils"/>
@@ -59,6 +60,7 @@
   <technology name="easymock" class="org.easymock.Mock"/>
   <technology name="eclipselink-jpa" class="org.eclipse.persistence.jpa.PersistenceProvider"/>
   <technology name="elasticsearch" class="co.elastic.clients.elasticsearch.ElasticsearchClient"/>
+  <technology name="embabel" class="com.embabel.agent.core.AgentPlatform"/>
   <technology name="errorprone" class="com.google.errorprone.annotations.Immutable"/>
   <technology name="eureka" class="com.netflix.discovery.EurekaClient"/>
   <technology name="exposed" class="org.jetbrains.exposed.sql.Query"/>
@@ -198,7 +200,7 @@
   <technology name="nacos" class="com.alibaba.nacos.client.naming.NacosNamingService"/>
   <technology name="netty" class="io.netty.channel.AbstractChannel"/>
   <technology name="okhttp3" class="okhttp3.Request"/>
-  <technology name="openai-java" class="com.openai.models.ChatModel"/>
+  <technology name="openai-java" class="com.openai.client.OpenAIClient"/>
   <technology name="openai-kotlin-unofficial" class="com.aallam.openai.client.OpenAI"/>
   <technology name="openfeign" class="feign.RequestLine"/>
   <technology name="openjfx" class="javafx.css.Size"/>
