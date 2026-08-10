@@ -3,6 +3,7 @@ package com.intellij.debugger.streams.core
 
 import com.intellij.debugger.streams.core.lib.LibrarySupportProvider
 import com.intellij.debugger.streams.core.wrapper.StreamChain
+import com.intellij.xdebugger.XSourcePosition
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -10,7 +11,10 @@ sealed interface ChainStatus {
   data object Computing : ChainStatus
   data object LanguageNotSupported : ChainStatus
   data object NotFound : ChainStatus
-  data class Found(val chains: List<StreamChainWithLibrary>) : ChainStatus
+  /**
+   * [position] is the pause point where [chains] were detected
+   */
+  data class Found(val position: XSourcePosition, val chains: List<StreamChainWithLibrary>) : ChainStatus
 }
 
 @ApiStatus.Internal

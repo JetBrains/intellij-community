@@ -64,16 +64,6 @@ class ChainDetectionStateManager(private val cs: CoroutineScope) {
 
   fun chainStateFlow(session: XDebugSession): Flow<ChainDetectionState> = sessionStates[session]?.status ?: SESSION_FINISHED
 
-  fun inlayStateFlow(session: XDebugSession): Flow<StreamChainInlayState> =
-    chainStateFlow(session).map { state ->
-      val position = state.suspendedStackTopFrame?.sourcePosition
-      if (position != null && state.status is ChainStatus.Found) {
-        StreamChainInlayState.Visible(position)
-      } else {
-        StreamChainInlayState.Hidden
-      }
-    }.distinctUntilChanged()
-
   // Both events are published with `syncPublisher`, and `processStopped` always comes strictly after `processStarted`,
   // so the state is created once per session and is always canceled.
   internal fun onProcessStarted(session: XDebugSession) {
@@ -153,7 +143,7 @@ class ChainDetectionStateManager(private val cs: CoroutineScope) {
       } ?: return ChainStatus.LanguageNotSupported
       if (chains.isEmpty()) return ChainStatus.NotFound
       val traceable = filterTraceable(chains, position, element)
-      return if (traceable.isEmpty()) ChainStatus.NotFound else ChainStatus.Found(traceable)
+      return if (traceable.isEmpty()) ChainStatus.NotFound else ChainStatus.Found(position, traceable)
     }
 
     private suspend fun filterTraceable(
@@ -178,12 +168,6 @@ data class ChainDetectionState(
   val suspendedStackTopFrame: XStackFrame?,
   val status: ChainStatus,
 )
-
-@ApiStatus.Internal
-sealed interface StreamChainInlayState {
-  data class Visible(val position: XSourcePosition) : StreamChainInlayState
-  object Hidden : StreamChainInlayState
-}
 
 private fun providersFor(language: Language): List<LibrarySupportProvider> =
   LibrarySupportProvider.EP_NAME.getByGroupingKey(language.id, ChainDetectionStateManager::class.java) { it.getLanguageId() }

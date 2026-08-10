@@ -9,12 +9,19 @@ import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
 import com.intellij.xdebugger.impl.XDebuggerManagerProxyListener
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
 
+/**
+ * Caches the chain state from the backend ([StreamDebuggerApi.getChainState])
+ * It is reused between the toolbar action and the inlay.
+ */
+@ApiStatus.Internal
 @Service(Service.Level.PROJECT)
-internal class StreamDebuggerManager(project: Project) : XDebuggerManagerProxyListener {
+class StreamDebuggerManager(project: Project) : XDebuggerManagerProxyListener {
   private val sessionStates = ConcurrentHashMap<XDebugSessionId, TraceDebuggerStateListener>()
 
   init {
@@ -23,16 +30,17 @@ internal class StreamDebuggerManager(project: Project) : XDebuggerManagerProxyLi
 
 
   override fun sessionStarted(session: XDebugSessionProxy) {
-    sessionStates[session.id] = TraceDebuggerStateListener(session.coroutineScope, session.id)
+    sessionState(session)
   }
 
   override fun sessionStopped(session: XDebugSessionProxy) {
-    sessionStates.remove(session.id)
+    sessionStates.remove(session.id)?.stop()
   }
 
-  fun getChainStatus(id: XDebugSessionId): ChainStatusDto? {
-    return sessionStates[id]?.chainStatus
-  }
+  fun chainStateFlow(session: XDebugSessionProxy): StateFlow<ChainStateDto?> = sessionState(session).chainStateFlow
+
+  private fun sessionState(session: XDebugSessionProxy): TraceDebuggerStateListener =
+    sessionStates.computeIfAbsent(session.id) { TraceDebuggerStateListener(session.coroutineScope, it) }
 
   companion object {
     fun getInstance(project: Project): StreamDebuggerManager = project.service()
@@ -40,19 +48,17 @@ internal class StreamDebuggerManager(project: Project) : XDebuggerManagerProxyLi
 }
 
 private class TraceDebuggerStateListener(cs: CoroutineScope, sessionId: XDebugSessionId) {
-  private val _state = MutableStateFlow(null as ChainStatusDto?)
+  private val _state = MutableStateFlow<ChainStateDto?>(null)
 
-
-  init {
-    cs.launch {
-      StreamDebuggerApi.getInstance().getChainStatus(sessionId).collectLatest {
-        _state.value = it
-      }
-    }
+  private val subscription = cs.launch {
+    StreamDebuggerApi.getInstance().getChainState(sessionId).collect { _state.value = it }
   }
 
-  val chainStatus: ChainStatusDto?
-    get() = _state.value
+  val chainStateFlow: StateFlow<ChainStateDto?> = _state.asStateFlow()
+
+  fun stop() {
+    subscription.cancel()
+  }
 }
 
 

@@ -6,8 +6,9 @@ import com.intellij.codeInsight.hints.presentation.MouseButton
 import com.intellij.codeInsight.hints.presentation.PresentationFactory
 import com.intellij.codeInsight.hints.presentation.PresentationRenderer
 import com.intellij.codeInsight.hints.presentation.mouseButton
-import com.intellij.debugger.streams.shared.StreamChainInlayStateDto
+import com.intellij.debugger.streams.shared.ChainStateDto
 import com.intellij.debugger.streams.shared.StreamDebuggerApi
+import com.intellij.debugger.streams.shared.StreamDebuggerManager
 import com.intellij.debugger.streams.shared.TraceEntryPoint
 import com.intellij.debugger.streams.shared.icons.DebuggerStreamsSharedIcons
 import com.intellij.java.debugger.impl.shared.SharedJavaDebuggerSession
@@ -30,6 +31,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.awt.Cursor
@@ -38,7 +42,6 @@ import java.awt.event.MouseEvent
 
 /**
  * Shows the "Trace Current Stream Chain" inlay for JVM debug sessions.
- * The backend publishes the chain state through [StreamDebuggerApi.getInlayState].
  * Each session has one collector, and each collector shows one inlay at most.
  */
 internal class StreamDebuggerInlaySessionListener(private val project: Project) : XDebuggerManagerProxyListener {
@@ -53,20 +56,23 @@ internal class StreamDebuggerInlaySessionListener(private val project: Project) 
  * The `finally` of the previous block disposes the previous inlay, so there is always exactly 0 or 1 inlay
  */
 private suspend fun collectInlayUpdates(project: Project, session: XDebugSessionProxy) {
-  StreamDebuggerApi.getInstance().getInlayState(session.id).collectLatest { state ->
-    val visible = state as? StreamChainInlayStateDto.Visible ?: return@collectLatest
-    if (!isStreamDebuggerInlaysEnabled()) return@collectLatest
-    // The process descriptor is registered asynchronously, so the JVM check cannot be moved to `sessionStarted`.
-    if (!isJavaSession(project, session)) return@collectLatest
-    val inlay = withContext(Dispatchers.EDT) { createInlay(project, session, visible.position.sourcePosition()) }
-                ?: return@collectLatest
-    try {
-      awaitCancellation()
+  StreamDebuggerManager.getInstance(project).chainStateFlow(session)
+    .map { (it as? ChainStateDto.Found)?.position }
+    .distinctUntilChanged() // Only the pause point matters
+    .filterNotNull()
+    .collectLatest { position ->
+      if (!isStreamDebuggerInlaysEnabled()) return@collectLatest
+      // The process descriptor is registered asynchronously, so the JVM check cannot be moved to `sessionStarted`.
+      if (!isJavaSession(project, session)) return@collectLatest
+      val inlay = withContext(Dispatchers.EDT) { createInlay(project, session, position.sourcePosition()) }
+                  ?: return@collectLatest
+      try {
+        awaitCancellation()
+      }
+      finally {
+        withContext(NonCancellable + Dispatchers.EDT) { Disposer.dispose(inlay) }
+      }
     }
-    finally {
-      withContext(NonCancellable + Dispatchers.EDT) { Disposer.dispose(inlay) }
-    }
-  }
 }
 
 private fun isJavaSession(project: Project, session: XDebugSessionProxy): Boolean =
