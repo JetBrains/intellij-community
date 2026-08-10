@@ -94,11 +94,18 @@ internal class PyInstallPackageDialog(private val project: Project) : BigPopupUI
   private data class InstallTarget(val mode: DialogMode, val id: String)
 
   /**
-   * Targets whose install we started and is still running. Package "installed" state is not stored —
-   * it is read live from the package manager (so transitive dependencies and real versions are
-   * always current).
+   * Shared active-installations key for [target]. Package (SEARCH) installs use the normalized
+   * package name so the key matches the tool-window tree and info pane; URL/path and command
+   * installs use namespaced keys the tool window never queries. The "is installing" state itself
+   * lives in the shared [PyPackagingToolWindowService] map (PY-91529) — not a dialog-local set — so
+   * an install started from the tree or the info pane also disables this dialog's control, and
+   * vice-versa. Package "installed" state is still read live from the package manager.
    */
-  private val installingTargets = HashSet<InstallTarget>()
+  private fun installKeyOf(target: InstallTarget): String = when (target.mode) {
+    DialogMode.SEARCH -> PyPackagingToolWindowService.packageKey(target.id)
+    DialogMode.DIRECT_INSTALL -> "location:${target.id}"
+    DialogMode.COMMAND -> "command:${target.id}"
+  }
 
   /**
    * Location (URL/path) targets that finished successfully. Unlike packages, these have no name to
@@ -252,6 +259,11 @@ internal class PyInstallPackageDialog(private val project: Project) : BigPopupUI
 
     val balloon = popup
     Disposer.register(project, balloon)
+    // Re-render the install control when the shared active-installations set changes, so an install
+    // started from the tool-window tree or info pane also shows INSTALLING here (PY-91529).
+    packagingService.addInstallStateListener(balloon) {
+      if (::popup.isInitialized && !popup.isDisposed) refreshInstallControl()
+    }
     val initialMin = minimumSize
     JBInsets.addTo(initialMin, balloon.content.insets)
     balloon.setMinimumSize(initialMin)
@@ -621,7 +633,8 @@ internal class PyInstallPackageDialog(private val project: Project) : BigPopupUI
       versionPanel.hideInstallStatus()
       return
     }
-    if (target in installingTargets) {
+    val sdk = packagingService.currentSdk
+    if (sdk != null && packagingService.isInstalling(sdk, installKeyOf(target))) {
       versionPanel.applyInstallControlState(InstallControlState.INSTALLING, null)
       return
     }
@@ -657,8 +670,10 @@ internal class PyInstallPackageDialog(private val project: Project) : BigPopupUI
     // Captured now (press time) from the current mode/selection, since the selection may change
     // before the async install finishes.
     val target = currentTarget() ?: return
+    val sdk = packagingService.currentSdk ?: return
     val trace = com.jetbrains.python.TraceContext(title, null)
-    installingTargets.add(target)
+    val installKey = installKeyOf(target)
+    packagingService.markInstalling(sdk, installKey)
     refreshInstallControl()
 
     packagingService.serviceScope.launch {
@@ -680,7 +695,7 @@ internal class PyInstallPackageDialog(private val project: Project) : BigPopupUI
     }.invokeOnCompletion {
       ApplicationManager.getApplication().invokeLater(
         {
-          installingTargets.remove(target)
+          packagingService.unmarkInstalling(sdk, installKey)
           if (::popup.isInitialized && !popup.isDisposed) refreshInstallControl()
         },
         ModalityState.any(),

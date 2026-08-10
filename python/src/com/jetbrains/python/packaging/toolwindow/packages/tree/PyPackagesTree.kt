@@ -11,6 +11,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
+import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.hover.TreeHoverListener
 import com.intellij.ui.render.RenderingHelper
@@ -117,6 +118,12 @@ internal class PyPackagesTree(
   internal val isReadOnly
     get() = packagingService.currentSdk?.isReadOnly != false
 
+  /** Whether an install for [packageName] is currently running on the current SDK (shared across all surfaces). */
+  internal fun isInstalling(packageName: String): Boolean {
+    val sdk = packagingService.currentSdk ?: return false
+    return packagingService.isPackageInstalling(sdk, packageName)
+  }
+
   /**
    * `true` once [PyPackageTreeCellRenderer] has been installed during construction. Used to
    * pin our renderer for the rest of the tree's lifetime — see [setCellRenderer] / [updateUI].
@@ -165,6 +172,9 @@ internal class PyPackagesTree(
   init {
     putClientProperty(TREE_KEY, this)
     ClientProperty.put(this, RenderingHelper.SHRINK_LONG_RENDERER, false)
+    // Allow AnimatedIcon (the install spinner in PyPackageTreeCellRenderer) to animate inside the
+    // cell renderer; without this the platform paints only a single static frame (PY-91529).
+    ClientProperty.put(this, AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED, true)
     model = treeModel
     alignmentX = LEFT_ALIGNMENT
     alignmentY = TOP_ALIGNMENT
@@ -184,6 +194,10 @@ internal class PyPackagesTree(
       }
     })
     initializeUI()
+    // Repaint when the shared active-installations set changes (an install started/finished from
+    // any surface — this tree, the info pane, or the install dialog) so installing rows show the
+    // spinner and a greyed, non-clickable link (PY-91529).
+    packagingService.addInstallStateListener(controller) { repaint() }
   }
 
   override fun getToolTipText(event: MouseEvent): String? {
@@ -388,16 +402,34 @@ internal class PyPackagesTree(
     val requirement = pyRequirement(pkg.name, pyRequirementVersionSpec(versionString))
     val spec = pkg.repository?.findPackageSpecification(requirement) ?: return
     val installRequest = PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications(listOf(spec))
+    val sdk = packagingService.currentSdk ?: return
+    val key = PyPackagingToolWindowService.packageKey(pkg.name)
+    if (!packagingService.markInstalling(sdk, key)) return
     PyPackageCoroutine.launch(project, Dispatchers.IO) {
-      packagingService.installPackage(installRequest, workspaceMember = pkg.workspaceMember, dependencyGroup = pkg.dependencyGroup)
+      try {
+        packagingService.installPackage(installRequest, workspaceMember = pkg.workspaceMember, dependencyGroup = pkg.dependencyGroup)
+      }
+      finally {
+        packagingService.unmarkInstalling(sdk, key)
+      }
     }
   }
 
   private fun installPackage(pkg: InstallablePackage) {
     val spec = pkg.repository.findPackageSpecification(pyRequirement(pkg.name, null)) ?: return
     val installRequest = PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications(listOf(spec))
+    val sdk = packagingService.currentSdk ?: return
+    // Reject a repeated click while this package is already installing on this SDK — otherwise every
+    // click fires another heavy install coroutine (PY-91529). The renderer greys the link in parallel.
+    val key = PyPackagingToolWindowService.packageKey(pkg.name)
+    if (!packagingService.markInstalling(sdk, key)) return
     PyPackageCoroutine.launch(project, Dispatchers.IO) {
-      packagingService.installPackage(installRequest)
+      try {
+        packagingService.installPackage(installRequest)
+      }
+      finally {
+        packagingService.unmarkInstalling(sdk, key)
+      }
     }
   }
 
