@@ -17,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -145,6 +146,11 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
 
   @ApiStatus.Internal
   @NotNull RuntimeException createError(@NotNull @NonNls String message, @NotNull PluginId pluginId);
+
+  @ApiStatus.Internal
+  default @NotNull RuntimeException createError(@NotNull @NonNls String message, @NotNull PluginId pluginId, @NotNull Collection<PluginId> conflictingPluginIds) {
+    return createError(message, pluginId);
+  }
 
   @NotNull RuntimeException createError(@NotNull @NonNls String message,
                                         @Nullable Throwable error,

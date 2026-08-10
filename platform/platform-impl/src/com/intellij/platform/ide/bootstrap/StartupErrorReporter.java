@@ -4,6 +4,7 @@ package com.intellij.platform.ide.bootstrap;
 import com.intellij.diagnostic.ITNProxy;
 import com.intellij.diagnostic.ImplementationConflictException;
 import com.intellij.diagnostic.LoadingState;
+import com.intellij.diagnostic.PluginConflictException;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.KeyboardAwareFocusOwner;
 import com.intellij.ide.logsUploader.LogUploader;
@@ -25,6 +26,7 @@ import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.ExceptionWithAttachments;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.NioFiles;
@@ -66,6 +68,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 
 import static com.intellij.ide.BootstrapBundle.message;
 import static java.util.Objects.requireNonNullElse;
@@ -366,9 +370,6 @@ public final class StartupErrorReporter {
       System.exit(AppExitCodes.INSTALLATION_CORRUPTED);
     }
 
-    var pluginException = findCause(t, PluginException.class);
-    var pluginId = pluginException == null ? null : pluginException.getPluginId();
-
     if (Logger.isInitialized() && !(t instanceof ProcessCanceledException)) {
       try {
         PluginManagerCore.getLogger().error(t);
@@ -388,7 +389,9 @@ public final class StartupErrorReporter {
       }
     }
 
-    if (pluginId != null && !ApplicationInfoImpl.getShadowInstance().isEssentialPlugin(pluginId)) {
+    var pluginException = findCause(t, PluginException.class);
+    var pluginId = extractNonEssentialPlugin(pluginException);
+    if (pluginId != null) {
       PluginManagerCore.disablePlugin(pluginId);
 
       var message = new StringWriter();
@@ -403,6 +406,27 @@ public final class StartupErrorReporter {
       showError(message("bootstrap.error.title.start.failed"), t);
       System.exit(AppExitCodes.STARTUP_EXCEPTION);
     }
+  }
+
+  private static @Nullable PluginId extractNonEssentialPlugin(@Nullable PluginException pluginException) {
+    if (pluginException == null) return null;
+
+    List<PluginId> affectedPlugins = new ArrayList<>();
+    if (pluginException instanceof PluginConflictException conflictException) {
+      affectedPlugins.addAll(conflictException.getConflictingPluginIds());
+    }
+    else {
+      PluginId pluginId = pluginException.getPluginId();
+      if (pluginId != null) {
+        affectedPlugins.add(pluginId);
+      }
+    }
+
+    var appInfo = ApplicationInfoImpl.getShadowInstance();
+    for (PluginId pluginId : affectedPlugins) {
+      if (!appInfo.isEssentialPlugin(pluginId)) return pluginId;
+    }
+    return null;
   }
 
   private static <T extends Throwable> @Nullable T findCause(Throwable t, Class<T> clazz) {

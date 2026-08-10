@@ -13,6 +13,7 @@ import com.intellij.concurrency.resetThreadContext
 import com.intellij.concurrency.withThreadLocal
 import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.LoadingState
+import com.intellij.diagnostic.PluginConflictException
 import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.plugins.ContainerDescriptor
@@ -1056,6 +1057,9 @@ abstract class ComponentManagerImpl(
   }
 
   final override fun createError(message: String, pluginId: PluginId): PluginException = PluginException(message, pluginId)
+
+  final override fun createError(message: String, pluginId: PluginId, conflictingPluginIds: Collection<PluginId>): RuntimeException =
+    PluginConflictException(message, pluginId, conflictingPluginIds)
 
   final override fun createError(
     message: String,
