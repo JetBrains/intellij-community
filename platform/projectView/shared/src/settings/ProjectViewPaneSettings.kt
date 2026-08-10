@@ -29,6 +29,12 @@ interface ProjectViewPaneOption {
   sealed interface ManualOrder : ProjectViewPaneOption
 }
 
+// need a better implementation for this (or simplify the whole thing, it seems over-engineered)
+@ApiStatus.Experimental
+inline fun <reified T : ProjectViewPaneOption> projectViewPaneOption(): T {
+  return allProjectViewPaneOptions().asSequence().filterIsInstance<T>().single()
+}
+
 @ApiStatus.Experimental
 fun allProjectViewPaneOptions(): List<ProjectViewPaneOption> {
   return ProjectViewPaneOptionDTO.entries.map { it.fromDTO() }

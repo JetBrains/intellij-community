@@ -274,7 +274,7 @@ abstract class TreeBasedProjectViewPaneModel<T : Any>(override val project: Proj
   ) {
     sink[PlatformCoreDataKeys.HELP_ID] = HelpID.PROJECT_VIEWS
     sink[LangDataKeys.IDE_VIEW] = MyIdeView(selectedNodes)
-    sink[PlatformCoreDataKeys.SELECTED_ITEMS] = selectedNodes.map { it.userObject as Any }.toTypedArray()
+    sink[PlatformCoreDataKeys.SELECTED_ITEMS] = selectedNodes.toTypedArray()
     // stuff that could be useful for backend-only code, not in the monolith
     val navigatables = selectedNodes.mapNotNull { it.userObject as? Navigatable }
     if (navigatables.isNotEmpty()) {

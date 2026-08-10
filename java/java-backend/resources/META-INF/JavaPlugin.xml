@@ -406,6 +406,7 @@
     <elementLookupRenderer implementation="com.intellij.codeInsight.lookup.impl.JavaElementLookupRenderer"/>
 
     <projectViewPane implementation="com.intellij.ide.projectView.impl.PackageViewPane"/>
+    <project.view.pane.model.backend implementation="com.intellij.ide.projectView.impl.PackageViewPaneModelProvider"/>
 
     <resolveScopeEnlarger implementation="com.intellij.ide.scratch.ScratchResolveScopeEnlarger"/>
 

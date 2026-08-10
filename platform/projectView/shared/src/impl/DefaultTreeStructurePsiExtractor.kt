@@ -21,13 +21,13 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
-class DefaultTreeStructurePsiExtractor(private val project: Project) : ProjectViewPsiExtractor<TreeStructureProjectViewNode> {
+open class DefaultTreeStructurePsiExtractor(private val project: Project) : ProjectViewPsiExtractor<TreeStructureProjectViewNode> {
 
   override fun extractPsiElements(nodes: List<BackendProjectViewNodeModel<TreeStructureProjectViewNode>>): List<PsiElement> {
     return nodes.flatMap { extractPsiElements(it) }
   }
 
-  private fun extractPsiElements(node: BackendProjectViewNodeModel<TreeStructureProjectViewNode>): List<PsiElement> {
+  protected open fun extractPsiElements(node: BackendProjectViewNodeModel<TreeStructureProjectViewNode>): List<PsiElement> {
     val userObject = node.legacyUserObject
     val value = extractValueFromNode(userObject)
     return extractPsiElementsFromNodeOrUserObject(project, userObject, value)

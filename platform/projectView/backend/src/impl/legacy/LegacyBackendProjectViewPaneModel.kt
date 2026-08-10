@@ -116,7 +116,7 @@ internal class LegacyBackendProjectViewPaneProvider : ProjectViewPaneProvider {
   }
 }
 
-private val PANES_WITH_NEW_IMPLEMENTATIONS = setOf(ProjectViewPane.ID)
+private val PANES_WITH_NEW_IMPLEMENTATIONS = setOf(ProjectViewPane.ID, "PackagesPane")
 
 @Service(Service.Level.PROJECT)
 private class LegacyBackendProjectViewPaneService(

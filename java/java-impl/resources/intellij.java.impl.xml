@@ -62,6 +62,8 @@
     <module name="intellij.platform.markdown.utils"/>
     <module name="intellij.platform.ml"/>
     <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.projectView"/>
+    <module name="intellij.platform.projectView.backend"/>
     <module name="intellij.platform.refactoring"/>
     <module name="intellij.platform.statistics"/>
     <module name="intellij.platform.structureView"/>
