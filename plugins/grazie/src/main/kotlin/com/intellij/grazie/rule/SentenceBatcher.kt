@@ -36,12 +36,13 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import java.util.SequencedMap
 import kotlin.coroutines.cancellation.CancellationException
 
 abstract class SentenceBatcher<T>(val language: Language, private val batchSize: Int, private val quoteMarkup: Boolean = false) : Disposable {
   @Volatile
   private var globalCache: MutableMap<SentenceWithExclusions, T?> = ContainerUtil.createConcurrentSoftValueMap()
-  private val key: Key<CachedValue<AsyncBatchParser<T>>> = Key.create(javaClass.name + " " + language)
+  private val key: Key<CachedValue<Pair<AsyncBatchParser<T>, List<SentenceWithExclusions>>>> = Key.create(javaClass.name + " " + language)
   private val executorScope = CoroutineScope(SupervisorJob() + CoroutineName(name = "SentenceBatcherScope-${this::class.java.name}"))
   private val taskMutex = Mutex()
 
@@ -57,32 +58,31 @@ abstract class SentenceBatcher<T>(val language: Language, private val batchSize:
 
   fun minimal(project: Project): AsyncBatchParser<T> = forSentences(project, emptyList())
 
-  fun forFile(vp: FileViewProvider): AsyncBatchParser<T> {
-    val cvManager = CachedValuesManager.getManager(vp.manager.project)
-    return cvManager.getCachedValue(vp, key, {
-      val textContents: List<TextContent> =
-        getCheckedFileTexts(vp)
-          .filterNot { HighlightingUtil.isTooLargeText(listOf(it)) }
-          .filter { hasOurLanguage(it) }
-      val parser = forSentences(vp.manager.project, allSentences(textContents))
-      CachedValueProvider.Result.create(parser, PsiModificationTracker.MODIFICATION_COUNT, HighlightingUtil.grazieConfigTracker())
-    }, false)
+  private fun getCached(sentences: List<SentenceWithExclusions>): SequencedMap<SentenceWithExclusions, T?>? =
+    sentences.associateWithTo(LinkedHashMap()) {
+      if (isNonSentence(it.sentence)) null else globalCache[it] ?: return null
+    }
+
+  fun forFile(vp: FileViewProvider): AsyncBatchParser<T> = getFileParser(vp).first
+
+  internal fun forFileWithSentences(vp: FileViewProvider): suspend () -> Map<SentenceWithExclusions, T?> {
+    val (parser, sentences) = getFileParser(vp)
+    return { getCached(sentences) ?: parser.parseAsync(sentences) }
   }
 
-  private fun allSentences(textContents: Collection<TextContent>): List<SentenceWithExclusions> {
-    val language = findInstalledLTLanguage(language)
-    val allSentences = if (language == null) emptyList() else textContents.asSequence()
-      .sortedBy { it.textOffsetToFile(0) }
-      .flatMap { text ->
-        ProgressManager.checkCanceled()
-        SentenceTokenizer.tokenize(text).flatMap {
-          listOf(it.swe()) + (if (quoteMarkup) listOfNotNull(it.stubbedSwe()) else emptyList())
-        }
-      }
-      .filterNot { isNonSentence(it.sentence) }
-      .distinct()
-      .toList()
-    return allSentences
+  private fun getFileParser(vp: FileViewProvider): Pair<AsyncBatchParser<T>, List<SentenceWithExclusions>> {
+    val cvManager = CachedValuesManager.getManager(vp.manager.project)
+    return cvManager.getCachedValue(vp, key, {
+      val textContents: List<TextContent> = getCheckedFileTexts(vp)
+        .filterNot { HighlightingUtil.isTooLargeText(listOf(it)) }
+        .filter { hasOurLanguage(it, language) }
+      val allSentences = allSentences(textContents, language, quoteMarkup)
+      val parser = forSentences(vp.manager.project, allSentences)
+      CachedValueProvider.Result.create(
+        parser to allSentences,
+        PsiModificationTracker.MODIFICATION_COUNT, HighlightingUtil.grazieConfigTracker()
+      )
+    }, false)
   }
 
   private fun forSentences(project: Project, allSentences: List<SentenceWithExclusions>): AsyncBatchParser<T> {
@@ -180,8 +180,6 @@ abstract class SentenceBatcher<T>(val language: Language, private val batchSize:
     }
   }
 
-  private fun isNonSentence(text: String) = text.isEmpty() || text.length >= 2000 || text.none { it.isLetter() }
-
   interface AsyncBatchParser<T> : BatchParser<T> {
     override fun parse(sentences: List<String>): LinkedHashMap<String, T?> =
       runBlockingCancellable {
@@ -194,9 +192,6 @@ abstract class SentenceBatcher<T>(val language: Language, private val batchSize:
 
   @Suppress("UnstableApiUsage")
   protected open fun reportStatus(reporter: RawProgressReporter) {}
-
-  private fun hasOurLanguage(tc: TextContent): Boolean =
-    NaturalTextDetector.seemsNatural(tc) && getLanguageIfAvailable(tc) == language
 
   companion object {
     private val LOG = Logger.getInstance(SentenceBatcher::class.java)
@@ -230,6 +225,25 @@ abstract class SentenceBatcher<T>(val language: Language, private val batchSize:
         LinkedHashMap()
       }
     }
-  }
 
+    private fun allSentences(textContents: List<TextContent>, language: Language, quoteMarkup: Boolean): List<SentenceWithExclusions> {
+      if (findInstalledLTLanguage(language) == null) return emptyList()
+      return textContents.asSequence()
+        .sortedBy { it.textOffsetToFile(0) }
+        .flatMap { text ->
+          ProgressManager.checkCanceled()
+          SentenceTokenizer.tokenize(text).flatMap {
+            listOf(it.swe()) + (if (quoteMarkup) listOfNotNull(it.stubbedSwe()) else emptyList())
+          }
+        }
+        .filterNot { isNonSentence(it.sentence) }
+        .distinct()
+        .toList()
+    }
+
+    private fun isNonSentence(text: String): Boolean = text.isEmpty() || text.length >= 2000 || text.none { it.isLetter() }
+
+    private fun hasOurLanguage(tc: TextContent, language: Language): Boolean =
+      NaturalTextDetector.seemsNatural(tc) && getLanguageIfAvailable(tc) == language
+  }
 }
