@@ -6,7 +6,6 @@ package com.intellij.platform.projectView.impl
 import com.intellij.ide.projectView.NodeSortKey
 import com.intellij.ide.projectView.impl.AbstractProjectTreeStructure
 import com.intellij.ide.projectView.impl.GroupByTypeComparator
-import com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.ide.util.treeView.AbstractTreeStructure
@@ -40,6 +39,7 @@ sealed interface TreeStructureProjectViewNode {
 private data class TreeStructureProjectViewNodeImpl(
   val element: Any,
   override val elementDescriptor: NodeDescriptor<*>,
+  val isRoot: Boolean,
 ) : TreeStructureProjectViewNode {
   @RequiresReadLock
   fun canNavigate(): Boolean {
@@ -126,7 +126,7 @@ class TreeStructureProjectViewNodeProvider(
       // A hack to make tree state save / restore work when switching from Light to Backend:
       // project names are different for some reason, but because the root node is not even shown,
       // we can treat any root nodes as equal for the purpose of re-expand.
-      if (node.elementDescriptor is ProjectViewProjectNode) {
+      if (node.isRoot) {
         nodeBuilder.setPathElementType("")
         nodeBuilder.setPathElementId("")
       }
@@ -164,7 +164,7 @@ class TreeStructureProjectViewNodeProvider(
 
   private fun computeFastIsLeaf(validNode: TreeStructureProjectViewNodeImpl): Boolean {
     return when {
-      validNode.elementDescriptor is ProjectViewProjectNode -> false // the root is never leaf
+      validNode.isRoot -> false // the root is never leaf
       else -> !validNode.isDirectory()
     }
   }
@@ -206,6 +206,7 @@ private class TypesafeTreeStructure(
     return TreeStructureProjectViewNodeImpl(
       element = rootElement,
       elementDescriptor = structure.createDescriptor(rootElement, null),
+      isRoot = true,
     )
   }
 
@@ -217,6 +218,7 @@ private class TypesafeTreeStructure(
       TreeStructureProjectViewNodeImpl(
         element = it,
         elementDescriptor = structure.createDescriptor(it, parentDescriptor),
+        isRoot = false,
       )
     }
   }
