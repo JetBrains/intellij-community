@@ -123,7 +123,7 @@ abstract class ToolWindowToolbar(private val isPrimary: Boolean, val anchor: Too
   }
 
   open fun createBorder():Border = JBUI.Borders.empty()
-  open fun getBorderColor(): Color? = JBUI.CurrentTheme.ToolWindow.borderColor()
+  open fun getBorderColor(): Color = JBUI.CurrentTheme.ToolWindow.borderColor()
 
   override fun getComponentGraphics(graphics: Graphics?): Graphics? {
     return InternalUICustomization.runGlobalCGTransformWithInactiveFrameSupport(this, graphics as Graphics2D)

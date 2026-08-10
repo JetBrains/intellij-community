@@ -1,14 +1,23 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.toolWindow.extendedToolWindowsUi
 
+import com.intellij.ide.ui.UISettings
+import com.intellij.ide.ui.UISettingsListener
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.impl.islands.isIslandTheme
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.impl.AbstractDroppableStripe
 import com.intellij.toolWindow.MoreSquareStripeButton
 import com.intellij.toolWindow.ToolWindowToolbar
+import com.intellij.ui.JBColor
 import com.intellij.ui.UIBundle
+import com.intellij.ui.border.CustomLineBorder
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.launchOnShow
+import kotlinx.coroutines.awaitCancellation
 import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
+import java.awt.Color
 import java.awt.Point
 import java.awt.Rectangle
 import javax.swing.border.Border
@@ -31,6 +40,8 @@ internal class ToolWindowHorizontalToolbar(paneId: String, anchor: ToolWindowAnc
   override val accessibleGroupName: String
     get() = if (anchor == ToolWindowAnchor.TOP) UIBundle.message("toolbar.group.top.accessible.group.name")
     else UIBundle.message("toolbar.group.bottom.accessible.group.name")
+
+  private val bottomStripeBorderHelper = if (anchor == ToolWindowAnchor.BOTTOM) BottomStripeBorderHelper(this) else null
 
   init {
     init()
@@ -57,8 +68,58 @@ internal class ToolWindowHorizontalToolbar(paneId: String, anchor: ToolWindowAnc
   }
 
   override fun createBorder(): Border {
-    return if (anchor == ToolWindowAnchor.TOP) JBUI.Borders.customLineBottom(getBorderColor())
-    else JBUI.Borders.customLineTop(getBorderColor())
+    if (bottomStripeBorderHelper != null) {
+      return bottomStripeBorderHelper.createBorder()
+    }
+
+    // Top horizontal stripe
+    return JBUI.Borders.customLineTop(getBorderColor())
+  }
+
+  override fun getBorderColor(): Color {
+    return JBColor.namedColor("ColorPalette.main-window-border",  super.getBorderColor())
+  }
+}
+
+private class BottomStripeBorderHelper(private val toolBar: ToolWindowHorizontalToolbar) {
+
+  init {
+    toolBar.launchOnShow("BottomStripeBorderHelper") {
+      updateBorder()
+
+      ApplicationManager.getApplication().messageBus.connect(this)
+        .subscribe(UISettingsListener.TOPIC, UISettingsListener {
+          updateBorder()
+        })
+
+      // Keep the coroutine for the subscription
+      awaitCancellation()
+    }
+  }
+
+  fun createBorder(): Border {
+    return JBUI.Borders.customLine(toolBar.getBorderColor(),
+                                   if (isTopLineNeeded()) 1 else 0, 0,
+                                   if (isBottomLineNeeded()) 1 else 0, 0)
+  }
+
+  private fun isTopLineNeeded(): Boolean {
+    return !isIslandTheme()
+  }
+
+  private fun isBottomLineNeeded(): Boolean {
+    return isIslandTheme() && UISettings.getInstance().showStatusBar
+  }
+
+  private fun updateBorder() {
+    val insets = (toolBar.border as? CustomLineBorder)?.getBorderInsets(toolBar)
+    if (insets != null &&
+        (insets.top > 0 == isTopLineNeeded()) &&
+        (insets.bottom > 0 == isBottomLineNeeded())) {
+      return
+    }
+    toolBar.border = createBorder()
+    toolBar.revalidate()
   }
 }
 
