@@ -271,7 +271,18 @@ internal class PyPackageTreeCellRenderer(
     appendTextPadding(padTo)
     val leftOff = textLeftOffset()
 
-    if (showActions) {
+    if (packagesTree.isInstalling(pkg.name)) {
+      // Install in progress (started here, from the info pane, or from the dialog): show a greyed,
+      // non-clickable "Install" label with a spinner in place of the + icon, regardless of hover.
+      // linkStartX/linkEndX stay -1 so PyPackagesTree.handleLinkClick rejects the click (PY-91529).
+      val disabledAttributes = SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, UIUtil.getInactiveTextColor())
+      append(linkText, disabledAttributes)
+      appendTextPadding(padTo + textWidth + gap)
+      trailingIconX = leftOff + padTo + textWidth + gap
+      trailingIcon = AnimatedIcon.Default.INSTANCE
+      appendTextPadding(padTo + blockWidth)
+    }
+    else if (showActions) {
       val linkStyle = if (packagesTree.linkHoveredRow == currentRow) SimpleTextAttributes.STYLE_UNDERLINE else SimpleTextAttributes.STYLE_PLAIN
       val linkAttributes = SimpleTextAttributes(linkStyle, LINK_COLOR)
       linkStartX = padTo
