@@ -25,6 +25,12 @@ class PluginSet internal constructor(
   private val enabledModules: List<PluginModuleDescriptor>,
   val resolvedPluginSet: ResolvedPluginSet,
   val input: PluginSubsystemInput,
+  /**
+   * Contains plugins that were filtered out early and are not part of the [candidate subset][ResolvedPluginSet.candidateSet].
+   * For example, it contains plugins of old versions that were superseded by newer versions ([PluginVersionIsSuperseded]), but may contain
+   * other exclusions too.
+   */
+  val excludedFromCandidateSubset: Map<PluginMainDescriptor, DescriptorExclusionReason>,
 ) {
   /**
    * You must not use this method before [ClassLoaderConfigurator.configure].

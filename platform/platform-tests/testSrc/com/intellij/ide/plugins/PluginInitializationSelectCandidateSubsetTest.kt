@@ -1261,7 +1261,8 @@ class PluginInitializationSelectCandidateSubsetTest {
 
       val (_, discoveryResult) = PluginSetTestBuilder.fromPath(pluginsDirPath).discoverPlugins()
       val initContext = createInitContext(disabledPlugins = setOf(PluginId.getId("bar")))
-      val candidateSubset = initContext.selectCandidateSubset(discoveryResult, null)
+      val excludedFromCandidateSubset = mutableMapOf<PluginMainDescriptor, DescriptorExclusionReason>()
+      val candidateSubset = initContext.selectCandidateSubset(discoveryResult, excludedFromCandidateSubset)
       val resolvedPluginSet = initContext.resolveConstraints(candidateSubset)
       val nonLoadReasons = mutableListOf<PluginNonLoadReason>()
 
@@ -1269,6 +1270,7 @@ class PluginInitializationSelectCandidateSubsetTest {
         input = PluginSubsystemInput(initContext, discoveryResult),
         resolvedPluginSet = resolvedPluginSet,
         registerLoadingError = nonLoadReasons::add,
+        excludedFromCandidateSubset = excludedFromCandidateSubset,
       )
 
       assertThat(nonLoadReasons).hasSize(1)

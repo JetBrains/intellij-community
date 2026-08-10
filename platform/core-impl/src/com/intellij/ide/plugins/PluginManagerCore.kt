@@ -520,6 +520,7 @@ object PluginManagerCore {
       input = PluginSubsystemInput(initContext, discoveredPlugins),
       resolvedPluginSet = resolvedPluginSet,
       registerLoadingError = ::registerLoadingError,
+      excludedFromCandidateSubset = excludedFromCandidateSubset,
     )
 
     initStagesActivity = initStagesActivity?.endAndStart("error reporting")
@@ -552,6 +553,7 @@ object PluginManagerCore {
     input: PluginSubsystemInput,
     resolvedPluginSet: ResolvedPluginSet,
     registerLoadingError: (PluginNonLoadReason) -> Unit,
+    excludedFromCandidateSubset: Map<PluginMainDescriptor, DescriptorExclusionReason>,
   ): Pair<PluginSet, List<PluginLoadingError>> {
     val cycleErrors = ArrayList<PluginLoadingError>()
     val mostRecentExcludedPlugins = input.discoveryResult.pluginLists.asSequence()
@@ -615,6 +617,7 @@ object PluginManagerCore {
       enabledModules = resolvedModules.keys.toList(),
       resolvedPluginSet = resolvedPluginSet,
       input = input,
+      excludedFromCandidateSubset = excludedFromCandidateSubset,
     )
     return pluginSet to cycleErrors
   }
