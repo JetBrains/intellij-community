@@ -13,6 +13,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.LangDataKeys
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction
 import com.intellij.openapi.components.service
@@ -47,9 +48,11 @@ import com.intellij.util.ui.JBUI
 import com.jetbrains.python.sdk.findPythonSdk
 import kotlinx.coroutines.launch
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.platform.debugger.impl.ui.XDebuggerEntityConverter
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XDebugSessionListener
 import com.intellij.xdebugger.XDebuggerManager
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import com.jetbrains.python.icons.PythonIcons
 import org.jetbrains.annotations.ApiStatus
 import java.lang.ref.WeakReference
@@ -103,14 +106,12 @@ internal class PyDebuggerBackendSwitcherAction : ComboBoxAction(), DumbAware {
       return
     }
 
-    if (!PyDebuggerBackendSwitcherVisibilityPin.isPinned(project)) {
-      val switchHandler = PyDebuggerBackendSwitchHandler.EP_NAME.extensionList.firstOrNull {
-        it.ownsRunProfile(e)
-      }
-      if (switchHandler != null && !switchHandler.shouldShowSwitcher(project, e)) {
-        e.presentation.isEnabledAndVisible = false
-        return
-      }
+    if (!isPyDebuggerBackendSwitcherVisible(project, e)) {
+      // Only the toolbar presence is in question here, so the action stays enabled: invoking it by id
+      // keeps working, which is how the backend is chosen before the first session exists.
+      e.presentation.isEnabled = true
+      e.presentation.isVisible = false
+      return
     }
 
     e.presentation.isEnabledAndVisible = true
@@ -254,6 +255,36 @@ internal class PyDebuggerBackendSwitcherAction : ComboBoxAction(), DumbAware {
     }
   }
 
+}
+
+/**
+ * Whether the backend switcher belongs on the Debug tool window tab the [e] context points at.
+ *
+ * The switcher lives in the tool window header, which is shared by every tab of every product that
+ * bundles the Python plugin, so it has to opt in per tab rather than default to visible: a C++ or a
+ * JavaScript session must not be told which Python debugger backend it runs on (CPP-51572).
+ */
+internal fun isPyDebuggerBackendSwitcherVisible(project: Project, e: AnActionEvent): Boolean {
+  if (PyDebuggerBackendSwitcherVisibilityPin.isPinned(project)) return true
+
+  // A handler that recognizes the tab decides for it.
+  val switchHandler = PyDebuggerBackendSwitchHandler.EP_NAME.extensionList.firstOrNull { it.ownsRunProfile(e) }
+  if (switchHandler != null) return switchHandler.shouldShowSwitcher(project, e)
+
+  // No handler recognizes the tab, which is also the state of every tab while the PythonDAP plugin is
+  // not installed. The switcher is the promotion surface for debugpy then, so it stays on pydevd-backed
+  // sessions and only those.
+  return isPythonDebugTab(e)
+}
+
+private fun isPythonDebugTab(e: AnActionEvent): Boolean {
+  // The header toolbar takes its data context from the selected tab, but a tab only publishes a run
+  // profile when it was started from an execution environment, which a Jupyter or console session
+  // was not. Those are recognized through the session instead: they run a pydevd-backed process.
+  if (e.getData(LangDataKeys.RUN_PROFILE) is AbstractPythonRunConfiguration<*>) return true
+  val sessionProxy = DebuggerUIUtil.getSessionProxy(e) ?: return false
+  val session = XDebuggerEntityConverter.getSession(sessionProxy) ?: return false
+  return session.runProfile is AbstractPythonRunConfiguration<*> || session.debugProcess is PyDebugProcess
 }
 
 /**
