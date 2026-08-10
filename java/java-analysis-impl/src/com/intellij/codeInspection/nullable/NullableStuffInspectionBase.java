@@ -150,6 +150,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
   @Deprecated @SuppressWarnings("WeakerAccess") public boolean REPORT_NULLABLE_METHOD_OVERRIDES_NOTNULL = true;
   @SuppressWarnings("WeakerAccess") public boolean REPORT_NOT_ANNOTATED_METHOD_OVERRIDES_NOTNULL = true;
   @SuppressWarnings("WeakerAccess") public boolean REPORT_NOTNULL_PARAMETER_OVERRIDES_NULLABLE = true;
+  @SuppressWarnings("WeakerAccess") public boolean REPORT_NULLABLE_RETURN_OVERRIDES_NOTNULL = true;
   /**
    * @deprecated the field remains to minimize changes to users' inspection profiles.
    */
@@ -195,6 +196,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
           "REPORT_NOT_NULL_TO_NULLABLE_CONFLICTS_IN_ASSIGNMENTS".equals(name) && "false".equals(value) ||
           "REPORT_NOT_ANNOTATED_INSTANTIATION_NOT_NULL_TYPE".equals(name) && "false".equals(value) ||
           "REPORT_NULLABLE_PARAMETER_OVERRIDES_NOTNULL".equals(name) && "false".equals(value) ||
+          "REPORT_NULLABLE_RETURN_OVERRIDES_NOTNULL".equals(name) && "true".equals(value) ||
           "REPORT_REDUNDANT_NULLABILITY_ANNOTATION_IN_THE_SCOPE_OF_ANNOTATED_CONTAINER".equals(name) && "true".equals(value)) {
         node.removeContent(child);
       }
@@ -1215,7 +1217,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
   }
 
   private boolean isNullableOverridingNotNull(Annotated methodInfo, PsiMethod superMethod) {
-    return REPORT_NOTNULL_PARAMETER_OVERRIDES_NULLABLE && methodInfo.isDeclaredNullable && isNotNullNotInferred(superMethod, true, false);
+    return REPORT_NULLABLE_RETURN_OVERRIDES_NOTNULL && methodInfo.isDeclaredNullable && isNotNullNotInferred(superMethod, true, false);
   }
 
   private boolean isNonAnnotatedOverridingNotNull(PsiMethod method, PsiMethod superMethod) {
@@ -1272,12 +1274,18 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
                                               List<PsiParameter> superParameters) {
     PsiIdentifier nameIdentifier = parameter.getNameIdentifier();
     if (nameIdentifier == null) return;
-    PsiParameter nullableSuper = findNullableSuperForNotNullParameter(parameter, superParameters, PsiSubstitutor.EMPTY);
+    NullableSuperParameter nullableSuper = findNullableSuperForNotNullParameter(parameter, superParameters, PsiSubstitutor.EMPTY);
     if (nullableSuper != null) {
       PsiAnnotation annotation = findAnnotation(parameter, nullableManager.getNotNulls(), true);
-      reportProblem(holder, annotation != null ? annotation : nameIdentifier,
-                    "inspection.nullable.problems.NotNull.parameter.overrides.Nullable",
-                    getPresentableAnnoName(parameter), getPresentableAnnoName(nullableSuper));
+      PsiElement anchor = annotation != null ? annotation : nameIdentifier;
+      if (nullableSuper.viaInstantiation()) {
+        reportProblem(holder, anchor, "inspection.nullable.problems.NotNull.parameter.overrides.parameter.instantiated.as.nullable",
+                      getPresentableAnnoName(parameter));
+      }
+      else {
+        reportProblem(holder, anchor, "inspection.nullable.problems.NotNull.parameter.overrides.Nullable",
+                      getPresentableAnnoName(parameter), getPresentableAnnoName(nullableSuper.parameter()));
+      }
     }
     PsiParameter notNullSuperForNullable = findNotNullSuperForNullableParameter(parameter, superParameters);
     if (notNullSuperForNullable != null) {
@@ -1367,8 +1375,10 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
 
   /**
    * The opposite direction of {@link #findNullableSuperForNotNullParameter}: an override that widens a parameter to
-   * nullable. This is legal for the JLS, which is why it is guarded by {@link #REPORT_NULLABLE_PARAMETER_OVERRIDES_NOTNULL},
-   * but JSpecify treats it as a nullness mismatch.
+   * nullable. This cannot break callers -- the override accepts more than the supertype promises -- and the JLS says
+   * nothing about it either way, since {@code @Nullable String} and {@code @NotNull String} are the same type as far as
+   * override-equivalent signatures go. That is why it is guarded by {@link #REPORT_NULLABLE_PARAMETER_OVERRIDES_NOTNULL}:
+   * only JSpecify, which requires the parameter nullness to match exactly, treats it as a nullness mismatch.
    */
   private @Nullable PsiParameter findNotNullSuperForNullableParameter(@NotNull PsiParameter parameter,
                                                                      @NotNull List<? extends PsiParameter> superParameters) {
@@ -1385,14 +1395,22 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
            : null;
   }
 
-  private @Nullable PsiParameter findNullableSuperForNotNullParameter(@NotNull PsiParameter parameter,
-                                                                      @NotNull List<? extends PsiParameter> superParameters, 
-                                                                      @NotNull PsiSubstitutor superSubstitutor) {
+  /**
+   * @param viaInstantiation the super parameter is not declared nullable itself: its type is a type variable of unspecified
+   *                         nullness that this subtype instantiates with a nullable type. The distinction matters for the
+   *                         message, which would otherwise claim that a {@code @NullnessUnspecified} parameter is overridden.
+   */
+  private record NullableSuperParameter(@NotNull PsiParameter parameter, boolean viaInstantiation) {
+  }
+
+  private @Nullable NullableSuperParameter findNullableSuperForNotNullParameter(@NotNull PsiParameter parameter,
+                                                                               @NotNull List<? extends PsiParameter> superParameters,
+                                                                               @NotNull PsiSubstitutor superSubstitutor) {
     if (!REPORT_NOTNULL_PARAMETER_OVERRIDES_NULLABLE || !isNotNullNotInferred(parameter, false, false)) return null;
     PsiClass derived = PsiUtil.getContainingClass(parameter);
     for (PsiParameter superParameter : superParameters) {
       PsiClass base = PsiUtil.getContainingClass(superParameter);
-      PsiSubstitutor substitutor = base == null || derived == null ? PsiSubstitutor.EMPTY : 
+      PsiSubstitutor substitutor = base == null || derived == null ? PsiSubstitutor.EMPTY :
                                    TypeConversionUtil.getMaybeSuperClassSubstitutor(base, derived, superSubstitutor);
       if (substitutor == null) {
         // may happen if A extends B implements C and methods are declared in B and C
@@ -1400,9 +1418,11 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
       }
       PsiType declaredSuperType = superParameter.getType();
       PsiType superType = substitutor.substitute(declaredSuperType);
-      if (DfaPsiUtil.getElementNullabilityForRead(superType, superParameter) == Nullability.NULLABLE ||
-          isUnspecifiedInstantiatedWithNullable(declaredSuperType, substitutor)) {
-        return superParameter;
+      if (DfaPsiUtil.getElementNullabilityForRead(superType, superParameter) == Nullability.NULLABLE) {
+        return new NullableSuperParameter(superParameter, false);
+      }
+      if (isUnspecifiedInstantiatedWithNullable(declaredSuperType, substitutor)) {
+        return new NullableSuperParameter(superParameter, true);
       }
     }
     return null;
