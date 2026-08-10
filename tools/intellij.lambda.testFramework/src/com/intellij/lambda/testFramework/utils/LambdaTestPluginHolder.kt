@@ -9,22 +9,24 @@ object LambdaTestPluginHolder {
   }
 
   data class AdditionalLambdaPlugin(
-    val moduleID: String,
-    val pluginId: String,
+    val devBuildModuleId: String,
     val pluginDirName: String,
     val splitMode: LoadingInSplitMode,
   )
 
   private var additionalLambdaPlugins: List<AdditionalLambdaPlugin> = emptyList()
   private var mainTestModuleId: String? = null
-  val defaultLambdaPlugin: AdditionalLambdaPlugin = AdditionalLambdaPlugin("intellij.lambda.testFramework",
-                                                                           "intellij.lambda.test.plugin",
-                                                                           "lambda-test-plugin",
-                                                                           LoadingInSplitMode.All)
+  val defaultLambdaPlugin: AdditionalLambdaPlugin = AdditionalLambdaPlugin(
+    devBuildModuleId = "intellij.lambda.test.plugin",
+    pluginDirName = "lambda-test-plugin",
+    splitMode = LoadingInSplitMode.All,
+  )
 
 
   fun testModuleId(): String? = mainTestModuleId
-  fun additionalPluginIds(vararg ideTarget: LoadingInSplitMode): List<String> = getAdditionalPlugins(*ideTarget).map { it.pluginId }
+  fun additionalDevBuildModuleIds(vararg ideTarget: LoadingInSplitMode): List<String> =
+    getAdditionalPlugins(*ideTarget).map { it.devBuildModuleId }
+
   fun additionalPluginDirNames(vararg ideTarget: LoadingInSplitMode): List<String> =
     getAdditionalPlugins(*ideTarget).map { it.pluginDirName }
 
@@ -45,8 +47,8 @@ object LambdaTestPluginHolder {
    * Sets up a single test plugin that loads in **all** modes (monolith, frontend-split,
    * backend-split). Use this when the same content modules are needed regardless of mode.
    *
-   * Derives the plugin id and Bazel target name from [mainTestModuleId] using the same naming
-   * convention as the wrapper generator: `<base>.plugin` for the id, and the id with `intellij.`
+   * Derives the dev-build plugin module and directory name from [mainTestModuleId] using the same naming
+   * convention as the wrapper generator: `<base>.plugin` for the module, and the module with `intellij.`
    * stripped and dots replaced by dashes for the Bazel target.
    *
    * ```kotlin
@@ -62,23 +64,25 @@ object LambdaTestPluginHolder {
    *   folder. Defaults to the plugin module id with `intellij.` stripped and dots replaced by
    *   dashes — the convention used by `jpsModelToBazel`. Override when the module id doesn't
    *   start with `intellij.` or when the packager uses a different naming scheme.
+   * @param additionalPlugins production or helper plugins needed by the test plugin. They are
+   *   bundled for, and loaded in, the modes declared by each entry.
    */
   fun setupAllModesPlugin(
     mainTestModuleId: String,
     pluginModuleBaseName: String = mainTestModuleId.removeSuffix("._test"),
     pluginDirName: String = "$pluginModuleBaseName.plugin".removePrefix("intellij.").replace('.', '-'),
+    additionalPlugins: List<AdditionalLambdaPlugin> = emptyList(),
   ) {
     setupAdditionalLambdaPlugins(
       mainTestModuleId,
       listOf(
         AdditionalLambdaPlugin(
-          moduleID = mainTestModuleId,
-          pluginId = "$pluginModuleBaseName.plugin",
+          devBuildModuleId = "$pluginModuleBaseName.plugin",
           pluginDirName = pluginDirName,
           splitMode = LoadingInSplitMode.All,
         ),
         defaultLambdaPlugin,
-      ),
+      ) + additionalPlugins,
     )
   }
 
@@ -117,8 +121,7 @@ object LambdaTestPluginHolder {
       mainTestModuleId,
       listOf(defaultLambdaPlugin) + MODE_SPLIT_SUFFIXES.map { (suffix, loadingMode) ->
         AdditionalLambdaPlugin(
-          moduleID = mainTestModuleId,
-          pluginId = "$wrapperModuleBaseName.$suffix",
+          devBuildModuleId = "$wrapperModuleBaseName.$suffix",
           pluginDirName = "$pluginDirNameBase-${suffix.replace('.', '-')}",
           splitMode = loadingMode,
         )

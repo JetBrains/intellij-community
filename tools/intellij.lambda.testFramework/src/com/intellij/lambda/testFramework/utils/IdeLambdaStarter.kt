@@ -102,7 +102,7 @@ internal fun IDERemDevTestContext.runIdeWithLambda(
     if (testCase.projectInfo != NoProject) {
       @Suppress("RAW_RUN_BLOCKING")
       runBlocking {
-        it.runInFrontend("Wait for the project") {
+        it.runInFrontend("Wait for the project", globalTestScope = true) {
           waitForProject(if (!ApplicationManager.getApplication().isHeadlessEnvironment) 30.seconds else 20.seconds)
         }
       }
