@@ -470,6 +470,16 @@ object PluginManagerCore {
       }
       excludedFromCandidateSubset[reason.descriptor.getMainDescriptor()] = reason
     }
+
+    initStagesActivity = initStagesActivity?.endAndStart("initContext startup configuration")
+    initContext.runConfigurationDuringStartup(candidateSubset)
+
+    initStagesActivity = initStagesActivity?.endAndStart("resolveConstraints")
+    val resolvedPluginSet = initContext.resolveConstraints(candidateSubset)
+
+    initStagesActivity = initStagesActivity?.endAndStart("log exclusion tree")
+    PluginInitializationDiagnosticUtils.logExclusionTree(logger, resolvedPluginSet)
+
     initStagesActivity = initStagesActivity?.endAndStart("selectCandidateSubset post-process")
     val incompletePlugins = HashMap<PluginId, PluginMainDescriptor>()
     val shadowedBundledIds = HashSet<PluginId>()
@@ -493,10 +503,6 @@ object PluginManagerCore {
       excludedFromCandidateSubset[plugin]!!.toSelectionPluginNonLoadReason()?.let { plugin.pluginId to it }
     }.toMap(mutableMapOf())
 
-    initStagesActivity = initStagesActivity?.endAndStart("initContext startup configuration")
-    initContext.runConfigurationDuringStartup(candidateSubset)
-
-    initStagesActivity = initStagesActivity?.endAndStart("resolveConstraints")
     val pluginsToDisable = HashMap<PluginId, PluginStateChangeData>()
     val pluginsToEnable = HashMap<PluginId, PluginStateChangeData>()
 
@@ -514,8 +520,7 @@ object PluginManagerCore {
       }
     }
 
-    val resolvedPluginSet = initContext.resolveConstraints(candidateSubset)
-    PluginInitializationDiagnosticUtils.logExclusionTree(logger, resolvedPluginSet)
+    initStagesActivity = initStagesActivity?.endAndStart("adapt plugin set")
     val (pluginSet, cycleErrors) = adaptResolvedPluginSetAsOldPluginSet(
       input = PluginSubsystemInput(initContext, discoveredPlugins),
       resolvedPluginSet = resolvedPluginSet,
