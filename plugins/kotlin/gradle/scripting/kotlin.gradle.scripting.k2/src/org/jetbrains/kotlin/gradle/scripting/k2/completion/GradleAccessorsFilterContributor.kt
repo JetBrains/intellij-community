@@ -7,24 +7,18 @@ import com.intellij.codeInsight.completion.CompletionProvider
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.util.ProcessingContext
-import org.jetbrains.plugins.gradle.util.GradleUtil
-import org.jetbrains.plugins.gradle.util.isBuildSrcModule
-import org.jetbrains.plugins.gradle.util.isIncludedBuild
-import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.session.analyze
-import org.jetbrains.kotlin.analysis.api.symbols.containingSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaAnnotatedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
+import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.gradle.isUnderSpecialSrcDirectory
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 internal class GradleAccessorsFilterContributor : CompletionContributor() {
     init {
@@ -37,40 +31,45 @@ internal class GradleAccessorsFilterContributor : CompletionContributor() {
         override fun addCompletions(
             parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet
         ) {
-            val file = parameters.originalFile as? KtFile ?: return
-            if (file.isScript()) return
-            if (!file.isUnderSpecialSrcDirectory()) return
+            val originalFile = parameters.originalFile as? KtFile ?: return
+            if (originalFile.isScript()) return
+            if (!originalFile.isUnderSpecialSrcDirectory()) return
 
             result.runRemainingContributors(parameters) { completionResult ->
-                val lookupElement = completionResult.lookupElement
-
-                val shouldShow = analyze(file) {
-                    shouldShowLookupElement(lookupElement)
-                }
-
-                if (shouldShow) {
+                if (shouldShowLookupElement(completionResult.lookupElement)) {
                     result.passResult(completionResult)
                 }
             }
         }
 
-        context(_: KaSession)
         private fun shouldShowLookupElement(element: LookupElement): Boolean {
-            val symbol = (element.psiElement as? KtDeclaration)?.symbol ?: return true
-            if (symbol.hasGradleAccessorPackage()) return false
+            val declaration = element.psiElement as? KtDeclaration ?: return true
+            val containingFile = declaration.containingKtFile
+            if (containingFile.packageFqName.asString().startsWith(GRADLE_ACCESSORS_PACKAGE)) return false
 
-            val containingSymbol = symbol.containingSymbol as? KaAnnotatedSymbol ?: return true
-            return !containingSymbol.hasGradleGeneratedAnnotation()
+            // If the entire file is marked as generated, then do not show it
+            if (containingFile.isGradleGenerated()) return false
+            val containingDeclaration = declaration.getStrictParentOfType<KtClassOrObject>() ?: return true
+            return !containingDeclaration.isGradleGenerated()
         }
 
-        private fun KaDeclarationSymbol.hasGradleAccessorPackage(): Boolean {
-            val packageName = when (this) {
-                is KaCallableSymbol -> this.callableId?.packageName?.asString()
-                is KaClassLikeSymbol -> this.classId?.packageFqName?.asString()
-                else -> null
+        private fun KtFile.isGradleGenerated(): Boolean {
+            val fileAnnotationList = fileAnnotationList ?: return false
+            // This only checks the short name, so it might produce false positives
+            if (KotlinPsiHeuristics.findAnnotation(fileAnnotationList, GRADLE_GENERATED) == null) return false
+            // We check the Analysis API to make sure after
+            analyze(this) {
+                return symbol.hasGradleGeneratedAnnotation()
             }
+        }
 
-            return packageName != null && packageName.startsWith(GRADLE_ACCESSORS_PACKAGE)
+        private fun KtClassOrObject.isGradleGenerated(): Boolean {
+            // This only checks the short name, so it might produce false positives
+            if (!KotlinPsiHeuristics.hasAnnotation(this, GRADLE_GENERATED)) return false
+            // We check the Analysis API to make sure after
+            analyze(this) {
+                return symbol.hasGradleGeneratedAnnotation()
+            }
         }
 
         private fun KaAnnotatedSymbol.hasGradleGeneratedAnnotation() =
