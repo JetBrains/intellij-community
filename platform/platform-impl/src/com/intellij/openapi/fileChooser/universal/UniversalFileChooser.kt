@@ -28,6 +28,7 @@ import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.ui.ComponentValidator
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
@@ -39,9 +40,9 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.asNioPath
-import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.coroutines.childScope
@@ -456,9 +457,13 @@ object UniversalFileChooser {
       project: Project,
       contributors: Collection<UniversalFileChooserContributor> = this.contributors,
     ): UniversalFileChooserContributor? {
-      if (project.isDefault) return null
-      val basePath = project.basePath ?: project.projectFilePath ?: return null
-      return contributors.findOwner(Path.of(basePath))
+      val projectPath = project.guessedProjectPath() ?: return null
+      return contributors.findOwner(projectPath)
+    }
+
+    private fun Project.guessedProjectPath(): Path? {
+      if (this.isDefault) return null
+      return this.guessProjectDir()?.toNioPathOrNull()
     }
 
     private fun localContributor(contributors: Collection<UniversalFileChooserContributor>): UniversalFileChooserContributor? {
@@ -495,7 +500,7 @@ object UniversalFileChooser {
       }
     }
 
-    private suspend fun pathToSelect(toSelect: Path?): Path {
+    private fun pathToSelect(toSelect: Path?): Path {
       val last = NioFileChooserUtil.getLastOpenedPath(project)
       if (last != null && (toSelect == null || descriptor.getUserData(PathChooserDialog.PREFER_LAST_OVER_EXPLICIT) == true)) {
         return last
@@ -504,10 +509,9 @@ object UniversalFileChooser {
         return toSelect
       }
       if (!project.isDefault) {
-        val eelDescriptor = project.getEelDescriptor()
-        val basePath = project.basePath ?: project.projectFilePath
-        if (basePath != null) {
-          return runCatching { Path.of(basePath) }.getOrNull() ?: eelDescriptor.toEelApi().userInfo.home.asNioPath()
+        val projectPath = project.guessedProjectPath()
+        if (projectPath != null) {
+          return projectPath
         }
       }
       return Path.of(SystemProperties.getUserHome())
@@ -602,7 +606,7 @@ object UniversalFileChooser {
       activeView.topComponent.cursor = Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR)
       scope.launch {
         withContext(Dispatchers.IO) {
-          val basePath = project.basePath?.let { Path.of(it) }
+          val basePath = project.guessedProjectPath()
                          ?: findNonProjectBasePath()
                          ?: return@withContext
           val homePath = basePath.asEelPath().descriptor.toEelApi().userInfo.home.asNioPath()
@@ -624,11 +628,11 @@ object UniversalFileChooser {
     }
 
     private fun navigateToProject() {
-      val basePath = project.basePath ?: return
       scope.launch {
         withContext(Dispatchers.IO) {
+          val projectPath = project.guessedProjectPath() ?: return@withContext
           runOnEdt {
-            navigateToFile(Path.of(basePath))
+            navigateToFile(projectPath)
           }
         }
       }
@@ -813,7 +817,7 @@ object UniversalFileChooser {
         scope.launch {
           withContext(Dispatchers.IO) {
             val allRoots = if (environmentRestricted && !project.isDefault) {
-              val basePath = project.basePath?.let { Path.of(it) }
+              val basePath = project.guessProjectDir()?.toNioPathOrNull()
               if (basePath != null) contributor.getFilteredRoots(basePath) else contributor.getRoots()
             }
             else {
