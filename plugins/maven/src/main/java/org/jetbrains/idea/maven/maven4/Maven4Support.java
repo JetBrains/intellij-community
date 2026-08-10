@@ -72,7 +72,7 @@ final class Maven4Support implements MavenVersionAwareSupportExtension {
 
   private static void prepareClassPathForLocalRunAndUnitTests(@NotNull String mavenVersion, List<Path> classpath) {
     BuildDependenciesCommunityRoot communityRoot = new BuildDependenciesCommunityRoot(Path.of(PathManager.getCommunityHomePath()));
-    BundledMavenDownloader.INSTANCE.downloadMaven4LibsSync(communityRoot);
+    Path maven4Libs = BundledMavenDownloader.INSTANCE.downloadMaven4LibsSync(communityRoot);
 
     classpath.add(PathManager.getJarForClass(MavenId.class));
     classpath.add(locateModuleOutput("intellij.maven.server"));
@@ -80,8 +80,7 @@ final class Maven4Support implements MavenVersionAwareSupportExtension {
     classpath.add(locateModuleOutput("intellij.maven.server.telemetry"));
     classpath.addAll(MavenUtil.collectClasspath(MavenServerTelemetryClasspathUtil.TELEMETRY_CLASSES));
 
-    Path parentPath = MavenUtil.getMavenPluginParentFile();
-    addDir(classpath, parentPath.resolve("maven40-server-impl/lib"), f -> true);
+    addDir(classpath, maven4Libs, ignored -> true);
 
     classpath.add(locateModuleOutput("intellij.maven.server.m40"));
   }

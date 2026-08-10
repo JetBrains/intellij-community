@@ -272,7 +272,7 @@ class SoftwareBillOfMaterialsImpl(
    * then should be replaced with [addRuntimeDocumentRef]
    */
   private suspend fun SpdxDocument.runtimePackage(os: OsFamily, arch: JvmArchitecture, libc: LibcImpl): SpdxPackage {
-    val checksums = Checksums.compute(context.bundledRuntime.findArchive(os = os, arch = arch, libc = libc))
+    val checksums = Checksums.compute(context.bundledRuntime.resolveArchive(os = os, arch = arch, libc = libc).file)
     val version = context.bundledRuntime.build
     val runtimeArchivePackage = spdxPackageForFile(
       this,

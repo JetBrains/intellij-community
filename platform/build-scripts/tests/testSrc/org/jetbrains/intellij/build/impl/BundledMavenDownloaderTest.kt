@@ -112,10 +112,15 @@ class BundledMavenDownloaderTest {
       }.awaitAll()
       Assert.assertEquals(setOf(maven3), concurrentMaven3.toSet())
 
+      // the manifest is authoritative, so re-pinning it - not the bytes behind it - is what re-identifies the inventory
+      Assert.assertEquals("content-1", Files.readString(maven3.resolve("one-1.jar")))
       Files.writeString(runfiles.resolve("one-1.jar"), "changed-content")
+      Assert.assertEquals(maven3, BundledMavenDownloader.downloadMaven3Libs(communityRoot))
+
+      rows[1] = "one-1.jar\t${"f".repeat(64)}\t${urls[1]}"
+      Files.writeString(manifest, "intellij-build-downloads\t1\n${rows.joinToString("\n")}\n")
       val changedMaven3 = BundledMavenDownloader.downloadMaven3Libs(communityRoot)
       Assert.assertNotEquals(maven3, changedMaven3)
-      Assert.assertEquals("content-1", Files.readString(maven3.resolve("one-1.jar")))
       Assert.assertEquals("changed-content", Files.readString(changedMaven3.resolve("one-1.jar")))
       Assert.assertFalse(
         Files.walk(cache).use { files -> files.anyMatch { file -> file.fileName.toString().endsWith(".tmp") } }

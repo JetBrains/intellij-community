@@ -602,6 +602,8 @@ internal fun configureDevModeBuildOptions(options: BuildOptions, request: BuildR
   options.buildNumber = buildOptionsTemplate.buildNumber
   options.isInDevelopmentMode = buildOptionsTemplate.isInDevelopmentMode
   options.isTestBuild = buildOptionsTemplate.isTestBuild
+  // a dev run directory is disposable and never patched in place, so it can share bytes with the caches it is assembled from
+  options.linkImmutableCacheEntries = true
 }
 
 internal fun createDevBuildPaths(projectDir: Path, buildDir: Path, logDir: Path): BuildPaths {

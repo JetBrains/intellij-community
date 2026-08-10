@@ -94,7 +94,8 @@ object FileSystem {
 
       val symlinks = mutableListOf<SymlinkInfo>()
 
-      JBZipFile(zipFile, StandardCharsets.UTF_8, false, ThreeState.UNSURE).use { zip ->
+      // read-only: unpacking never writes to the archive, and the archive can be a Bazel runfile on a read-only filesystem
+      JBZipFile(zipFile, StandardCharsets.UTF_8, true, ThreeState.UNSURE).use { zip ->
         for (entry in zip.entries) {
           if (entry.isDirectory) {
             val dir = targetDir.resolve(entry.name)
@@ -129,9 +130,10 @@ object FileSystem {
       }
     }
     catch (e: Throwable) {
-      zipFile.deleteRecursivelyQuietly()
+      // only the half-written target is ours to remove - the archive belongs to whoever supplied it, and a
+      // checksum-pinned Bazel runfile must survive a failure here
       targetDir.deleteRecursivelyQuietly()
-      throw Exception("Failed to unpack $zipFile. File and unpack targets are removed. ${e.message}", e)
+      throw Exception("Failed to unpack $zipFile. The unpack target is removed. ${e.message}", e)
     }
   }
 
@@ -245,9 +247,9 @@ object FileSystem {
       }
     }
     catch (e: Exception) {
-      tarFile.deleteRecursivelyQuietly()
+      // as in `unpackZip`: the archive belongs to its supplier, only the half-written target is ours
       targetDir.deleteRecursivelyQuietly()
-      throw Exception("Failed to unpack $tarFile. File and unpack targets are removed. ${e.message}", e)
+      throw Exception("Failed to unpack $tarFile. The unpack target is removed. ${e.message}", e)
     }
   }
 

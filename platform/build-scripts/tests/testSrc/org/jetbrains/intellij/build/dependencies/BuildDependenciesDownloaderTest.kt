@@ -6,12 +6,18 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.BuildPaths
 import org.jetbrains.intellij.build.downloadFileToCacheLocation
+import org.jetbrains.intellij.build.resolveAndExtractToCacheLocation
 import org.junit.Assert
 import org.junit.Test
 import java.net.InetSocketAddress
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.attribute.PosixFilePermission.OWNER_EXECUTE
+import java.nio.file.attribute.PosixFilePermission.OWNER_READ
+import java.nio.file.attribute.PosixFilePermission.OWNER_WRITE
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.zip.ZipEntry
+import java.util.zip.ZipOutputStream
 
 class BuildDependenciesDownloaderTest {
   @Test
@@ -126,6 +132,80 @@ class BuildDependenciesDownloaderTest {
         runBlocking { downloadFileToCacheLocation("https://example.invalid/missing.bin", communityRoot) }
       }
       Assert.assertTrue(missing.message, missing.message!!.contains("missing runfile"))
+    }
+  }
+
+  @Test
+  fun `extraction reads a preloaded archive without writing anywhere near it`() = runBlocking(Dispatchers.Default) {
+    withPreloadedTestRoot { communityRoot, cache, manifestRoot ->
+      val url = "https://example.invalid/preloaded.zip"
+      val archive = manifestRoot.resolve("preloaded.zip")
+      writeZip(archive, "hello.txt", "hello")
+      writeManifest(manifestRoot, "preloaded.zip", "5".repeat(64), url)
+
+      // the runfiles tree can be a read-only share; extraction must not need to write into it
+      val readOnly = setOf(OWNER_READ, OWNER_EXECUTE)
+      Files.setPosixFilePermissions(manifestRoot, readOnly)
+      try {
+        val extracted = resolveAndExtractToCacheLocation(url, communityRoot)
+        Assert.assertTrue("$extracted must be under $cache", extracted.startsWith(cache))
+        Assert.assertEquals("hello", Files.readString(extracted.resolve("hello.txt")))
+        Assert.assertEquals(extracted, resolveAndExtractToCacheLocation(url, communityRoot))
+      }
+      finally {
+        Files.setPosixFilePermissions(manifestRoot, setOf(OWNER_READ, OWNER_WRITE, OWNER_EXECUTE))
+      }
+    }
+  }
+
+  @Test
+  fun `extraction of the same content from two paths lands in one cache directory`() = runBlocking(Dispatchers.Default) {
+    withPreloadedTestRoot { communityRoot, _, manifestRoot ->
+      val url = "https://example.invalid/moving.zip"
+      val sha256 = "6".repeat(64)
+      val first = manifestRoot.resolve("a/moving.zip")
+      Files.createDirectories(first.parent)
+      writeZip(first, "payload.txt", "payload")
+      Files.writeString(manifestRoot.resolve("preloaded-downloads-v1.tsv"), "intellij-build-downloads\t1\na/moving.zip\t$sha256\t$url\n")
+      val fromFirstPath = resolveAndExtractToCacheLocation(url, communityRoot)
+
+      // the same declared content, reached through the path a different test target or sandbox would give it
+      val second = manifestRoot.resolve("b/moving.zip")
+      Files.createDirectories(second.parent)
+      writeZip(second, "payload.txt", "payload")
+      Files.writeString(manifestRoot.resolve("preloaded-downloads-v1.tsv"), "intellij-build-downloads\t1\nb/moving.zip\t$sha256\t$url\n")
+      val fromSecondPath = resolveAndExtractToCacheLocation(url, communityRoot)
+
+      Assert.assertEquals(fromFirstPath, fromSecondPath)
+      Assert.assertEquals("payload", Files.readString(fromSecondPath.resolve("payload.txt")))
+    }
+  }
+
+  @Test
+  fun `extraction keyed by path treats two presentations of one archive as one entry`() = runBlocking(Dispatchers.Default) {
+    withPreloadedTestRoot { communityRoot, _, manifestRoot ->
+      val archive = manifestRoot.resolve("local.zip")
+      writeZip(archive, "payload.txt", "payload")
+      writeManifest(manifestRoot, "local.zip", "7".repeat(64), "https://example.invalid/local.zip")
+
+      val direct = extractFileToCacheLocation(archive, communityRoot)
+      val dotted = extractFileToCacheLocation(archive.parent.resolve(".").resolve(archive.fileName), communityRoot)
+      val roundTripped = extractFileToCacheLocation(
+        archive.parent.resolve("..").resolve(manifestRoot.fileName).resolve(archive.fileName),
+        communityRoot,
+      )
+
+      Assert.assertEquals(direct, dotted)
+      Assert.assertEquals(direct, roundTripped)
+      Assert.assertEquals("payload", Files.readString(direct.resolve("payload.txt")))
+    }
+  }
+
+  private fun writeZip(target: Path, entryName: String, content: String) {
+    ZipOutputStream(Files.newOutputStream(target)).use { zip ->
+      zip.putNextEntry(ZipEntry(entryName))
+      zip.write(content.toByteArray())
+      zip.closeEntry()
     }
   }
 

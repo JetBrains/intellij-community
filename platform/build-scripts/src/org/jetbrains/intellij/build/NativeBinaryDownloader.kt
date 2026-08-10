@@ -4,6 +4,8 @@ package org.jetbrains.intellij.build
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesConstants.INTELLIJ_DEPENDENCIES_URL
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
 import org.jetbrains.intellij.build.dependencies.TerminalLibGhosttyVtDownloader
+import org.jetbrains.intellij.build.dependencies.archiveCacheKey
+import org.jetbrains.intellij.build.dependencies.extractToCacheLocation
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
 import kotlin.io.path.exists
@@ -95,9 +97,14 @@ object NativeBinaryDownloader {
     val communityRoot = context.paths.communityHomeDirRoot
     val version = context.dependenciesProperties.property(propertyName)
     val uri = BuildDependenciesDownloader.getUriForMavenArtifact(INTELLIJ_DEPENDENCIES_URL, GROUP_ID, artifactId, version, PACKAGING)
-    val archiveFile = downloadFileToCacheLocation(uri.toString(), communityRoot)
-    val unpackedDir = BuildDependenciesDownloader.extractFileToCacheLocation(communityRoot, archiveFile)
-    return archiveFile to unpackedDir
+    val resolved = resolveFileForReading(uri.toString(), communityRoot)
+    val unpackedDir = extractToCacheLocation(
+      archiveFile = resolved.file,
+      communityRoot = communityRoot,
+      cacheKey = archiveCacheKey(archiveFile = resolved.file, sha256 = resolved.sha256),
+      options = emptyArray(),
+    )
+    return resolved.file to unpackedDir
   }
 
   private fun binName(os: OsFamily, arch: JvmArchitecture, baseName: String): String = "${os.osName}-${arch.archName}/${os.binaryName(baseName)}"

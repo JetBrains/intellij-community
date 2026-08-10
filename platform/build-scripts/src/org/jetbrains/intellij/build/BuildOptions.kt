@@ -46,6 +46,18 @@ data class BuildOptions(
   @JvmField var useCompiledClassesFromProjectOutput: Boolean = getBooleanProperty(USE_COMPILED_CLASSES_PROPERTY, isInDevelopmentMode),
 
   /**
+   * If `true`, files taken from an immutable cache - a download-cache entry, an extracted archive, a
+   * Bazel runfile - may be hardlinked into the layout instead of copied.
+   *
+   * Enabled only for an in-process dev-mode assembly (see `configureDevModeBuildOptions`), whose run
+   * directory is disposable and never patched in place. A distribution must own its bytes: signing,
+   * notarization, and packaging all rewrite files, and a link would write those changes back into the
+   * shared cache. This is deliberately *not* [isInDevelopmentMode], which is merely "not on CI" and is
+   * true for a release-shaped build on a developer machine.
+   */
+  @JvmField var linkImmutableCacheEntries: Boolean = false,
+
+  /**
    * In addition to production compilation sources, allow various functions to use and traverse test output.
    * It is necessary. e.g., to run tests in a dev-build-provided environment.
    */

@@ -14,9 +14,9 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesConstants
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesExtractOptions
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesManualRunOnly
-import org.jetbrains.intellij.build.dependencies.extractFileToCacheLocation
-import org.jetbrains.intellij.build.downloadFileToCacheLocation
+import org.jetbrains.intellij.build.resolveAndExtractToCacheLocation
 import org.jetbrains.intellij.build.resolveFileForReading
 import java.nio.file.Files
 import java.nio.file.Path
@@ -152,8 +152,13 @@ object BundledMavenDownloader {
     return coroutineScope {
       fileNameToUri.map { (fileName, uri) ->
         async {
-          val source = resolveFileForReading(uri.toString(), communityRoot)
-          MavenLibraryFile(fileName = fileName, source = source, sha256 = fileChecksum(source))
+          val resolved = resolveFileForReading(uri.toString(), communityRoot)
+          // a preloaded input arrives with the digest Bazel already verified; only a downloaded one has to be read back
+          MavenLibraryFile(
+            fileName = fileName,
+            source = resolved.file,
+            sha256 = resolved.sha256 ?: fileChecksum(resolved.file),
+          )
         }
       }.awaitAll()
     }
@@ -177,8 +182,7 @@ object BundledMavenDownloader {
         classifier = "bin",
         packaging = "zip"
       )
-      val zipPath = downloadFileToCacheLocation(uri.toString(), communityRoot)
-      extractFileToCacheLocation(archiveFile = zipPath, communityRoot = communityRoot, stripRoot = true)
+      resolveAndExtractToCacheLocation(uri.toString(), communityRoot, BuildDependenciesExtractOptions.STRIP_ROOT)
     }
   }
 

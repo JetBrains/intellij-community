@@ -24,6 +24,8 @@ import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectLibraryE
 import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.io.copyFile
 import org.jetbrains.intellij.build.io.copyFileToDir
+import org.jetbrains.intellij.build.io.linkOrCopyDir
+import org.jetbrains.intellij.build.io.linkOrCopyFile
 import org.jetbrains.intellij.build.kotlin.CommunityKotlinPluginBuilder
 import org.jetbrains.intellij.build.python.PythonCommunityPluginModules
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
@@ -113,7 +115,13 @@ object CommunityRepositoryModules {
         val targetLib = targetDir.resolve("lib")
 
         val mavenDist = BundledMavenDownloader.downloadMavenDistribution(context.paths.communityHomeDirRoot)
-        copyDir(mavenDist, targetLib.resolve("maven3"))
+        val maven3Dir = targetLib.resolve("maven3")
+        if (context.options.linkImmutableCacheEntries) {
+          linkOrCopyDir(mavenDist, maven3Dir)
+        }
+        else {
+          copyDir(mavenDist, maven3Dir)
+        }
       }
 
       with("intellij.maven.server3") {
@@ -125,9 +133,9 @@ object CommunityRepositoryModules {
         spec.withGeneratedResources { targetDir, context ->
           val targetLib = targetDir.resolve("lib")
           val maven3Libs = BundledMavenDownloader.resolveMaven3Libs(context.paths.communityHomeDirRoot)
-          copyMavenLibraries(maven3Libs, targetLib.resolve(this))
+          copyMavenLibraries(maven3Libs, targetLib.resolve(this), context)
           val mavenTelemetryDependencies = BundledMavenDownloader.resolveMavenTelemetryDependencies(context.paths.communityHomeDirRoot)
-          copyMavenLibraries(mavenTelemetryDependencies, targetLib.resolve(this))
+          copyMavenLibraries(mavenTelemetryDependencies, targetLib.resolve(this), context)
         }
       }
 
@@ -143,9 +151,9 @@ object CommunityRepositoryModules {
         spec.withGeneratedResources { targetDir, context ->
           val targetLib = targetDir.resolve("lib")
           val maven4Libs = BundledMavenDownloader.resolveMaven4Libs(context.paths.communityHomeDirRoot)
-          copyMavenLibraries(maven4Libs, targetLib.resolve(this))
+          copyMavenLibraries(maven4Libs, targetLib.resolve(this), context)
           val mavenTelemetryDependencies = BundledMavenDownloader.resolveMavenTelemetryDependencies(context.paths.communityHomeDirRoot)
-          copyMavenLibraries(mavenTelemetryDependencies, targetLib.resolve(this))
+          copyMavenLibraries(mavenTelemetryDependencies, targetLib.resolve(this), context)
         }
       }
 
@@ -374,11 +382,17 @@ object CommunityRepositoryModules {
         val properties = BuildDependenciesDownloader.getDependencyProperties(communityRoot)
         val jcefBuildNumber = properties.property("jcefBuild")
 
-        val archivePath = downloadFileToCacheLocation(jcefDownloadUrl(os, arch, jcefBuildNumber), communityRoot)
+        val archive = resolveFileForReading(jcefDownloadUrl(os, arch, jcefBuildNumber), communityRoot)
         val subDir = targetDir.resolve("jcef-tmp") // to not clean up root plugin directory on BuildDependenciesDownloader.extractFile
         Files.createDirectories(subDir)
 
-        BuildDependenciesDownloader.extractFile(archivePath, subDir, communityRoot, BuildDependenciesExtractOptions.STRIP_ROOT)
+        BuildDependenciesDownloader.extractFile(
+          archiveFile = archive.file,
+          target = subDir,
+          communityRoot = communityRoot,
+          sha256 = archive.sha256,
+          options = arrayOf(BuildDependenciesExtractOptions.STRIP_ROOT),
+        )
 
         // Unix ZIP does not have root `jcef` directory
         val jcefOutputDir = if (Files.exists(subDir.resolve("jcef"))) subDir.resolve("jcef") else subDir
@@ -800,9 +814,15 @@ object CommunityRepositoryModules {
   }
 }
 
-private fun copyMavenLibraries(libraries: List<BundledMavenDownloader.MavenLibraryFile>, targetDir: Path) {
+private fun copyMavenLibraries(libraries: List<BundledMavenDownloader.MavenLibraryFile>, targetDir: Path, context: BuildContext) {
   for ((fileName, source) in libraries) {
-    copyFile(source, targetDir.resolve(fileName))
+    val target = targetDir.resolve(fileName)
+    if (context.options.linkImmutableCacheEntries) {
+      linkOrCopyFile(source, target)
+    }
+    else {
+      copyFile(source, target)
+    }
   }
 }
 
