@@ -632,6 +632,8 @@ jvm_library(
         "//platform/statistics/testFramework",
         "//platform/statistics/testFramework:testFramework_test_lib",
         "@lib//:jimfs",
+        "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
+        "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.ide.impl.tests` end
