@@ -36,6 +36,7 @@ import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.PsiVariable;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.impl.light.LightCompactConstructorParameter;
 import com.intellij.psi.impl.light.LightRecordCanonicalConstructor;
 import com.intellij.psi.impl.light.LightRecordField;
 import com.intellij.psi.util.JavaPsiRecordUtil;
@@ -217,9 +218,18 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
 
       final PsiVariable var = constructorParams[i];
 
-      final PsiField field = var instanceof PsiParameter parameter
-              ? new ParamAssignmentFinder(parameter, compatibleConstructor).findFieldAssigned()
-              : (PsiField)var;
+      final PsiField field;
+      if (var instanceof LightCompactConstructorParameter parameter) {
+        PsiRecordComponent component = JavaPsiRecordUtil.getComponentForCanonicalConstructorParameter(parameter);
+        if (component == null) return null;
+        field = JavaPsiRecordUtil.getFieldForComponent(component);
+      }
+      else if (var instanceof PsiParameter parameter) {
+        field = new ParamAssignmentFinder(parameter, compatibleConstructor).findFieldAssigned();
+      }
+      else {
+        field = (PsiField)var;
+      }
       if (field == null) {
         return null;
       }
