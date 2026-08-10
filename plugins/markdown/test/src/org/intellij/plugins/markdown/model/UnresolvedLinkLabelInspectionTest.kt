@@ -26,37 +26,71 @@ class UnresolvedLinkLabelInspectionTest: BasePlatformTestCase() {
   }
 
   @Test
-  fun `test standalone bracketed text is not reported`() {
+  fun `test resolved label of shortcut reference link is not reported`() {
     doTest("""
-      T030 [P] Implement the thing
+      Here is a link to [Google].
+
+      [Google]: https://google.com
     """)
   }
 
   @Test
-  fun `test bracketed text separated by a space is not a reference link`() {
+  fun `test resolved label of collapsed reference link is not reported`() {
     doTest("""
-      T030 [P] [US3] Implement the thing
+      Here is a link to [Google][].
+
+      [Google]: https://google.com
     """)
   }
 
   @Test
-  fun `test several bracketed texts separated by spaces are not reference links`() {
+  fun `case and whitespace mismatched shortcut label is reported`() {
     doTest("""
-      T030 [P] [US3] [US4] Implement the thing
+      [<warning descr="Cannot resolve link label foo">foo </warning>]
+
+      [FOO]: https://google.com
+    """)
+  }
+
+  @Test
+  fun `test standalone bracketed text is reported`() {
+    doTest("""
+      T030 [<warning descr="Cannot resolve link label P">P</warning>] Implement the thing
+    """)
+  }
+
+  @Test
+  fun `test bracketed text separated by a space is reported`() {
+    doTest("""
+      T030 [<warning descr="Cannot resolve link label P">P</warning>] [<warning descr="Cannot resolve link label US3">US3</warning>] Implement the thing
+    """)
+  }
+
+  @Test
+  fun `test several bracketed texts separated by spaces are reported`() {
+    doTest("""
+      T030 [<warning descr="Cannot resolve link label P">P</warning>] [<warning descr="Cannot resolve link label US3">US3</warning>] [<warning descr="Cannot resolve link label US4">US4</warning>] Implement the thing
     """)
   }
 
   @Test
   fun `test bracketed text separated by a space after an image marker is not a reference link`() {
     doTest("""
-      T030 ![P] [US3] Implement the thing
+      T030 ![P] [<warning descr="Cannot resolve link label US3">US3</warning>] Implement the thing
     """)
   }
 
   @Test
-  fun `test bracketed text separated by a space inside a list item is not a reference link`() {
+  fun `image reference label is reported`() {
     doTest("""
-      - [ ] T030 [P] [US3] Implement the thing
+      ![P][<warning descr="Cannot resolve link label US3">US3</warning>]
+    """)
+  }
+
+  @Test
+  fun `test bracketed text separated by a space inside a list item is reported`() {
+    doTest("""
+      - [ ] T030 [<warning descr="Cannot resolve link label P">P</warning>] [<warning descr="Cannot resolve link label US3">US3</warning>] Implement the thing
     """)
   }
 
