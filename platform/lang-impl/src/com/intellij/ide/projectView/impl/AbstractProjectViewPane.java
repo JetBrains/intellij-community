@@ -279,6 +279,16 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
   public JComponent getComponentToFocus() {
     return myTree;
   }
+  
+  @ApiStatus.Internal
+  public @Nullable DnDSource getDragSource() {
+    return myDragSource;
+  }
+  
+  @ApiStatus.Internal
+  public @Nullable DnDTarget getDropTarget() {
+    return myDropTarget;
+  }
 
   @Override
   public void dispose() {

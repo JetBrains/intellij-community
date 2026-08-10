@@ -140,6 +140,7 @@ internal class TreeBasedFrontendProjectViewPane(
         expand(expandRequest)
       }
     }
+    enableDnD(tree, paneTreeModel)
   }
 
   override suspend fun manage() {

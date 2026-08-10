@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.projectView.pane
 
+import com.intellij.ide.dnd.DnDAction
 import com.intellij.ide.projectView.NodeSortKey
 import com.intellij.platform.projectView.settings.NestingRuleDTO
 import com.intellij.platform.projectView.settings.ProjectViewPaneOptionDTO
@@ -72,4 +73,12 @@ data class ProjectViewPanePasteRequest(
 @Serializable
 data class ProjectViewPaneDeleteRequest(
   val nodeIds: List<Long>,
+) : ProjectViewPaneRequest()
+
+@ApiStatus.Internal
+@Serializable
+data class ProjectViewPaneDnDRequest(
+  val sourceIDs: List<Long>,
+  val targetID: Long,
+  val action: DnDAction,
 ) : ProjectViewPaneRequest()

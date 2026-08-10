@@ -197,6 +197,7 @@ private class ProjectViewPaneManager(val pane: ProjectViewPaneModel, val descrip
           is ProjectViewPaneCutRequest -> pane.cutCopyPasteDeleteHandler.performCut(request.nodeIds)
           is ProjectViewPanePasteRequest -> pane.cutCopyPasteDeleteHandler.performPaste(request.nodeIds)
           is ProjectViewPaneDeleteRequest -> pane.cutCopyPasteDeleteHandler.performDelete(request.nodeIds)
+          is ProjectViewPaneDnDRequest -> pane.dndHandler.performInternalDnD(request.sourceIDs, request.targetID, ProjectViewDnDOptionsImpl(request.action))
         }
       }
       catch (e: Exception) {

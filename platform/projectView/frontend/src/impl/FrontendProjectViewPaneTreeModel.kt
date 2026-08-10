@@ -2,6 +2,7 @@
 package com.intellij.platform.projectView.frontend.impl
 
 import com.intellij.ide.SelectInTarget
+import com.intellij.ide.dnd.DnDAction
 import com.intellij.ide.projectView.NodeSortKey
 import com.intellij.ide.util.treeView.DefaultTreeModelWithCachedPresentation
 import com.intellij.openapi.diagnostic.debug
@@ -27,6 +28,7 @@ import com.intellij.platform.projectView.pane.ProjectViewPaneCopyRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneCutRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneDeleteRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorImpl
+import com.intellij.platform.projectView.pane.ProjectViewPaneDnDRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneLoadChildrenRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneNavigateRequest
 import com.intellij.platform.projectView.pane.ProjectViewPanePasteRequest
@@ -133,6 +135,10 @@ internal class FrontendProjectViewPaneTreeModel(
 
   internal fun requestDelete(nodeIds: List<Long>) {
     sendRequest(ProjectViewPaneDeleteRequest(nodeIds))
+  }
+  
+  internal fun requestDnD(sourceIDs: List<Long>, targetID: Long, action: DnDAction) {
+    sendRequest(ProjectViewPaneDnDRequest(sourceIDs, targetID, action))
   }
 
   internal fun getOptionSupport(): ProjectViewActionSupport = optionSupport

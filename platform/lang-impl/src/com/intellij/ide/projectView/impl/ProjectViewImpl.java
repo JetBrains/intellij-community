@@ -1343,6 +1343,10 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
     String id = content.getUserData(ID_KEY);
     String subId = content.getUserData(SUB_ID_KEY);
+    setSelectedView(id, subId);
+  }
+
+  private void setSelectedView(String id, String subId) {
     if (Objects.equals(id, currentViewId) && Objects.equals(subId, currentViewSubId)) {
       return;
     }
@@ -1600,8 +1604,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
     
     if (isBackendMode) {
-      currentViewId = viewId;
-      currentViewSubId = subId;
+      setSelectedView(viewId, subId);
       return ActionCallback.DONE;
     }
 

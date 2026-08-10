@@ -176,6 +176,11 @@ internal class ProjectViewPaneStateBuilderImpl(
       override fun getNodeById(id: Long): BackendProjectViewNodeModel<T>? {
         return nodeById[id]?.model as BackendProjectViewNodeModel<T>?
       }
+
+      @Suppress("UNCHECKED_CAST") // the platform has no idea about types, common sense the implementations is the type safety guarantee
+      override fun getParentByChildId(childId: Long): BackendProjectViewNodeModel<T>? {
+        return nodeById[childId]?.parent?.model as BackendProjectViewNodeModel<T>?
+      }
     }
 
     private class SuspendingBackendProjectViewPaneStateAccessorImpl<T>(

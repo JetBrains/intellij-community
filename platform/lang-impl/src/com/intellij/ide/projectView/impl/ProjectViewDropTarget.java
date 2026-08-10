@@ -104,6 +104,11 @@ public abstract class ProjectViewDropTarget implements DnDNativeTarget {
     Rectangle bounds = myTree.getPathBounds(target);
     if (bounds == null || bounds.y > point.y || point.y >= bounds.y + bounds.height) return;
 
+    doDrop(event, target);
+  }
+
+  @ApiStatus.Internal
+  public void doDrop(@NotNull DnDEvent event, @NotNull TreePath target) {
     DropHandler handler = getDropHandler(event);
     if (handler == null) return;
 

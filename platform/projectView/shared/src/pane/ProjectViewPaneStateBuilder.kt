@@ -26,6 +26,7 @@ sealed interface ProjectViewPaneStateBuilder {
 @ApiStatus.Experimental
 sealed interface BackendProjectViewPaneStateAccessor<T> {
   fun getNodeById(id: Long): BackendProjectViewNodeModel<T>?
+  fun getParentByChildId(childId: Long): BackendProjectViewNodeModel<T>?
 }
 
 @ApiStatus.Experimental

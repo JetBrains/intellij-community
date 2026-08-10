@@ -1,8 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.projectView.pane
 
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.DataSnapshot
+import com.intellij.openapi.project.Project
 import com.intellij.platform.projectView.settings.ProjectViewPaneFileNestingValue
 import com.intellij.platform.projectView.settings.ProjectViewPaneOption
 import com.intellij.platform.projectView.settings.ProjectViewPaneSortKey
@@ -10,7 +12,9 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
 interface ProjectViewPaneModel {
+  val project: Project
   val cutCopyPasteDeleteHandler: ProjectViewPaneCutCopyPasteDeleteHandler
+  val dndHandler: ProjectViewPaneDnDHandler
   
   suspend fun describe(builder: ProjectViewPaneDescriptorBuilder): ProjectViewPaneDescriptor
 
@@ -29,6 +33,8 @@ interface ProjectViewPaneModel {
   suspend fun setFileNesting(fileNestingValue: ProjectViewPaneFileNestingValue)
 
   fun uiDataSnapshot(sink: DataSink, snapshot: DataSnapshot)
+  
+  fun getDataContext(nodeIds: List<Long>): DataContext
 
   suspend fun findNodeForSelectIn(selectInRequest: SelectInRequest): ProjectViewNodePath?
 }

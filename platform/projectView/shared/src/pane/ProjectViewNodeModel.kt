@@ -3,8 +3,8 @@
 package com.intellij.platform.projectView.pane
 
 import com.intellij.ide.util.treeView.ExpandOnDoubleClickSupport
-import com.intellij.ui.treeStructure.TreeNodePresentation
 import com.intellij.ui.treeStructure.TreeNodePresentationBuilder
+import com.intellij.ui.treeStructure.TreeNodeWithPresentation
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
@@ -28,9 +28,8 @@ sealed interface ProjectViewNodeModelBuilder {
 }
 
 @ApiStatus.Experimental
-sealed interface ProjectViewNodeModel : ExpandOnDoubleClickSupport {
+sealed interface ProjectViewNodeModel : ExpandOnDoubleClickSupport, TreeNodeWithPresentation {
   val id: Long
-  val presentation: TreeNodePresentation
   fun canNavigate(): Boolean
   fun canNavigateToSource(): Boolean
   fun isIncludedInExpandAll(): Boolean

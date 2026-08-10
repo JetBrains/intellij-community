@@ -4,10 +4,14 @@
 
 package com.intellij.platform.projectView.backend.impl.legacy
 
+import com.intellij.ide.ActivityTracker
+import com.intellij.ide.dnd.DnDEventImpl
+import com.intellij.ide.dnd.DnDManagerImpl
 import com.intellij.ide.projectView.NodeSortKey
 import com.intellij.ide.projectView.ProjectView
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane
 import com.intellij.ide.projectView.impl.IdeViewForProjectViewPane
+import com.intellij.ide.projectView.impl.ProjectViewDropTarget
 import com.intellij.ide.projectView.impl.ProjectViewFileNestingService
 import com.intellij.ide.projectView.impl.ProjectViewImpl
 import com.intellij.ide.projectView.impl.ProjectViewPane
@@ -38,11 +42,13 @@ import com.intellij.platform.ide.navigation.NavigationService
 import com.intellij.platform.projectView.actions.legacyProjectViewOption
 import com.intellij.platform.projectView.impl.DataContextCutCopyPasteDeleteHandler
 import com.intellij.platform.projectView.pane.PROJECT_VIEW_SELECTED_NODE_IDS_KEY
+import com.intellij.platform.projectView.pane.ProjectViewDnDOptions
 import com.intellij.platform.projectView.pane.ProjectViewNodeModel
 import com.intellij.platform.projectView.pane.ProjectViewNodePath
 import com.intellij.platform.projectView.pane.ProjectViewPaneCutCopyPasteDeleteHandler
 import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptor
 import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorBuilder
+import com.intellij.platform.projectView.pane.ProjectViewPaneDnDHandler
 import com.intellij.platform.projectView.pane.ProjectViewPaneId
 import com.intellij.platform.projectView.pane.ProjectViewPaneLoadChildrenOptions
 import com.intellij.platform.projectView.pane.ProjectViewPaneModel
@@ -76,6 +82,7 @@ import com.intellij.ui.treeStructure.CachingTreePath
 import com.intellij.ui.treeStructure.ProjectViewUpdateCause
 import com.intellij.ui.treeStructure.TreeNodePresentation
 import com.intellij.ui.treeStructure.TreeNodePresentationBuilder
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.ui.tree.TreeUtil
 import kotlinx.coroutines.CompletableDeferred
@@ -91,6 +98,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
+import java.awt.Point
 import javax.swing.JComponent
 import javax.swing.JTree
 import javax.swing.event.TreeModelEvent
@@ -151,7 +159,7 @@ private class LegacyBackendProjectViewPaneService(
 }
 
 private class LegacyBackendProjectViewPaneModel(
-  private val project: Project,
+  override val project: Project,
   private val legacyPaneManager: AbstractProjectViewPaneStateManager,
   private val subId: String?,
   private val addSelectInTargetDescriptors: Boolean,
@@ -159,6 +167,15 @@ private class LegacyBackendProjectViewPaneModel(
   private val id = projectViewPaneId(if (subId == null) legacyPaneManager.id else "${legacyPaneManager.id}:$subId")
 
   override val cutCopyPasteDeleteHandler: ProjectViewPaneCutCopyPasteDeleteHandler = MyCutCopyPasteDeleteHandler()
+
+  override val dndHandler: ProjectViewPaneDnDHandler
+    get() = object : ProjectViewPaneDnDHandler {
+      override suspend fun performInternalDnD(sourceIDs: List<Long>, targetID: Long, options: ProjectViewDnDOptions) {
+        withContext(Dispatchers.EDT) {
+          legacyPaneManager.performInternalDnD(sourceIDs, targetID, options)
+        }
+      }
+    }
 
   override suspend fun describe(builder: ProjectViewPaneDescriptorBuilder): ProjectViewPaneDescriptor = builder.run {
     if (legacyPaneManager.legacyPane.isDefaultPane(project)) {
@@ -239,6 +256,26 @@ private class LegacyBackendProjectViewPaneModel(
   override fun uiDataSnapshot(sink: DataSink, snapshot: DataSnapshot) {
     val selectedIds = snapshot[PROJECT_VIEW_SELECTED_NODE_IDS_KEY] ?: return
     legacyPaneManager.uiDataSnapshot(sink, selectedIds)
+  }
+
+  override fun getDataContext(nodeIds: List<Long>): DataContext {
+    return selectionDataContext(nodeIds)
+  }
+
+  /**
+   * The data context the legacy pane itself would have for this selection.
+   *
+   * Unlike the new pane model, the legacy wrapper stays entirely data-context based: pushing the selection
+   * into the legacy tree and asking the pane for its snapshot is exactly what [uiDataSnapshot] does, and it
+   * gives all the keys the copy/paste/delete handlers need, including the pane's own
+   * [com.intellij.openapi.actionSystem.PlatformDataKeys.DELETE_ELEMENT_PROVIDER] choice.
+   */
+  @RequiresEdt
+  private fun selectionDataContext(nodeIds: List<Long>): DataContext {
+    return CustomizedDataContext.withSnapshot(DataContext.EMPTY_CONTEXT) { sink ->
+      sink[CommonDataKeys.PROJECT] = project
+      legacyPaneManager.uiDataSnapshot(sink, nodeIds)
+    }
   }
 
   override suspend fun findNodeForSelectIn(selectInRequest: SelectInRequest): ProjectViewNodePath? {
@@ -332,40 +369,26 @@ private class LegacyBackendProjectViewPaneModel(
 
   private inner class MyCutCopyPasteDeleteHandler : ProjectViewPaneCutCopyPasteDeleteHandler {
     override suspend fun performCopy(nodeIds: List<Long>) {
-      val dataContext = selectionDataContext(nodeIds) ?: return
-      DataContextCutCopyPasteDeleteHandler.copy(dataContext)
+      withContext(Dispatchers.EDT) {
+        DataContextCutCopyPasteDeleteHandler.copy(selectionDataContext(nodeIds))
+      }
     }
 
     override suspend fun performCut(nodeIds: List<Long>) {
-      val dataContext = selectionDataContext(nodeIds) ?: return
-      DataContextCutCopyPasteDeleteHandler.cut(dataContext)
+      withContext(Dispatchers.EDT) {
+        DataContextCutCopyPasteDeleteHandler.cut(selectionDataContext(nodeIds))
+      }
     }
 
     override suspend fun performPaste(nodeIds: List<Long>) {
-      val dataContext = selectionDataContext(nodeIds) ?: return
-      DataContextCutCopyPasteDeleteHandler.paste(dataContext)
+      withContext(Dispatchers.EDT) {
+        DataContextCutCopyPasteDeleteHandler.paste(selectionDataContext(nodeIds))
+      }
     }
 
     override suspend fun performDelete(nodeIds: List<Long>) {
-      val dataContext = selectionDataContext(nodeIds) ?: return
-      DataContextCutCopyPasteDeleteHandler.delete(dataContext)
-    }
-
-    /**
-     * The data context the legacy pane itself would have for this selection.
-     *
-     * Unlike the new pane model, the legacy wrapper stays entirely data-context based: pushing the selection
-     * into the legacy tree and asking the pane for its snapshot is exactly what [uiDataSnapshot] does, and it
-     * gives all the keys the copy/paste/delete handlers need, including the pane's own
-     * [com.intellij.openapi.actionSystem.PlatformDataKeys.DELETE_ELEMENT_PROVIDER] choice.
-     */
-    private suspend fun selectionDataContext(nodeIds: List<Long>): DataContext? {
-      if (nodeIds.isEmpty()) return null
-      return withContext(Dispatchers.UI) {
-        CustomizedDataContext.withSnapshot(DataContext.EMPTY_CONTEXT) { sink ->
-          sink[CommonDataKeys.PROJECT] = project
-          legacyPaneManager.uiDataSnapshot(sink, nodeIds)
-        }
+      withContext(Dispatchers.EDT) {
+        DataContextCutCopyPasteDeleteHandler.delete(selectionDataContext(nodeIds))
       }
     }
   }
@@ -847,6 +870,17 @@ private class AbstractProjectViewPaneStateManager(
       return null // can't really recover, skip this node and hope other are OK
     }
     return parent.treePath()?.pathByAddingChild(modelNode)
+  }
+
+  fun performInternalDnD(sourceIDs: List<Long>, targetID: Long, options: ProjectViewDnDOptions) {
+    ActivityTracker.getInstance().inc() // we need the new selection to be reflected in the data context
+    val manager = DnDManagerImpl.getInstance() as? DnDManagerImpl ?: return
+    val tree = legacyPane.tree ?: return
+    tree.selectionPaths = sourceIDs.mapNotNull { nodeById[it]?.treePath() }.toTypedArray()
+    val dndBean = legacyPane.dragSource?.startDragging(options.action, Point()) ?: return
+    val targetPath = nodeById[targetID]?.treePath() ?: return
+    (legacyPane.dropTarget as? ProjectViewDropTarget?)
+      ?.doDrop(DnDEventImpl(manager, options.action, dndBean.attachedObject, Point()), targetPath)
   }
 
   private inner class MyTreeModelListener : TreeModelListener {
