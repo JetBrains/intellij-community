@@ -91,6 +91,15 @@ public final class LoaderFactory implements Disposable {
     return classLoader;
   }
 
+  /**
+   * Whether the class comes from the project rather than from the JDK or from the IDE. Only these are unsafe to
+   * initialize or to instantiate: everything the design time class loader does not own itself comes from its parent,
+   * which is the class loader of this plugin.
+   */
+  public static boolean isProjectClass(@NotNull Class<?> aClass) {
+    return aClass.getClassLoader() instanceof DesignTimeClassLoader;
+  }
+
   public @NotNull ClassLoader getProjectClassLoader() {
     if (myProjectClassLoader == null) {
       var runClasspath = OrderEnumerator.orderEntries(myProject).withoutSdk().getPathsList().getPathsString();
