@@ -1,11 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.suggested
 
 import com.intellij.codeInsight.template.TemplateManager
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.command.CommandEvent
 import com.intellij.openapi.command.CommandListener
 import com.intellij.openapi.command.undo.UndoManager
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.ProjectDisposeAwareDocumentListener
@@ -13,6 +17,7 @@ import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.asTextRange
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
+import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiBinaryFile
@@ -27,7 +32,15 @@ import com.intellij.psi.impl.PsiTreeChangeEventImpl
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.util.hasErrorElementInRange
 import com.intellij.util.SlowOperations
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 
 @ApiStatus.Internal
 class SuggestedRefactoringChangeListener(
@@ -45,6 +58,7 @@ class SuggestedRefactoringChangeListener(
   )
 
   private var editingState: SignatureEditingState? = null
+  private var signatureUpdateJob: Job? = null
 
   private var isFirstChangeInsideCommand = false
 
@@ -57,6 +71,13 @@ class SuggestedRefactoringChangeListener(
         isFirstChangeInsideCommand = true
       }
     })
+
+    parentDisposable.whenDisposed { signatureUpdateJob?.cancel() }
+  }
+
+  companion object {
+    @TestOnly
+    fun getSignatureAnalysisScope(project: Project): CoroutineScope = project.service<SuggestedRefactoringService>().scope
   }
 
   fun reset(withNewIdentifiers: Boolean = false) {
@@ -257,25 +278,50 @@ class SuggestedRefactoringChangeListener(
         return
       }
 
+      scheduleSignatureUpdateWhenAllCommitted()
+    }
+
+    private fun scheduleSignatureUpdateWhenAllCommitted() {
+      signatureUpdateJob?.cancel()
       if (!isActionOnAllCommittedScheduled) {
         isActionOnAllCommittedScheduled = true
-        psiDocumentManager.performWhenAllCommitted(this::performWhenAllCommitted)
+        psiDocumentManager.performWhenAllCommitted(this::scheduleSignatureUpdate)
       }
     }
 
-    private fun performWhenAllCommitted() {
+    private fun scheduleSignatureUpdate() {
       isActionOnAllCommittedScheduled = false
+      val state = editingState ?: return
 
-      val editingState = editingState ?: return
-      val watchedRange = editingState.signatureRangeMarker.asTextRange
-      if (watchedRange == null) {
-        reset()
-        return
+      val document = state.signatureRangeMarker.document
+      val scheduledModificationStamp = document.modificationStamp
+
+      signatureUpdateJob?.cancel()
+      signatureUpdateJob = project.service<SuggestedRefactoringService>().scope.launch(Dispatchers.IO) {
+        val signatureUpdate = readAction {
+          if (document.modificationStamp != scheduledModificationStamp) SignatureUpdate.NoUpdate
+          else computeSignatureUpdate(state)
+        }
+
+        withContext(Dispatchers.EDT) {
+          if (editingState !== state) return@withContext
+          if (document.modificationStamp != scheduledModificationStamp) {
+            scheduleSignatureUpdateWhenAllCommitted()
+            return@withContext
+          }
+          applySignatureUpdate(state, signatureUpdate)
+        }
       }
+    }
+
+    @RequiresBackgroundThread
+    private fun computeSignatureUpdate(editingState: SignatureEditingState): SignatureUpdate {
+      val watchedRange = editingState.signatureRangeMarker.asTextRange ?: return SignatureUpdate.Reset
 
       val document = editingState.signatureRangeMarker.document
-      val psiFile = psiDocumentManager.getPsiFile(document) ?: return
-      val refactoringSupport = SuggestedRefactoringSupport.forLanguage(psiFile.language) ?: return
+      if (psiDocumentManager.isUncommited(document)) return SignatureUpdate.NoUpdate
+      val psiFile = psiDocumentManager.getPsiFile(document) ?: return SignatureUpdate.NoUpdate
+      val refactoringSupport = SuggestedRefactoringSupport.forLanguage(psiFile.language) ?: return SignatureUpdate.NoUpdate
 
       val chars = document.charsSequence
       val strippedWatchedRange = watchedRange.stripWhitespace(chars)
@@ -283,25 +329,47 @@ class SuggestedRefactoringChangeListener(
       val signatureRange = anchor?.let { refactoringSupport.signatureRange(it) }
 
       if (anchor == null || signatureRange == null || strippedWatchedRange != signatureRange.stripWhitespace(chars)) {
-        val watchedRangeExtended = watchedRange.extendWithWhitespace(document.charsSequence)
+        val watchedRangeExtended = watchedRange.extendWithWhitespace(chars)
         val range = signatureRange?.union(watchedRangeExtended) ?: watchedRangeExtended
-        if (psiFile.hasErrorElementInRange(range)) {
+        return if (psiFile.hasErrorElementInRange(range)) SignatureUpdate.InconsistentState else SignatureUpdate.Reset
+      }
+
+      return SignatureUpdate.NextSignature(anchor, refactoringSupport)
+    }
+
+    @RequiresEdt
+    private fun applySignatureUpdate(editingState: SignatureEditingState, update: SignatureUpdate) {
+      if (this@SuggestedRefactoringChangeListener.editingState !== editingState) return
+
+      when (update) {
+        SignatureUpdate.NoUpdate -> {}
+        SignatureUpdate.Reset -> reset()
+        SignatureUpdate.InconsistentState -> {
           if (!editingState.isRefactoringSuppressed) {
             watcher.inconsistentState()
           }
         }
-        else {
-          reset()
-        }
-        return
-      }
-
-      if (!editingState.isRefactoringSuppressed) {
-        SlowOperations.knownIssue("IDEA-322957, EA-765399").use {
-          watcher.nextSignature(anchor, refactoringSupport)
+        is SignatureUpdate.NextSignature -> {
+          if (!editingState.isRefactoringSuppressed) {
+            SlowOperations.knownIssue("IDEA-322957, EA-765399").use {
+              watcher.nextSignature(update.anchor, update.refactoringSupport)
+            }
+          }
         }
       }
     }
+
+  }
+
+  private sealed interface SignatureUpdate {
+    object NoUpdate : SignatureUpdate
+    object Reset : SignatureUpdate
+    object InconsistentState : SignatureUpdate
+
+    class NextSignature(
+      val anchor: PsiElement,
+      val refactoringSupport: SuggestedRefactoringSupport,
+    ) : SignatureUpdate
   }
 
   private inner class MyPsiTreeChangeListener : PsiTreeChangeAdapter() {
@@ -359,3 +427,6 @@ interface SuggestedRefactoringSignatureWatcher {
   fun inconsistentState()
   fun reset()
 }
+
+@Service(Service.Level.PROJECT)
+private class SuggestedRefactoringService(val scope: CoroutineScope)

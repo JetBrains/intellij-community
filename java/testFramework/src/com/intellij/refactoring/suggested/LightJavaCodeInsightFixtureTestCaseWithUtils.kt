@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.suggested
 
 import com.intellij.openapi.application.runWriteAction
@@ -6,6 +6,7 @@ import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.utils.coroutines.waitCoroutinesBlocking
 
 abstract class LightJavaCodeInsightFixtureTestCaseWithUtils : LightJavaCodeInsightFixtureTestCase() {
   protected fun deleteTextAtCaret(text: String) = editAction {
@@ -53,5 +54,6 @@ abstract class LightJavaCodeInsightFixtureTestCaseWithUtils : LightJavaCodeInsig
   protected fun executeEditingActions(editingActions: () -> Unit) {
     editingActions()
     PsiDocumentManager.getInstance(this.project).commitAllDocuments()
+    waitCoroutinesBlocking(SuggestedRefactoringChangeListener.getSignatureAnalysisScope(project), 5000)
   }
 }
