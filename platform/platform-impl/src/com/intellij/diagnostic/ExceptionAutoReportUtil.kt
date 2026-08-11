@@ -8,7 +8,6 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginUtil
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.idea.AppMode
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.ProblematicPluginInfo
@@ -169,8 +168,6 @@ object ExceptionAutoReportUtil {
   private fun isDefaultSubmitter(submitter: ITNReporter): Boolean {
     val cls = submitter.javaClass
     return cls == ITNReporter::class.java
-           || cls.name == $$"com.intellij.rustrover.RustRoverMessagePoolAutoReporter$MyITNReporter"
-           && ApplicationManager.getApplication().isEAP
   }
 
   fun isFreeze(throwable: Throwable): Boolean {
