@@ -32,19 +32,11 @@ internal abstract class DocumentMutatorImpl(
   protected abstract fun updateAndGet(update: UnaryOperator<DocumentSnapshot>): DocumentSnapshot
 
   override fun setModStamp(newModStamp: Long, incrementModSequence: Boolean) {
-    updateAndGet { snapshot ->
-      val text = snapshot.text()
-      val newText = text.withModStamp(newModStamp, incrementModSequence)
-      snapshot.withText(newText)
-    }
+    updateAndGet { it.withModStamp(newModStamp, incrementModSequence) }
   }
 
   override fun clearLineFlags(startLine: Int, endLine: Int, exceptLines: IntArray) {
-    updateAndGet { snapshot ->
-      val text = snapshot.text()
-      val newText = text.withClearedLineFlags(startLine, endLine, exceptLines)
-      snapshot.withText(newText)
-    }
+    updateAndGet { it.withClearedLineFlags(startLine, endLine, exceptLines) }
   }
 
   override fun insertString(
@@ -315,18 +307,18 @@ internal abstract class DocumentMutatorImpl(
   }
 
   /**
-   * Returns [latest] carrying the text of [snapshotBefore] updated by [patch].
+   * Returns the snapshot of [snapshotBefore] updated by [patch], carrying the metadata of [latest].
    *
    * modStamp or other metadata could be changed during before-change listeners,
-   * so the metadata of [latest] is merged into the text the change is based on.
+   * so the metadata of [latest] is merged in before the patch is applied.
    */
   protected fun mergeAndPatch(
     snapshotBefore: DocumentSnapshot,
     latest: DocumentSnapshot,
     patch: DocumentTextPatch,
   ): DocumentSnapshot {
-    val merged = snapshotBefore.text().withMetadata(latest.text())
-    return latest.withText(merged.withPatch(patch))
+    val merged = snapshotBefore.withMetadata(latest)
+    return merged.withPatch(patch)
   }
 
   private fun trimToSize(hostDocument: Document, snapshot: DocumentSnapshot): DocumentSnapshot {

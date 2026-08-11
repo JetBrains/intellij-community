@@ -6,7 +6,7 @@ import com.intellij.openapi.util.Key
 import org.jetbrains.annotations.Contract
 
 /**
- * Immutable collection of [DocumentAspect]s of a [DocumentText], keyed by [Key] identity
+ * Immutable collection of [DocumentAspect]s of a [DocumentSnapshot], keyed by [Key] identity
  */
 internal interface DocumentAspectList {
 

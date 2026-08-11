@@ -35,6 +35,12 @@ import org.jetbrains.annotations.ApiStatus
  * 6) text = 'ab'   // t1 gets nested modification exception
  * ```
  * cases (5) and (6) are T_O_D_O to be fixed
+ *
+ * A change is computed against the snapshot captured at the start of the operation, but published against the
+ * snapshot found at CAS time. The two are reconciled by [DocumentSnapshot.withMetadata]: the metadata of the
+ * latest snapshot is taken, its text is discarded, and the change is applied to the text the operation started
+ * from. That is how a losing text mutation is overridden in cases (1) and (2), while a metadata-only update
+ * that raced the change -- a modification stamp set from another thread, say -- still survives.
  */
 @ApiStatus.Internal
 interface DocumentMutator {
@@ -44,7 +50,7 @@ interface DocumentMutator {
    *
    * Safe to perform concurrently.
    * @param incrementModSequence whether the modSequence should be incremented
-   * @see DocumentText.withModStamp
+   * @see DocumentSnapshot.withModStamp
    */
   fun setModStamp(newModStamp: Long, incrementModSequence: Boolean)
 
@@ -53,7 +59,7 @@ interface DocumentMutator {
    *
    * It is unsafe to perform concurrently with text mutations because line numbers may become outdated causing an exception
    *
-   * @see DocumentText.withClearedLineFlags
+   * @see DocumentSnapshot.withClearedLineFlags
    */
   fun clearLineFlags(startLine: Int, endLine: Int, exceptLines: IntArray)
 

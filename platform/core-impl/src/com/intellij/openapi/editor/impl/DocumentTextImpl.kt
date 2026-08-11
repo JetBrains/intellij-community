@@ -160,7 +160,7 @@ internal class DocumentTextImpl private constructor(
     if (this.chars === metadata.chars()) {
       return metadata
     }
-    // discard metadata.chars, see doc [com.intellij.openapi.editor.ex.DocumentMutator]
+    // discard metadata.chars, see the reconciliation note in [com.intellij.openapi.editor.ex.DocumentMutator]
     return DocumentTextImpl(
       this.chars,
       metadata.modStamp(),

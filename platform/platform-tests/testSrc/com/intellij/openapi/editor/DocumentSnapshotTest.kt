@@ -13,19 +13,27 @@ import kotlin.test.assertSame
 internal class DocumentSnapshotTest {
 
   @Test
-  fun `withText of the own text returns the same snapshot`() {
+  fun `withModStamp changing nothing returns the same snapshot`() {
     val snapshot = snapshot("abc")
-    assertSame(snapshot, snapshot.withText(snapshot.text()))
+    assertSame(snapshot, snapshot.withModStamp(snapshot.text().modStamp(), false))
   }
 
   @Test
-  fun `withText of another text returns a snapshot carrying it`() {
+  fun `withModStamp returns a snapshot carrying the new stamp`() {
     val snapshot = snapshot("abc")
-    val otherText = snapshot("xyz").text()
-    val updated = snapshot.withText(otherText)
+    val originalStamp = snapshot.text().modStamp()
+    val updated = snapshot.withModStamp(42L, true)
     assertNotSame(snapshot, updated)
-    assertSame(otherText, updated.text())
-    assertEquals("abc", snapshot.text().string()) // the original snapshot is unaffected
+    assertEquals(42L, updated.text().modStamp())
+    assertEquals(snapshot.text().modSequence() + 1, updated.text().modSequence())
+    assertSame(snapshot.text().chars(), updated.text().chars()) // the characters are carried over as they are
+    assertEquals(originalStamp, snapshot.text().modStamp()) // the original snapshot is unaffected
+  }
+
+  @Test
+  fun `withClearedLineFlags of an untouched text returns the same snapshot`() {
+    val snapshot = snapshot("a\nb\nc")
+    assertSame(snapshot, snapshot.withClearedLineFlags(0, Int.MAX_VALUE, IntArray(0)))
   }
 
   @Test

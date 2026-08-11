@@ -177,8 +177,7 @@ internal abstract class ElfRealSync(
   }
 
   private fun computeSnapshotAfter(change: ElfTextChange): DocumentSnapshot {
-    val snapshotBefore = change.snapshotBefore
-    return snapshotBefore.withText(snapshotBefore.text().withPatch(change.patch))
+    return change.snapshotBefore.withPatch(change.patch)
   }
 
   private fun matchesOldFragment(wholeText: CharSequence, startOffset: Int, oldFragment: CharSequence): Boolean {

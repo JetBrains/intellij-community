@@ -28,7 +28,7 @@ public class FrozenDocument implements DocumentEx {
   public @NotNull FrozenDocument applyEvent(@NotNull DocumentEvent event, int newStamp) {
     int originStartOffset = event instanceof DocumentEventImpl ? ((DocumentEventImpl)event).getInitialStartOffset() : event.getOffset();
     int originOldLength = event instanceof DocumentEventImpl ? ((DocumentEventImpl)event).getInitialOldLength() : event.getOldLength();
-    DocumentSnapshot newSnapshot = mySnapshot.withText(mySnapshot.text().withPatch(DocumentTextPatch.complex(
+    DocumentSnapshot newSnapshot = mySnapshot.withPatch(DocumentTextPatch.complex(
       event.getOffset(),
       event.getOffset() + event.getOldLength(),
       event.getNewFragment(),
@@ -37,7 +37,7 @@ public class FrozenDocument implements DocumentEx {
       originStartOffset,
       originStartOffset + originOldLength,
       event.getMoveOffset()
-    )));
+    ));
     return new FrozenDocument(newSnapshot);
   }
 
