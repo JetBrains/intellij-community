@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.progress
 
+import com.intellij.openapi.util.NlsContexts.ProgressTitle
 import com.intellij.platform.ide.progress.suspender.TaskSuspension
 import com.intellij.platform.project.ProjectEntity
 import com.intellij.platform.project.asProject
@@ -29,7 +30,7 @@ data class TaskInfoEntity(override val eid: EID) : Entity {
   /**
    * Human-readable title of a task, which is used to display the task in UI
    */
-  val title: String by TitleType
+  val title: @ProgressTitle String by TitleType
 
   /**
    * Specifies whether the task can be canceled.

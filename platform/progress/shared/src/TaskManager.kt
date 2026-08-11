@@ -4,16 +4,11 @@ package com.intellij.platform.ide.progress
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.util.NlsContexts.ProgressText
-import com.intellij.platform.ide.progress.TaskManager.cancelTask
-import com.intellij.platform.ide.progress.TaskManager.pauseTask
-import com.intellij.platform.ide.progress.TaskManager.resumeTask
 import com.intellij.platform.ide.progress.suspender.TaskSuspension
 import com.intellij.platform.kernel.withKernel
 import com.jetbrains.rhizomedb.ChangeScope
 import com.jetbrains.rhizomedb.exists
 import fleet.kernel.change
-import fleet.kernel.rebase.isShared
-import fleet.kernel.rebase.shared
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -59,15 +54,10 @@ object TaskManager {
   }
 
   private suspend fun TaskInfoEntity.setTaskStatus(newStatus: TaskStatus) {
-    // If a task is shared, it should be updated in shared scope, otherwise it should be update in local
+    // tasks are always local entities; the other process observes them over RPC
     val taskEntity = this
     change {
-      if (isShared) {
-        shared { trySetTaskStatus(taskEntity, newStatus) }
-      }
-      else {
-        trySetTaskStatus(taskEntity, newStatus)
-      }
+      trySetTaskStatus(taskEntity, newStatus)
     }
   }
 
