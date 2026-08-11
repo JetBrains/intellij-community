@@ -19,7 +19,6 @@ import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callabl
 import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.scopes.memberScope
-import org.jetbrains.kotlin.analysis.api.session.useSiteSession
 import org.jetbrains.kotlin.analysis.api.signatures.substitute
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
@@ -35,8 +34,8 @@ import org.jetbrains.kotlin.analysis.api.symbols.markers.KaDeclarationContainerS
 import org.jetbrains.kotlin.analysis.api.symbols.name
 import org.jetbrains.kotlin.analysis.api.symbols.sourcePsi
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
-import org.jetbrains.kotlin.analysis.api.types.KaSubstitutor
 import org.jetbrains.kotlin.analysis.api.types.createInheritanceTypeSubstitutor
+import org.jetbrains.kotlin.analysis.api.types.emptySubstitutor
 import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.asJava.unwrapped
@@ -194,9 +193,7 @@ private fun checkAccidentalOverrides(
         for (it in sequence) {
             val subClassSymbol = it.symbol as KaClassSymbol
             val substitutor =
-                createInheritanceTypeSubstitutor(subClassSymbol, data.getTargetClassSymbol()) ?: KaSubstitutor.Empty(
-                    useSiteSession.token
-                )
+                createInheritanceTypeSubstitutor(subClassSymbol, data.getTargetClassSymbol()) ?: emptySubstitutor
 
             val memberSymbolInSubClass = memberSymbolInTargetClass.substitute(substitutor)
             val clashingMemberSymbol = memberSymbolInSubClass.let {

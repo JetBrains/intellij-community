@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.isSubClassOf
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaSubstitutor
 import org.jetbrains.kotlin.analysis.api.types.createInheritanceTypeSubstitutor
+import org.jetbrains.kotlin.analysis.api.types.emptySubstitutor
 import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
 import org.jetbrains.kotlin.analysis.api.visibility.createUseSiteVisibilityChecker
 import org.jetbrains.kotlin.asJava.unwrapped
@@ -104,7 +105,7 @@ internal fun checkConflicts(
     val substitutor = createInheritanceTypeSubstitutor(
         subClass = targetClassSymbol,
         superClass = sourceClass.symbol as KaClassSymbol,
-    ) ?: KaSubstitutor.Empty(useSiteSession.token)
+    ) ?: emptySubstitutor
 
     if (!context.sourceClass.isInterface() && targetClass is KtClass && targetClass.isInterface()) {
         val message = KotlinBundle.message(

@@ -140,7 +140,7 @@ package kotlin.collections
 }
 
 <symbolName descr="null">internal</symbolName> object <symbolName descr="null">EmptyList</symbolName> : kotlin.collections.List<kotlin.Nothing>, kotlin.io.Serializable, kotlin.collections.RandomAccess {
-    <symbolName descr="null">private</symbolName> <symbolName descr="null">const</symbolName> val <symbolName descr="null">serialVersionUID</symbolName>: kotlin.Long = COMPILED_CODE /* compiled code */
+    <symbolName descr="null">private</symbolName> <symbolName descr="null">const</symbolName> val <symbolName descr="null">serialVersionUID</symbolName>: kotlin.Long = -7390468764508069838L
 
     <symbolName descr="null">public</symbolName> <symbolName descr="null">open</symbolName> val <symbolName descr="null">size</symbolName>: kotlin.Int /* compiled code */
         <symbolName descr="null">public</symbolName> <symbolName descr="null">open</symbolName> <symbolName descr="null">get</symbolName>() { /* compiled code */ }

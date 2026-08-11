@@ -1,4 +1,4 @@
-// "Create expected class in common module testModule_Common" "true"
+// "Create expected class in common module testModule_Common" "false"
 // ERROR: Unresolved reference: T
 // ERROR: Unresolved reference: TODO
 
