@@ -435,14 +435,6 @@ object DynamicPlugins {
       descriptorLoadingErrors = currentSet.input.discoveryResult.descriptorLoadingErrors,
     )
 
-    val excludedFromCandidateSubset = mutableMapOf<PluginMainDescriptor, DescriptorExclusionReason>()
-    val candidateSubset = newInitContext.selectCandidateSubset(newDiscoveryResult, excludedFromCandidateSubset)
-    val resolvedSet = newInitContext.resolveConstraints(candidateSubset)
-    val newPluginSet = PluginSet(
-      input = PluginSubsystemInput(newInitContext, newDiscoveryResult),
-      excludedFromCandidateSubset = excludedFromCandidateSubset,
-      resolvedPluginSet = resolvedSet,
-    )
-    return newPluginSet
+    return newInitContext.computeTargetState(newDiscoveryResult, null)
   }
 }
