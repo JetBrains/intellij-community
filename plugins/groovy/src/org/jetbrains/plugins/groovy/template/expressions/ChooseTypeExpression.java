@@ -167,11 +167,13 @@ public class ChooseTypeExpression extends Expression {
           keywords.add(LookupElementBuilder.create(GrModifier.VAL).bold());
         }
       }
+
+      // put the default keyword at the top of the completion list and the rest at the bottom
       switch (mySelectDef) {
         case DEF -> result.addFirst(keywords.removeFirst());
         case FINAL -> result.addFirst(keywords.remove(1));
-        case VAR -> result.addFirst(keywords.size() > 2 ? keywords.remove(1) : keywords.removeFirst());
-        case VAL -> result.addFirst(keywords.size() > 3 ? keywords.remove(2) : keywords.removeFirst());
+        case VAR -> result.addFirst(keywords.size() > 2 ? keywords.remove(2) : keywords.removeFirst());
+        case VAL -> result.addFirst(keywords.size() > 3 ? keywords.remove(3) : keywords.removeFirst());
       }
       result.addAll(keywords);
     }
