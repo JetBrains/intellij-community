@@ -92,7 +92,11 @@ class EditMaximizedView(private val grid: DataGrid) : CheckedDisposable, Removab
       }
 
       override fun onSelectionChanged(dataGrid: DataGrid?) {
-        tabInfoProviders.forEach { it.update(event = UpdateEvent.SelectionChanged) }
+        // Only the tab on screen is worth updating: a hidden one costs the same to build and nobody sees the result.
+        val shown = runnerTabs.selectedInfo
+        tabInfoProviders.forEach { provider ->
+          if (provider.tabInfo == shown) provider.update(event = UpdateEvent.SelectionChanged) else provider.markOutdated()
+        }
       }
 
       override fun onValueEdited(dataGrid: DataGrid?, value: Any?) {

@@ -41,6 +41,14 @@ abstract class TabInfoProvider(title: @NlsContexts.TabTitle String, private val 
     }
   }
 
+  /**
+   * Lets a hidden tab go out of date instead of rebuilding it: [onTabEnter] refreshes it before it is shown.
+   * The reason is not kept, so only events no wider than the [UpdateEvent.ContentChanged] replayed there may land here.
+   */
+  fun markOutdated() {
+    isUpdated = false
+  }
+
   open fun update(event: UpdateEvent? = null) {
     isUpdated = false
     val viewer = getViewer()
