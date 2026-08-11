@@ -75,6 +75,8 @@ suspend fun Project.asEntity(): ProjectEntity {
 @ApiStatus.Internal
 fun ProjectEntity.asProjectOrNull(): Project? {
   return ProjectManager.getInstance().openProjects.firstOrNull { it.projectId() == projectId }
+         // covers ids that were re-bound or aliased (Remote Development reconciles project identity between peers)
+         ?: projectId.findProjectOrNull()
 }
 
 /**
