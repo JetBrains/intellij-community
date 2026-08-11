@@ -602,6 +602,9 @@ internal fun configureDevModeBuildOptions(options: BuildOptions, request: BuildR
   options.buildNumber = buildOptionsTemplate.buildNumber
   options.isInDevelopmentMode = buildOptionsTemplate.isInDevelopmentMode
   options.isTestBuild = buildOptionsTemplate.isTestBuild
+  // A dev assembly can contain uncommitted changes, so HEAD does not identify its contents.
+  // Avoid coupling assembly to the mutable checkout solely for production provenance metadata.
+  options.storeGitRevision = false
   // a dev run directory is disposable and never patched in place, so it can share bytes with the caches it is assembled from
   options.linkImmutableCacheEntries = true
 }

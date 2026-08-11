@@ -4,6 +4,7 @@ package org.jetbrains.intellij.build
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
 import org.jetbrains.intellij.build.dev.BuildRequest
+import org.jetbrains.intellij.build.dev.configureDevModeBuildOptions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.lang.reflect.Method
@@ -64,6 +65,21 @@ class IdeBuilderTest {
     assertThat(options.buildNumber).isEqualTo("241.1")
     assertThat(options.isInDevelopmentMode).isFalse()
     assertThat(options.isTestBuild).isTrue()
+  }
+
+  @Test
+  fun configureDevModeBuildOptionsDisablesGitRevision() {
+    val options = BuildOptions().apply {
+      storeGitRevision = true
+    }
+
+    configureDevModeBuildOptions(
+      options = options,
+      request = createBuildRequest(),
+      buildOptionsTemplate = BuildOptions(),
+    )
+
+    assertThat(options.storeGitRevision).isFalse()
   }
 
   @Test
