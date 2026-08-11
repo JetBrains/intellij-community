@@ -7,6 +7,8 @@ import com.intellij.ide.dnd.DnDNativeTarget
 import com.intellij.ide.dnd.DnDSupport
 import com.intellij.ide.dnd.FileCopyPasteUtil
 import com.intellij.ide.projectView.impl.ProjectViewPane
+import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.ProjectCollectors
@@ -149,7 +151,14 @@ class WelcomeScreenLeftPanel(private val project: Project) : ProjectViewPane(pro
     separator().customize()
   }
 
+  override fun uiDataSnapshot(sink: DataSink) {
+    super.uiDataSnapshot(sink)
+    sink[WELCOME_SCREEN_IS_SHOWN] = true
+  }
+
   companion object {
     const val ID: String = "NonModalWelcomeScreenProjectPane"
   }
 }
+
+internal val WELCOME_SCREEN_IS_SHOWN: DataKey<Boolean> = DataKey.create("NonModalWelcomeScreenProjectPane.isShown")
