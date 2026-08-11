@@ -2115,6 +2115,11 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
             runTest("../../shared/tests/testData/newJ2k/docComments/linkTagWithLabel.java");
         }
 
+        @TestMetadata("markdownDocComment.java")
+        public void testMarkdownDocComment() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/docComments/markdownDocComment.java");
+        }
+
         @TestMetadata("onlyDeprecatedDocTag.java")
         public void testOnlyDeprecatedDocTag() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/docComments/onlyDeprecatedDocTag.java");
