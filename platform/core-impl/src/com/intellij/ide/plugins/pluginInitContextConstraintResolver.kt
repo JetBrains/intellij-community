@@ -14,14 +14,17 @@ import java.util.IdentityHashMap
 @ApiStatus.Internal
 fun PluginInitializationContext.computeTargetState(
   discoveryResult: PluginsDiscoveryResult,
+  isStartupInit: Boolean,
   parentActivity: Activity?,
 ): PluginSet {
   var initStagesActivity = parentActivity?.startChild("select candidate subset")
   val excludedFromCandidateSubset = IdentityHashMap<PluginMainDescriptor, DescriptorExclusionReason>()
   val candidateSubset = selectCandidateSubset(discoveryResult, excludedFromCandidateSubset)
 
-  initStagesActivity = initStagesActivity?.endAndStart("startup configuration")
-  runConfigurationDuringStartup(candidateSubset)
+  if (isStartupInit) {
+    initStagesActivity = initStagesActivity?.endAndStart("startup configuration")
+    runConfigurationDuringStartup(candidateSubset)
+  }
 
   initStagesActivity = initStagesActivity?.endAndStart("resolve constraints")
   val resolvedPluginSet = resolveConstraints(candidateSubset)

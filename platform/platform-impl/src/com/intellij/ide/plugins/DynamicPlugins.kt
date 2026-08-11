@@ -435,6 +435,6 @@ object DynamicPlugins {
       descriptorLoadingErrors = currentSet.input.discoveryResult.descriptorLoadingErrors,
     )
 
-    return newInitContext.computeTargetState(newDiscoveryResult, null)
+    return newInitContext.computeTargetState(newDiscoveryResult, isStartupInit = false, parentActivity = null)
   }
 }

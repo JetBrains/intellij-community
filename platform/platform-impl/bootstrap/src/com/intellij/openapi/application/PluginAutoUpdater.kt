@@ -146,7 +146,7 @@ object PluginAutoUpdater {
     val composedDiscoveryResult = PluginsDiscoveryResult.build(
       discoveredPlugins + DiscoveredPluginsList(updates.values.toList(), PluginsSourceContext.Custom)
     )
-    val pluginSet = initContext.computeTargetState(composedDiscoveryResult, null)
+    val pluginSet = initContext.computeTargetState(composedDiscoveryResult, isStartupInit = false, parentActivity = null)
     val excludedDescriptors = pluginSet.excludedFromCandidateSubset
     for ((id, updateDesc) in updates) {
       // no third-party plugin check, settings are not available at this point; that check must be done when downloading the updates

@@ -90,7 +90,7 @@ class PluginInitializationTargetStateTest {
       explicitPluginSubsetToLoad = explicitPluginSubsetToLoad,
       disablePluginLoadingCompletely = disablePluginLoadingCompletely
     )
-    return initContext.computeTargetState(discoveryResult, parentActivity = null)
+    return initContext.computeTargetState(discoveryResult, isStartupInit = false, parentActivity = null)
   }
 
   private val PluginSet.candidateSubset: UnambiguousPluginSet

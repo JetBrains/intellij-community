@@ -461,7 +461,7 @@ object PluginManagerCore {
     configureClassLoaders: Boolean,
   ): PluginManagerState {
     var initStagesActivity = parentActivity?.startChild("computeTargetState") // no safe end() call, because if it fails, it won't matter
-    val pluginSet = initContext.computeTargetState(discoveredPlugins, initStagesActivity)
+    val pluginSet = initContext.computeTargetState(discoveredPlugins, isStartupInit = true, parentActivity = initStagesActivity)
     val resolvedPluginSet = pluginSet.resolvedPluginSet
     val excludedFromCandidateSubset = pluginSet.excludedFromCandidateSubset
     val candidateSubset = resolvedPluginSet.candidateSet
