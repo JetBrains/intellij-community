@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.performanceTesting.remoteDriver.compose
 
+import androidx.compose.runtime.tooling.ComposeToolingApi
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.awt.ComposePanel
 import androidx.compose.ui.semantics.SemanticsNode
@@ -88,6 +89,7 @@ class ComposeXpathDataModelExtension : XpathDataModelExtension {
     wrapperCache.clear()
 
     try {
+      @OptIn(ComposeToolingApi::class)
       val semanticsOwners = composePanel.semanticsOwners
       semanticsOwners.forEach { owner ->
         traverseComposeTree(doc, element, owner.rootSemanticsNode, composePanel)

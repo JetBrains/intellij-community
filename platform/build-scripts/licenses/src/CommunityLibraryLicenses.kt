@@ -56,6 +56,10 @@ object CommunityLibraryLicenses {
       .copyrightText("Copyright (C) The Android Open Source Project")
       .suppliedByOrganizations(Suppliers.GOOGLE),
 
+    androidDependency("AndroidX Navigation Event Compose Desktop", libraryName = "androidx.navigationevent.navigationevent.compose.desktop"),
+
+    androidDependency("AndroidX Navigation Event Desktop", libraryName = "androidx.navigationevent.navigationevent.desktop"),
+
     LibraryLicense("antlr4-runtime", libraryName = "antlr4-runtime", url = "https://github.com/antlr/antlr4")
       .newBsd("https://github.com/antlr/antlr4/blob/dev/LICENSE.txt"),
 
