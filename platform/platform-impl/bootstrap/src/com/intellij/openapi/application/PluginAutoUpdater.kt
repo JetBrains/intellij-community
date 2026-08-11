@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application
 
-import com.intellij.ide.plugins.DescriptorExclusionReason
 import com.intellij.ide.plugins.DiscoveredPluginsList
 import com.intellij.ide.plugins.PluginInitContextFactory
 import com.intellij.ide.plugins.PluginInitializationContext
@@ -10,11 +9,10 @@ import com.intellij.ide.plugins.PluginInstaller
 import com.intellij.ide.plugins.PluginMainDescriptor
 import com.intellij.ide.plugins.PluginsDiscoveryResult
 import com.intellij.ide.plugins.PluginsSourceContext
+import com.intellij.ide.plugins.computeTargetState
 import com.intellij.ide.plugins.isExcluded
 import com.intellij.ide.plugins.loadDescriptorFromArtifact
 import com.intellij.ide.plugins.loadDescriptors
-import com.intellij.ide.plugins.resolveConstraints
-import com.intellij.ide.plugins.selectCandidateSubset
 import com.intellij.ide.plugins.shortLogDescription
 import com.intellij.ide.plugins.validatePluginIsCompatible
 import com.intellij.openapi.application.PluginAutoUpdateRepository.PluginUpdateInfo
@@ -148,9 +146,8 @@ object PluginAutoUpdater {
     val composedDiscoveryResult = PluginsDiscoveryResult.build(
       discoveredPlugins + DiscoveredPluginsList(updates.values.toList(), PluginsSourceContext.Custom)
     )
-    val excludedDescriptors = mutableMapOf<PluginMainDescriptor, DescriptorExclusionReason>()
-    val candidateSubset = initContext.selectCandidateSubset(composedDiscoveryResult, excludedDescriptors)
-    val pluginSet = initContext.resolveConstraints(candidateSubset)
+    val pluginSet = initContext.computeTargetState(composedDiscoveryResult, null)
+    val excludedDescriptors = pluginSet.excludedFromCandidateSubset
     for ((id, updateDesc) in updates) {
       // no third-party plugin check, settings are not available at this point; that check must be done when downloading the updates
       if (initContext.validatePluginIsCompatible(updateDesc) != null) {
@@ -173,7 +170,7 @@ object PluginAutoUpdater {
       // But for now we just check that each of the updates is compatible. Formally speaking, we don't fully check this condition and
       // the behavior may actually differ from the honest check. To implement it better, the plugin loading implementation should be a little
       // bit more formalized and a bit more flexible to be reused here (TODO).
-      val plugin = pluginSet.candidateSet.resolvePluginId(id)
+      val plugin = pluginSet.candidateSubset.resolvePluginId(id)
       if (plugin == null || plugin !== updateDesc) {
         val nonLoadReason = excludedDescriptors[updateDesc]
         rejectedUpdates[id] = "plugin ${updateDesc.shortLogDescription} would not load after the update" +
@@ -181,9 +178,9 @@ object PluginAutoUpdater {
                                plugin?.let { ": version ${it.version} is selected for loading instead" }.orEmpty())
         continue
       }
-      if (pluginSet.isExcluded(plugin)) {
+      if (pluginSet.resolvedPluginSet.isExcluded(plugin)) {
         rejectedUpdates[id] = "plugin ${updateDesc.shortLogDescription} would not load after the update:\n" +
-          PluginInitializationDiagnosticUtils.buildSingleExclusionChainMessage(pluginSet, plugin)
+          PluginInitializationDiagnosticUtils.buildSingleExclusionChainMessage(pluginSet.resolvedPluginSet, plugin)
         continue
       }
       updatesToApply.add(id)

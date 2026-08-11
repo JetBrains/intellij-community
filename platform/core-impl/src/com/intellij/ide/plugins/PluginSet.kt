@@ -141,6 +141,8 @@ class PluginSet(
     return resolvedPluginSet.sortedResolvedDescriptors.asSequence()
   }
 
+  val candidateSubset: UnambiguousPluginSet get() = resolvedPluginSet.candidateSet
+
   override fun toString(): String {
     return buildString {
       val resolvedPluginsCount = resolvedPluginSet.sortedResolvedDescriptors.filterIsInstance<PluginMainDescriptor>().count()
