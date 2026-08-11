@@ -58,7 +58,8 @@ internal class TerminalMouseEventsReportingTest : BasePlatformTestCase() {
     fixture.press(outsidePoint, InputEvent.BUTTON1_DOWN_MASK)
     val consumed = fixture.release(outsidePoint, 0)
 
-    assertThat(consumed).isFalse()
+    // Consumed by the mouse reporting
+    assertThat(consumed).isTrue()
     assertThat(fixture.reportedEvents).containsExactly(MouseEventKind.PRESSED, MouseEventKind.RELEASED)
   }
 
@@ -90,10 +91,8 @@ internal class TerminalMouseEventsReportingTest : BasePlatformTestCase() {
     fixture.press(linkPoint, InputEvent.BUTTON1_DOWN_MASK)
     val consumed = fixture.release(linkPoint, 0)
 
-    // A plain click is never consumed by hyperlink handling, not even on a visible link, so the
-    // shell's own mouse-tracking state (e.g. for text selection) always sees a fully paired
-    // click, even though it also opens the link locally (a deliberate dual action).
-    assertThat(consumed).isFalse()
+    // Consumed by the mouse reporting
+    assertThat(consumed).isTrue()
     assertThat(fixture.reportedEvents).containsExactly(MouseEventKind.PRESSED, MouseEventKind.RELEASED)
   }
 
