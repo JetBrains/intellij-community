@@ -84,17 +84,6 @@ internal class IdeaFreezeReporter : PerformanceListener {
       }
     }
 
-    internal fun analyzeFreeze(event: AbstractMessage): PluginId? {
-      for (attachment in event.allAttachments) {
-        if (attachment.name.startsWith(DUMP_PREFIX)) {
-          val cause = analyzeFreeze(attachment.displayText)?.plugin
-          if (cause != null) return cause
-        }
-      }
-
-      return PluginUtil.getInstance().findPluginId(event.throwable)
-    }
-
     internal fun analyzeFreeze(dump: String): FreezeAnalysis.Result? {
       return FREEZE_ANALYSIS_EP.computeSafeIfAny {
         it.analyzeFreeze(dump)
@@ -195,7 +184,7 @@ internal class IdeaFreezeReporter : PerformanceListener {
       }
 
       val dumps = ArrayList(currentDumps) // defensive copy
-      if (!dumpTask.isValid() || dumps.size < 2) {
+      if (!dumpTask.isValid() || dumps.size < MIN_DUMPS_COUNT_FOR_ANALYSIS) {
         LOG.debug("Ignoring freeze, not enough dumps collected")
         telemetry.finishNotSent(FreezeNotSentReason.NOT_ENOUGH_DUMPS, durationMs)
         return
@@ -250,7 +239,7 @@ internal class IdeaFreezeReporter : PerformanceListener {
       if (isAutoReportEnabled && ExceptionAutoReportUtil.isAutoReportableException(loggingEvent)) {
         LOG.debug("UI freeze will be automatically reported, do not show to user")
 
-        val reason = analyzeFreeze(loggingEvent)
+        val reason = PluginUtil.getInstance().findPluginId(loggingEvent.throwable)
         if (reason != null) {
           LifecycleUsageTriggerCollector.pluginFreezeDetected(reason, durationMs, false)
         }
@@ -358,7 +347,22 @@ ${if (finished) "" else if (appClosing) "IDE is closing. " else "IDE KILLED! "}S
       message += "\n\nThe stack is from the thread that was blocking EDT"
     }
     val report = createReportAttachment(durationInSeconds, reportText)
-    return LogMessage(Freeze(commonStack), message, attachments + report)
+    val pluginId = analyzeFreeze(attachments)
+
+    return LogMessage(Freeze(pluginId, commonStack), message, attachments + report)
+  }
+
+  private fun analyzeFreeze(attachments: List<Attachment>): PluginId? {
+    val dumps = attachments
+      .filter { it.name.startsWith(DUMP_PREFIX) }
+
+    val bestAttachment = when {
+      dumps.size < MIN_DUMPS_COUNT_FOR_ANALYSIS -> null
+      dumps.size == MIN_DUMPS_COUNT_FOR_ANALYSIS -> dumps[0]
+      else -> dumps[dumps.size / 2]
+    }
+
+    return bestAttachment?.let { analyzeFreeze(bestAttachment.displayText) }?.plugin
   }
 }
 
@@ -470,6 +474,7 @@ internal const val APP_INFO_FILE_NAME: String = ".appinfo"
 // common stack contains more than the specified % samples
 private const val COMMON_SUB_STACK_WEIGHT = 0.25
 private const val MAX_SCATTERED_DUMPS_COUNT = 10
+private const val MIN_DUMPS_COUNT_FOR_ANALYSIS = 2
 
 /**
  * Set DEBUG = true to enable freeze-detection regardless of other settings.

@@ -5,6 +5,7 @@ import com.intellij.ide.AboutPopupDescriptionProvider
 import com.intellij.ide.gdpr.Consent
 import com.intellij.ide.gdpr.ConsentOptions
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginUtil
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.idea.AppMode
 import com.intellij.openapi.application.ApplicationManager
@@ -12,11 +13,13 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.ProblematicPluginInfo
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryManager
+import com.intellij.util.application
 import com.intellij.util.text.nullize
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -38,7 +41,7 @@ object ExceptionAutoReportUtil {
     return !autoReportIsForbiddenForProduct && RegistryManager.getInstanceAsync().`is`("ea.auto.report.feature.visible")
   }
 
-  private fun isAutoReportVisibleBlocking(): Boolean {
+  fun isAutoReportVisibleBlocking(): Boolean {
     // may be called extremely early before IDE started!
     return !autoReportIsForbiddenForProduct && Registry.`is`("ea.auto.report.feature.visible", false)
   }
@@ -143,10 +146,8 @@ object ExceptionAutoReportUtil {
       return null
     }
 
-    val errorMessageClustering = ErrorMessageClustering.getInstance()
-
-    val pluginId = errorMessageClustering.analyzeCause(message)
-    val pluginInfo = errorMessageClustering.createPluginInfo(pluginId)
+    val pluginId = PluginUtil.getInstance().findPluginId(throwable)
+    val pluginInfo = ErrorMessageClustering.getInstance().createPluginInfo(pluginId)
     val submitter = DefaultIdeaErrorLogger.findSubmitterByPluginInfo(throwable, pluginInfo)
     val itnReporter = submitter as? ITNReporter ?: return null
 
@@ -191,7 +192,7 @@ object ExceptionAutoReportUtil {
   }
 
   @TestOnly
-  fun createFreezeLogMessage(): LogMessage = LogMessage(Freeze(emptyList()), null, emptyList())
+  fun createFreezeLogMessage(): LogMessage = LogMessage(Freeze(null, emptyList()), null, emptyList())
 }
 
 internal class ReporterIdForEAAutoReporters : AboutPopupDescriptionProvider {
@@ -201,6 +202,10 @@ internal class ReporterIdForEAAutoReporters : AboutPopupDescriptionProvider {
 }
 
 internal class ReporterIdLoggerActivity : ProjectActivity {
+  init {
+      if (application.isHeadlessEnvironment) throw ExtensionNotApplicableException.create()
+  }
+
   override suspend fun execute(project: Project) {
     thisLogger().info(DiagnosticBundle.message("about.dialog.text.ea.reporting.id", ITNProxy.DEVICE_ID))
   }
