@@ -57,6 +57,7 @@ jvm_library(
         "//platform/util-ex",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//platform/syntax/syntax-psi:psi",
+        "//platform/syntax/syntax-util:util",
         "//plugins/yaml/syntax",
     ],
 )
@@ -103,6 +104,7 @@ jvm_library(
         "//platform/util-ex:util-ex_test_lib",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
         "//platform/syntax/syntax-psi:psi_test_lib",
+        "//platform/syntax/syntax-util:util_test_lib",
         "//plugins/yaml/syntax:syntax_test_lib",
     ],
 )

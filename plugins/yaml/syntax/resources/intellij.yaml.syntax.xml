@@ -1,2 +1,7 @@
-<idea-plugin>
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.jetbrains.annotations"/>
+  </dependencies>
+  <!-- endregion -->
 </idea-plugin>
