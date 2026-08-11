@@ -874,7 +874,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
           link.text = pluginUpdateSource.getPresentableName()
           link.selectedItem = pluginUpdateSource
           coroutineScope.launch(Dispatchers.IO) {
-            pluginModel.setPluginUpdateSource(pluginToHandle.pluginId, pluginUpdateSource)
+            pluginModel.setPendingPluginUpdateSourceInSession(pluginToHandle.pluginId, pluginUpdateSource)
           }
         }
       }

@@ -909,7 +909,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     return session.pluginUpdateSourceStates[pluginId]?.value
   }
 
-  override suspend fun setPluginUpdateSourceId(sessionId: String, pluginId: PluginId, pluginUpdateSource: PluginUpdateSourceId?) {
+  override suspend fun setPendingPluginUpdateSourceInSession(sessionId: String, pluginId: PluginId, pluginUpdateSource: PluginUpdateSourceId?) {
     val session = findSession(sessionId) ?: return
     val value = PluginUpdateSourceState(pluginUpdateSource)
     val diff = session.pluginUpdateSourceStatesDiff[pluginId]
@@ -921,6 +921,18 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
       initialValue == value -> session.pluginUpdateSourceStatesDiff.remove(pluginId)
       else -> session.pluginUpdateSourceStatesDiff[pluginId] = PluginUpdateSourceChangedState(initialValue, value)
     }
+  }
+
+  override suspend fun persistPluginUpdateSource(sessionId: String, pluginId: PluginId, pluginUpdateSource: PluginUpdateSourceId?) {
+    if (pluginUpdateSource == null) {
+      PluginUpdateSourceService.getInstance().erasePluginUpdateSourceId(pluginId)
+    }
+    else {
+      PluginUpdateSourceService.getInstance().setPluginUpdateSourceId(pluginId, pluginUpdateSource)
+    }
+    val session = findSession(sessionId) ?: return
+    session.pluginUpdateSourceStatesDiff.remove(pluginId)
+    session.pluginUpdateSourceStates[pluginId] = PluginUpdateSourceState(pluginUpdateSource)
   }
 
   override suspend fun isPluginUpdateSourceVisibleInUI(): Boolean {

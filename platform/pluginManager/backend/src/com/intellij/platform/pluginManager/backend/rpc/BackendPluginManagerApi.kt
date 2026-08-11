@@ -227,8 +227,12 @@ class BackendPluginManagerApi : PluginManagerApi {
     return DefaultUiPluginManagerController.getPluginUpdateSourceId(sessionId, pluginId)
   }
 
-  override suspend fun setPluginUpdateSource(sessionId: String, pluginId: PluginId, pluginUpdateSource: PluginUpdateSourceId?) {
-    DefaultUiPluginManagerController.setPluginUpdateSourceId(sessionId, pluginId, pluginUpdateSource)
+  override suspend fun setPendingPluginUpdateSourceInSession(sessionId: String, pluginId: PluginId, pluginUpdateSource: PluginUpdateSourceId?) {
+    DefaultUiPluginManagerController.setPendingPluginUpdateSourceInSession(sessionId, pluginId, pluginUpdateSource)
+  }
+
+  override suspend fun persistPluginUpdateSource(sessionId: String, pluginId: PluginId, pluginUpdateSource: PluginUpdateSourceId?) {
+    DefaultUiPluginManagerController.persistPluginUpdateSource(sessionId, pluginId, pluginUpdateSource)
   }
 
   override suspend fun isPluginUpdateSourceVisibleInUI(): Boolean {

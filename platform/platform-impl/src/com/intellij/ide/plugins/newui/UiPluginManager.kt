@@ -274,8 +274,12 @@ class UiPluginManager {
     return getController().getPluginUpdateSourceId(sessionId, pluginId)
   }
 
-  suspend fun setPluginUpdateSource(sessionId: String, pluginId: PluginId, pluginUpdateSource: PluginUpdateSourceId?) {
-    getController().setPluginUpdateSourceId(sessionId, pluginId, pluginUpdateSource)
+  suspend fun setPendingPluginUpdateSourceInSession(sessionId: String, pluginId: PluginId, pluginUpdateSource: PluginUpdateSourceId?) {
+    getController().setPendingPluginUpdateSourceInSession(sessionId, pluginId, pluginUpdateSource)
+  }
+
+  suspend fun persistPluginUpdateSource(sessionId: String, pluginId: PluginId, pluginUpdateSource: PluginUpdateSourceId?){
+    getController().persistPluginUpdateSource(sessionId, pluginId, pluginUpdateSource)
   }
 
   suspend fun isPluginUpdateSourceVisibleInUI(): Boolean {
