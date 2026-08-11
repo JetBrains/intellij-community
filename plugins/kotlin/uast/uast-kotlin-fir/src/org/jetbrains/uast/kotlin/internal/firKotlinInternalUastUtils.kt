@@ -41,6 +41,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertyAccessorSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySetterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
@@ -76,6 +77,7 @@ import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.toLightElements
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.light.classes.symbol.annotations.annotateByKtType
+import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.JvmStandardClassIds
 import org.jetbrains.kotlin.name.StandardClassIds
@@ -191,9 +193,17 @@ private fun fakePsiMethodForReifiedInline(
                     }
 
                     val methodName = when (actualSymbol) {
-                        is KaPropertyAccessorSymbol -> actualSymbol.javaMethodName ?: ""
+                        is KaPropertyAccessorSymbol -> actualSymbol.javaMethodName ?: run {
+                            val propertySymbol = actualSymbol.containingDeclaration as? KaPropertySymbol
+                            val propertyName = propertySymbol?.name?.asString() ?: return null
+                            if (actualSymbol is KaPropertySetterSymbol) {
+                                JvmAbi.setterName(propertyName)
+                            } else {
+                                JvmAbi.getterName(propertyName)
+                            }
+                        }
                         is KaNamedFunctionSymbol -> actualSymbol.name.identifier
-                        else -> actualSymbol.callableId?.callableName?.identifier ?: ""
+                        else -> actualSymbol.callableId?.callableName?.identifier ?: return null
                     }
                     return UastFakeDeserializedSymbolLightMethod(
                         actualSymbol.createPointer(),
