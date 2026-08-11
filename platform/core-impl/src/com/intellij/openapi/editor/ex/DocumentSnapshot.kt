@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.ex
 
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.text.ImmutableCharSequence
 import org.jetbrains.annotations.ApiStatus
@@ -117,24 +116,6 @@ interface DocumentSnapshot {
   fun dumpState(): String
 
   /**
-   * Returns the aspect associated with [key], or `null` if there is none.
-   *
-   * @see DocumentAspect
-   */
-  @Contract(pure = true)
-  fun <A : DocumentAspect> aspect(key: Key<A>): A?
-
-  /**
-   * Returns a snapshot where [key] is associated with [aspect], replacing the current association if any,
-   * or without any association for [key] if [aspect] is `null`.
-   *
-   * Keep [key] in a static field: keys are compared by identity,
-   * and a garbage-collected key leaves its aspect unreachable and unremovable
-   */
-  @Contract(pure = true)
-  fun <A : DocumentAspect> withAspect(key: Key<A>, aspect: A?): DocumentSnapshot
-
-  /**
    * Returns snapshot with specified `newModStamp`.
    *
    * @param incrementModSeq whether [modSequence] should be incremented
@@ -153,13 +134,6 @@ interface DocumentSnapshot {
   /**
    * Returns snapshot with the same text and metadata from the other snapshot.
    * This method is used to preserve the semantics of metadata being a tracker of text timeline.
-   *
-   * Aspects follow the newest snapshot whose text survives:
-   * - if [metadata] has the same text as this snapshot, the result takes [metadata]'s aspects --
-   *   the latest document state, including aspects attached during before-change listeners
-   *   (aspect updates never change the text instance);
-   * - otherwise this snapshot's aspects are kept, because [metadata]'s aspects
-   *   correspond to its discarded text
    *
    * @param metadata latest version of the document
    */

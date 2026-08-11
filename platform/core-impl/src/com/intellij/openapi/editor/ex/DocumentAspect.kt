@@ -10,8 +10,7 @@ import org.jetbrains.annotations.Contract
  * Aspects are identified by [com.intellij.openapi.util.Key] identity.
  * Keep keys in static fields: a garbage-collected key leaves its aspect unreachable and unremovable.
  *
- * @see DocumentSnapshot.aspect
- * @see DocumentSnapshot.withAspect
+ * The snapshot-side attach/read API is not wired yet, so nothing creates or rebuilds aspects so far.
  */
 @ApiStatus.Internal
 interface DocumentAspect {
