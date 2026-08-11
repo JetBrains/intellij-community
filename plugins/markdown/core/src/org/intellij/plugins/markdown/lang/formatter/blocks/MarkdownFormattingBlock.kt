@@ -108,7 +108,11 @@ internal open class MarkdownFormattingBlock(
       if (listItemParent != null && listItemParent.children().any { it.elementType == MarkdownElementTypes.TABLE }) {
         return Indent.getNoneIndent()
       }
-      return Indent.getNormalIndent()
+      if (obtainCustomSettings().USE_FIXED_INDENTS_FOR_SUBLISTS) {
+        return Indent.getNormalIndent()
+      }
+      val listMarker = listItemParent?.children()?.firstOrNull { it.elementType in MarkdownTokenTypeSets.LIST_MARKERS }
+      return listMarker?.text?.length?.let(Indent::getSpaceIndent) ?: Indent.getNormalIndent()
     }
     return Indent.getNoneIndent()
   }

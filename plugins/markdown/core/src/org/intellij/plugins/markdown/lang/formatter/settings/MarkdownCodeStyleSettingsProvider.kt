@@ -8,10 +8,12 @@ import com.intellij.psi.codeStyle.CodeStyleConfigurable
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable
 import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizableOptions
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.lang.MarkdownLanguage
+import javax.swing.JCheckBox
 
 internal class MarkdownCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvider() {
   override fun getLanguage(): Language = MarkdownLanguage.INSTANCE
@@ -24,6 +26,14 @@ internal class MarkdownCodeStyleSettingsProvider : LanguageCodeStyleSettingsProv
 
   override fun customizeSettings(consumer: CodeStyleSettingsCustomizable, settingsType: SettingsType) {
     when (settingsType) {
+      SettingsType.INDENT_SETTINGS -> {
+        consumer.showCustomOption(
+          MarkdownCustomCodeStyleSettings::class.java,
+          MarkdownCustomCodeStyleSettings::USE_FIXED_INDENTS_FOR_SUBLISTS.name,
+          MarkdownBundle.message("markdown.style.settings.use.fixed.indents.for.sublists"),
+          null
+        )
+      }
       SettingsType.WRAPPING_AND_BRACES_SETTINGS -> {
         consumer.showStandardOptions("RIGHT_MARGIN", "WRAP_ON_TYPING")
         consumer.showCustomOption(
@@ -149,7 +159,40 @@ internal class MarkdownCodeStyleSettingsProvider : LanguageCodeStyleSettingsProv
     return MarkdownCustomCodeStyleSettings(settings)
   }
 
-  override fun getIndentOptionsEditor(): IndentOptionsEditor = SmartIndentOptionsEditor()
+  override fun getIndentOptionsEditor(): IndentOptionsEditor = MarkdownIndentOptionsEditor(this)
+
+  private class MarkdownIndentOptionsEditor(provider: MarkdownCodeStyleSettingsProvider) : SmartIndentOptionsEditor(provider) {
+    private lateinit var useFixedIndentsForSublists: JCheckBox
+
+    override fun addComponents() {
+      super.addComponents()
+      useFixedIndentsForSublists = JCheckBox(MarkdownBundle.message("markdown.style.settings.use.fixed.indents.for.sublists"))
+      add(useFixedIndentsForSublists)
+    }
+
+    override fun isModified(settings: CodeStyleSettings, options: CommonCodeStyleSettings.IndentOptions): Boolean {
+      val customSettings = settings.getCustomSettings(MarkdownCustomCodeStyleSettings::class.java)
+      return super.isModified(settings, options) ||
+             useFixedIndentsForSublists.isSelected != customSettings.USE_FIXED_INDENTS_FOR_SUBLISTS
+    }
+
+    override fun apply(settings: CodeStyleSettings, options: CommonCodeStyleSettings.IndentOptions) {
+      super.apply(settings, options)
+      settings.getCustomSettings(MarkdownCustomCodeStyleSettings::class.java).USE_FIXED_INDENTS_FOR_SUBLISTS =
+        useFixedIndentsForSublists.isSelected
+    }
+
+    override fun reset(settings: CodeStyleSettings, options: CommonCodeStyleSettings.IndentOptions) {
+      super.reset(settings, options)
+      useFixedIndentsForSublists.isSelected =
+        settings.getCustomSettings(MarkdownCustomCodeStyleSettings::class.java).USE_FIXED_INDENTS_FOR_SUBLISTS
+    }
+
+    override fun setEnabled(enabled: Boolean) {
+      super.setEnabled(enabled)
+      useFixedIndentsForSublists.isEnabled = enabled
+    }
+  }
 
   @org.intellij.lang.annotations.Language("Markdown")
   override fun getCodeSample(settingsType: SettingsType): String {

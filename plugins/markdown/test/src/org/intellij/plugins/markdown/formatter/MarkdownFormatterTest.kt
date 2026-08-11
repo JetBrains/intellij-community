@@ -129,6 +129,10 @@ class MarkdownFormatterTest: LightPlatformCodeInsightTestCase() {
 
   fun `test reflow does not split emphasis markers`() = doTest()
 
+  fun `tests sublists with fixed indents enabled`() = doSublistIndentationTest(useFixedIndents = true)
+
+  fun `tests sublists with fixed indents disabled`() = doSublistIndentationTest(useFixedIndents = false)
+
   override fun getTestDataPath(): String {
     return MarkdownTestingUtil.TEST_DATA_PATH + "/formatter/"
   }
@@ -136,6 +140,21 @@ class MarkdownFormatterTest: LightPlatformCodeInsightTestCase() {
   override fun getTestName(lowercaseFirstLetter: Boolean): String {
     val name = super.getTestName(lowercaseFirstLetter)
     return name.trimStart().replace(' ', '_')
+  }
+
+  private fun doSublistIndentationTest(useFixedIndents: Boolean) {
+    val testName = if (useFixedIndents) "sublists_with_fixed_indents_enabled" else "sublists_with_fixed_indents_disabled"
+    val beforeFile = "${testName}_before.md"
+    val afterFile = "${testName}_after.md"
+    runWithTemporaryStyleSettings(project) { settings ->
+      settings.getCustomSettings(MarkdownCustomCodeStyleSettings::class.java).USE_FIXED_INDENTS_FOR_SUBLISTS = useFixedIndents
+      settings.getCommonSettings(MarkdownLanguage.INSTANCE).indentOptions!!.INDENT_SIZE = 4
+      configureByFile(beforeFile)
+      performReformatting(project, file)
+      checkResultByFile(afterFile)
+      performReformatting(project, file)
+      checkResultByFile(afterFile)
+    }
   }
 
   private fun doTest(

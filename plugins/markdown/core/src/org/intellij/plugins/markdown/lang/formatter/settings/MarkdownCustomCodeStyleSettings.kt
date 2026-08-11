@@ -49,6 +49,9 @@ class MarkdownCustomCodeStyleSettings(settings: CodeStyleSettings) : CustomCodeS
   var FORCE_ONE_SPACE_AFTER_BLOCKQUOTE_SYMBOL: Boolean = true
 
   @JvmField
+  var USE_FIXED_INDENTS_FOR_SUBLISTS: Boolean = true
+
+  @JvmField
   var WRAP_TEXT_IF_LONG = true
 
   @JvmField
