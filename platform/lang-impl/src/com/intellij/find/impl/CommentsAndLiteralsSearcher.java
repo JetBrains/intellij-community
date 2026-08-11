@@ -124,7 +124,9 @@ final class CommentsAndLiteralsSearcher {
       }
 
       Matcher matcher = model.isRegularExpressions() ? FindManagerBase.compileRegExp(model, "") : null;
-      StringSearcher searcher = matcher != null ? null : new StringSearcher(model.getStringToFind(), model.isCaseSensitive(), true);
+      // a regular expression that failed to compile falls back to searching for its source text literally
+      TokenSearcher tokenSearcher = createTokenSearcher(model, matcher);
+
       LayeredLexer.ourDisableLayersFlag.set(Boolean.TRUE);
 
       try {
@@ -137,8 +139,7 @@ final class CommentsAndLiteralsSearcher {
           relevantLanguages,
           highlighterAdapter,
           tokensOfInterest,
-          searcher,
-          matcher,
+          tokenSearcher,
           model.clone()
         );
         currentThreadData.highlighter.restart(text);
@@ -151,6 +152,16 @@ final class CommentsAndLiteralsSearcher {
     }
 
     return currentThreadData;
+  }
+
+  private static @NotNull TokenSearcher createTokenSearcher(@NotNull FindModel model, @Nullable Matcher matcher) {
+    if (matcher != null) {
+      return new RegexpTokenSearcher(matcher);
+    }
+    else {
+      StringSearcher stringSearcher = new StringSearcher(model.getStringToFind(), model.isCaseSensitive(), true);
+      return new PlainTokenSearcher(stringSearcher, model.getStringToFind().length());
+    }
   }
 
   /**
@@ -213,31 +224,12 @@ final class CommentsAndLiteralsSearcher {
             nextCancellationCheckAt = start + CANCELLATION_CHECK_INTERVAL;
           }
 
-          int matchStart = -1;
-          int matchEnd = -1;
-
-          if (currentThreadData.searcher != null) {
-            int found = currentThreadData.searcher.scan(text, textArray, start, end);
-            if (found != -1 && found >= start) {
-              matchStart = found;
-              matchEnd = found + model.getStringToFind().length();
-            }
-          }
-          else if (start <= end) {
-            currentThreadData.matcher.reset(StringPattern.newBombedCharSequence(text.subSequence(tokenContentStart, end)));
-            currentThreadData.matcher.region(start - tokenContentStart, end - tokenContentStart);
-            currentThreadData.matcher.useTransparentBounds(true);
-            if (currentThreadData.matcher.find()) {
-              matchStart = tokenContentStart + currentThreadData.matcher.start();
-              matchEnd = tokenContentStart + currentThreadData.matcher.end();
-            }
-          }
-
-          if (matchStart == -1) break;
-          if (!processor.process(matchStart, matchEnd, lastGoodOffset)) return;
+          Match match = currentThreadData.tokenSearcher.findNext(text, textArray, tokenContentStart, start, end);
+          if (match == null) break;
+          if (!processor.process(match.start, match.end, lastGoodOffset)) return;
 
           // step past the occurrence; the +1 keeps a zero-length regexp match from spinning on the same offset
-          start = matchEnd + (start == end || start == matchEnd ? 1 : 0);
+          start = match.end + (start == end || start == match.end ? 1 : 0);
         }
       }
       else {
@@ -335,6 +327,62 @@ final class CommentsAndLiteralsSearcher {
     boolean process(int startOffset, int endOffset, int lastGoodOffset);
   }
 
+  /** Where an occurrence was found, filled in by {@link TokenSearcher#findNext}. */
+  private record Match(int start, int end) {
+  }
+
+  /**
+   * How occurrences are located inside a single token. Which of the two applies is decided once, when the search data
+   * is built, and cannot change afterwards -- so the walk neither chooses between them nor has to consider that
+   * neither might be set.
+   */
+  private sealed interface TokenSearcher {
+    /**
+     * Finds the first occurrence within {@code [start, end)}, where the token being searched begins at
+     * {@code tokenContentStart}.
+     *
+     * @return Match or null if nothing is found
+     */
+    @Nullable Match findNext(@NotNull CharSequence text,
+                             char @Nullable [] textArray,
+                             int tokenContentStart,
+                             int start,
+                             int end);
+  }
+
+  /**
+   * @param patternLength taken from the string to find rather than from the searcher, whose pattern may have a
+   *                      different length after the case transform it applies
+   */
+  private record PlainTokenSearcher(@NotNull StringSearcher searcher, int patternLength) implements TokenSearcher {
+    @Override
+    public @Nullable Match findNext(@NotNull CharSequence text,
+                                    char @Nullable [] textArray,
+                                    int tokenContentStart,
+                                    int start,
+                                    int end) {
+      int found = searcher.scan(text, textArray, start, end);
+      if (found == -1 || found < start) return null;
+      return new Match(found, found + patternLength);
+    }
+  }
+
+  private record RegexpTokenSearcher(@NotNull Matcher matcher) implements TokenSearcher {
+    @Override
+    public @Nullable Match findNext(@NotNull CharSequence text,
+                                    char @Nullable [] textArray,
+                                    int tokenContentStart,
+                                    int start,
+                                    int end) {
+      if (start > end) return null;
+      matcher.reset(StringPattern.newBombedCharSequence(text.subSequence(tokenContentStart, end)));
+      matcher.region(start - tokenContentStart, end - tokenContentStart);
+      matcher.useTransparentBounds(true);
+      if (!matcher.find()) return null;
+      return new Match(tokenContentStart + matcher.start(), tokenContentStart + matcher.end());
+    }
+  }
+
   private static final class CommentsLiteralsSearchData {
     @NotNull final VirtualFile lastFile;
     final @Nullable Language lang;
@@ -342,8 +390,7 @@ final class CommentsAndLiteralsSearcher {
     @NotNull final SyntaxHighlighterOverEditorHighlighter highlighter;
 
     @NotNull TokenSet tokensOfInterest;
-    @Nullable final StringSearcher searcher;
-    @Nullable final Matcher matcher;
+    @NotNull final TokenSearcher tokenSearcher;
     @NotNull final Set<Language> relevantLanguages;
     @NotNull final FindModel model;
 
@@ -352,15 +399,13 @@ final class CommentsAndLiteralsSearcher {
                                @NotNull Set<Language> relevantLanguages,
                                @NotNull SyntaxHighlighterOverEditorHighlighter highlighter,
                                @NotNull TokenSet tokensOfInterest,
-                               @Nullable StringSearcher searcher,
-                               @Nullable Matcher matcher,
+                               @NotNull TokenSearcher tokenSearcher,
                                @NotNull FindModel model) {
       this.lastFile = lastFile;
       this.lang = lang;
       this.highlighter = highlighter;
       this.tokensOfInterest = tokensOfInterest;
-      this.searcher = searcher;
-      this.matcher = matcher;
+      this.tokenSearcher = tokenSearcher;
       this.relevantLanguages = relevantLanguages;
       this.model = model;
     }
