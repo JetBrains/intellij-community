@@ -327,7 +327,7 @@ internal class DynamicPluginsSupportImpl(
         val listenerCallbacks = mutableListOf<ExtensionPointDeferredListenersNotification>()
         application.runWriteAction {
           val descriptors = groups.flatMap { it.sortedDescriptors }
-          registerDescriptors(application as ApplicationImpl, descriptors.asSequence(), listenerCallbacks)
+          registerDescriptors(application as ApplicationImpl, descriptors.asSequence(), listenerCallbacks, newSupport = true)
           clearCachedValues()
 
           PluginManagerCore.setPluginSet(targetPluginSet)

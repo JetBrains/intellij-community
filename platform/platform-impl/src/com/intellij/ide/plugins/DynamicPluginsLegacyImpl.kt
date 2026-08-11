@@ -42,6 +42,7 @@ import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.application.impl.inModalContext
 import com.intellij.openapi.components.ComponentManagerEx
+import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
@@ -89,6 +90,7 @@ import com.intellij.util.ObjectUtils
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.application
+import com.intellij.util.concurrency.TransferredWriteActionService
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.WeakList
 import com.intellij.util.messages.impl.MessageBusEx
@@ -1055,6 +1057,7 @@ internal object DynamicPluginsLegacyImpl {
     app: ApplicationImpl,
     descriptors: Sequence<IdeaPluginDescriptorImpl>,
     listenerCallbacks: MutableList<ExtensionPointDeferredListenersNotification>,
+    newSupport: Boolean = false
   ) {
     app.registerComponents(descriptors = descriptors, app = app, listenerCallbacks = listenerCallbacks)
     for (openProject in getOpenedProjects()) {
@@ -1065,7 +1068,14 @@ internal object DynamicPluginsLegacyImpl {
       }
     }
 
-    (ActionManager.getInstance() as ActionManagerImpl).registerActions(descriptors)
+    if (newSupport) {
+      application.service<TransferredWriteActionService>().runOnEdtWithTransferredWriteActionAndWait { // FIXME topic listeners expect EDT IJPL-252536
+        (ActionManager.getInstance() as ActionManagerImpl).registerActions(descriptors)
+      }
+    }
+    else {
+      (ActionManager.getInstance() as ActionManagerImpl).registerActions(descriptors)
+    }
   }
 
   internal fun analyzeSnapshot(hprofPath: String, pluginId: PluginId): String {
