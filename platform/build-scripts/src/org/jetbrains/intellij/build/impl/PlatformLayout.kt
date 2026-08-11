@@ -4,13 +4,8 @@
 package org.jetbrains.intellij.build.impl
 
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.impl.PlatformJarNames.APP_BACKEND_JAR
 import org.jetbrains.intellij.build.productLayout.LIB_MODULE_PREFIX
-import org.jetbrains.jps.model.java.JpsJavaClasspathKind
-import org.jetbrains.jps.model.java.JpsJavaExtensionService
-import org.jetbrains.jps.model.module.JpsModule
-import org.jetbrains.jps.model.module.JpsModuleReference
 
 /**
  * Describes layout of the platform (*.jar files in IDE_HOME/lib directory).
@@ -74,28 +69,5 @@ class PlatformLayout(@JvmField val descriptorCacheContainer: DescriptorCacheCont
 
   fun withoutProjectLibrary(libraryName: String) {
     projectLibraryToPolicy.put(libraryName, ProjectLibraryPackagingPolicy.EXCLUDE)
-  }
-
-  fun collectProjectLibrariesFromIncludedModules(context: ModuleOutputProvider, consumer: (String, JpsModule) -> Unit) {
-    val libsToUnpack = includedProjectLibraries.mapTo(LinkedHashSet(includedProjectLibraries.size)) { it.libraryName }
-    val uniqueGuard = HashSet<String>()
-    for (item in includedModules) {
-      if (item.isProductModule()) {
-        continue
-      }
-
-      val moduleName = item.moduleName
-      if (!uniqueGuard.add(moduleName)) {
-        continue
-      }
-
-      val module = context.findRequiredModule(moduleName)
-      for (library in JpsJavaExtensionService.dependencies(module).includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME).libraries) {
-        val libraryName = library.name
-        if (!libsToUnpack.contains(libraryName) && library.createReference().parentReference !is JpsModuleReference && !isProjectLibraryExcluded(libraryName)) {
-          consumer(libraryName, module)
-        }
-      }
-    }
   }
 }
