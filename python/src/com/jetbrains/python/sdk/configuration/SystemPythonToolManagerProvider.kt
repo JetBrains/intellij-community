@@ -11,7 +11,6 @@ import com.intellij.python.pytools.PyToolManager
 import com.intellij.python.pytools.PyToolManagerProvider
 import com.intellij.python.pytools.configuration.ConfigurablePyTool
 import com.intellij.python.pytools.getToolVersion
-import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrNull
 import com.jetbrains.python.packaging.PyPackageVersionNormalizer
@@ -20,7 +19,6 @@ import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.add.v2.detectTool
 import com.jetbrains.python.sdk.add.v2.toFileSystem
-import com.jetbrains.python.sdk.impl.PySdkBundle
 import com.jetbrains.python.sdk.installExecutableViaPythonScript
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -46,10 +44,10 @@ private class SystemPythonToolManager(
   private val systemPython: SystemPython,
 ) : PyToolManager {
   override suspend fun install(tool: PyTool): PyResult<Path> {
-    installExecutableViaPythonScript(systemPython.asExecutablePython.binary, "-n", tool.packageName.name).getOr { return it }
-    val executable = fileSystem.detectTool(tool.packageName.name)
-                     ?: return PyResult.localizedError(PySdkBundle.message("cannot.find.executable", tool.packageName.name, fileSystem.userReadableName))
-    return Result.success(executable.path)
+    // The pip helper drops the launcher into a per-user scripts directory that is frequently not on PATH
+    // (e.g. %APPDATA%\Python\Scripts on Windows), so trust the path it reports rather than re-detecting the
+    // tool on PATH, which would spuriously fail with "cannot find executable" (PY-91493).
+    return installExecutableViaPythonScript(systemPython.asExecutablePython.binary, "-n", tool.packageName.name)
   }
 
   /** The pip helper always installs the latest release, so an upgrade is just a fresh install. */

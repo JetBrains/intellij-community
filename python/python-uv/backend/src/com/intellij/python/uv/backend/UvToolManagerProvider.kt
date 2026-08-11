@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.uv.backend
 
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.platform.eel.EelApi
 import com.intellij.python.pytools.InstalledInfo
 import com.intellij.python.pytools.PyTool
@@ -11,13 +12,15 @@ import com.intellij.python.uv.backend.runtime.uvCli
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrNull
+import com.jetbrains.python.orLogException
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
-import com.jetbrains.python.sdk.add.v2.detectTool
 import com.jetbrains.python.sdk.add.v2.toFileSystem
 import com.jetbrains.python.sdk.impl.PySdkBundle
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
+
+private val LOG = Logger.getInstance(UvToolManagerProvider::class.java)
 
 /**
  * Provides a [UvToolManager] when a local `uv` is available for the target environment. Registered
@@ -69,9 +72,19 @@ private class UvToolManager(
   }
 
   private suspend fun run(tool: PyTool, reinstall: Boolean): PyResult<Path> {
-    createUvToolRuntime(uv).uvCli().tool().install(tool.packageName.name, reinstall = reinstall).getOr { return it }
-    val executable = fileSystem.detectTool(tool.packageName.name)
-                     ?: return PyResult.localizedError(PySdkBundle.message("cannot.find.executable", tool.packageName.name, fileSystem.userReadableName))
-    return Result.success(executable.path)
+    val name = tool.packageName.name
+    val uvTool = createUvToolRuntime(uv).uvCli().tool()
+    uvTool.install(name, reinstall = reinstall).getOr { return it }
+    // uv installs launchers into its own bin dir (`uv tool dir --bin`), which is not on PATH by default. Add it
+    // so the tool is also runnable from the user's shell; best-effort, since the IDE uses the resolved path below
+    // regardless (PY-91493).
+    uvTool.updateShell().orLogException(LOG)
+    // Resolve the executable from uv's own records rather than re-detecting it on PATH: the current process does
+    // not see the freshly added PATH entry, so a PATH lookup would spuriously fail with "cannot find executable".
+    val executable = uvTool.list(showPaths = true).getOrNull()
+                       ?.firstOrNull { PyTool.findByPackageName(it.name) == tool }
+                       ?.let { it.executables[name] ?: it.executables.values.firstOrNull() }
+                     ?: return PyResult.localizedError(PySdkBundle.message("cannot.find.executable", name, fileSystem.userReadableName))
+    return Result.success(executable)
   }
 }
