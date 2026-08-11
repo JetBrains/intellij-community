@@ -215,6 +215,7 @@ data class OpenProjectTask @Internal constructor(
   fun asNewProject(): OpenProjectTask = copy(isNewProject = true, useDefaultProjectAsTemplate = true)
   fun withProject(project: Project?): OpenProjectTask = copy(project = project)
   fun withProjectName(projectName: String?): OpenProjectTask = copy(projectName = projectName)
+  fun withProjectRootDir(projectRootDir: Path?): OpenProjectTask = copy(projectRootDir = projectRootDir)
 
   @Internal
   fun markAsOpeningFileAfterProjectOpen(): OpenProjectTask = copy(implOptions = implOptions.withOpensFileAfterProjectOpen(value = true))

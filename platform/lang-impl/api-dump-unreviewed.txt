@@ -5686,7 +5686,6 @@ a:com.intellij.ide.util.projectWizard.AbstractNewProjectDialog
 - pf:init():V
 a:com.intellij.ide.util.projectWizard.AbstractNewProjectStep
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
-- ps:createOpenProjectOptions(com.intellij.openapi.project.Project,java.util.function.Consumer):com.intellij.ide.impl.OpenProjectTask
 - s:doGenerateProject(com.intellij.openapi.project.Project,java.lang.String,com.intellij.platform.DirectoryProjectGenerator,java.lang.Object):com.intellij.openapi.project.Project
 - s:doGenerateProject(java.lang.String,com.intellij.platform.DirectoryProjectGenerator,java.lang.Object,com.intellij.ide.impl.OpenProjectTask):com.intellij.openapi.project.Project
 - f:getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread

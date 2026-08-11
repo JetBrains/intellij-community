@@ -469,6 +469,8 @@ jvm_library(
         "//platform/platform-impl:ide-impl",
         "//platform/lang-impl",
         "//platform/lang-impl:lang-impl_test_lib",
+        "//platform/welcome-screen-impl:welcomeScreen-impl",
+        "//platform/welcome-screen-impl:welcomeScreen-impl_test_lib",
         "//platform/usageView",
         "//platform/usageView:usageView_test_lib",
         "//libraries/cli-parser",

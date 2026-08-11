@@ -119,6 +119,7 @@ f:com.intellij.ide.impl.OpenProjectTask
 - f:withForceOpenInNewFrame(Z):com.intellij.ide.impl.OpenProjectTask
 - f:withProject(com.intellij.openapi.project.Project):com.intellij.ide.impl.OpenProjectTask
 - f:withProjectName(java.lang.String):com.intellij.ide.impl.OpenProjectTask
+- f:withProjectRootDir(java.nio.file.Path):com.intellij.ide.impl.OpenProjectTask
 - f:withProjectToClose(com.intellij.openapi.project.Project):com.intellij.ide.impl.OpenProjectTask
 f:com.intellij.ide.impl.OpenProjectTask$Companion
 - f:build():com.intellij.ide.impl.OpenProjectTask
