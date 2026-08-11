@@ -4,7 +4,10 @@ import com.intellij.execution.impl.EditorTextDecorationApplier
 import com.intellij.execution.impl.buildHyperlink
 import com.intellij.execution.impl.createTextDecorationId
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.editor.markup.EffectType
+import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.provider.LocalEelDescriptor
@@ -29,9 +32,12 @@ import org.jetbrains.plugins.terminal.session.impl.TerminalOutputEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalSession
 import org.jetbrains.plugins.terminal.session.impl.dto.KeyEventProcessingResultDto
 import org.jetbrains.plugins.terminal.util.terminalProjectScope
+import org.jetbrains.plugins.terminal.view.impl.MutableTerminalOutputModel
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import java.awt.Color
+import java.awt.Font
 import java.awt.Point
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
@@ -39,212 +45,253 @@ import java.awt.event.MouseEvent
 import kotlin.math.ceil
 
 /**
- * Checks how mouse events are reported to the [TerminalSession] in various scenarios.
- * Now covers only cases with mouse events over hyperlinks.
+ * Checks the full effect of mouse events over hyperlinks: whether the hyperlink is followed,
+ * whether the event is reported to the [TerminalSession], and whether it ends up consumed.
  */
 @RunWith(JUnit4::class)
 internal class TerminalMouseEventsReportingTest : BasePlatformTestCase() {
   override fun runInDispatchThread(): Boolean = false
 
   @Test
-  fun `plain click outside any hyperlink is reported`(): Unit = doTest { fixture ->
+  fun `click outside hyperlink causes nothing and is reported`(): Unit = doTest { fixture ->
     fixture.setText("open link here")
     fixture.addHyperlink(startOffset = 5, endOffset = 9)
 
     val outsidePoint = fixture.pointAtColumn(0) // over "o" of "open", not the link
     fixture.hover(outsidePoint)
-    fixture.clearReportedEvents() // the hover move above is expected to report; only count what happens after
+    fixture.resetEffects() // the hover move above is expected to report; only count effects after
 
-    fixture.press(outsidePoint, InputEvent.BUTTON1_DOWN_MASK)
-    val consumed = fixture.release(outsidePoint, 0)
+    val pressConsumed = fixture.press(outsidePoint, InputEvent.BUTTON1_DOWN_MASK)
+    val releaseConsumed = fixture.release(outsidePoint, 0)
 
-    // Consumed by the mouse reporting
-    assertThat(consumed).isTrue()
+    // Both consumed by mouse reporting
+    assertThat(pressConsumed).isTrue()
+    assertThat(releaseConsumed).isTrue()
     assertThat(fixture.reportedEvents).containsExactly(MouseEventKind.PRESSED, MouseEventKind.RELEASED)
+    assertThat(fixture.linkFollowedCount).isZero()
   }
 
   @Test
-  fun `ctrl click outside any hyperlink is reported`(): Unit = doTest { fixture ->
+  fun `ctrl click outside hyperlink causes nothing and is reported`(): Unit = doTest { fixture ->
     fixture.setText("open link here")
     fixture.addHyperlink(startOffset = 5, endOffset = 9)
 
     val outsidePoint = fixture.pointAtColumn(0) // over "o" of "open", not the link
     fixture.hover(outsidePoint)
-    fixture.clearReportedEvents() // the hover move above is expected to report; only count what happens after
+    fixture.resetEffects()
 
-    fixture.press(outsidePoint, ctrlModifierMask())
-    fixture.release(outsidePoint, ctrlModifierMask())
+    val pressConsumed = fixture.press(outsidePoint, ctrlModifierMask())
+    val releaseConsumed = fixture.release(outsidePoint, ctrlModifierMask())
 
-    // No hyperlink here, so the modifier has nothing to do with terminal-side hyperlink
-    // handling: the click must still be reported, preserving whatever the shell app itself
-    // does with Cmd/Ctrl-clicks unrelated to links.
+    // No hyperlink here, so the modifier is irrelevant: the click is reported like any other.
+    assertThat(pressConsumed).isTrue()
+    assertThat(releaseConsumed).isTrue()
     assertThat(fixture.reportedEvents).containsExactly(MouseEventKind.PRESSED, MouseEventKind.RELEASED)
+    assertThat(fixture.linkFollowedCount).isZero()
   }
 
   @Test
-  fun `plain click on a visible hyperlink is still reported (dual action)`(): Unit = doTest { fixture ->
+  fun `click on visible hyperlink opens it and is reported`(): Unit = doTest { fixture ->
     fixture.setText("open link here")
     val linkPoint = fixture.addHyperlink(startOffset = 5, endOffset = 9)
     fixture.hover(linkPoint)
-    fixture.clearReportedEvents() // the hover move above is expected to report; only count what happens after
+    fixture.resetEffects()
 
-    fixture.press(linkPoint, InputEvent.BUTTON1_DOWN_MASK)
-    val consumed = fixture.release(linkPoint, 0)
+    val pressConsumed = fixture.press(linkPoint, InputEvent.BUTTON1_DOWN_MASK)
+    val releaseConsumed = fixture.release(linkPoint, 0)
 
-    // Consumed by the mouse reporting
-    assertThat(consumed).isTrue()
+    // Dual action: the link opens locally, but the click is still fully reported to the shell.
+    assertThat(pressConsumed).isTrue()
+    assertThat(releaseConsumed).isTrue()
     assertThat(fixture.reportedEvents).containsExactly(MouseEventKind.PRESSED, MouseEventKind.RELEASED)
+    assertThat(fixture.linkFollowedCount).isEqualTo(1)
   }
 
   @Test
-  fun `plain click on an invisible hyperlink is still reported (dual action)`(): Unit = doTest { fixture ->
+  fun `click on invisible hyperlink does not open it and is reported`(): Unit = doTest { fixture ->
     fixture.setText("open link here")
     val linkPoint = fixture.addHyperlink(startOffset = 5, endOffset = 9, isInvisible = true)
     fixture.hover(linkPoint)
-    fixture.clearReportedEvents() // the hover move above is expected to report; only count what happens after
+    fixture.resetEffects()
 
-    fixture.press(linkPoint, InputEvent.BUTTON1_DOWN_MASK)
-    fixture.release(linkPoint, 0)
+    val pressConsumed = fixture.press(linkPoint, InputEvent.BUTTON1_DOWN_MASK)
+    val releaseConsumed = fixture.release(linkPoint, 0)
 
+    // A plain click only hints that Ctrl/Cmd-click opens an invisible link; it doesn't open it itself.
+    assertThat(pressConsumed).isTrue()
+    assertThat(releaseConsumed).isTrue()
     assertThat(fixture.reportedEvents).containsExactly(MouseEventKind.PRESSED, MouseEventKind.RELEASED)
+    assertThat(fixture.linkFollowedCount).isZero()
   }
 
   @Test
-  fun `ctrl click on a visible hyperlink opens it once and is not reported`(): Unit = doTest { fixture ->
+  fun `ctrl click on visible hyperlink opens it and is not reported`(): Unit = doTest { fixture ->
     fixture.setText("open link here")
     val linkPoint = fixture.addHyperlink(startOffset = 5, endOffset = 9)
     fixture.hover(linkPoint)
-    fixture.clearReportedEvents() // the hover move above is expected to report; only count what happens after
+    fixture.resetEffects()
 
-    fixture.press(linkPoint, ctrlModifierMask())
-    val consumed = fixture.release(linkPoint, ctrlModifierMask())
+    val pressConsumed = fixture.press(linkPoint, ctrlModifierMask())
+    val releaseConsumed = fixture.release(linkPoint, ctrlModifierMask())
 
-    assertThat(consumed).isTrue() // followLink opened it
-    assertThat(fixture.reportedEvents).isEmpty() // and it wasn't also reported to the shell
-  }
-
-  @Test
-  fun `ctrl click on an invisible hyperlink is not reported`(): Unit = doTest { fixture ->
-    fixture.setText("open link here")
-    val linkPoint = fixture.addHyperlink(startOffset = 5, endOffset = 9, isInvisible = true)
-    fixture.hover(linkPoint)
-    fixture.clearReportedEvents() // the hover move above is expected to report; only count what happens after
-
-    fixture.press(linkPoint, ctrlModifierMask())
-    val consumed = fixture.release(linkPoint, ctrlModifierMask())
-
-    assertThat(consumed).isTrue() // followLink opened it (ctrl bypasses the hint)
+    assertThat(pressConsumed).isTrue()
+    assertThat(releaseConsumed).isTrue()
     assertThat(fixture.reportedEvents).isEmpty()
+    assertThat(fixture.linkFollowedCount).isEqualTo(1)
   }
 
   @Test
-  fun `plain mouse move over a visible hyperlink is reported`(): Unit = doTest { fixture ->
+  fun `ctrl click on invisible hyperlink opens it and is not reported`(): Unit = doTest { fixture ->
+    fixture.setText("open link here")
+    val linkPoint = fixture.addHyperlink(startOffset = 5, endOffset = 9, isInvisible = true)
+    fixture.hover(linkPoint)
+    fixture.resetEffects()
+
+    val pressConsumed = fixture.press(linkPoint, ctrlModifierMask())
+    val releaseConsumed = fixture.release(linkPoint, ctrlModifierMask())
+
+    // Ctrl/Cmd bypasses the "click to open" hint and follows the link directly.
+    assertThat(pressConsumed).isTrue()
+    assertThat(releaseConsumed).isTrue()
+    assertThat(fixture.reportedEvents).isEmpty()
+    assertThat(fixture.linkFollowedCount).isEqualTo(1)
+  }
+
+  @Test
+  fun `move over visible hyperlink causes nothing and is reported`(): Unit = doTest { fixture ->
     fixture.setText("open link here")
     val linkPoint = fixture.addHyperlink(startOffset = 5, endOffset = 9)
 
-    fixture.move(linkPoint, 0)
+    val consumed = fixture.move(linkPoint, 0)
 
+    assertThat(consumed).isTrue()
     assertThat(fixture.reportedEvents).containsExactly(MouseEventKind.MOVED)
+    assertThat(fixture.linkFollowedCount).isZero()
   }
 
   @Test
-  fun `plain mouse move over an invisible hyperlink is reported`(): Unit = doTest { fixture ->
+  fun `move over invisible hyperlink underlines it and is reported`(): Unit = doTest { fixture ->
     fixture.setText("open link here")
     val linkPoint = fixture.addHyperlink(startOffset = 5, endOffset = 9, isInvisible = true)
 
-    fixture.move(linkPoint, 0)
+    val consumed = fixture.move(linkPoint, 0)
 
+    assertThat(consumed).isTrue()
     assertThat(fixture.reportedEvents).containsExactly(MouseEventKind.MOVED)
+    assertThat(fixture.linkFollowedCount).isZero()
+    assertThat(fixture.hyperlinkTextAttributes(startOffset = 5, endOffset = 9)).isEqualTo(TEST_HOVERED_LINK_ATTRIBUTES)
   }
 
   @Test
-  fun `ctrl mouse move over a hyperlink is still reported`(): Unit = doTest { fixture ->
+  fun `ctrl move over visible hyperlink causes nothing and is reported`(): Unit = doTest { fixture ->
     fixture.setText("open link here")
     val linkPoint = fixture.addHyperlink(startOffset = 5, endOffset = 9)
 
-    fixture.move(linkPoint, ctrlModifierMask())
+    val consumed = fixture.move(linkPoint, ctrlModifierMask())
 
+    assertThat(consumed).isTrue()
     assertThat(fixture.reportedEvents).containsExactly(MouseEventKind.MOVED)
+    assertThat(fixture.linkFollowedCount).isZero()
   }
 
   @Test
-  fun `ctrl mouse move over an invisible hyperlink is still reported`(): Unit = doTest { fixture ->
+  fun `ctrl move over invisible hyperlink underlines it and is reported`(): Unit = doTest { fixture ->
     fixture.setText("open link here")
     val linkPoint = fixture.addHyperlink(startOffset = 5, endOffset = 9, isInvisible = true)
 
-    fixture.move(linkPoint, ctrlModifierMask())
+    val consumed = fixture.move(linkPoint, ctrlModifierMask())
 
+    assertThat(consumed).isTrue()
     assertThat(fixture.reportedEvents).containsExactly(MouseEventKind.MOVED)
+    assertThat(fixture.linkFollowedCount).isZero()
+    // Ctrl/Cmd always shows the real hyperlink color, ignoring our custom hover attributes.
+    assertThat(fixture.hyperlinkTextAttributes(startOffset = 5, endOffset = 9)).isEqualTo(fixture.ctrlHoveredInvisibleLinkAttributes)
   }
 
   @Test
-  fun `pressing on a hyperlink, dragging away and releasing elsewhere is fully reported (drag-select over a link works)`(): Unit =
+  fun `press-drag-release from visible hyperlink does not open it and is reported`(): Unit =
     doTest { fixture ->
-      // A plain press/drag/release must be reported in full even when the gesture starts on a
-      // hyperlink, or drag-selecting text that happens to start on a link would be invisible to the shell.
+      // A plain press/drag/release must be reported in full even when it starts on a hyperlink,
+      // or drag-selecting text that happens to start on a link would be invisible to the shell.
       fixture.setText("open link here")
       val linkPoint = fixture.addHyperlink(startOffset = 5, endOffset = 9)
       val awayPoint = fixture.pointAtColumn(12) // over "here", not the link
       fixture.hover(linkPoint)
-      fixture.clearReportedEvents() // the hover move above is expected to report; only count what happens after
+      fixture.resetEffects()
 
-      fixture.press(linkPoint, InputEvent.BUTTON1_DOWN_MASK)
-      fixture.drag(awayPoint, InputEvent.BUTTON1_DOWN_MASK)
-      fixture.release(awayPoint, 0)
+      val pressConsumed = fixture.press(linkPoint, InputEvent.BUTTON1_DOWN_MASK)
+      val dragConsumed = fixture.drag(awayPoint, InputEvent.BUTTON1_DOWN_MASK)
+      val releaseConsumed = fixture.release(awayPoint, 0)
 
+      assertThat(pressConsumed).isTrue()
+      assertThat(dragConsumed).isTrue()
+      assertThat(releaseConsumed).isTrue()
       assertThat(fixture.reportedEvents).containsExactly(MouseEventKind.PRESSED, MouseEventKind.DRAGGED, MouseEventKind.RELEASED)
+      assertThat(fixture.linkFollowedCount).isZero()
     }
 
   @Test
-  fun `pressing on an invisible hyperlink, dragging away and releasing elsewhere is fully reported (drag-select over a link works)`(): Unit =
+  fun `press-drag-release from invisible hyperlink does not open it and is reported`(): Unit =
     doTest { fixture ->
       fixture.setText("open link here")
       val linkPoint = fixture.addHyperlink(startOffset = 5, endOffset = 9, isInvisible = true)
       val awayPoint = fixture.pointAtColumn(12) // over "here", not the link
       fixture.hover(linkPoint)
-      fixture.clearReportedEvents() // the hover move above is expected to report; only count what happens after
+      fixture.resetEffects()
 
-      fixture.press(linkPoint, InputEvent.BUTTON1_DOWN_MASK)
-      fixture.drag(awayPoint, InputEvent.BUTTON1_DOWN_MASK)
-      fixture.release(awayPoint, 0)
+      val pressConsumed = fixture.press(linkPoint, InputEvent.BUTTON1_DOWN_MASK)
+      val dragConsumed = fixture.drag(awayPoint, InputEvent.BUTTON1_DOWN_MASK)
+      val releaseConsumed = fixture.release(awayPoint, 0)
 
+      assertThat(pressConsumed).isTrue()
+      assertThat(dragConsumed).isTrue()
+      assertThat(releaseConsumed).isTrue()
       assertThat(fixture.reportedEvents).containsExactly(MouseEventKind.PRESSED, MouseEventKind.DRAGGED, MouseEventKind.RELEASED)
+      assertThat(fixture.linkFollowedCount).isZero()
     }
 
   @Test
-  fun `ctrl press on a hyperlink then dragging away and releasing elsewhere reports neither`(): Unit =
+  fun `ctrl press-drag-release from visible hyperlink does not open it and is not reported`(): Unit =
     doTest { fixture ->
-      // Hover tracking only updates on mouseMoved, which isn't fired while a button is held, so it
-      // stays frozen at the link for the whole gesture below even though the mouse moves away -
-      // keeping the suppression decision (and therefore press/release pairing) consistent without
-      // needing to track gesture state explicitly.
+      // Hover freezes on the link while a button is held (it only updates on mouseMoved), so every
+      // event of the gesture is consumed pre-emptively - yet release lands away from press, so the
+      // link is never actually opened.
       fixture.setText("open link here")
       val linkPoint = fixture.addHyperlink(startOffset = 5, endOffset = 9)
       val awayPoint = fixture.pointAtColumn(12) // over "here", not the link
       fixture.hover(linkPoint)
-      fixture.clearReportedEvents() // the hover move above is expected to report; only count what happens after
+      fixture.resetEffects()
 
-      fixture.press(linkPoint, ctrlModifierMask())
-      fixture.drag(awayPoint, ctrlModifierMask())
-      fixture.release(awayPoint, ctrlModifierMask())
+      val pressConsumed = fixture.press(linkPoint, ctrlModifierMask())
+      val dragConsumed = fixture.drag(awayPoint, ctrlModifierMask())
+      val releaseConsumed = fixture.release(awayPoint, ctrlModifierMask())
 
+      // All three consumed pre-emptively by the hyperlink layer, before mouse reporting even runs.
+      assertThat(pressConsumed).isTrue()
+      assertThat(dragConsumed).isTrue()
+      assertThat(releaseConsumed).isTrue()
       assertThat(fixture.reportedEvents).isEmpty()
+      assertThat(fixture.linkFollowedCount).isZero()
     }
 
   @Test
-  fun `ctrl press on an invisible hyperlink then dragging away and releasing elsewhere reports neither`(): Unit =
+  fun `ctrl press-drag-release from invisible hyperlink does not open it and is not reported`(): Unit =
     doTest { fixture ->
       fixture.setText("open link here")
       val linkPoint = fixture.addHyperlink(startOffset = 5, endOffset = 9, isInvisible = true)
       val awayPoint = fixture.pointAtColumn(12) // over "here", not the link
       fixture.hover(linkPoint)
-      fixture.clearReportedEvents() // the hover move above is expected to report; only count what happens after
+      fixture.resetEffects()
 
-      fixture.press(linkPoint, ctrlModifierMask())
-      fixture.drag(awayPoint, ctrlModifierMask())
-      fixture.release(awayPoint, ctrlModifierMask())
+      val pressConsumed = fixture.press(linkPoint, ctrlModifierMask())
+      val dragConsumed = fixture.drag(awayPoint, ctrlModifierMask())
+      val releaseConsumed = fixture.release(awayPoint, ctrlModifierMask())
 
+      assertThat(pressConsumed).isTrue()
+      assertThat(dragConsumed).isTrue()
+      assertThat(releaseConsumed).isTrue()
       assertThat(fixture.reportedEvents).isEmpty()
+      assertThat(fixture.linkFollowedCount).isZero()
     }
 
   private fun doTest(block: suspend (Fixture) -> Unit): Unit =
@@ -263,6 +310,11 @@ internal class TerminalMouseEventsReportingTest : BasePlatformTestCase() {
     PRESSED, RELEASED, MOVED, DRAGGED,
   }
 
+  companion object {
+    /** An arbitrary hover-attributes value owned by the test, so it doesn't depend on the default hover formula. */
+    private val TEST_HOVERED_LINK_ATTRIBUTES = TextAttributes(null, null, Color.RED, EffectType.LINE_UNDERSCORE, Font.PLAIN)
+  }
+
   /**
    * A real [TerminalViewImpl] connected to a [RecordingTerminalSession], so the production mouse events handler and
    * hyperlinks logic (registered on [TerminalViewImpl.outputEditor]) are exercised as-is.
@@ -270,20 +322,34 @@ internal class TerminalMouseEventsReportingTest : BasePlatformTestCase() {
   private class Fixture(project: Project, columns: Int = 20) : AutoCloseable {
     private val scope = terminalProjectScope(project).childScope("TerminalViewImpl")
     private val session = RecordingTerminalSession(scope)
-    private val decorationApplier: EditorTextDecorationApplier
+    private val terminalView: TerminalViewImpl = TerminalViewImpl(
+      project = project,
+      settings = JBTerminalSystemSettingsProvider(),
+      startupFusInfo = null,
+      coroutineScope = scope
+    )
     private var nextHyperlinkId = 1L
 
-    val editor: EditorImpl
+    private val decorationApplier: EditorTextDecorationApplier
+      get() = terminalView.outputEditorDecorationApplier
+
+    private val editor: EditorImpl
+      get() = terminalView.outputEditor
 
     /** Kinds of the mouse events reported to the (fake) terminal process, in order. */
     val reportedEvents: List<MouseEventKind>
       get() = session.reportedEvents
 
+    /** How many times a hyperlink's action actually ran, i.e. the link was really opened. */
+    var linkFollowedCount: Int = 0
+      private set
+
+    /** What EditorHyperlinkInteraction#calcHoveredLinkAttrs applies to a Ctrl/Cmd-hovered invisible link: a real link color. */
+    val ctrlHoveredInvisibleLinkAttributes: TextAttributes
+      get() = editor.colorsScheme.getAttributes(CodeInsightColors.HYPERLINK_ATTRIBUTES)
+
     init {
-      val terminalView = TerminalViewImpl(project, JBTerminalSystemSettingsProvider(), null, scope)
       terminalView.connectToSession(session)
-      decorationApplier = terminalView.outputEditorDecorationApplier
-      editor = terminalView.outputEditor as EditorImpl
 
       val characterGrid = editor.characterGrid ?: error("Character grid is not initialized")
       val widthInPixels = ceil(columns * characterGrid.charWidth).toInt()
@@ -291,11 +357,13 @@ internal class TerminalMouseEventsReportingTest : BasePlatformTestCase() {
     }
 
     fun setText(text: String) {
-      editor.document.setText(text)
+      val outputModel = terminalView.outputModels.regular as MutableTerminalOutputModel
+      outputModel.updateContent(0, text)
     }
 
-    fun clearReportedEvents() {
+    fun resetEffects() {
       session.reportedEvents.clear()
+      linkFollowedCount = 0
     }
 
     /** Adds a hyperlink decoration and returns the point in the middle of its range. */
@@ -303,12 +371,23 @@ internal class TerminalMouseEventsReportingTest : BasePlatformTestCase() {
       decorationApplier.addDecorations(listOf(
         buildHyperlink(
           id = createTextDecorationId(nextHyperlinkId++), startOffset = startOffset, endOffset = endOffset,
-          action = { },
+          action = { linkFollowedCount++ },
         ) {
           this.isInvisibleLink = isInvisible
+          this.hoveredAttributes = TEST_HOVERED_LINK_ATTRIBUTES
         }
       ))
       return pointAtColumn((startOffset + endOffset) / 2)
+    }
+
+    /** The text attributes currently in effect for the hyperlink occupying [startOffset]..[endOffset]. */
+    fun hyperlinkTextAttributes(startOffset: Int, endOffset: Int): TextAttributes {
+      var result: TextAttributes? = null
+      editor.markupModel.processRangeHighlightersOverlappingWith(startOffset, endOffset) { highlighter ->
+        result = highlighter.getTextAttributes(editor.colorsScheme)
+        true
+      }
+      return checkNotNull(result) { "No highlighter found for range $startOffset..$endOffset" }
     }
 
     /** The point in the middle of the given [column]'s cell on the first line. */
@@ -321,20 +400,24 @@ internal class TerminalMouseEventsReportingTest : BasePlatformTestCase() {
       move(point, modifiers = 0)
     }
 
-    fun press(point: Point, modifiers: Int) {
-      dispatch(MouseEventKind.PRESSED, point, modifiers)
+    /** Dispatches a mouse press and returns whether it ended up consumed. */
+    fun press(point: Point, modifiers: Int): Boolean {
+      return dispatch(MouseEventKind.PRESSED, point, modifiers).isConsumed
     }
 
-    /** Dispatches a mouse release and returns whether the editor consumed it. */
-    fun release(point: Point, modifiers: Int): Boolean =
-      dispatch(MouseEventKind.RELEASED, point, modifiers).isConsumed
-
-    fun move(point: Point, modifiers: Int) {
-      dispatch(MouseEventKind.MOVED, point, modifiers)
+    /** Dispatches a mouse release and returns whether it ended up consumed. */
+    fun release(point: Point, modifiers: Int): Boolean {
+      return dispatch(MouseEventKind.RELEASED, point, modifiers).isConsumed
     }
 
-    fun drag(point: Point, modifiers: Int) {
-      dispatch(MouseEventKind.DRAGGED, point, modifiers)
+    /** Dispatches a mouse move and returns whether it ended up consumed. */
+    fun move(point: Point, modifiers: Int): Boolean {
+      return dispatch(MouseEventKind.MOVED, point, modifiers).isConsumed
+    }
+
+    /** Dispatches a mouse drag and returns whether it ended up consumed. */
+    fun drag(point: Point, modifiers: Int): Boolean {
+      return dispatch(MouseEventKind.DRAGGED, point, modifiers).isConsumed
     }
 
     private fun dispatch(kind: MouseEventKind, point: Point, modifiers: Int): MouseEvent {
