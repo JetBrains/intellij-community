@@ -327,6 +327,54 @@ describe('render-guides skills', () => {
     }
   })
 
+  it('removes bundled files the source skill no longer has', async () => {
+    const {rootDir, communitySourceDir, agentsDir, claudeDir, junieDir, communityClaudeDir} = createFixture()
+
+    try {
+      // A skill whose bundle has been renamed: `new.ts` replaced `old.ts`, and a whole directory went away.
+      const sourceSkillDir = join(communitySourceDir, 'testing')
+      mkdirSync(join(sourceSkillDir, 'scripts'), {recursive: true})
+      writeFileSync(join(sourceSkillDir, 'scripts', 'new.ts'), 'export const kept = 1\n', 'utf8')
+
+      // Seed the harness copies with the previous shape, as an earlier render would have left them.
+      for (const targetDir of [claudeDir, junieDir]) {
+        mkdirSync(join(targetDir, 'testing', 'scripts'), {recursive: true})
+        writeFileSync(join(targetDir, 'testing', 'scripts', 'old.ts'), 'export const stale = 1\n', 'utf8')
+        mkdirSync(join(targetDir, 'testing', 'cache'), {recursive: true})
+        writeFileSync(join(targetDir, 'testing', 'cache', 'stale.ts'), 'export const gone = 1\n', 'utf8')
+      }
+
+      await renderSkills({
+        communitySourceDir,
+        agentsDir,
+        claudeDir,
+        junieDir,
+        communityClaudeDir,
+        edition: 'COMMUNITY',
+      })
+
+      for (const targetDir of [claudeDir, junieDir]) {
+        ok(
+          existsSync(join(targetDir, 'testing', 'scripts', 'new.ts')),
+          `render should copy the current bundle into ${targetDir}`,
+        )
+        // Copying without pruning makes these trees append-only, and an agent reading a stale copy gets
+        // code that no longer exists anywhere.
+        ok(
+          !existsSync(join(targetDir, 'testing', 'scripts', 'old.ts')),
+          `render should delete a renamed bundled file in ${targetDir}`,
+        )
+        ok(
+          !existsSync(join(targetDir, 'testing', 'cache')),
+          `render should delete a removed bundled directory in ${targetDir}`,
+        )
+        ok(existsSync(join(targetDir, 'testing', 'SKILL.md')), 'the generated stub must survive the prune')
+      }
+    } finally {
+      rmSync(rootDir, {recursive: true, force: true})
+    }
+  })
+
   it('writes a name → description index beside each canonical source tree', async () => {
     const {rootDir, communitySourceDir, agentsDir, claudeDir, junieDir, communityClaudeDir} = createFixture()
 

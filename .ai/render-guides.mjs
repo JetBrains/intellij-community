@@ -543,6 +543,32 @@ async function copyDirectory(sourceDir, targetDir) {
       await copyFile(sourcePath, targetPath);
     }
   }
+  await pruneStaleCopies(targetDir, new Set(entries.map((entry) => entry.name)));
+}
+
+/**
+ * Delete target entries the source no longer has.
+ *
+ * Copying alone makes these trees append-only: a renamed or deleted bundled script stays behind in
+ * every harness copy forever, and an agent reading one gets code that no longer exists. That is not
+ * cosmetic drift — it sent a session searching through a pre-rename copy of a whole controller.
+ */
+async function pruneStaleCopies(targetDir, keepNames) {
+  let entries;
+  try {
+    entries = await readdir(targetDir, {withFileTypes: true});
+  } catch (error) {
+    if (error && error.code === "ENOENT") {
+      return;
+    }
+    throw error;
+  }
+  for (const entry of entries) {
+    if (keepNames.has(entry.name)) {
+      continue;
+    }
+    await rm(join(targetDir, entry.name), {recursive: true, force: true});
+  }
 }
 
 export async function renderOpenCodeSkills(options = {}) {
@@ -781,6 +807,8 @@ async function writeSkillStub(targetDir, skillDirName, sourceContent, sourcePath
         await copyFile(entrySource, entryTarget);
       }
     }
+    // SKILL.md is written below rather than copied, so it must survive the prune.
+    await pruneStaleCopies(skillDir, new Set([...sourceEntries.map((entry) => entry.name), "SKILL.md"]));
   }
 
   const targetPath = join(skillDir, "SKILL.md");
