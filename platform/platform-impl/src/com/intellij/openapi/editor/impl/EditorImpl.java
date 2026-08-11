@@ -90,8 +90,8 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl;
-import com.intellij.openapi.editor.elf.ElfFeatureFlag;
 import com.intellij.openapi.editor.elf.Elf;
+import com.intellij.openapi.editor.elf.ElfFeatureFlag;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -5138,20 +5138,32 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
-  private static boolean isColumnSelectionDragEvent(@NotNull MouseEvent e) {
-    return isMouseActionEvent(e, IdeActions.ACTION_EDITOR_CREATE_RECTANGULAR_SELECTION_ON_MOUSE_DRAG);
+  private boolean isColumnSelectionDragEvent(@NotNull MouseEvent e) {
+    String actionId = EditorMouseActionsOverrider.EP_NAME.computeSafeIfAny(
+      overrider -> overrider.getCreateRectangularSelectionOnMouseDragActionId(this)
+    );
+    return isMouseActionEvent(e, actionId != null ? actionId : IdeActions.ACTION_EDITOR_CREATE_RECTANGULAR_SELECTION_ON_MOUSE_DRAG);
   }
 
-  private static boolean isToggleCaretEvent(@NotNull MouseEvent e) {
-    return isMouseActionEvent(e, IdeActions.ACTION_EDITOR_ADD_OR_REMOVE_CARET) || isAddRectangularSelectionEvent(e);
+  private boolean isToggleCaretEvent(@NotNull MouseEvent e) {
+    String actionId = EditorMouseActionsOverrider.EP_NAME.computeSafeIfAny(
+      overrider -> overrider.getAddOrRemoveCaretActionId(this)
+    );
+    return isMouseActionEvent(e, actionId != null ? actionId : IdeActions.ACTION_EDITOR_ADD_OR_REMOVE_CARET) || isAddRectangularSelectionEvent(e);
   }
 
-  private static boolean isAddRectangularSelectionEvent(@NotNull MouseEvent e) {
-    return isMouseActionEvent(e, IdeActions.ACTION_EDITOR_ADD_RECTANGULAR_SELECTION_ON_MOUSE_DRAG);
+  private boolean isAddRectangularSelectionEvent(@NotNull MouseEvent e) {
+    String actionId = EditorMouseActionsOverrider.EP_NAME.computeSafeIfAny(
+      overrider -> overrider.getAddRectangularSelectionOnMouseDragActionId(this)
+    );
+    return isMouseActionEvent(e, actionId != null ? actionId : IdeActions.ACTION_EDITOR_ADD_RECTANGULAR_SELECTION_ON_MOUSE_DRAG);
   }
 
-  private static boolean isCreateRectangularSelectionEvent(@NotNull MouseEvent e) {
-    return isMouseActionEvent(e, IdeActions.ACTION_EDITOR_CREATE_RECTANGULAR_SELECTION);
+  private boolean isCreateRectangularSelectionEvent(@NotNull MouseEvent e) {
+    String actionId = EditorMouseActionsOverrider.EP_NAME.computeSafeIfAny(
+      overrider -> overrider.getCreateRectangularSelectionActionId(this)
+    );
+    return isMouseActionEvent(e, actionId != null ? actionId : IdeActions.ACTION_EDITOR_CREATE_RECTANGULAR_SELECTION);
   }
 
   private static boolean isMouseActionEvent(@NotNull MouseEvent e, @NotNull String actionId) {

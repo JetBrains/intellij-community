@@ -81,6 +81,7 @@
 
     <extendWordSelectionHandler implementation="com.intellij.terminal.frontend.view.impl.TerminalTextSelectioner"/>
     <basicWordSelectionFilter implementation="com.intellij.terminal.frontend.view.impl.TerminalWordSelectionFilter"/>
+    <editorMouseActionsOverrider implementation="com.intellij.terminal.frontend.view.impl.TerminalMouseActionsOverrider"/>
 
     <toolWindow.splitContentProvider toolWindowId="terminal"
                                      implementationClass="com.intellij.terminal.frontend.view.impl.TerminalToolWindowSplitContentProvider"/>
@@ -139,6 +140,11 @@
     <action id="Terminal.PasteSelection" class="com.intellij.terminal.frontend.action.TerminalPasteSelectionAction"
             use-shortcut-of="EditorPasteFromX11">
       <override-text place="GoToAction"/>
+    </action>
+    <action id="Terminal.CreateRectangularSelectionOnMouseDrag"
+            class="com.intellij.terminal.frontend.action.TerminalCreateRectangularSelectionOnMouseDragAction"
+            use-shortcut-of="EditorCreateRectangularSelectionOnMouseDrag">
+      <mouse-shortcut keystroke="shift alt button1" keymap="$default"/>
     </action>
     <action id="Terminal.Find" class="com.intellij.terminal.frontend.action.TerminalFindAction" use-shortcut-of="Find">
       <override-text place="GoToAction"/>
