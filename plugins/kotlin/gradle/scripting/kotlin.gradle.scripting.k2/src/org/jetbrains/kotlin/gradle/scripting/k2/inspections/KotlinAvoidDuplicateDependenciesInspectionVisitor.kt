@@ -22,7 +22,8 @@ import org.jetbrains.plugins.gradle.service.resolve.GradleVersionCatalogPsiResol
 import org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings
 
 class KotlinAvoidDuplicateDependenciesInspectionVisitor(
-    private val holder: ProblemsHolder
+    private val holder: ProblemsHolder,
+    private val isOnTheFly: Boolean
 ) : KtVisitorVoid() {
     override fun visitKtFile(file: KtFile) {
         val configurationExtensions = file.findConfigurationExtensions() ?: return
@@ -46,22 +47,9 @@ class KotlinAvoidDuplicateDependenciesInspectionVisitor(
                 }
             }
             .forEach { (key, dependencies) ->
-                dependencies.forEachWithRest { (configName, callExpr), otherDependencies ->
-                    val superConfigNames = configurationExtensions.withExtendedConfigurations(configName)
-                    val inheritedDependencies = otherDependencies.filter { (otherConfigName, _) ->
-                        superConfigNames.contains(otherConfigName)
-                    }
-                    if (inheritedDependencies.isNotEmpty()) {
-                        reportProblem(key, configName, callExpr, inheritedDependencies)
-                    }
-                }
+                if (isOnTheFly) reportProblems(key, dependencies, configurationExtensions)
+                else reportProblemsInBatchMode(key, dependencies, configurationExtensions)
             }
-    }
-
-    private inline fun <T> List<T>.forEachWithRest(action: (element: T, rest: List<T>) -> Unit) {
-        forEachIndexed { index, element ->
-            action(element, subList(0, index) + subList(index + 1, size))
-        }
     }
 
     /**
@@ -124,11 +112,43 @@ class KotlinAvoidDuplicateDependenciesInspectionVisitor(
         return "$group:$name:$version"
     }
 
+    private fun reportProblems(
+        key: String,
+        dependencies: List<Pair<String, KtCallExpression>>,
+        configurationExtensions: ConfigurationExtensions,
+    ) {
+        dependencies.forEach { dependency ->
+            val otherDependencies = dependencies - dependency
+            reportProblem(key, dependency.first, dependency.second, otherDependencies, configurationExtensions)
+        }
+    }
+
     /**
-     * Report each dependency that is duplicate (same coordinates and configuration)
-     * or inheriting from a super configuration which also declares the same coordinates.
+     * Similar to [reportProblems], but ensures only one [RemoveExactDuplicateDependencies] quick-fix
+     * per exact duplicate dependency group, so that the 'Apply all fixes in file' works correctly
+     * and doesn't remove *all* duplicates.
+     */
+    private fun reportProblemsInBatchMode(
+        key: String,
+        dependencies: List<Pair<String, KtCallExpression>>,
+        configurationExtensions: ConfigurationExtensions,
+    ) {
+        val dependenciesByConfigName = dependencies.groupBy { it.first }
+        dependenciesByConfigName.forEach { (_, duplicateDependencies) ->
+            duplicateDependencies.groupBy { it.second.text }.forEach { (_, exactDuplicateDependencies) ->
+                val exactDuplicateDependency = exactDuplicateDependencies.first()
+                val otherDependencies = duplicateDependencies - exactDuplicateDependency
+                reportProblemDuplicates(key, exactDuplicateDependency.second, otherDependencies)
+            }
+        }
+        reportProblems(key, dependencies, configurationExtensions)
+    }
+
+    /**
+     * Report a dependency that is duplicate (same coordinates and configuration)
+     * or inheriting from a super configuration which also declares the same coordinates
+     * based on [otherDependencies].
      *
-     * For each:
      * - Offer an intention to navigate to the duplicates / relevant super config dependencies.
      * - Offer a quick fix to remove only exact duplicates if available.
      */
@@ -136,23 +156,21 @@ class KotlinAvoidDuplicateDependenciesInspectionVisitor(
         key: String,
         configName: String,
         callExpr: KtCallExpression,
-        inheritedDependencies: List<Pair<String, KtCallExpression>>,
+        otherDependencies: List<Pair<String, KtCallExpression>>,
+        configurationExtensions: ConfigurationExtensions,
     ) {
-        val (duplicateDependencies, dependenciesFromSuperConfigurations) = inheritedDependencies.partition { it.first == configName }
-        if (duplicateDependencies.isNotEmpty()) {
-            val duplicateCallExprs = duplicateDependencies.map { it.second }
-            val exactDuplicateCallExprs = duplicateCallExprs.filter { it.text == callExpr.text }
-            val potentialRemoveFix =
-                if (exactDuplicateCallExprs.isNotEmpty()) RemoveExactDuplicateDependencies(exactDuplicateCallExprs)
-                else null
-            holder.problem(
-                callExpr,
-                GradleInspectionBundle.message("inspection.message.avoid.duplicate.dependencies.descriptor", key)
-            )
-                .maybeFix(potentialRemoveFix)
-                .fix(ShowDuplicateElementsAction.forDependencies(key, duplicateDependencies.map { it.second }))
-                .register()
+        val superConfigNames = configurationExtensions.withExtendedConfigurations(configName)
+        val inheritedDependencies = otherDependencies.filter { (otherConfigName, _) ->
+            superConfigNames.contains(otherConfigName)
         }
+        if (inheritedDependencies.isEmpty()) return
+
+        val (duplicateDependencies, dependenciesFromSuperConfigurations) = inheritedDependencies.partition { it.first == configName }
+
+        if (isOnTheFly) {
+            reportProblemDuplicates(key, callExpr, duplicateDependencies)
+        }
+
         if (dependenciesFromSuperConfigurations.isNotEmpty()) {
             holder.problem(
                 callExpr,
@@ -161,6 +179,26 @@ class KotlinAvoidDuplicateDependenciesInspectionVisitor(
                 .fix(ShowDuplicateElementsAction.forDependencies(key, dependenciesFromSuperConfigurations.map { it.second }))
                 .register()
         }
+    }
+
+    private fun reportProblemDuplicates(
+        key: String,
+        callExpr: KtCallExpression,
+        duplicateDependencies: List<Pair<String, KtCallExpression>>
+    ) {
+        if (duplicateDependencies.isEmpty()) return
+        val duplicateCallExprs = duplicateDependencies.map { it.second }
+        val exactDuplicateCallExprs = duplicateCallExprs.filter { it.text == callExpr.text }
+        val potentialRemoveFix =
+            if (exactDuplicateCallExprs.isNotEmpty()) RemoveExactDuplicateDependencies(exactDuplicateCallExprs)
+            else null
+        holder.problem(
+            callExpr,
+            GradleInspectionBundle.message("inspection.message.avoid.duplicate.dependencies.descriptor", key)
+        )
+            .maybeFix(potentialRemoveFix)
+            .fix(ShowDuplicateElementsAction.forDependencies(key, duplicateDependencies.map { it.second }))
+            .register()
     }
 }
 
