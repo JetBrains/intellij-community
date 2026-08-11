@@ -244,6 +244,110 @@ public class PyMethodOverridingInspectionTest extends PyInspectionTestCase {
                    """);
   }
 
+  // PY-76896
+  public void testIncompatibleConstructorsWithOverrideDecorator() {
+    doTestByText("""
+                   from typing import override
+
+                   class Base:
+                       def __init__(self, x: int) -> None: ...
+                       def __new__(cls, x: int) -> "Base": ...
+
+                   class Child(Base):
+                       @override
+                       def __init__<warning descr="Signature of method 'Child.__init__()' does not match signature of the base method in class 'Base'">(self, x: str)</warning> -> None: ...
+                       @override
+                       def __new__<warning descr="Signature of method 'Child.__new__()' does not match signature of the base method in class 'Base'">(cls, x: str)</warning> -> "Child": ...
+                   """);
+  }
+
+  // PY-76896
+  public void testIncompatibleConstructorsWithoutOverrideDecorator() {
+    doTestByText("""
+                   class Base:
+                       def __init__(self, x: int) -> None: ...
+                       def __new__(cls, x: int) -> "Base": ...
+
+                   class Child(Base):
+                       def __init__(self, x: str) -> None: ...
+                       def __new__(cls, x: str) -> "Child": ...
+                   """);
+  }
+
+  // PY-76896
+  // We only inspect `self`/`cls` if Base declares an explicit receiver contract.
+  //
+  // 1. Unconstrained Base e.g., Base.method(self) or Base.method(self: Self):
+  //    Base defines no special receiver requirements beyond standard subclassing.
+  //    - If Child uses standard `Self`: Valid by construction (`Child` is a subclass of `Base`).
+  //    - If Child adds a custom annotation (`self: Custom`): Child restricts calling on its own type. 
+  //      Whether Child satisfies `Custom` is a class-self-consistency check, not an override violation.
+  //
+  // 2. Constrained Base e.g., Base.method(self: MixinProtocol):
+  //    Base explicitly restricts its receiver (e.g., in mixins). Child overrides MUST honor this 
+  //    contract, so we keep the receiver in the override compatibility check.
+  public void testExplicitReceiverDomainNotHonored() {
+    doTestByText("""
+                   from typing import Protocol
+
+                   class HasValue(Protocol):
+                       value: int
+
+                   class Base:
+                       def method(self: HasValue) -> None: ...
+
+                   class Child(Base):
+                       def method<warning descr="Signature of method 'Child.method()' does not match signature of the base method in class 'Base'">(self)</warning> -> None: ...
+                   """);
+  }
+
+  // PY-76896
+  public void testExplicitReceiverDomainHonored() {
+    doTestByText("""
+                   from typing import Protocol
+
+                   class HasValue(Protocol):
+                       value: int
+
+                   class Base:
+                       def method(self: HasValue) -> None: ...
+
+                   class Child(Base):
+                       value: int
+
+                       def method(self) -> None: ...
+                   """);
+  }
+
+  // PY-76896
+  public void testChildOnlyNarrowingReceiverIsNotThisInspectionsJob() {
+    doTestByText("""
+                   from typing import Protocol
+
+                   class HasValue(Protocol):
+                       value: int
+
+                   class Base:
+                       def method(self) -> None: ...
+
+                   class Child(Base):
+                       def method(self: HasValue) -> None: ...
+                   """);
+  }
+
+  // PY-76896
+  public void testImplicitReceiverStillDroppedForGenericMetaclassCall() {
+    doTestByText("""
+                   from typing import TypeVar
+
+                   T = TypeVar("T")
+
+                   class Meta(type):
+                       def __call__(cls: type[T], *args, **kwargs) -> T:
+                           return type.__call__(cls, *args, **kwargs)
+                   """);
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

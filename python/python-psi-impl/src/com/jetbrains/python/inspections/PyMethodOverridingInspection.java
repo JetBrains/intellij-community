@@ -18,13 +18,18 @@ import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyKnownDecoratorUtil;
 import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.impl.ParamHelper;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
+import com.jetbrains.python.psi.types.PyCallableParameter;
 import com.jetbrains.python.psi.types.PyCallableParameterListTypeImpl;
+import com.jetbrains.python.psi.types.PySelfType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeChecker;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public final class PyMethodOverridingInspection extends PyInspection {
 
@@ -58,7 +63,12 @@ public final class PyMethodOverridingInspection extends PyInspection {
     }
 
     private boolean skipFunctionValidation(@NotNull PyFunction function) {
-      return PyUtil.isConstructorLikeMethod(function) ||
+      // Constructors are not subject to the Liskov substitution principle, so they are normally exempt from override
+      // compatibility checks. An explicit `@override` decorator opts them in, see https://github.com/python/typing/issues/2222.
+      return (PyUtil.isConstructorLikeMethod(function) && !PyKnownDecoratorUtil.hasOverrideDecorator(function, myTypeEvalContext)) ||
+             // Only the implementation of an overloaded method is compared with the base method: an individual @overload
+             // declaration is not required to be assignable to the whole signature of the overridden method.
+             PyKnownDecoratorUtil.hasRedeclarationDecorator(function, myTypeEvalContext) ||
              PyKnownDecoratorUtil.hasUnknownOrChangingSignatureDecorator(function, myTypeEvalContext) ||
              ContainerUtil.exists(PyInspectionExtension.EP_NAME.getExtensionList(),
                                   e -> e.ignoreMethodParameters(function, myTypeEvalContext));
@@ -75,18 +85,28 @@ public final class PyMethodOverridingInspection extends PyInspection {
       CodifiedParam methodSignatureParam = CodifiedParam.ofReference(function, methodSignature);
       Object baseClassParam = baseClass != null ? CodifiedParam.ofReference(baseClass, baseClassName) : baseClassName;
 
-      PyCallableParameterListTypeImpl baseMethodInputSignature =
-        new PyCallableParameterListTypeImpl(baseMethod.getParameters(myTypeEvalContext));
-      PyCallableParameterListTypeImpl functionInputSignature =
-        new PyCallableParameterListTypeImpl(function.getParameters(myTypeEvalContext));
+      List<PyCallableParameter> baseMethodParameters = baseMethod.getParameters(myTypeEvalContext);
+      List<PyCallableParameter> functionParameters = function.getParameters(myTypeEvalContext);
+
+      // We only inspect `self`/`cls` if Base declares an explicit receiver contract.
+      // see com.jetbrains.python.PyMethodOverridingInspectionTest#testExplicitReceiverDomainNotHonored
+      PyCallableParameter baseReceiver = ContainerUtil.getFirstItem(baseMethodParameters);
+      boolean baseReceiverIsFixed = baseReceiver != null && baseReceiver.isSelf() &&
+                                    !(baseReceiver.getType(myTypeEvalContext) instanceof PySelfType);
+      if (!baseReceiverIsFixed) {
+        baseMethodParameters = ParamHelper.dropSelf(baseMethodParameters);
+        functionParameters = ParamHelper.dropSelf(functionParameters);
+      }
+
+      PyCallableParameterListTypeImpl baseMethodInputSignature = new PyCallableParameterListTypeImpl(baseMethodParameters);
+      PyCallableParameterListTypeImpl functionInputSignature = new PyCallableParameterListTypeImpl(functionParameters);
 
       if (!PyTypeChecker.match(baseMethodInputSignature, functionInputSignature, myTypeEvalContext)) {
         ProblemMessage msg = PyPsiBundle.problemMessage("INSP.signature.mismatch", methodSignatureParam, baseClassParam);
         LocalQuickFix fix = PythonUiService.getInstance().createPyChangeSignatureQuickFixForMismatchingMethods(function, baseMethod);
 
         // Keep the headline's clickable `B.f()`/`A` links: feed the rich tooltip HTML, not the escaped description.
-        String diff = PyTypeDiff.paramsDiffTooltip(baseMethod.getParameters(myTypeEvalContext),
-                                                   function.getParameters(myTypeEvalContext),
+        String diff = PyTypeDiff.paramsDiffTooltip(baseMethodParameters, functionParameters,
                                                    PyInspectionMessages.tooltipHeadline(msg), myTypeEvalContext);
         ProblemMessage problemMessage = new ProblemMessage(msg.description(), diff);
         // The diff is the message tooltip; registerOverrideMismatch appends the breakdown below it on-the-fly.

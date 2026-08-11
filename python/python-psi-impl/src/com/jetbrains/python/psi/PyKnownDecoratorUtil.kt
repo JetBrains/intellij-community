@@ -137,6 +137,20 @@ object PyKnownDecoratorUtil {
   }
 
   @JvmStatic
+  fun findOverrideDecorator(decoratable: PyDecoratable, context: TypeEvalContext): PyDecorator? {
+    return decoratable.decoratorList?.decorators?.firstOrNull { decorator ->
+      asKnownDecorators(decorator, context).any {
+        it == PyKnownDecorator.TYPING_OVERRIDE || it == PyKnownDecorator.TYPING_EXTENSIONS_OVERRIDE
+      }
+    }
+  }
+
+  @JvmStatic
+  fun hasOverrideDecorator(decoratable: PyDecoratable, context: TypeEvalContext): Boolean {
+    return findOverrideDecorator(decoratable, context) != null
+  }
+
+  @JvmStatic
   fun hasUnknownOrChangingSignatureDecorator(decoratable: PyDecoratable, context: TypeEvalContext): Boolean {
     val decorators = getKnownDecorators(decoratable, context)
     return !allDecoratorsAreKnown(decoratable, decorators) || decorators.contains(PyKnownDecorator.UNITTEST_MOCK_PATCH)

@@ -6,7 +6,6 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.psi.PyFunction
-import com.jetbrains.python.psi.PyKnownDecorator
 import com.jetbrains.python.psi.PyKnownDecoratorUtil
 import com.jetbrains.python.psi.search.PySuperMethodsSearch
 import com.jetbrains.python.psi.types.TypeEvalContext
@@ -31,11 +30,7 @@ class PyOverridesInspection : PyInspection() {
 
       if (node.containingClass?.getAncestorTypes(myTypeEvalContext)?.contains(null) ?: false) return
 
-      val overrideDecorator = node.decoratorList?.decorators?.firstOrNull { decorator ->
-        PyKnownDecoratorUtil.asKnownDecorators(decorator, myTypeEvalContext).any {
-          it == PyKnownDecorator.TYPING_OVERRIDE || it == PyKnownDecorator.TYPING_EXTENSIONS_OVERRIDE
-        }
-      } ?: return
+      val overrideDecorator = PyKnownDecoratorUtil.findOverrideDecorator(node, myTypeEvalContext) ?: return
 
       val superMethods = PySuperMethodsSearch.search(node, myTypeEvalContext).findAll()
       if (superMethods.isEmpty()) {
