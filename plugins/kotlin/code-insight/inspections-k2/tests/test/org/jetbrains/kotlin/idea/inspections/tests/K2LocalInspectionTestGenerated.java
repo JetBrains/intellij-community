@@ -17471,6 +17471,74 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/inspectionsLocal/leakingThis")
+        public static class LeakingThis extends AbstractK2LocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("callMethod.kt")
+            public void testCallMethod() throws Exception {
+                runTest("testData/inspectionsLocal/leakingThis/callMethod.kt");
+            }
+
+            @TestMetadata("leakingThisAssign.kt")
+            public void testLeakingThisAssign() throws Exception {
+                runTest("testData/inspectionsLocal/leakingThis/leakingThisAssign.kt");
+            }
+
+            @TestMetadata("leakingThisInAnonymOblect.kt")
+            public void testLeakingThisInAnonymOblect() throws Exception {
+                runTest("testData/inspectionsLocal/leakingThis/leakingThisInAnonymOblect.kt");
+            }
+
+            @TestMetadata("leakingThisInConstructor.kt")
+            public void testLeakingThisInConstructor() throws Exception {
+                runTest("testData/inspectionsLocal/leakingThis/leakingThisInConstructor.kt");
+            }
+
+            @TestMetadata("leakingThisInNestedClasses.kt")
+            public void testLeakingThisInNestedClasses() throws Exception {
+                runTest("testData/inspectionsLocal/leakingThis/leakingThisInNestedClasses.kt");
+            }
+
+            @TestMetadata("leakingThisInPropertyInit.kt")
+            public void testLeakingThisInPropertyInit() throws Exception {
+                runTest("testData/inspectionsLocal/leakingThis/leakingThisInPropertyInit.kt");
+            }
+
+            @TestMetadata("leakingThisViaParameter.kt")
+            public void testLeakingThisViaParameter() throws Exception {
+                runTest("testData/inspectionsLocal/leakingThis/leakingThisViaParameter.kt");
+            }
+
+            @TestMetadata("noLeakingInDelegate.kt")
+            public void testNoLeakingInDelegate() throws Exception {
+                runTest("testData/inspectionsLocal/leakingThis/noLeakingInDelegate.kt");
+            }
+
+            @TestMetadata("noLeakingInGetter.kt")
+            public void testNoLeakingInGetter() throws Exception {
+                runTest("testData/inspectionsLocal/leakingThis/noLeakingInGetter.kt");
+            }
+
+            @TestMetadata("noLeakingInMethods.kt")
+            public void testNoLeakingInMethods() throws Exception {
+                runTest("testData/inspectionsLocal/leakingThis/noLeakingInMethods.kt");
+            }
+
+            @TestMetadata("noLeakingInSetter.kt")
+            public void testNoLeakingInSetter() throws Exception {
+                runTest("testData/inspectionsLocal/leakingThis/noLeakingInSetter.kt");
+            }
+
+            @TestMetadata("propertyAssign.kt")
+            public void testPropertyAssign() throws Exception {
+                runTest("testData/inspectionsLocal/leakingThis/propertyAssign.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/liftOut")
         public abstract static class LiftOut extends AbstractK2LocalInspectionTest {
             @RunWith(JUnit3RunnerWithInners.class)
