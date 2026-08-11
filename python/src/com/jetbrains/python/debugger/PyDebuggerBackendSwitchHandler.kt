@@ -25,6 +25,8 @@ interface PyDebuggerBackendSwitchHandler {
   /**
    * Controls visibility of the backend switcher UI.
    * Return false to hide the switcher (e.g., when the currently open file uses a remote kernel).
+   * This is one of two gates: returning true does not show the switcher by itself, since it is also
+   * hidden on Debug tool window tabs that do not run a Python or Jupyter session.
    */
   fun shouldShowSwitcher(project: Project): Boolean = true
 
