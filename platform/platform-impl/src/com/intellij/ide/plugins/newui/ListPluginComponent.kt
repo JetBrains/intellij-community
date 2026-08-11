@@ -41,6 +41,7 @@ import com.intellij.ui.components.labels.LinkListener
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.PlatformUtils
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.system.OS
 import com.intellij.util.ui.AbstractLayoutManager
@@ -780,6 +781,8 @@ class ListPluginComponent(
   }
 
   private fun showProgress(repaint: Boolean) {
+    ThreadingAssertions.softAssertAwtOperationsThread()
+
     if (successfullyFinishedOnce) return
     myIndicator = AbstractProgressIndicatorExBase()
     myLayout.setProgressComponent(object : AsyncProcessIcon("PluginListComponentIconProgress") {

@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components;
 
+import com.intellij.openapi.util.UtilThreadingAssertions;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBFont;
 import com.intellij.util.ui.JBSwingUtilities;
@@ -28,18 +29,26 @@ public class JBPanel<T extends JBPanel> extends JPanel implements JBComponent<T>
 
   public JBPanel(LayoutManager layout, boolean isDoubleBuffered) {
     super(layout, isDoubleBuffered);
+
+    UtilThreadingAssertions.softAssertAwtOperationsThread();
   }
 
   public JBPanel(LayoutManager layout) {
     super(layout);
+
+    UtilThreadingAssertions.softAssertAwtOperationsThread();
   }
 
   public JBPanel(boolean isDoubleBuffered) {
     super(isDoubleBuffered);
+
+    UtilThreadingAssertions.softAssertAwtOperationsThread();
   }
 
   public JBPanel() {
     super();
+
+    UtilThreadingAssertions.softAssertAwtOperationsThread();
   }
 
   @Override

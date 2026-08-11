@@ -8,7 +8,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.Cancellation;
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.openapi.util.UtilThreadingAssertions;
 import com.intellij.openapi.util.objectTree.ThrowableInterner;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.Strings;
@@ -37,15 +36,11 @@ import java.util.stream.Collectors;
  */
 public final class SlowOperations {
 
-  static {
-    UtilThreadingAssertions.init(() -> {
-      assertNonCancelableSlowOperationsAreAllowed();
-    });
-  }
-
   private static final class Holder {
     private static final Logger LOG = Logger.getInstance(SlowOperations.class);
   }
+
+  private static final Set<String> REPORTED_NON_CANCELLABLE_EXECUTIONS = ConcurrentHashMap.newKeySet();
 
   /**
    * Set this property to force slow ops check
@@ -175,11 +170,18 @@ public final class SlowOperations {
     if (isAlwaysAllowed() || isSlowNonCancellableOperationAllowed()) {
       return;
     }
+
+    String message = null;
+
     if (EDT.isCurrentThreadEdt()) {
-      logError(ERROR_EDT);
+      message = ERROR_EDT;
     }
     else if (ApplicationManager.getApplication().isReadAccessAllowed()) {
-      logError(ERROR_RA);
+      message = ERROR_RA;
+    }
+
+    if (message != null && REPORTED_NON_CANCELLABLE_EXECUTIONS.add(ExceptionUtil.currentStackTrace())) {
+      logError(message);
     }
   }
 
@@ -194,7 +196,6 @@ public final class SlowOperations {
 
     return false;
   }
-
 
   private static boolean isSlowOperationAllowed() {
     boolean forceAssert = isInSection(FORCE_ASSERT);

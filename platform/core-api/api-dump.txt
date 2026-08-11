@@ -3671,6 +3671,7 @@ f:com.intellij.util.concurrency.ThreadingAssertions
 - s:assertReadAccess():V
 - s:assertWriteAccess():V
 - s:assertWriteIntentReadAccess():V
+- s:softAssertAwtOperationsThread():V
 - s:softAssertEventDispatchThread():V
 - s:softAssertNoReadAccess():V
 - s:softAssertReadAccess():V

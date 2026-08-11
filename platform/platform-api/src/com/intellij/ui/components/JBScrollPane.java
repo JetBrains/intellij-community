@@ -15,6 +15,7 @@ import com.intellij.ui.scroll.TouchScrollUtil;
 import com.intellij.ui.tabs.impl.IslandsPainterProvider;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.RegionPainter;
@@ -205,6 +206,8 @@ public class JBScrollPane extends JScrollPane {
   }
 
   private void init() {
+    ThreadingAssertions.softAssertAwtOperationsThread();
+
     init(true);
   }
 
@@ -565,6 +568,8 @@ public class JBScrollPane extends JScrollPane {
 
     @Override
     public void layoutContainer(Container parent) {
+      ThreadingAssertions.softAssertAwtOperationsThread();
+
       JScrollPane pane = (JScrollPane)parent;
       // Calculate inner bounds of the scroll pane
       Rectangle viewportBounds = new Rectangle(pane.getWidth(), pane.getHeight());

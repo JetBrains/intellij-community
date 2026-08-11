@@ -37,6 +37,7 @@ import com.intellij.ui.tree.TreePathBackgroundSupplier;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.LazyInitializer;
 import com.intellij.util.ThreeState;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.ComponentWithEmptyText;
@@ -295,6 +296,8 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
   @Override
   public void setUI(TreeUI ui) {
+    ThreadingAssertions.softAssertAwtOperationsThread();
+
     // We have to repeat what JTree does here, because uiTreeExpansionListener is private in JTree.
     if (this.ui != ui) {
       settingUI = true;

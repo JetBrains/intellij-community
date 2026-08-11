@@ -7,6 +7,8 @@ import org.jetbrains.annotations.ApiStatus
 object UtilThreadingAssertions {
   @Volatile
   private var BACKGROUND_ACTIVITY_ASSERT: Runnable? = null
+  @Volatile
+  private var AWT_OPERATIONS_ASSERT: Runnable? = null
 
   /**
    * Soft-asserts that the caller is performing heavy background activity from an appropriate context,
@@ -20,8 +22,18 @@ object UtilThreadingAssertions {
     BACKGROUND_ACTIVITY_ASSERT?.run()
   }
 
+  /**
+   * Asserts that the current thread is the Event Dispatch Thread (EDT), which is the only thread allowed
+   * to access AWT/Swing components.
+   */
   @JvmStatic
-  fun init(backgroundActivityAssert: Runnable? = null) {
+  fun softAssertAwtOperationsThread() {
+    AWT_OPERATIONS_ASSERT?.run()
+  }
+
+  @JvmStatic
+  fun init(backgroundActivityAssert: Runnable? = null, awtOperationsAssert: Runnable? = null) {
     BACKGROUND_ACTIVITY_ASSERT = backgroundActivityAssert
+    AWT_OPERATIONS_ASSERT = awtOperationsAssert
   }
 }
