@@ -86,7 +86,6 @@ private suspend fun <P : PathHolder> PythonAddInterpreterModel<P>.createSdkFromB
     moduleOrProject = moduleOrProject,
     fileSystem = fileSystem,
     targetPanelExtension = state.targetPanelExtension.get(),
-    isAssociateWithModule = !venvViewModel.makeAvailableForAllProjects.get()
   )
 
   return when (sdkResult) {

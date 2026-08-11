@@ -54,7 +54,6 @@ internal class PythonExistingEnvironmentSelector<P : PathHolder>(model: PythonAd
       moduleOrProject = moduleOrProject,
       fileSystem = model.fileSystem,
       targetPanelExtension = model.state.targetPanelExtension.get(),
-      isAssociateWithModule = true,
     )
     return sdk
   }
