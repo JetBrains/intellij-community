@@ -127,7 +127,7 @@ class PluginVerifier internal constructor(
 
       lines.forEach { line ->
         when {
-          line.startsWith("Package ") || line.startsWith("Probably the package") || line.startsWith("It is also possible") || line.startsWith("The following classes") || line.startsWith("The method might have been declared") || line.startsWith("The field might have been declared in the super classes") || line.startsWith("  ") || line.isBlank() -> { // logger.warn(line)
+          line.startsWith("  ") || line.isBlank() -> {
           }
           else -> {
             val foundExceptions = compatibilityExceptions.filter {
