@@ -66,6 +66,12 @@ object PluginInitializationDiagnosticUtils {
     val logHeader = "Plugin set resolution:\n"
     val logBuilder = StringBuilder().apply {
       append(logHeader)
+      for (reason in pluginSet.excludedFromCandidateSubset.values) {
+        if (reason !is PluginVersionIsSuperseded || logger.isDebugEnabled) {
+          append("excluded from candidate set: ")
+          appendLine(reason.logMessage())
+        }
+      }
       dependencyIsNotResolvedRoots.map { resolvedPluginSet.getExclusionReason(it) as DependencyIsNotResolved }.groupBy { it.dependency }
         .forEach { (ref, roots) ->
           appendDependencyIsNotResolvedLogMessage(ref)
