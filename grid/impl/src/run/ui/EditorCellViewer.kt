@@ -27,6 +27,7 @@ import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.application.ApplicationManager.getApplication
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.EditorModificationUtil
@@ -175,7 +176,7 @@ open class EditorCellViewer(
 
   private fun createEditor(editable: Boolean): EditorEx {
     val virtualFile = LightVirtualFile("Value Editor", PlainTextLanguage.INSTANCE, "")
-    val document = FileDocumentManager.getInstance().getDocument(virtualFile)
+    val document = runReadActionBlocking { FileDocumentManager.getInstance().getDocument(virtualFile) }
                    ?: EditorFactory.getInstance().createDocument("")
     val editor = if (editable) EditorFactory.getInstance().createEditor(document, project) as EditorEx
     else EditorFactory.getInstance().createViewer(document, project) as EditorEx
