@@ -1,7 +1,7 @@
 package com.intellij.terminal.frontend.view.impl
 
-import com.intellij.execution.impl.EditorTextDecorationApplier
 import com.intellij.codeInsight.inline.completion.InlineCompletion
+import com.intellij.execution.impl.EditorTextDecorationApplier
 import com.intellij.execution.impl.createEditorTextDecorationApplier
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataSink
@@ -149,7 +149,7 @@ class TerminalViewImpl(
   private val terminalSearchController: TerminalSearchController
 
   @VisibleForTesting
-  val outputEditor: EditorEx
+  val outputEditor: EditorImpl
   private val alternateBufferEditor: EditorEx
 
   @VisibleForTesting
