@@ -223,6 +223,7 @@ fun Driver.openEditor(file: VirtualFile, project: Project? = null): Array<FileEd
 
 fun Driver.openFile(relativePath: String, project: Project = singleProject(), waitForCodeAnalysis: Boolean = true, isTextEditor: Boolean = true) {
   step("Open file $relativePath") {
+    val openInLightSession = isRemDevMode && isLightSession()
     val openedFile = if (!isRemDevMode) {
       val fileToOpen = waitFor(message = "File is opened: $relativePath",
                                errorMessage = { "Fail to find file $relativePath" },
@@ -236,7 +237,7 @@ fun Driver.openFile(relativePath: String, project: Project = singleProject(), wa
       openEditor(fileToOpen!!, project)
       fileToOpen
     }
-    else if (isLightSession()) {
+    else if (openInLightSession) {
       openFileInLightSession(relativePath, project, isTextEditor)
     }
     else {
@@ -246,7 +247,7 @@ fun Driver.openFile(relativePath: String, project: Project = singleProject(), wa
         findCurrentEditorFile(relativePath = relativePath, project = project, isTextEditor = isTextEditor)!!
       }
     }
-    if (waitForCodeAnalysis) {
+    if (waitForCodeAnalysis && !openInLightSession) {
       waitForCodeAnalysis(project, openedFile)
     }
   }
