@@ -177,3 +177,15 @@ fun <K, V> MutableMap<K, SafeDeferred<V>>.computeDeferred(
       })
     }
   }!!
+
+@ApiStatus.Internal
+fun <K, V> MutableMap<K, SafeDeferred<V>>.retrieveValidDeferred(
+  key: K
+): SafeDeferred<V>? =
+  compute(key) { _, old ->
+    when (old?.state) {
+      SafeDeferred.State.Active, is SafeDeferred.State.Completed -> old
+
+      null, is SafeDeferred.State.FinishedUnsuccessfully -> null
+    }
+  }
