@@ -122,6 +122,50 @@ public class AsmClassPropertiesProviderTest extends UsefulTestCase {
     assertEquals("RIGHT", value.getConstantName());
   }
 
+  /**
+   * The finder of a form editor outlives a single read, so the jars of the module are released after each one. It has
+   * to stay usable across that, and it has to pick up what the last build produced rather than answer from the classes
+   * it read before.
+   */
+  public void testFinderIsUsableAfterItsClasspathIsReleased() throws Exception {
+    HashMap<String, LwIntrospectedProperty> before =
+      new AsmClassPropertiesProvider(myClassFinder).getLwProperties("EnumPropertyComponent");
+    assertThat(before.keySet()).contains("alignment").doesNotContain("title");
+
+    myClassFinder.releaseClasspathResources();
+
+    // same roots, so the same properties - a released finder that could not read its roots again would return null here
+    HashMap<String, LwIntrospectedProperty> afterRelease =
+      new AsmClassPropertiesProvider(myClassFinder).getLwProperties("EnumPropertyComponent");
+    assertNotNull("the finder stopped resolving its classpath after being released", afterRelease);
+    assertThat(afterRelease.keySet()).contains("alignment").doesNotContain("title");
+
+    // recompile the component with a second property, as a build would
+    Path source = myOutputDir.resolve("EnumPropertyComponent.java");
+    Files.writeString(source, """
+      import javax.swing.*;
+
+      public class EnumPropertyComponent extends JPanel {
+        private Alignment alignment = Alignment.LEFT;
+        private String title = "";
+
+        public Alignment getAlignment() { return alignment; }
+        public void setAlignment(Alignment alignment) { this.alignment = alignment; }
+        public String getTitle() { return title; }
+        public void setTitle(String title) { this.title = title; }
+      }
+      """);
+    assertEquals(0, Main.compile(new String[]{"-d", myOutputDir.toString(), "-classpath", myOutputDir.toString(),
+      source.toString()}));
+
+    myClassFinder.releaseClasspathResources();
+
+    HashMap<String, LwIntrospectedProperty> afterRebuild =
+      new AsmClassPropertiesProvider(myClassFinder).getLwProperties("EnumPropertyComponent");
+    assertNotNull(afterRebuild);
+    assertThat(afterRebuild.keySet()).contains("alignment", "title");
+  }
+
   public void testUnknownComponentClassHasNoProperties() {
     // null (rather than an empty map) is what makes XmlReader render a per-component error placeholder
     assertNull(new AsmClassPropertiesProvider(myClassFinder).getLwProperties("no.such.Component"));

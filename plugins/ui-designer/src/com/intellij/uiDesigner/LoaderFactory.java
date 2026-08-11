@@ -37,6 +37,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicReference;
 
 @Service(Service.Level.PROJECT)
 public final class LoaderFactory implements Disposable {
@@ -45,10 +46,9 @@ public final class LoaderFactory implements Disposable {
   private final Project myProject;
   private final ConcurrentMap<Module, ClassLoader> myModule2ClassLoader;
   private final ConcurrentMap<Module, InstrumentationClassFinder> myModule2ClassFinder;
-  private final Object myClassFinderLock = new Object();
+  private final AtomicReference<InstrumentationClassFinder> myPlatformClassFinder = new AtomicReference<>();
   private final MessageBusConnection myConnection;
   private ClassLoader myProjectClassLoader = null;
-  private InstrumentationClassFinder myPlatformClassFinder = null;
 
   public static LoaderFactory getInstance(final Project project) {
     return project.getService(LoaderFactory.class);
@@ -104,10 +104,18 @@ public final class LoaderFactory implements Disposable {
    * never loads, initializes or introspects the component classes it names (IDEA-392515).
    */
   public @NotNull LwRootContainer readRootContainer(@NotNull VirtualFile formFile, @NotNull String text) throws Exception {
-    // neither InstrumentationClassFinder nor AsmClassPropertiesProvider is thread safe, and finders are shared
-    synchronized (myClassFinderLock) {
-      var classFinder = getClassFinder(formFile);
-      return Utils.getRootContainer(text, new AsmClassPropertiesProvider(classFinder));
+    var classFinder = getClassFinder(formFile);
+    // neither InstrumentationClassFinder nor AsmClassPropertiesProvider is thread safe, and a finder is shared by
+    // every form of its module - the forms of other modules have a finder of their own and do not wait here
+    synchronized (classFinder) {
+      try {
+        return Utils.getRootContainer(text, new AsmClassPropertiesProvider(classFinder));
+      }
+      finally {
+        // between two reads the finder must not keep the jars of the module open, nor answer with the classes of a
+        // previous build; only its platform roots are worth keeping, see #getClassFinder
+        classFinder.releaseClasspathResources();
+      }
     }
   }
 
@@ -116,6 +124,10 @@ public final class LoaderFactory implements Disposable {
     return module != null ? getClassFinder(module) : getPlatformClassFinder();
   }
 
+  /**
+   * Only reading a form is guarded, never the lookup of the finder to read it with - a lock must not be held while
+   * the project model is read, and the roots below are read without one.
+   */
   private @NotNull InstrumentationClassFinder getClassFinder(@NotNull Module module) {
     var cachedFinder = myModule2ClassFinder.get(module);
     if (cachedFinder != null) return cachedFinder;
@@ -131,8 +143,9 @@ public final class LoaderFactory implements Disposable {
       platformUrls = createPlatformUrls(System.getProperty("java.home"));
     }
     var classFinder = createClassFinder(platformUrls, runClasspath);
-    myModule2ClassFinder.put(module, classFinder);
-    return classFinder;
+    // a finder opens a root only when it is asked for a class, so one that loses this race has nothing to release
+    var raceWinner = myModule2ClassFinder.putIfAbsent(module, classFinder);
+    return raceWinner != null ? raceWinner : classFinder;
   }
 
   /**
@@ -140,10 +153,9 @@ public final class LoaderFactory implements Disposable {
    * which is enough for the standard Swing components.
    */
   private @NotNull InstrumentationClassFinder getPlatformClassFinder() {
-    if (myPlatformClassFinder == null) {
-      myPlatformClassFinder = createClassFinder(createPlatformUrls(System.getProperty("java.home")), spacerJarPath());
-    }
-    return myPlatformClassFinder;
+    return myPlatformClassFinder.updateAndGet(
+      finder -> finder != null ? finder
+                               : createClassFinder(createPlatformUrls(System.getProperty("java.home")), spacerJarPath()));
   }
 
   private static @NotNull String spacerJarPath() {
@@ -218,18 +230,29 @@ public final class LoaderFactory implements Disposable {
   }
 
   /**
-   * A finder keeps the jars it has read open, so it must be closed as soon as the roots it was built from change.
+   * A cached finder is only good for the roots it was built from, and it holds the {@code jrt:} file system of the
+   * module SDK open, so it has to go when the roots change. The jars of the classpath are already released after every
+   * read, see {@link #readRootContainer}.
    */
   private void releaseClassFinders() {
-    // do not pull the jars away from a form that is being read right now
-    synchronized (myClassFinderLock) {
-      for (var finder : myModule2ClassFinder.values()) {
-        finder.releaseResources();
+    var released = new ArrayList<InstrumentationClassFinder>();
+    // remove one by one rather than clear: a finder must never be dropped from the map without being released
+    for (var module : new ArrayList<>(myModule2ClassFinder.keySet())) {
+      var finder = myModule2ClassFinder.remove(module);
+      if (finder != null) {
+        released.add(finder);
       }
-      myModule2ClassFinder.clear();
-      if (myPlatformClassFinder != null) {
-        myPlatformClassFinder.releaseResources();
-        myPlatformClassFinder = null;
+    }
+    var platformClassFinder = myPlatformClassFinder.getAndSet(null);
+    if (platformClassFinder != null) {
+      released.add(platformClassFinder);
+    }
+    for (var finder : released) {
+      // do not pull the jars away from a form that is being read right now - the finder is the lock of its module,
+      // see #readRootContainer
+      //noinspection SynchronizationOnLocalVariableOrMethodParameter
+      synchronized (finder) {
+        finder.releaseResources();
       }
     }
   }

@@ -20,13 +20,10 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Queue;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -108,6 +105,19 @@ public class InstrumentationClassFinder {
 
   public void releaseResources() {
     myPlatformClasspath.releaseResources();
+    releaseClasspathResources();
+  }
+
+  /**
+   * Closes the classpath roots, keeping the platform roots open, and drops the classes read so far. The finder stays
+   * usable: it reads the roots again on the next lookup.
+   * <p>
+   * For a finder that outlives a single operation, this is what keeps it from holding the jars of the classpath open -
+   * on Windows an open jar cannot be replaced by a build - and from answering with classes from before the last build.
+   * The platform roots are kept because the {@code jrt:} file system of a JDK is expensive to build and does not
+   * change while the JDK is the same.
+   */
+  public void releaseClasspathResources() {
     myClasspath.releaseResources();
     myLoaded.clear();
     myBuffer = null;
@@ -472,12 +482,14 @@ public class InstrumentationClassFinder {
   }
 
   public static final class ClassFinderClasspath {
-    private final Queue<URL> myUrls;
+    private final URL[] myUrls;
+    /** Index into {@link #myUrls} of the next root to create a loader for; loaders are created on demand. */
+    private int myNextUrlIndex;
     private final List<Loader> myLoaders = new ArrayList<>();
     private final Map<URL,Loader> myLoadersMap = new HashMap<>();
 
     ClassFinderClasspath(URL[] urls) {
-      myUrls = new ArrayDeque<>(Arrays.asList(urls));
+      myUrls = urls.clone();
     }
 
     public Resource getResource(String s) {
@@ -492,20 +504,25 @@ public class InstrumentationClassFinder {
       return null;
     }
 
-    public void releaseResources() {
+    /**
+     * Closes the roots. The classpath stays usable: the loaders it needs are created again, from the same roots, the
+     * next time a resource is looked up.
+     */
+    public synchronized void releaseResources() {
       for (Loader loader : myLoaders) {
         loader.releaseResources();
       }
       myLoaders.clear();
       myLoadersMap.clear();
+      myNextUrlIndex = 0;
     }
 
     private synchronized Loader getLoader(int i) {
       while (myLoaders.size() < i + 1) {
-        URL url = myUrls.poll();
-        if (url == null) {
+        if (myNextUrlIndex >= myUrls.length) {
           return null;
         }
+        URL url = myUrls[myNextUrlIndex++];
 
         if (myLoadersMap.containsKey(url)) {
           continue;
