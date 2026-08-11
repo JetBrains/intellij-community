@@ -324,6 +324,29 @@ open class SettingsNonModalDialog @ApiStatus.Internal constructor(
     return SettingsTreeView(filter, groups)
   }
 
+  /**
+   * Creates the OK button from [action]. Mirrors [SettingsDialog.createJButtonForAction]'s
+   * ability to return a different button for a specific action — override to wrap [action] in an
+   * [com.intellij.openapi.ui.OptionAction] before delegating to
+   * [DialogWrapper.createJButtonForAction], which then builds a
+   * [com.intellij.ui.components.JBOptionButton] automatically (e.g. Rider's "Save to layer"
+   * dropdown, shown only for ReSharper settings pages).
+   */
+  @ApiStatus.Internal
+  protected open fun createOkButton(action: Action, rootPane: JRootPane?): JButton {
+    return DialogWrapper.createJButtonForAction(action, rootPane)
+  }
+
+  /**
+   * Mirrors [SettingsDialog.tryAddOptionsListener]: subscribes [colleague] to configurable
+   * selection changes in [editor], e.g. to keep a per-page dropdown (see [createOkButton]) in
+   * sync with the currently selected page.
+   */
+  @ApiStatus.Internal
+  protected fun tryAddOptionsListener(colleague: OptionsEditorColleague) {
+    editor.addOptionsListener(colleague)
+  }
+
   // ── Lifecycle subscriptions ───────────────────────────────────────────────────
 
   private fun setupLifecycleSubscriptions() {
@@ -515,8 +538,7 @@ open class SettingsNonModalDialog @ApiStatus.Internal constructor(
     }
     okAction.putValue(DialogWrapper.DEFAULT_ACTION, true)
 
-    val okButton = DialogWrapper.createJButtonForAction(okAction,
-                                                        (activeWindow as? RootPaneContainer)?.rootPane)
+    val okButton = createOkButton(okAction, (activeWindow as? RootPaneContainer)?.rootPane)
 
     val cancelButton = DialogWrapper.createJButtonForAction(
       object : AbstractAction(CommonBundle.getCancelButtonText()) {
