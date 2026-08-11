@@ -1,0 +1,53 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.compose.ide.plugin.tests.main` start
+jvm_library(
+    name = "ide-plugin-tests-main",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.compose.ide.plugin.tests.main",
+    visibility = ["//visibility:public"],
+    runtime_deps = ["//plugins/kotlin:kotlin-plugin-community-main"],
+)
+
+jvm_library(
+    name = "ide-plugin-tests-main_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.compose.ide.plugin.tests.main",
+    resource_strip_prefix = "testResources",
+    resources = glob(
+        ["testResources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":ide-plugin-tests-main",
+        "//platform/bootstrap/coroutine",
+        "//platform/bootstrap/coroutine:coroutine_test_lib",
+        "//platform/testFramework",
+        "//platform/testFramework:testFramework_test_lib",
+        "//plugins/kotlin:kotlin-plugin-community-main_test_lib",
+        "//plugins/compose/intellij.compose.ide.plugin.k2:ide-plugin-k2-tests",
+        "//plugins/compose/intellij.compose.ide.plugin.k2:ide-plugin-k2-tests_test_lib",
+        "//plugins/compose/intellij.compose.ide.plugin.projectStructureTests:ide-plugin-projectStructureTests",
+        "//plugins/compose/intellij.compose.ide.plugin.projectStructureTests:ide-plugin-projectStructureTests_test_lib",
+        "//plugins/compose/intellij.compose.ide.plugin.shared:ide-plugin-shared-tests",
+        "//plugins/compose/intellij.compose.ide.plugin.shared:ide-plugin-shared-tests_test_lib",
+    ],
+)
+### auto-generated section `build intellij.compose.ide.plugin.tests.main` end
+
+### auto-generated section `iml intellij.compose.ide.plugin.tests.main` start
+exports_files(
+    [
+        "intellij.compose.ide.plugin.tests.main.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.compose.ide.plugin.tests.main` end

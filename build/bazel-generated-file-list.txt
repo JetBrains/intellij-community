@@ -1105,6 +1105,7 @@ plugins/compose/intellij.compose.ide.plugin.projectStructureTests
 plugins/compose/intellij.compose.ide.plugin.resources
 plugins/compose/intellij.compose.ide.plugin.resources.android
 plugins/compose/intellij.compose.ide.plugin.shared
+plugins/compose/intellij.compose.ide.plugin.tests.main
 plugins/configuration-script
 plugins/copyright
 plugins/copyright/vcs
