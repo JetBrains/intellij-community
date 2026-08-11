@@ -5,6 +5,7 @@ import com.intellij.history.core.tree.Entry;
 import com.intellij.history.core.tree.RootEntry;
 import com.intellij.ide.scratch.ScratchFileActions;
 import com.intellij.ide.scratch.ScratchFileCreationHelper;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -14,7 +15,10 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
+import com.intellij.openapi.roots.AdditionalLibraryRootsProvider;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.SyntheticLibrary;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
@@ -172,6 +176,32 @@ public class IdeaGatewayTest extends IntegrationTestCase {
     // WHEN - THEN
     assertTrue(myGateway.isVersioned(sourceDirectory));
     assertTrue(myGateway.isVersioned(sourceFile));
+  }
+
+  public void testFileVersionedWhenInLibraryRootOutsideContentRoot() throws Exception {
+    // GIVEN a library source root (e.g. Composer's "vendor" directory registered by
+    // AdditionalLibraryRootsProvider) that is outside any content root
+    VirtualFile libraryRoot = getTempDir().createVirtualDir();
+    VirtualFile libraryFile = WriteAction.compute(() -> libraryRoot.createChildData(this, "LibraryFile.txt"));
+
+    Disposer.register(getTestRootDisposable(), registerLibrary(libraryRoot));
+
+    ProjectFileIndex projectFileIndex = ProjectFileIndex.getInstance(myProject);
+    assertFalse(projectFileIndex.isInContent(libraryFile));
+    assertTrue(projectFileIndex.isInProject(libraryFile));
+    assertTrue(myGateway.isVersioned(libraryFile));
+  }
+
+  private static Disposable registerLibrary(VirtualFile sourceRoot) {
+    Disposable disposable = Disposer.newDisposable();
+    AdditionalLibraryRootsProvider.EP_NAME.getPoint().registerExtension(new AdditionalLibraryRootsProvider() {
+      @Override
+      public @NotNull Collection<SyntheticLibrary> getAdditionalProjectLibraries(@NotNull Project project) {
+        return List.of(SyntheticLibrary.newImmutableLibrary(List.of(sourceRoot)));
+      }
+    }, disposable);
+    PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
+    return disposable;
   }
 
   public void testScratchFileVersionedOnlyWhenCallerDontCareAboutContentRoot() {
