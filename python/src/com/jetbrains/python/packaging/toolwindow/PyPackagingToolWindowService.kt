@@ -116,14 +116,23 @@ internal class PyPackagingToolWindowService(val project: Project, val serviceSco
   /** `true` while a package named [packageName] (any version) is being installed on [sdk]. */
   fun isPackageInstalling(sdk: Sdk, packageName: String): Boolean = PyActiveInstalls.forSdk(sdk).isPackageInstalling(packageName)
 
-  /** Records [key] as an active install on [sdk]. Returns `false` if already recorded (rejects a rapid re-trigger). */
-  fun markInstalling(sdk: Sdk, key: String): Boolean =
-    PyActiveInstalls.forSdk(sdk).mark(key).also { if (it) fireInstallStateChanged() }
+  /**
+   * Records [key] as an active install on [sdk]. Returns `false` if already recorded (rejects a rapid re-trigger).
+   *
+   * [traceUuid] — uuid of the trace the install runs in, for callers that own one (see [installPackage]'s
+   * `trace` parameter). Stored so a surface showing the install as in progress can point the user at the
+   * running command's output; cleared again by [unmarkInstalling].
+   */
+  fun markInstalling(sdk: Sdk, key: String, traceUuid: String? = null): Boolean =
+    PyActiveInstalls.forSdk(sdk).mark(key, traceUuid).also { if (it) fireInstallStateChanged() }
 
   /** Clears [key] on [sdk]; must run in a `finally` / completion handler so a cancelled install can't leak it. */
   fun unmarkInstalling(sdk: Sdk, key: String) {
     if (PyActiveInstalls.forSdk(sdk).unmark(key)) fireInstallStateChanged()
   }
+
+  /** Uuid of the trace of the install running under [key] on [sdk], or `null` if unknown or nothing is running. */
+  fun installTraceUuid(sdk: Sdk, key: String): String? = PyActiveInstalls.forSdk(sdk).traceUuid(key)
 
   /**
    * Subscribes [listener] to any change of the active-installations state; it is invoked on the EDT
@@ -354,17 +363,24 @@ internal class PyPackagingToolWindowService(val project: Project, val serviceSco
     }
   }
 
+  /**
+   * [trace] — when non-null the install runs directly in this trace instead of a fresh nested one, so
+   * the caller's uuid is the one the spawned pip / uv process reports. Callers that show their own
+   * in-progress UI need that: nothing between here and the process launcher adds another trace, so
+   * whichever trace wraps this call is the one the process is tagged with.
+   */
   suspend fun installPackage(
     installRequest: PythonPackageInstallRequest,
     options: List<String> = emptyList(),
     workspaceMember: PyWorkspaceMember? = null,
     dependencyGroup: PyDependencyGroup? = null,
+    trace: TraceContext? = null,
   ) {
     val context = sdkContext ?: return
     val managerUI = context.managerUI
     val module = workspaceMember?.let { context.manager.workspaceSupport?.resolveModule(it) }
 
-    withContext(TraceContext(message("trace.context.packaging.tool.window.install"))) {
+    withContext(trace ?: TraceContext(message("trace.context.packaging.tool.window.install"))) {
       PythonPackagesToolwindowStatisticsCollector.installPackageEvent.log(project)
       managerUI.installPackagesRequestBackground(installRequest, options, module, dependencyGroup)?.let {
         handleActionCompleted(

@@ -9,7 +9,7 @@ import com.jetbrains.python.packaging.PyPackageName
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * Per-SDK set of "installs currently running", keyed by opaque strings — the normalized package
+ * Per-SDK map of "installs currently running", keyed by opaque strings — the normalized package
  * name for package installs (see [packageKey]) or the install dialog's namespaced `"location:"` /
  * `"command:"` keys. It is the single source of truth behind the tool-window tree link, the info
  * pane and the install dialog, so a package cannot be installed twice at once into the same
@@ -23,24 +23,38 @@ import java.util.concurrent.ConcurrentHashMap
  * Thread-safe.
  */
 internal class PyActiveInstalls {
-  private val keys: MutableSet<String> = ConcurrentHashMap.newKeySet()
+  private val installs: ConcurrentHashMap<String, ActiveInstall> = ConcurrentHashMap()
+
+  /** State of one running install. A value type because [ConcurrentHashMap] forbids null values. */
+  private class ActiveInstall(val traceUuid: String?)
 
   /** `true` while an install keyed by exactly [key] is running. */
-  fun isInstalling(key: String): Boolean = keys.contains(key)
+  fun isInstalling(key: String): Boolean = installs.containsKey(key)
 
   /** `true` while a package named [packageName] (any version) is being installed. */
   fun isPackageInstalling(packageName: String): Boolean = isInstalling(packageKey(packageName))
 
-  /** Records [key]. Returns `false` if it was already recorded (so a repeated trigger is rejected). */
-  fun mark(key: String): Boolean = keys.add(key)
+  /**
+   * Records [key], optionally tagging it with the uuid of the [com.jetbrains.python.TraceContext] the
+   * install runs in so its command can be located later (see [traceUuid]). Returns `false` if [key]
+   * was already recorded (so a repeated trigger is rejected); the uuid of the install that is
+   * actually running is kept in that case, never overwritten by the rejected caller.
+   */
+  fun mark(key: String, traceUuid: String? = null): Boolean = installs.putIfAbsent(key, ActiveInstall(traceUuid)) == null
 
-  /** Clears [key]. Returns `false` if it was not recorded. */
-  fun unmark(key: String): Boolean = keys.remove(key)
+  /** Clears [key] along with its trace uuid. Returns `false` if it was not recorded. */
+  fun unmark(key: String): Boolean = installs.remove(key) != null
+
+  /**
+   * Uuid of the trace the install under [key] runs in, or `null` when nothing is running under [key]
+   * or the install was started without a trace — not every surface owns one.
+   */
+  fun traceUuid(key: String): String? = installs[key]?.traceUuid
 
   companion object {
     private val KEY = Key.create<PyActiveInstalls>(PyActiveInstalls::class.java.name)
 
-    /** The [Sdk]'s active-installations set, created on first use and living in its user data. */
+    /** The [Sdk]'s active-installations map, created on first use and living in its user data. */
     fun forSdk(sdk: Sdk): PyActiveInstalls = of(sdk)
 
     /** Storage accessor by raw [UserDataHolder] — the SDK in production, any holder in tests. */
