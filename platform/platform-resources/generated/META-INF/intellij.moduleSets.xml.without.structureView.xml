@@ -18,6 +18,8 @@
     <module name="intellij.xml.parser"/>
     <module name="intellij.xml.syntax"/>
     <module name="intellij.relaxng"/>
+    <module name="intellij.libraries.isorelax"/>
+    <module name="intellij.libraries.jing"/>
     <module name="intellij.xml.impl"/>
     <module name="intellij.xml.analysis.impl"/>
     <module name="intellij.libraries.cglib" loading="embedded"/>

@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.tasks.core.libraries.commonsDiscovery.jar
+  modules:
+  - name: intellij.tasks.core.libraries.commonsDiscovery
+    libraries:
+      commons-discovery:
+      - name: $MAVEN_REPOSITORY$/commons-discovery/commons-discovery/0/commons-discovery-0.jar

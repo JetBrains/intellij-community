@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.jing.jar
+  modules:
+  - name: intellij.libraries.jing
+    libraries:
+      jing:
+      - name: $MAVEN_REPOSITORY$/thaiopensource/jing/20030619/jing-20030619.jar

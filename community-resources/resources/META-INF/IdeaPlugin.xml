@@ -26,6 +26,8 @@
     <module name="intellij.platform.coverage"/>
     <module name="intellij.platform.coverage.agent"/>
     <module name="intellij.xml.xmlbeans"/>
+    <module name="intellij.libraries.log4j.to.slf4j"/>
+    <module name="intellij.libraries.xmlbeans"/>
     <module name="intellij.platform.ide.newUiOnboarding"/>
     <module name="intellij.platform.ide.newUsersOnboarding"/>
     <module name="intellij.ide.startup.importSettings"/>

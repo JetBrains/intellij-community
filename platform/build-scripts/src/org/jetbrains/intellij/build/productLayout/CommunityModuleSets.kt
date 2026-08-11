@@ -236,6 +236,8 @@ object CommunityModuleSets {
     module("intellij.xml.parser")
     module("intellij.xml.syntax")
     module("intellij.relaxng")
+    module("intellij.libraries.isorelax")
+    module("intellij.libraries.jing")
     module("intellij.xml.impl")
     module("intellij.xml.analysis.impl")
     // kept embedded (i.e. loaded by the core classloader): the non-embedded xml content modules
@@ -263,6 +265,8 @@ object CommunityModuleSets {
     module("intellij.xml.parser")
     module("intellij.xml.syntax")
     module("intellij.relaxng")
+    module("intellij.libraries.isorelax")
+    module("intellij.libraries.jing")
     module("intellij.xml.impl")
     module("intellij.xml.analysis.impl")
     // kept embedded (i.e. loaded by the core classloader): the non-embedded xml content modules

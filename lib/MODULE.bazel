@@ -8709,6 +8709,13 @@ http_file(
 )
 
 http_file(
+    name = "isorelax-isorelax-20030108_http",
+    downloaded_file_path = "isorelax-20030108.jar",
+    sha256 = "3427152431cf7f967f92e69e5cac16147c5d8fb4b4e5a8a72f5291788efcff8c",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/isorelax/isorelax/20030108/isorelax-20030108.jar",
+)
+
+http_file(
     name = "org_apache_ivy-ivy-2_5_2_http",
     downloaded_file_path = "ivy-2.5.2.jar",
     sha256 = "98428d545ea63cd9a0aaf255caf42cb8cb64fe430dbb5e709aed536d4daeed04",
@@ -9189,6 +9196,20 @@ http_file(
     downloaded_file_path = "forms-1.1-preview.jar",
     sha256 = "26b0fc745ea051b57462be22a150c7600dbac6716b24cc60a5ecc0e8085c41a0",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/jgoodies/forms/1.1-preview/forms-1.1-preview.jar",
+)
+
+http_file(
+    name = "thaiopensource-jing-20030619_http",
+    downloaded_file_path = "jing-20030619.jar",
+    sha256 = "600acd9ebd37dd46e3a006bc6e748d68dfeb31cbf4881a84d06e6dc5cc5eed26",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/thaiopensource/jing/20030619/jing-20030619.jar",
+)
+
+http_file(
+    name = "thaiopensource-jing-20030619-sources_http",
+    downloaded_file_path = "jing-20030619-sources.jar",
+    sha256 = "b055dbb5df0ccd5f659e2511bdc18c3bbe034c9a5fc0a33f95408d05401e0641",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/thaiopensource/jing/20030619/jing-20030619-sources.jar",
 )
 
 http_file(
@@ -10060,6 +10081,34 @@ http_file(
 )
 
 http_file(
+    name = "org_apache_logging_log4j-log4j-to-slf4j-2_20_0_http",
+    downloaded_file_path = "log4j-to-slf4j-2.20.0.jar",
+    sha256 = "88e731d7f455da59dfa08769527f87d6c496053a712637df7b999f6977933a2c",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/logging/log4j/log4j-to-slf4j/2.20.0/log4j-to-slf4j-2.20.0.jar",
+)
+
+http_file(
+    name = "org_apache_logging_log4j-log4j-api-2_20_0_http",
+    downloaded_file_path = "log4j-api-2.20.0.jar",
+    sha256 = "2f43eea679ea66f14ca0f13fec2a8600ac124f5a5231dcb4df8393eddcb97550",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/logging/log4j/log4j-api/2.20.0/log4j-api-2.20.0.jar",
+)
+
+http_file(
+    name = "org_apache_logging_log4j-log4j-to-slf4j-2_20_0-sources_http",
+    downloaded_file_path = "log4j-to-slf4j-2.20.0-sources.jar",
+    sha256 = "e1b7556e9bd774f032aca6579367cc6a96ae3a389fbe2a286875c1534576a91b",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/logging/log4j/log4j-to-slf4j/2.20.0/log4j-to-slf4j-2.20.0-sources.jar",
+)
+
+http_file(
+    name = "org_apache_logging_log4j-log4j-api-2_20_0-sources_http",
+    downloaded_file_path = "log4j-api-2.20.0-sources.jar",
+    sha256 = "54b4514536902d4d677192928b6a661c3a301c5da47b8e8b18a9bc8d7238f301",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/logging/log4j/log4j-api/2.20.0/log4j-api-2.20.0-sources.jar",
+)
+
+http_file(
     name = "org_apache_lucene-lucene-analysis-common-10_5_0_http",
     downloaded_file_path = "lucene-analysis-common-10.5.0.jar",
     sha256 = "922e217fe5cc88305b5a8e057cd80a30b7de96be2ff20dc4327fb524d26e6a25",
@@ -10921,6 +10970,34 @@ http_file(
 )
 
 http_file(
+    name = "org_jetbrains_intellij_deps_searchEverywhere_model-find-all-model-252_0_1_http",
+    downloaded_file_path = "find-all-model-252.0.1.jar",
+    sha256 = "9670b6befe4aa52df008d6612095d1db587880b42d36550794a3db43ff55c377",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/searchEverywhere/model/find-all-model/252.0.1/find-all-model-252.0.1.jar",
+)
+
+http_file(
+    name = "org_jetbrains_intellij_deps_searchEverywhere_model-find-all-model-252_0_1-sources_http",
+    downloaded_file_path = "find-all-model-252.0.1-sources.jar",
+    sha256 = "58d46fda2d7ab0348f4d76305cded034828d0b65c0b16bab7916226aa12e8b4a",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/searchEverywhere/model/find-all-model/252.0.1/find-all-model-252.0.1-sources.jar",
+)
+
+http_file(
+    name = "org_jetbrains_intellij_deps_searchEverywhere_model-find-ec-model-252_0_1_http",
+    downloaded_file_path = "find-ec-model-252.0.1.jar",
+    sha256 = "7c49ae42530a312fd8bcb0e63be01b8bae3f2daded8524ba599cd023b376edb2",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/searchEverywhere/model/find-ec-model/252.0.1/find-ec-model-252.0.1.jar",
+)
+
+http_file(
+    name = "org_jetbrains_intellij_deps_searchEverywhere_model-find-ec-model-252_0_1-sources_http",
+    downloaded_file_path = "find-ec-model-252.0.1-sources.jar",
+    sha256 = "737b2ca39697e8ef1f301dad4e269390b5227b5e3637e521d2ac05e23676d28e",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/searchEverywhere/model/find-ec-model/252.0.1/find-ec-model-252.0.1-sources.jar",
+)
+
+http_file(
     name = "io_github_z4kn4fein-semver-jvm-2_0_0_http",
     downloaded_file_path = "semver-jvm-2.0.0.jar",
     sha256 = "fbbf174a4e78aa5be1f1b7db73edc5c0a6a2e59e1562263e2c3a2e510fa1ba45",
@@ -11345,6 +11422,20 @@ http_file(
     downloaded_file_path = "xmlrpc-2.0.1-sources.jar",
     sha256 = "34d3755800c35568aab53447c576d3ab8fb63e6e9df32d6acb1fe7187bf5383c",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/ws/xmlrpc/xmlrpc/2.0.1/xmlrpc-2.0.1-sources.jar",
+)
+
+http_file(
+    name = "org_apache_xmlbeans-xmlbeans-5_1_1_http",
+    downloaded_file_path = "xmlbeans-5.1.1.jar",
+    sha256 = "5f484a78bed71cbffe3709678b6bdd3463781a7c61c6d9872330aecbf150762a",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/xmlbeans/xmlbeans/5.1.1/xmlbeans-5.1.1.jar",
+)
+
+http_file(
+    name = "org_apache_xmlbeans-xmlbeans-5_1_1-sources_http",
+    downloaded_file_path = "xmlbeans-5.1.1-sources.jar",
+    sha256 = "22e5689846077e5561c9facb96b8f81cd019b9b70ffb124d26741ead78f4bc41",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/xmlbeans/xmlbeans/5.1.1/xmlbeans-5.1.1-sources.jar",
 )
 
 http_file(
@@ -15639,27 +15730,6 @@ http_file(
 )
 
 http_file(
-    name = "isorelax-isorelax-20030108_http",
-    downloaded_file_path = "isorelax-20030108.jar",
-    sha256 = "3427152431cf7f967f92e69e5cac16147c5d8fb4b4e5a8a72f5291788efcff8c",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/isorelax/isorelax/20030108/isorelax-20030108.jar",
-)
-
-http_file(
-    name = "thaiopensource-jing-20030619_http",
-    downloaded_file_path = "jing-20030619.jar",
-    sha256 = "600acd9ebd37dd46e3a006bc6e748d68dfeb31cbf4881a84d06e6dc5cc5eed26",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/thaiopensource/jing/20030619/jing-20030619.jar",
-)
-
-http_file(
-    name = "thaiopensource-jing-20030619-sources_http",
-    downloaded_file_path = "jing-20030619-sources.jar",
-    sha256 = "b055dbb5df0ccd5f659e2511bdc18c3bbe034c9a5fc0a33f95408d05401e0641",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/thaiopensource/jing/20030619/jing-20030619-sources.jar",
-)
-
-http_file(
     name = "org_jetbrains_intellij_deps_searchEverywhere_model-find-action-model-252_0_0_http",
     downloaded_file_path = "find-action-model-252.0.0.jar",
     sha256 = "0e2660aabf41c984a38cf8b19f5cfd8ef714d29ed614b47e27547a9319fa4104",
@@ -15688,20 +15758,6 @@ http_file(
 )
 
 http_file(
-    name = "org_jetbrains_intellij_deps_searchEverywhere_model-find-all-model-252_0_1_http",
-    downloaded_file_path = "find-all-model-252.0.1.jar",
-    sha256 = "9670b6befe4aa52df008d6612095d1db587880b42d36550794a3db43ff55c377",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/searchEverywhere/model/find-all-model/252.0.1/find-all-model-252.0.1.jar",
-)
-
-http_file(
-    name = "org_jetbrains_intellij_deps_searchEverywhere_model-find-all-model-252_0_1-sources_http",
-    downloaded_file_path = "find-all-model-252.0.1-sources.jar",
-    sha256 = "58d46fda2d7ab0348f4d76305cded034828d0b65c0b16bab7916226aa12e8b4a",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/searchEverywhere/model/find-all-model/252.0.1/find-all-model-252.0.1-sources.jar",
-)
-
-http_file(
     name = "org_jetbrains_intellij_deps_searchEverywhere_model-find-classes-model-252_0_0_http",
     downloaded_file_path = "find-classes-model-252.0.0.jar",
     sha256 = "925e272431706c9044c296f007249f360b57acdf0f762eeb29fa451f4a955adc",
@@ -15727,20 +15783,6 @@ http_file(
     downloaded_file_path = "find-classes-model-252.0.1-sources.jar",
     sha256 = "7ccd101c540116990dd95869f8dbf36657bb808dcc05df032af4a903df952eb3",
     url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/searchEverywhere/model/find-classes-model/252.0.1/find-classes-model-252.0.1-sources.jar",
-)
-
-http_file(
-    name = "org_jetbrains_intellij_deps_searchEverywhere_model-find-ec-model-252_0_1_http",
-    downloaded_file_path = "find-ec-model-252.0.1.jar",
-    sha256 = "7c49ae42530a312fd8bcb0e63be01b8bae3f2daded8524ba599cd023b376edb2",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/searchEverywhere/model/find-ec-model/252.0.1/find-ec-model-252.0.1.jar",
-)
-
-http_file(
-    name = "org_jetbrains_intellij_deps_searchEverywhere_model-find-ec-model-252_0_1-sources_http",
-    downloaded_file_path = "find-ec-model-252.0.1-sources.jar",
-    sha256 = "737b2ca39697e8ef1f301dad4e269390b5227b5e3637e521d2ac05e23676d28e",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/searchEverywhere/model/find-ec-model/252.0.1/find-ec-model-252.0.1-sources.jar",
 )
 
 http_file(
@@ -16175,48 +16217,6 @@ http_file(
     downloaded_file_path = "xml-resolver-1.2-sources.jar",
     sha256 = "53915f3c5181ec712d18fde7f13a90c53d94a1b2f69f20b604424dbb2be5b227",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/xml-resolver/xml-resolver/1.2/xml-resolver-1.2-sources.jar",
-)
-
-http_file(
-    name = "org_apache_xmlbeans-xmlbeans-5_1_1_http",
-    downloaded_file_path = "xmlbeans-5.1.1.jar",
-    sha256 = "5f484a78bed71cbffe3709678b6bdd3463781a7c61c6d9872330aecbf150762a",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/xmlbeans/xmlbeans/5.1.1/xmlbeans-5.1.1.jar",
-)
-
-http_file(
-    name = "org_apache_xmlbeans-xmlbeans-5_1_1-sources_http",
-    downloaded_file_path = "xmlbeans-5.1.1-sources.jar",
-    sha256 = "22e5689846077e5561c9facb96b8f81cd019b9b70ffb124d26741ead78f4bc41",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/xmlbeans/xmlbeans/5.1.1/xmlbeans-5.1.1-sources.jar",
-)
-
-http_file(
-    name = "org_apache_logging_log4j-log4j-to-slf4j-2_20_0_http",
-    downloaded_file_path = "log4j-to-slf4j-2.20.0.jar",
-    sha256 = "88e731d7f455da59dfa08769527f87d6c496053a712637df7b999f6977933a2c",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/logging/log4j/log4j-to-slf4j/2.20.0/log4j-to-slf4j-2.20.0.jar",
-)
-
-http_file(
-    name = "org_apache_logging_log4j-log4j-api-2_20_0_http",
-    downloaded_file_path = "log4j-api-2.20.0.jar",
-    sha256 = "2f43eea679ea66f14ca0f13fec2a8600ac124f5a5231dcb4df8393eddcb97550",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/logging/log4j/log4j-api/2.20.0/log4j-api-2.20.0.jar",
-)
-
-http_file(
-    name = "org_apache_logging_log4j-log4j-to-slf4j-2_20_0-sources_http",
-    downloaded_file_path = "log4j-to-slf4j-2.20.0-sources.jar",
-    sha256 = "e1b7556e9bd774f032aca6579367cc6a96ae3a389fbe2a286875c1534576a91b",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/logging/log4j/log4j-to-slf4j/2.20.0/log4j-to-slf4j-2.20.0-sources.jar",
-)
-
-http_file(
-    name = "org_apache_logging_log4j-log4j-api-2_20_0-sources_http",
-    downloaded_file_path = "log4j-api-2.20.0-sources.jar",
-    sha256 = "54b4514536902d4d677192928b6a661c3a301c5da47b8e8b18a9bc8d7238f301",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/logging/log4j/log4j-api/2.20.0/log4j-api-2.20.0-sources.jar",
 )
 
 http_file(

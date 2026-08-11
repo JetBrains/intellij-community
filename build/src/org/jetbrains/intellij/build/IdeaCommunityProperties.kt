@@ -207,6 +207,8 @@ fun intellijCommunityBaseFragment(platformPrefix: String? = null): ProductModule
   module("intellij.platform.coverage")
   module("intellij.platform.coverage.agent")
   module("intellij.xml.xmlbeans")
+  module("intellij.libraries.log4j.to.slf4j")
+  module("intellij.libraries.xmlbeans")
   module("intellij.platform.ide.newUiOnboarding")
   module("intellij.platform.ide.newUsersOnboarding")
   module("intellij.ide.startup.importSettings")

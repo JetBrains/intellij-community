@@ -20,6 +20,8 @@
     <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.util.ui"/>
+    <module name="intellij.libraries.isorelax"/>
+    <module name="intellij.libraries.jing"/>
     <module name="intellij.xml.analysis"/>
     <module name="intellij.xml.dom"/>
     <module name="intellij.xml.impl"/>

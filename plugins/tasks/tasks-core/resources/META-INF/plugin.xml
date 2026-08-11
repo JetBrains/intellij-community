@@ -21,6 +21,7 @@
   </content>
   <content>
     <module name="intellij.libraries.xml.rpc"/>
+    <module name="intellij.tasks.core.libraries.commonsDiscovery" loading="embedded"/>
   </content>
   <dependencies>
     <plugin id="com.intellij.modules.xml"/>

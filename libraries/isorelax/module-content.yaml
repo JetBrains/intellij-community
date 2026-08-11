@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.isorelax.jar
+  modules:
+  - name: intellij.libraries.isorelax
+    libraries:
+      isorelax:
+      - name: $MAVEN_REPOSITORY$/isorelax/isorelax/20030108/isorelax-20030108.jar

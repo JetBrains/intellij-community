@@ -11165,6 +11165,20 @@ jvm_import(
 )
 
 copy_file(
+    name = "isorelax/isorelax-20030108.jar_copy",
+    src = "@isorelax-isorelax-20030108_http//file",
+    out = "isorelax/isorelax-20030108.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-isorelax-isorelax",
+    jar = "@isorelax-isorelax-20030108_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
     name = "org.apache.ivy/ivy-2.5.2.jar_copy",
     src = "@org_apache_ivy-ivy-2_5_2_http//file",
     out = "org.apache.ivy/ivy-2.5.2.jar",
@@ -11701,6 +11715,21 @@ copy_file(
 jvm_import(
     name = "libraries-jgoodies-forms-jgoodies-forms",
     jar = "@com_jgoodies-forms-1_1-preview_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "thaiopensource/jing-20030619.jar_copy",
+    src = "@thaiopensource-jing-20030619_http//file",
+    out = "thaiopensource/jing-20030619.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-jing-jing",
+    jar = "@thaiopensource-jing-20030619_http//file",
+    source_jar = "@thaiopensource-jing-20030619-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
@@ -12789,6 +12818,44 @@ jvm_import(
 )
 
 copy_file(
+    name = "org.apache.logging.log4j/log4j-to-slf4j-2.20.0.jar_copy",
+    src = "@org_apache_logging_log4j-log4j-to-slf4j-2_20_0_http//file",
+    out = "org.apache.logging.log4j/log4j-to-slf4j-2.20.0.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "org.apache.logging.log4j/log4j-api-2.20.0.jar_copy",
+    src = "@org_apache_logging_log4j-log4j-api-2_20_0_http//file",
+    out = "org.apache.logging.log4j/log4j-api-2.20.0.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+java_library(
+    name = "libraries-log4j-to-slf4j-apache-logging-log4j-to-slf4j",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        ":org_apache_logging_log4j-log4j-to-slf4j-2_20_0_http_import",
+        ":org_apache_logging_log4j-log4j-api-2_20_0_http_import",
+    ],
+)
+
+jvm_import(
+    name = "org_apache_logging_log4j-log4j-to-slf4j-2_20_0_http_import",
+    jar = "@org_apache_logging_log4j-log4j-to-slf4j-2_20_0_http//file",
+    source_jar = "@org_apache_logging_log4j-log4j-to-slf4j-2_20_0-sources_http//file",
+)
+
+jvm_import(
+    name = "org_apache_logging_log4j-log4j-api-2_20_0_http_import",
+    jar = "@org_apache_logging_log4j-log4j-api-2_20_0_http//file",
+    source_jar = "@org_apache_logging_log4j-log4j-api-2_20_0-sources_http//file",
+)
+
+copy_file(
     name = "org.apache.lucene/lucene-analysis-common-10.5.0.jar_copy",
     src = "@org_apache_lucene-lucene-analysis-common-10_5_0_http//file",
     out = "org.apache.lucene/lucene-analysis-common-10.5.0.jar",
@@ -13851,6 +13918,36 @@ jvm_import(
 )
 
 copy_file(
+    name = "org.jetbrains.intellij.deps.searchEverywhere.model/find-all-model-252.0.1.jar_copy",
+    src = "@org_jetbrains_intellij_deps_searchEverywhere_model-find-all-model-252_0_1_http//file",
+    out = "org.jetbrains.intellij.deps.searchEverywhere.model/find-all-model-252.0.1.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-search-everywhere-find-all-model-find-all-model-experimental",
+    jar = "@org_jetbrains_intellij_deps_searchEverywhere_model-find-all-model-252_0_1_http//file",
+    source_jar = "@org_jetbrains_intellij_deps_searchEverywhere_model-find-all-model-252_0_1-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "org.jetbrains.intellij.deps.searchEverywhere.model/find-ec-model-252.0.1.jar_copy",
+    src = "@org_jetbrains_intellij_deps_searchEverywhere_model-find-ec-model-252_0_1_http//file",
+    out = "org.jetbrains.intellij.deps.searchEverywhere.model/find-ec-model-252.0.1.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-search-everywhere-find-ec-model-find-ec-model-experimental",
+    jar = "@org_jetbrains_intellij_deps_searchEverywhere_model-find-ec-model-252_0_1_http//file",
+    source_jar = "@org_jetbrains_intellij_deps_searchEverywhere_model-find-ec-model-252_0_1-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
     name = "io.github.z4kn4fein/semver-jvm-2.0.0.jar_copy",
     src = "@io_github_z4kn4fein-semver-jvm-2_0_0_http//file",
     out = "io.github.z4kn4fein/semver-jvm-2.0.0.jar",
@@ -14343,6 +14440,21 @@ jvm_import(
     name = "libraries-xml-rpc-xml-rpc",
     jar = "@org_apache_ws_xmlrpc-xmlrpc-2_0_1_http//file",
     source_jar = "@org_apache_ws_xmlrpc-xmlrpc-2_0_1-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "org.apache.xmlbeans/xmlbeans-5.1.1.jar_copy",
+    src = "@org_apache_xmlbeans-xmlbeans-5_1_1_http//file",
+    out = "org.apache.xmlbeans/xmlbeans-5.1.1.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-xmlbeans-_xml_beans",
+    jar = "@org_apache_xmlbeans-xmlbeans-5_1_1_http//file",
+    source_jar = "@org_apache_xmlbeans-xmlbeans-5_1_1-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
@@ -20014,42 +20126,6 @@ jvm_import(
     visibility = ["//visibility:public"],
 )
 
-copy_file(
-    name = "isorelax/isorelax-20030108.jar_copy",
-    src = "@isorelax-isorelax-20030108_http//file",
-    out = "isorelax/isorelax-20030108.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "relaxng-isorelax",
-    jar = "@isorelax-isorelax-20030108_http//file",
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "thaiopensource/jing-20030619.jar_copy",
-    src = "@thaiopensource-jing-20030619_http//file",
-    out = "thaiopensource/jing-20030619.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "relaxng-jing",
-    jar = "@thaiopensource-jing-20030619_http//file",
-    source_jar = "@thaiopensource-jing-20030619-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "relaxng-tests-jing",
-    jar = "@thaiopensource-jing-20030619_http//file",
-    source_jar = "@thaiopensource-jing-20030619-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
 java_library(
     name = "search_everywhere_ml-ai-grazie-emb",
     visibility = ["//visibility:public"],
@@ -20101,21 +20177,6 @@ jvm_import(
 )
 
 copy_file(
-    name = "org.jetbrains.intellij.deps.searchEverywhere.model/find-all-model-252.0.1.jar_copy",
-    src = "@org_jetbrains_intellij_deps_searchEverywhere_model-find-all-model-252_0_1_http//file",
-    out = "org.jetbrains.intellij.deps.searchEverywhere.model/find-all-model-252.0.1.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "search_everywhere_ml-ranking-core-find-all-model-experimental",
-    jar = "@org_jetbrains_intellij_deps_searchEverywhere_model-find-all-model-252_0_1_http//file",
-    source_jar = "@org_jetbrains_intellij_deps_searchEverywhere_model-find-all-model-252_0_1-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
     name = "org.jetbrains.intellij.deps.searchEverywhere.model/find-classes-model-252.0.0.jar_copy",
     src = "@org_jetbrains_intellij_deps_searchEverywhere_model-find-classes-model-252_0_0_http//file",
     out = "org.jetbrains.intellij.deps.searchEverywhere.model/find-classes-model-252.0.0.jar",
@@ -20142,21 +20203,6 @@ jvm_import(
     name = "search_everywhere_ml-ranking-core-find-classes-model-experimental",
     jar = "@org_jetbrains_intellij_deps_searchEverywhere_model-find-classes-model-252_0_1_http//file",
     source_jar = "@org_jetbrains_intellij_deps_searchEverywhere_model-find-classes-model-252_0_1-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "org.jetbrains.intellij.deps.searchEverywhere.model/find-ec-model-252.0.1.jar_copy",
-    src = "@org_jetbrains_intellij_deps_searchEverywhere_model-find-ec-model-252_0_1_http//file",
-    out = "org.jetbrains.intellij.deps.searchEverywhere.model/find-ec-model-252.0.1.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "search_everywhere_ml-ranking-core-find-ec-model-experimental",
-    jar = "@org_jetbrains_intellij_deps_searchEverywhere_model-find-ec-model-252_0_1_http//file",
-    source_jar = "@org_jetbrains_intellij_deps_searchEverywhere_model-find-ec-model-252_0_1-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
@@ -20205,13 +20251,6 @@ jvm_import(
 )
 
 jvm_import(
-    name = "search_everywhere_ml-ranking-core-tests-find-all-model-experimental",
-    jar = "@org_jetbrains_intellij_deps_searchEverywhere_model-find-all-model-252_0_1_http//file",
-    source_jar = "@org_jetbrains_intellij_deps_searchEverywhere_model-find-all-model-252_0_1-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
     name = "search_everywhere_ml-ranking-core-tests-find-classes-model",
     jar = "@org_jetbrains_intellij_deps_searchEverywhere_model-find-classes-model-252_0_0_http//file",
     source_jar = "@org_jetbrains_intellij_deps_searchEverywhere_model-find-classes-model-252_0_0-sources_http//file",
@@ -20222,13 +20261,6 @@ jvm_import(
     name = "search_everywhere_ml-ranking-core-tests-find-classes-model-experimental",
     jar = "@org_jetbrains_intellij_deps_searchEverywhere_model-find-classes-model-252_0_1_http//file",
     source_jar = "@org_jetbrains_intellij_deps_searchEverywhere_model-find-classes-model-252_0_1-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "search_everywhere_ml-ranking-core-tests-find-ec-model-experimental",
-    jar = "@org_jetbrains_intellij_deps_searchEverywhere_model-find-ec-model-252_0_1_http//file",
-    source_jar = "@org_jetbrains_intellij_deps_searchEverywhere_model-find-ec-model-252_0_1-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
@@ -20422,7 +20454,7 @@ copy_file(
 )
 
 jvm_import(
-    name = "tasks-core-commons-discovery",
+    name = "tasks-core-libraries-commons_discovery-commons-discovery",
     jar = "@commons-discovery-commons-discovery-0_4_http//file",
     source_jar = "@commons-discovery-commons-discovery-0_4-sources_http//file",
     visibility = ["//visibility:public"],
@@ -20889,76 +20921,6 @@ jvm_import(
     jar = "@xml-resolver-xml-resolver-1_2_http//file",
     source_jar = "@xml-resolver-xml-resolver-1_2-sources_http//file",
     visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "org.apache.xmlbeans/xmlbeans-5.1.1.jar_copy",
-    src = "@org_apache_xmlbeans-xmlbeans-5_1_1_http//file",
-    out = "org.apache.xmlbeans/xmlbeans-5.1.1.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "xml-xmlbeans-_xml_beans",
-    jar = "@org_apache_xmlbeans-xmlbeans-5_1_1_http//file",
-    source_jar = "@org_apache_xmlbeans-xmlbeans-5_1_1-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "org.apache.logging.log4j/log4j-to-slf4j-2.20.0.jar_copy",
-    src = "@org_apache_logging_log4j-log4j-to-slf4j-2_20_0_http//file",
-    out = "org.apache.logging.log4j/log4j-to-slf4j-2.20.0.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "org.apache.logging.log4j/log4j-api-2.20.0.jar_copy",
-    src = "@org_apache_logging_log4j-log4j-api-2_20_0_http//file",
-    out = "org.apache.logging.log4j/log4j-api-2.20.0.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-java_library(
-    name = "xml-xmlbeans-apache-logging-log4j-to-slf4j",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        ":org_apache_logging_log4j-log4j-to-slf4j-2_20_0_http_import",
-        ":org_apache_logging_log4j-log4j-api-2_20_0_http_import",
-    ],
-)
-
-jvm_import(
-    name = "org_apache_logging_log4j-log4j-to-slf4j-2_20_0_http_import",
-    jar = "@org_apache_logging_log4j-log4j-to-slf4j-2_20_0_http//file",
-    source_jar = "@org_apache_logging_log4j-log4j-to-slf4j-2_20_0-sources_http//file",
-)
-
-jvm_import(
-    name = "org_apache_logging_log4j-log4j-api-2_20_0_http_import",
-    jar = "@org_apache_logging_log4j-log4j-api-2_20_0_http//file",
-    source_jar = "@org_apache_logging_log4j-log4j-api-2_20_0-sources_http//file",
-)
-
-jvm_import(
-    name = "xml-xmlbeans-tests-_xml_beans",
-    jar = "@org_apache_xmlbeans-xmlbeans-5_1_1_http//file",
-    source_jar = "@org_apache_xmlbeans-xmlbeans-5_1_1-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-java_library(
-    name = "xml-xmlbeans-tests-apache-logging-log4j-to-slf4j",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        ":org_apache_logging_log4j-log4j-to-slf4j-2_20_0_http_import",
-        ":org_apache_logging_log4j-log4j-api-2_20_0_http_import",
-    ],
 )
 
 copy_file(

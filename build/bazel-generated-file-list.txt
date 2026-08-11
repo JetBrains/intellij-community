@@ -448,6 +448,7 @@ libraries/imgscalr
 libraries/ini4j
 libraries/io
 libraries/ion
+libraries/isorelax
 libraries/ivy
 libraries/jackson/annotations
 libraries/jackson/databind
@@ -483,6 +484,7 @@ libraries/jettison
 libraries/jgit-ssh
 libraries/jgoodies/common
 libraries/jgoodies/forms
+libraries/jing
 libraries/jline
 libraries/jna
 libraries/joni
@@ -540,6 +542,7 @@ libraries/ktor/network-tls
 libraries/ktor/serialization-gson
 libraries/ktor/server-cio
 libraries/ktor/utils
+libraries/log4j-to-slf4j
 libraries/lsp4j
 libraries/lsp4j/debug
 libraries/lsp4j/jsonrpc
@@ -582,6 +585,8 @@ libraries/rd/framework
 libraries/rd/swing
 libraries/rd/text
 libraries/rhino
+libraries/search-everywhere-find-all-model
+libraries/search-everywhere-find-ec-model
 libraries/semver
 libraries/semver4j
 libraries/skiko
@@ -602,6 +607,7 @@ libraries/winp
 libraries/xerces
 libraries/xerial-snappy-java
 libraries/xml-rpc
+libraries/xmlbeans
 libraries/xmlunit-core
 libraries/xstream
 libraries/xtext-xbase
@@ -1609,6 +1615,7 @@ plugins/tasks/tasks-compatibility
 plugins/tasks/tasks-core
 plugins/tasks/tasks-core/bugzilla
 plugins/tasks/tasks-core/jira
+plugins/tasks/tasks-core/libraries
 plugins/tasks/tasks-core/trac
 plugins/tasks/tasks-java
 plugins/tasks/tasks-tests

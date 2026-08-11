@@ -44,24 +44,8 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="module-library" scope="TEST">
-      <library name="jing" type="repository">
-        <properties maven-id="thaiopensource:jing:20030619">
-          <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/thaiopensource/jing/20030619/jing-20030619.jar">
-              <sha256sum>600acd9ebd37dd46e3a006bc6e748d68dfeb31cbf4881a84d06e6dc5cc5eed26</sha256sum>
-            </artifact>
-          </verification>
-        </properties>
-        <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/thaiopensource/jing/20030619/jing-20030619.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/thaiopensource/jing/20030619/jing-20030619-sources.jar!/" />
-        </SOURCES>
-      </library>
-    </orderEntry>
+    <orderEntry type="module" module-name="intellij.libraries.isorelax" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.jing" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.nanoxml" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.fastutil" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.indexing.impl" scope="TEST" />

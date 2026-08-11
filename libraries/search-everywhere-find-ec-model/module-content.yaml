@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.search.everywhere.find.ec.model.jar
+  modules:
+  - name: intellij.libraries.search.everywhere.find.ec.model
+    libraries:
+      find-ec-model-experimental:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-ec-model/252/find-ec-model-252.jar

@@ -1,0 +1,49 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.libraries.xmlbeans` start
+jvm_library(
+    name = "xmlbeans",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.xmlbeans",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-xmlbeans-_xml_beans"],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:libraries-xmlbeans-_xml_beans",
+        "//libraries/log4j-to-slf4j",
+    ],
+)
+
+jvm_library(
+    name = "xmlbeans_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.xmlbeans",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-xmlbeans-_xml_beans"],
+    runtime_deps = [
+        # do not sort,
+        ":xmlbeans",
+        "//libraries/log4j-to-slf4j:log4j-to-slf4j_test_lib",
+    ],
+)
+### auto-generated section `build intellij.libraries.xmlbeans` end
+
+### auto-generated section `iml intellij.libraries.xmlbeans` start
+exports_files(
+    [
+        "intellij.libraries.xmlbeans.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.xmlbeans` end
