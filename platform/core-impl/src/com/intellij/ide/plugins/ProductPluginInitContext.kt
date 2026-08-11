@@ -253,8 +253,8 @@ class ProductPluginInitContext(
         // We are not yet ready to recommend adding a dependency on extracted VCS modules since the coordinates are not finalized.
         if ((descriptor is PluginMainDescriptor && descriptor.pluginId != CORE_ID) || descriptor is ContentModuleDescriptor) {
           val isExternalNonBundledDescriptor = isExternalNonBundledPlugin(descriptor)
-          if (isExternalNonBundledDescriptor || doesDependOnPluginAlias(descriptor, VCS_ALIAS_ID)) {
-            vcsApiContentModules.forEach { vcsModule ->
+          if (doesDependOnPluginAlias(descriptor, VCS_ALIAS_ID)) {
+            for (vcsModule in vcsApiContentModules) {
               yieldIfResolves(DependencyRef.of(vcsModule))
             }
           }
@@ -332,6 +332,9 @@ class ProductPluginInitContext(
         if (descriptor is PluginModuleDescriptor && descriptor.pluginId != CORE_ID && isExternalNonBundledPlugin(descriptor)) {
           for (dependencyRef in externalNonBundledPluginCompatibilityDependencies) {
             yieldIfResolves(dependencyRef)
+          }
+          for (vcsModule in vcsApiContentModules) {
+            yieldIfResolves(DependencyRef.of(vcsModule))
           }
         }
         if (descriptor !is PluginMainDescriptor || descriptor.pluginId != CORE_ID) { // FIXME violator: DesignedCorePlugin.xml which is xi:included from IdeaPlugin.xml

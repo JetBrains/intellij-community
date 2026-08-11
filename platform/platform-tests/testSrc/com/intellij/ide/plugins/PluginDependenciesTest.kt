@@ -1167,6 +1167,12 @@ internal class PluginDependenciesTest {
         "intellij.platform.todo",
         "intellij.platform.bookmarks",
         "intellij.platform.smRunner",
+        "intellij.platform.vcs.impl",
+        "intellij.platform.vcs.dvcs",
+        "intellij.platform.vcs.dvcs.impl",
+        "intellij.platform.vcs.log",
+        "intellij.platform.vcs.log.graph",
+        "intellij.platform.vcs.log.impl",
       )
       plugin("compatibility.modules.provider") {
         vendor = "JetBrains"
