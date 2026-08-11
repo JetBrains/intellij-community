@@ -36,7 +36,6 @@ import org.jetbrains.annotations.VisibleForTesting
 import java.nio.file.FileVisitResult
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.IdentityHashMap
 import java.util.concurrent.CancellationException
 import java.util.concurrent.CompletableFuture
 import java.util.function.Supplier
@@ -461,22 +460,11 @@ object PluginManagerCore {
     reportingPolicy: PluginLoadingErrorReportingPolicy,
     configureClassLoaders: Boolean,
   ): PluginManagerState {
-    var initStagesActivity = parentActivity?.startChild("selectCandidateSubset") // no safe end() call, because if it fails, it won't matter
-    val excludedFromCandidateSubset = IdentityHashMap<PluginMainDescriptor, DescriptorExclusionReason>()
-    val candidateSubset = initContext.selectCandidateSubset(discoveredPlugins, excludedFromCandidateSubset)
-
-    initStagesActivity = initStagesActivity?.endAndStart("initContext startup configuration")
-    initContext.runConfigurationDuringStartup(candidateSubset)
-
-    initStagesActivity = initStagesActivity?.endAndStart("resolveConstraints")
-    val resolvedPluginSet = initContext.resolveConstraints(candidateSubset)
-
-    initStagesActivity = initStagesActivity?.endAndStart("adapt plugin set")
-    val pluginSet = PluginSet(
-      input = PluginSubsystemInput(initContext, discoveredPlugins),
-      excludedFromCandidateSubset = excludedFromCandidateSubset,
-      resolvedPluginSet = resolvedPluginSet,
-    )
+    var initStagesActivity = parentActivity?.startChild("computeTargetState") // no safe end() call, because if it fails, it won't matter
+    val pluginSet = initContext.computeTargetState(discoveredPlugins, initStagesActivity)
+    val resolvedPluginSet = pluginSet.resolvedPluginSet
+    val excludedFromCandidateSubset = pluginSet.excludedFromCandidateSubset
+    val candidateSubset = resolvedPluginSet.candidateSet
 
     initStagesActivity = initStagesActivity?.endAndStart("log exclusion tree")
     PluginInitializationDiagnosticUtils.logExclusionTree(logger, resolvedPluginSet)

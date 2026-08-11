@@ -28,6 +28,7 @@ import org.jetbrains.annotations.ApiStatus
  * @param excludedPluginsCollector Map populated with the exclusion reason for each excluded [PluginMainDescriptor], or `null` if exclusion
  * reasons do not need to be collected
  * @return [UnambiguousPluginSet] containing the candidate subset with all ID conflicts resolved
+ * @see [computeTargetState]
  */
 @ApiStatus.Internal
 fun PluginInitializationContext.selectCandidateSubset(
