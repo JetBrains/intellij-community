@@ -2,6 +2,8 @@ package org.intellij.plugins.markdown.actions;
 
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import org.intellij.plugins.markdown.MarkdownTestingUtil;
+import org.intellij.plugins.markdown.editor.tables.MarkdownTestSettingsUtilsKt;
+import org.intellij.plugins.markdown.settings.MarkdownCodeInsightSettings.EmphasisStyle;
 import org.jetbrains.annotations.NotNull;
 
 public class MarkdownToggleItalicTest extends LightPlatformCodeInsightTestCase {
@@ -28,6 +30,14 @@ public class MarkdownToggleItalicTest extends LightPlatformCodeInsightTestCase {
 
   public void testPartiallyOff() {
     doTest();
+  }
+
+  public void testSimpleWithUnderscore() {
+    MarkdownTestSettingsUtilsKt.withEmphasisStyle(EmphasisStyle.UNDERSCORES, () -> {
+      configureFromFileText("some.md", "Simple <selection>test</selection> text");
+      executeAction("org.intellij.plugins.markdown.ui.actions.styling.ToggleItalicAction");
+      checkResultByText("Simple _<selection>test</selection>_ text");
+    });
   }
 
   private void doTest() {

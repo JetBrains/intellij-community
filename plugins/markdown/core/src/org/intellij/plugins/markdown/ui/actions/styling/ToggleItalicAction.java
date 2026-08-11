@@ -3,13 +3,16 @@ package org.intellij.plugins.markdown.ui.actions.styling;
 
 import com.intellij.psi.tree.IElementType;
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes;
+import org.intellij.plugins.markdown.settings.MarkdownCodeInsightSettings;
+import org.intellij.plugins.markdown.settings.MarkdownCodeInsightSettings.EmphasisStyle;
 import org.jetbrains.annotations.NotNull;
 
 public class ToggleItalicAction extends BaseToggleStateAction {
 
   @Override
   protected @NotNull String getBoundString(@NotNull CharSequence text, int selectionStart, int selectionEnd) {
-    return isWord(text, selectionStart, selectionEnd) ? "_" : "*";
+    EmphasisStyle style = MarkdownCodeInsightSettings.getInstance().getState().getEmphasisStyle();
+    return style == EmphasisStyle.ASTERISKS || isWord(text, selectionStart, selectionEnd) ? style.getItalicMarker() : "*";
   }
 
   @Override
