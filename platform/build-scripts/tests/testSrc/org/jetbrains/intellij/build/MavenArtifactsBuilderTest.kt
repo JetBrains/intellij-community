@@ -9,21 +9,24 @@ import org.jetbrains.intellij.build.impl.maven.DependencyScope
 import org.jetbrains.intellij.build.impl.maven.MavenArtifactDependency
 import org.jetbrains.intellij.build.impl.maven.MavenArtifactsBuilder
 import org.jetbrains.intellij.build.impl.maven.MavenCoordinates
+import org.jetbrains.jps.model.java.JpsJavaDependencyScope
+import org.jetbrains.jps.model.java.JpsJavaExtensionService
+import org.jetbrains.jps.model.module.JpsModuleDependency
 import org.junit.Assert
 import org.junit.Test
 
 class MavenArtifactsBuilderTest {
-  private val builder by lazy {
+  private val context by lazy {
     runBlocking {
-      MavenArtifactsBuilder(
-        createBuildContext(
-          projectHome = ULTIMATE_HOME,
-          productProperties = IdeaCommunityProperties(COMMUNITY_ROOT.communityRoot),
-          setupTracer = false,
-        )
+      createBuildContext(
+        projectHome = ULTIMATE_HOME,
+        productProperties = IdeaCommunityProperties(COMMUNITY_ROOT.communityRoot),
+        setupTracer = false,
       )
     }
   }
+
+  private val builder by lazy { MavenArtifactsBuilder(context) }
 
   @Test
   fun `maven coordinates`() {
@@ -54,13 +57,6 @@ class MavenArtifactsBuilderTest {
    */
   @Test
   fun `icons platform dependencies require javadocs`() {
-    val context = runBlocking {
-      createBuildContext(
-        projectHome = ULTIMATE_HOME,
-        productProperties = IdeaCommunityProperties(COMMUNITY_ROOT.communityRoot),
-        setupTracer = false,
-      )
-    }
     val isJavadocJarRequired = context.productProperties.mavenArtifacts.isJavadocJarRequired
     val validateForMavenCentralPublication = context.productProperties.mavenArtifacts.validateForMavenCentralPublication
     for (moduleName in listOf("intellij.platform.icons.api", "intellij.platform.icons.api.rendering", "intellij.platform.icons.impl")) {
@@ -78,13 +74,6 @@ class MavenArtifactsBuilderTest {
    */
   @Test
   fun `jewel poms declare icons api dependencies`() {
-    val context = runBlocking {
-      createBuildContext(
-        projectHome = ULTIMATE_HOME,
-        productProperties = IdeaCommunityProperties(COMMUNITY_ROOT.communityRoot),
-        setupTracer = false,
-      )
-    }
     val jewelUi = context.outputProvider.findRequiredModule("intellij.platform.jewel.ui")
     val iconsDependencies = listOf("icons-api", "icons-api-rendering", "icons-impl").map { artifactId ->
       MavenArtifactDependency(
@@ -105,6 +94,45 @@ class MavenArtifactsBuilderTest {
     for (dependency in patched) {
       Assert.assertEquals("${dependency.coordinates} must be a compile dependency", DependencyScope.COMPILE, dependency.scope)
       Assert.assertTrue("${dependency.coordinates} must include transitive dependencies", dependency.includeTransitiveDeps)
+    }
+  }
+
+  /**
+   * `build-scripts-downloader` is consumed as a plain Maven artifact by `platform/jps-bootstrap/pom.xml` and by jps-to-bazel, where
+   * [org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader] unpacks `.zst` archives. The JPS edge to
+   * `intellij.libraries.zstd.jni` is compile-only on purpose (IJPL-125), so the POM generator has to declare the library explicitly —
+   * otherwise consumers hit `NoClassDefFoundError: com/github/luben/zstd/ZstdInputStreamNoFinalizer`.
+   */
+  @Test
+  fun `build-scripts-downloader pom declares zstd-jni`() {
+    val moduleName = "intellij.platform.buildScripts.downloader"
+    val artifactData = builder.generateMavenArtifactData(listOf(moduleName), ignoreNonMavenizable = false)
+    val dependencies = artifactData.entries.single { it.key.name == moduleName }.value.dependencies
+    Assert.assertTrue(
+      "$moduleName must declare com.github.luben:zstd-jni, but declares ${dependencies.map { it.coordinates }}",
+      dependencies.any { it.coordinates.groupId == "com.github.luben" && it.coordinates.artifactId == "zstd-jni" },
+    )
+  }
+
+  /**
+   * Every entry of the allowlist must correspond to an existing compile-only edge, otherwise it is dead and must be removed.
+   */
+  @Test
+  fun `compile-only dependencies to publish are still compile-only`() {
+    val javaExtensionService = JpsJavaExtensionService.getInstance()
+    for ((moduleName, dependencyNames) in MavenArtifactsBuilder.compileOnlyDependenciesToPublish()) {
+      val module = context.outputProvider.findRequiredModule(moduleName)
+      for (dependencyName in dependencyNames) {
+        val dependency = module.dependenciesList.dependencies
+          .filterIsInstance<JpsModuleDependency>()
+          .singleOrNull { it.moduleReference.moduleName == dependencyName }
+        Assert.assertNotNull("Module '$moduleName' has no dependency on '$dependencyName' anymore", dependency)
+        Assert.assertEquals(
+          "Dependency of '$moduleName' on '$dependencyName' is not compile-only anymore, so the allowlist entry must be removed",
+          JpsJavaDependencyScope.PROVIDED,
+          javaExtensionService.getDependencyExtension(dependency!!)?.scope,
+        )
+      }
     }
   }
 }
