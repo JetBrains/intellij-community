@@ -21,14 +21,14 @@ interface DocumentSnapshot {
    * @see DocumentEx.getImmutableCharSequence
    */
   @Contract(pure = true)
-  fun text(): ImmutableCharSequence
+  fun chars(): ImmutableCharSequence
 
   /**
-   * Same characters as [text], but returns an already-cached [String] (faster `charAt`) when available.
+   * Same characters as [chars], but returns an already-cached [String] (faster `charAt`) when available.
    * Unlike [string], never forces [String] materialization.
    */
   @Contract(pure = true)
-  fun charSequence(): CharSequence
+  fun cachedChars(): CharSequence
 
   /**
    * @see DocumentEx.getText
@@ -38,7 +38,7 @@ interface DocumentSnapshot {
 
   /**
    * Pure in visible effects, but discouraged: materializing a [String] copies the whole text (O(n)).
-   * Prefer [text] or [charSequence] when a [CharSequence] is enough.
+   * Prefer [chars] or [cachedChars] when a [CharSequence] is enough.
    *
    * @see DocumentEx.getText
    */
@@ -49,7 +49,7 @@ interface DocumentSnapshot {
    * @see DocumentEx.getTextLength
    */
   @Contract(pure = true)
-  fun textLength(): Int
+  fun length(): Int
 
   /**
    * Part of the document metadata tracking text timeline

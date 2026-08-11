@@ -241,14 +241,14 @@ internal class DocumentMagicCoreImpl private constructor(
 
   private inner class LiveElf : CharSequence {
     override val length: Int
-      get() = this@DocumentMagicCoreImpl.snapshot.elf.textLength()
+      get() = this@DocumentMagicCoreImpl.snapshot.elf.length()
 
     override fun get(index: Int): Char {
-      return this@DocumentMagicCoreImpl.snapshot.elf.text()[index]
+      return this@DocumentMagicCoreImpl.snapshot.elf.chars()[index]
     }
 
     override fun subSequence(startIndex: Int, endIndex: Int): CharSequence {
-      return this@DocumentMagicCoreImpl.snapshot.elf.text().subSequence(startIndex, endIndex)
+      return this@DocumentMagicCoreImpl.snapshot.elf.chars().subSequence(startIndex, endIndex)
     }
 
     override fun toString(): String {
@@ -258,14 +258,14 @@ internal class DocumentMagicCoreImpl private constructor(
 
   private inner class LiveReal : CharSequence {
     override val length: Int
-      get() = this@DocumentMagicCoreImpl.snapshot.real.textLength()
+      get() = this@DocumentMagicCoreImpl.snapshot.real.length()
 
     override fun get(index: Int): Char {
-      return this@DocumentMagicCoreImpl.snapshot.real.text()[index]
+      return this@DocumentMagicCoreImpl.snapshot.real.chars()[index]
     }
 
     override fun subSequence(startIndex: Int, endIndex: Int): CharSequence {
-      return this@DocumentMagicCoreImpl.snapshot.real.text().subSequence(startIndex, endIndex)
+      return this@DocumentMagicCoreImpl.snapshot.real.chars().subSequence(startIndex, endIndex)
     }
 
     override fun toString(): String {

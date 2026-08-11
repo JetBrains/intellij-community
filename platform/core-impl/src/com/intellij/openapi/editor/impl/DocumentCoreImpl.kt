@@ -73,14 +73,14 @@ internal class DocumentCoreImpl private constructor(
 
   private inner class LiveCharSequence : CharSequence {
     override val length: Int
-      get() = this@DocumentCoreImpl.snapshot.textLength()
+      get() = this@DocumentCoreImpl.snapshot.length()
 
     override fun get(index: Int): Char {
-      return this@DocumentCoreImpl.snapshot.text()[index]
+      return this@DocumentCoreImpl.snapshot.chars()[index]
     }
 
     override fun subSequence(startIndex: Int, endIndex: Int): CharSequence {
-      return this@DocumentCoreImpl.snapshot.text().subSequence(startIndex, endIndex)
+      return this@DocumentCoreImpl.snapshot.chars().subSequence(startIndex, endIndex)
     }
 
     override fun toString(): String {

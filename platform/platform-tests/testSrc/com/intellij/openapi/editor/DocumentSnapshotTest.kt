@@ -45,7 +45,7 @@ internal class DocumentSnapshotTest {
       .withModStamp(42L, true)
       .withModStamp(43L, true) // twice, so that modSequence differs from the one of `changed`
     val merged = changed.withMetadata(metadata)
-    assertEquals("a\nb\nc", merged.text().toString()) // this text survives
+    assertEquals("a\nb\nc", merged.chars().toString()) // this text survives
     assertEquals(3, merged.lineCount()) // and so does its line structure
     assertEquals(43L, merged.modStamp()) // metadata is taken from the other snapshot
     assertEquals(metadata.modSequence(), merged.modSequence())

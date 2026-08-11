@@ -96,7 +96,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
 
   @Override
   public @NotNull CharSequence getImmutableCharSequence() {
-    return impl.snapshot().text();
+    return impl.snapshot().chars();
   }
 
   @Override
@@ -116,7 +116,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
 
   @Override
   public int getTextLength() {
-    return impl.snapshot().textLength();
+    return impl.snapshot().length();
   }
 
   @Override

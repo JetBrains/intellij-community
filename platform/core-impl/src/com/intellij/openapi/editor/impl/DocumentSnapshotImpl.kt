@@ -12,7 +12,7 @@ import it.unimi.dsi.fastutil.ints.IntList
 import java.lang.ref.SoftReference
 
 internal class DocumentSnapshotImpl private constructor(
-  private val text: ImmutableCharSequence,
+  private val chars: ImmutableCharSequence,
   private val modStamp: Long,
   private val modSequence: Int,
   private var lineSet: LineSet?,                  // non-volatile intentionally, see getLineSet()
@@ -20,28 +20,28 @@ internal class DocumentSnapshotImpl private constructor(
 ) : DocumentSnapshot {
 
   constructor(chars: CharSequence) : this(
-    text = CharArrayUtil.createImmutableCharSequence(chars),
+    chars = CharArrayUtil.createImmutableCharSequence(chars),
     modStamp = DocumentModStamp.next(),
     modSequence = 0,
     lineSet = null,
     textString = null,
   )
 
-  override fun text(): ImmutableCharSequence {
-    return text
+  override fun chars(): ImmutableCharSequence {
+    return chars
   }
 
-  override fun charSequence(): CharSequence {
+  override fun cachedChars(): CharSequence {
     // TODO: use it in EditorPainter because String.charAt may improve performance during painting
     val string = textString?.get()
     if (string != null) {
       return string
     }
-    return text
+    return chars
   }
 
   override fun string(range: TextRange): String {
-    val textInRange = text.subSequence(range.startOffset, range.endOffset)
+    val textInRange = chars.subSequence(range.startOffset, range.endOffset)
     return textInRange.toString()
   }
 
@@ -57,15 +57,15 @@ internal class DocumentSnapshotImpl private constructor(
     if (string != null) {
       return string
     }
-    string = text.toString()
+    string = chars.toString()
     textString = SoftReference(string)
     return string
   }
 
-  override fun textLength(): Int {
+  override fun length(): Int {
     // TODO: hot method, optimize
-    //  the length is constant, create a field textLength?
-    return text.length
+    //  the length is constant, create a field length?
+    return chars.length
   }
 
   override fun modStamp(): Long {
@@ -94,7 +94,7 @@ internal class DocumentSnapshotImpl private constructor(
   }
 
   override fun lineEndOffset(line: Int): Int {
-    if (line == 0 && textLength() == 0) {
+    if (line == 0 && length() == 0) {
       return 0
     }
     val lineSet = getLineSet()
@@ -142,7 +142,7 @@ internal class DocumentSnapshotImpl private constructor(
     if (modStamp == newModStamp && modSequence == newModSequence) {
       return this
     }
-    return DocumentSnapshotImpl(text, newModStamp, newModSequence, lineSet, textString)
+    return DocumentSnapshotImpl(chars, newModStamp, newModSequence, lineSet, textString)
   }
 
   override fun withClearedLineFlags(
@@ -179,12 +179,12 @@ internal class DocumentSnapshotImpl private constructor(
     if (this === metadata) {
       return this
     }
-    if (this.text === metadata.text()) {
+    if (this.chars === metadata.chars()) {
       return metadata
     }
-    // discard metadata.text, see doc [com.intellij.openapi.editor.ex.DocumentMutator]
+    // discard metadata.chars, see doc [com.intellij.openapi.editor.ex.DocumentMutator]
     return DocumentSnapshotImpl(
-      this.text,
+      this.chars,
       metadata.modStamp(),
       metadata.modSequence(),
       this.lineSet,
@@ -199,7 +199,7 @@ internal class DocumentSnapshotImpl private constructor(
     val oldFragmentLength = endOffset - startOffset
     val newFragmentLength = newFragment.length
     val diff = newFragmentLength - oldFragmentLength
-    val oldText = text
+    val oldText = chars
     val oldTextLength = oldText.length
     val newText = updateText(startOffset, endOffset, oldTextLength, newFragment)
     val newTextLength = newText.length
@@ -237,7 +237,7 @@ internal class DocumentSnapshotImpl private constructor(
     if (this.lineSet === newLineSet) {
       return this
     }
-    return DocumentSnapshotImpl(text, modStamp, modSequence, newLineSet, textString)
+    return DocumentSnapshotImpl(chars, modStamp, modSequence, newLineSet, textString)
   }
 
   /**
@@ -252,7 +252,7 @@ internal class DocumentSnapshotImpl private constructor(
     if (lineSet != null) {
       return lineSet
     }
-    lineSet = LineSet.createLineSet(text)
+    lineSet = LineSet.createLineSet(chars)
     this.lineSet = lineSet
     return lineSet
   }
@@ -267,7 +267,7 @@ internal class DocumentSnapshotImpl private constructor(
     if (canUseNewFragment) {
       return newFragment
     }
-    return text.replace(startOffset, endOffset, newFragment)
+    return chars.replace(startOffset, endOffset, newFragment)
   }
 
   private fun nextModSequence(): Int {
@@ -293,13 +293,13 @@ internal class DocumentSnapshotImpl private constructor(
     val id = presentation(this)
     val ms = modStamp
     val mq = modSequence
-    val tx = presentation(text)
+    val ch = presentation(chars)
     val ls = presentation(lineSet)
     val st = presentation(textString)
     return "DocumentSnapshot" + id + '{' +
            "modStamp=" + ms +
            ", modSequence=" + mq +
-           ", text=" + tx +
+           ", chars=" + ch +
            ", lineSet=" + ls +
            ", string=" + st +
            '}'

@@ -29,7 +29,7 @@ final class LogicalColumns {
     int end = document.lineEndOffset(line);
     int cacheSize = (end - start) / CACHE_FREQUENCY;
     int[] cache = ArrayUtil.newIntArray(cacheSize);
-    CharSequence text = document.charSequence();
+    CharSequence text = document.cachedChars();
     int column = 0;
     boolean hasTabsOrSurrogates = false;
     for (int i = start; i < end; i++) {
@@ -73,7 +73,7 @@ final class LogicalColumns {
     int startOffset = lineStartOffset + cacheIndex * CACHE_FREQUENCY;
     int startColumn = cacheIndex == 0 ? 0 : columnCache[cacheIndex - 1];
     return DocumentInternalUtil.calcLogicalColumn(
-      document.charSequence(),
+      document.cachedChars(),
       startOffset,
       startColumn,
       offset,
@@ -98,7 +98,7 @@ final class LogicalColumns {
     int startOffset = lineStartOffset + (- pos - 1) * CACHE_FREQUENCY;
     int cachedColumn = pos == -1 ? 0 : columnCache[- pos - 2];
     return DocumentInternalUtil.calcLogicalOffset(
-      document.charSequence(),
+      document.cachedChars(),
       column,
       cachedColumn,
       startOffset,

@@ -81,7 +81,7 @@ public final class DocumentInternalUtil {
   }
 
   public static boolean isSurrogatePair(@NotNull DocumentSnapshot snapshot, int offset) {
-    CharSequence text = snapshot.charSequence();
+    CharSequence text = snapshot.cachedChars();
     return offset >= 0 &&
            offset + 1 < text.length() &&
            Character.isHighSurrogate(text.charAt(offset)) &&

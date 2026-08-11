@@ -131,10 +131,10 @@ internal abstract class ElfRealSync(
       return null
     }
     val endOffset = startOffset + changeEvent.oldLength
-    if (startOffset < 0 || endOffset > real.textLength()) {
+    if (startOffset < 0 || endOffset > real.length()) {
       return null
     }
-    if (!matchesOldFragment(real.text(), startOffset, changeEvent.oldFragment)) {
+    if (!matchesOldFragment(real.chars(), startOffset, changeEvent.oldFragment)) {
       return null
     }
     val initialStartOffset = if (changeEvent is DocumentEventImpl) {
@@ -153,7 +153,7 @@ internal abstract class ElfRealSync(
       initialStartOffset,
       initialOldLength,
       startOffset,
-      real.textLength(),
+      real.length(),
     )
     return ElfTextChange(
       real,
@@ -269,8 +269,8 @@ internal abstract class ElfRealSync(
   }
 
   private fun checkTextConsistency(expect: SnapshotSnapshot) {
-    val real = expect.real.text()
-    val elf = expect.elf.text()
+    val real = expect.real.chars()
+    val elf = expect.elf.chars()
     check(real === elf || real.hashCode() == elf.hashCode()) {
       "inconsistent text detected, which leads to text change without notification to listeners"
     }

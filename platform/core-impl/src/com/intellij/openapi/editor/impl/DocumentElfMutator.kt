@@ -79,7 +79,7 @@ internal abstract class DocumentElfMutator(
             syncPatch(
               change.changeEvent,
               snapshotBefore,
-              change.snapshotAfter.text(),
+              change.snapshotAfter.chars(),
               DocumentModStamp.next(),
               false, // TODO: why false?
             ),
@@ -234,7 +234,7 @@ internal abstract class DocumentElfMutator(
       initialStartOffset,
       eventToRevert.newLength,
       getRevertMoveOffset(eventToRevert),
-      currentSnapshot.textLength(),
+      currentSnapshot.length(),
     )
     revertingChangeEvent = eventToRevert
     try {
@@ -244,7 +244,7 @@ internal abstract class DocumentElfMutator(
         syncPatch(
           changeEvent,
           currentSnapshot,
-          change.snapshotBefore.text(),
+          change.snapshotBefore.chars(),
           DocumentModStamp.next(),
           change.patch.clearLineFlags(),
         ),
@@ -279,7 +279,7 @@ internal abstract class DocumentElfMutator(
     if (changeEvent.isWholeTextReplaced) {
       return DocumentTextPatch.complex(
         startOffset = 0,
-        endOffset = snapshotBefore.textLength(),
+        endOffset = snapshotBefore.length(),
         newFragment = wholeText,
         newModStamp = newModStamp,
         clearLineFlags = true,

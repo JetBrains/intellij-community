@@ -107,7 +107,7 @@ public class FrozenDocument implements DocumentEx {
 
   @Override
   public @NotNull CharSequence getImmutableCharSequence() {
-    return mySnapshot.text();
+    return mySnapshot.chars();
   }
 
   @Override

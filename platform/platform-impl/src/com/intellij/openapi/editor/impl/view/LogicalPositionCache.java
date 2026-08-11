@@ -43,7 +43,7 @@ public final class LogicalPositionCache implements PrioritizedDocumentListener, 
 
   @NotNull LogicalPosition offsetToLogicalPosition(int offset) {
     LogicalLines snapshot = getSnapshot();
-    int textLength = snapshot.document.textLength();
+    int textLength = snapshot.document.length();
     if (offset <= 0 || textLength == 0) {
       return new LogicalPosition(0, 0);
     }
@@ -65,7 +65,7 @@ public final class LogicalPositionCache implements PrioritizedDocumentListener, 
   int logicalPositionToOffset(@NotNull LogicalPosition pos) {
     LogicalLines snapshot = getSnapshot();
     if (pos.line >= snapshot.document.lineCount()) {
-      return snapshot.document.textLength();
+      return snapshot.document.length();
     }
     return getSnapshotWithLine(snapshot, pos.line).logicalColumnToOffset(pos.line, pos.column);
   }
@@ -148,7 +148,7 @@ public final class LogicalPositionCache implements PrioritizedDocumentListener, 
   }
 
   private static int getAdjustedLineNumber(@NotNull DocumentSnapshot document, int offset) {
-    return document.textLength() == 0 ? -1 : document.lineNumber(offset);
+    return document.length() == 0 ? -1 : document.lineNumber(offset);
   }
 
   // text for which offset<->logicalColumn conversion is trivial
