@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor.ex
 
 import com.intellij.openapi.editor.Document
+import com.intellij.openapi.util.Key
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -62,6 +63,8 @@ interface DocumentMutator {
    * @see DocumentSnapshot.withClearedLineFlags
    */
   fun clearLineFlags(startLine: Int, endLine: Int, exceptLines: IntArray)
+
+  fun <A : DocumentAspect> setAspect(key: Key<A>, aspect: A?)
 
   /**
    * Atomically changes document snapshot with semantics from `Threading` section.
