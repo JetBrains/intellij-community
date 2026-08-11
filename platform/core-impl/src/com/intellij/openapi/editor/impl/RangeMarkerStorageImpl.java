@@ -25,26 +25,22 @@ final class RangeMarkerStorageImpl implements RangeMarkerStorage {
   }
 
   @Override
-  public @NotNull RangeMarkerEx createRangeMarker(
-    @NotNull DocumentEx hostDocument,
-    int startOffset,
-    int endOffset,
-    boolean surviveOnExternalChange
-  ) {
+  public @NotNull RangeMarkerEx createRangeMarker(@NotNull DocumentEx hostDocument,
+                                                  int startOffset,
+                                                  int endOffset,
+                                                  boolean surviveOnExternalChange) {
     return surviveOnExternalChange
            ? new PersistentRangeMarker(hostDocument, startOffset, endOffset, true)
            : new RangeMarkerImpl(hostDocument, startOffset, endOffset, true, false);
   }
 
   @Override
-  public void registerRangeMarker(
-    @NotNull RangeMarkerEx rangeMarker,
-    int start,
-    int end,
-    boolean greedyToLeft,
-    boolean greedyToRight,
-    int layer
-  ) {
+  public void registerRangeMarker(@NotNull RangeMarkerEx rangeMarker,
+                                  int start,
+                                  int end,
+                                  boolean greedyToLeft,
+                                  boolean greedyToRight,
+                                  int layer) {
     treeFor(rangeMarker).addInterval(rangeMarker, start, end, greedyToLeft, greedyToRight, false, layer);
   }
 
@@ -57,13 +53,17 @@ final class RangeMarkerStorageImpl implements RangeMarkerStorage {
   public boolean processRangeMarkersOverlappingWith(int start, int end, @NotNull Processor<? super RangeMarker> processor) {
     return processDeliciousRangeMarkersOverlappingWith(start, end, (byte)0, processor);
   }
-  boolean processDeliciousRangeMarkersOverlappingWith(int start, int end,
+
+  boolean processDeliciousRangeMarkersOverlappingWith(int start,
+                                                      int end,
                                                       byte tastePreference,
                                                       @NotNull Processor<? super RangeMarker> processor) {
     TextRange interval = new ProperTextRange(start, end);
-    try(MarkupIterator<RangeMarkerEx> iterator = IntervalTreeImpl.mergingOverlappingIterator(
-      myRangeMarkers, interval, myPersistentRangeMarkers, interval, tastePreference, RangeMarker.BY_START_OFFSET
-    )) {
+    try (MarkupIterator<RangeMarkerEx> iterator =
+           IntervalTreeImpl.mergingOverlappingIterator(myRangeMarkers, interval,
+                                                       myPersistentRangeMarkers, interval,
+                                                       tastePreference,
+                                                       RangeMarker.BY_START_OFFSET)) {
       return ContainerUtil.process(iterator, processor);
     }
   }
@@ -87,22 +87,5 @@ final class RangeMarkerStorageImpl implements RangeMarkerStorage {
 
   private @NotNull RangeMarkerTree<RangeMarkerEx> treeFor(@NotNull RangeMarkerEx rangeMarker) {
     return (rangeMarker instanceof PersistentRangeMarker) ? myPersistentRangeMarkers : myRangeMarkers;
-  }
-
-  @SuppressWarnings("SameParameterValue")
-  private static boolean rangesIntersect(
-    int start0, int end0, boolean start0Inclusive, boolean end0Inclusive,
-    int start1, int end1, boolean start1Inclusive, boolean end1Inclusive
-  ) {
-    if (start0 > start1 || start0 == start1 && !start0Inclusive) {
-      if (end1 == start0) {
-        return start0Inclusive && end1Inclusive;
-      }
-      return end1 > start0;
-    }
-    if (end0 == start1) {
-      return start1Inclusive && end0Inclusive;
-    }
-    return end0 > start1;
   }
 }

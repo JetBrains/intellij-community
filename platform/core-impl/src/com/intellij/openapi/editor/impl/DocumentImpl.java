@@ -75,11 +75,9 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
   }
 
   public DocumentImpl(@NotNull CharSequence chars, boolean acceptSlashR, boolean forUseInNonAWTThread) {
-    this(
-      forUseInNonAWTThread
-      ? DocumentCoreImpl.createCore(chars, acceptSlashR, forUseInNonAWTThread)
-      : DocumentMagicCoreImpl.createCore(chars, acceptSlashR, forUseInNonAWTThread)
-    );
+    this(forUseInNonAWTThread
+         ? DocumentCoreImpl.createCore(chars, acceptSlashR, forUseInNonAWTThread)
+         : DocumentMagicCoreImpl.createCore(chars, acceptSlashR, forUseInNonAWTThread));
   }
 
   private DocumentImpl(@NotNull DocumentCore impl) {
@@ -222,14 +220,12 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
   }
 
   @Override
-  public void registerRangeMarker(
-    @NotNull RangeMarkerEx rangeMarker,
-    int start,
-    int end,
-    boolean greedyToLeft,
-    boolean greedyToRight,
-    int layer
-  ) {
+  public void registerRangeMarker(@NotNull RangeMarkerEx rangeMarker,
+                                  int start,
+                                  int end,
+                                  boolean greedyToLeft,
+                                  boolean greedyToRight,
+                                  int layer) {
     impl.rangeMarkers().registerRangeMarker(rangeMarker, start, end, greedyToLeft, greedyToRight, layer);
   }
 
@@ -391,7 +387,12 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
   }
 
   @ApiStatus.Internal
-  public void replaceString(int startOffset, int endOffset, int moveOffset, @NotNull CharSequence s, long newModificationStamp, boolean wholeTextReplaced) {
+  public void replaceString(int startOffset,
+                            int endOffset,
+                            int moveOffset,
+                            @NotNull CharSequence s,
+                            long newModificationStamp,
+                            boolean wholeTextReplaced) {
     impl.mutator().replaceString(hostDocument(), startOffset, endOffset, moveOffset, s, newModificationStamp, wholeTextReplaced);
   }
 
@@ -436,7 +437,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
 
   @ApiStatus.Internal
   public @NotNull FrozenDocument freeze() {
-    return (FrozenDocument) impl.frozen();
+    return (FrozenDocument)impl.frozen();
   }
 
   @ApiStatus.Internal
@@ -475,7 +476,8 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
   @Override
   public String toString() {
     VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(hostDocument());
-    return "DocumentImpl[" + (virtualFile == null ? null : virtualFile.getName()) +
+    return "DocumentImpl[" +
+           (virtualFile == null ? null : virtualFile.getName()) +
            (isInEventsHandling() ? ",inEventHandling" : "") +
            (!isWriteThreadOnly() ? ",nonWriteThreadOnly" : "") +
            (acceptsSlashR() ? ",acceptSlashR" : "") +
