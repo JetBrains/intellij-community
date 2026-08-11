@@ -179,7 +179,7 @@
     <orderEntry type="module" module-name="intellij.libraries.rd.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.guiForms.rt" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" scope="TEST" />
-    <orderEntry type="module" module-name="fleet.rhizomedb" scope="RUNTIME" />
+    <orderEntry type="module" module-name="fleet.rhizomedb" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
   </component>

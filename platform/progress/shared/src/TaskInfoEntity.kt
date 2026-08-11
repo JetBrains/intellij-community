@@ -3,13 +3,11 @@ package com.intellij.platform.ide.progress
 
 import com.intellij.openapi.util.NlsContexts.ProgressTitle
 import com.intellij.platform.ide.progress.suspender.TaskSuspension
-import com.intellij.platform.project.ProjectEntity
-import com.intellij.platform.project.asProject
-import com.intellij.platform.project.asProjectOrNull
+import com.intellij.platform.project.ProjectId
 import com.intellij.platform.util.progress.ProgressState
 import com.jetbrains.rhizomedb.EID
 import com.jetbrains.rhizomedb.Entity
-import com.jetbrains.rhizomedb.RefFlags
+import com.jetbrains.rhizomedb.Indexing
 import fleet.kernel.DurableEntityType
 import kotlinx.serialization.builtins.serializer
 import org.jetbrains.annotations.ApiStatus
@@ -20,12 +18,17 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 data class TaskInfoEntity(override val eid: EID) : Entity {
   /**
-   * Project entity associated with a task.
-   * To retrieve an instance of a project from the entity use [asProjectOrNull] or [asProject]
+   * Id of the project associated with a task.
    *
-   * The entity can be null for a default project
+   * A plain value on purpose, not a ref to `ProjectEntity`: the project entity may be deleted and
+   * re-created with the same id (both peers create one; in IJ Light the id itself is re-bound on
+   * connect), and a `CASCADE_DELETE_BY` ref would silently wipe the tasks on every such replacement.
+   * Tasks of an unregistered project are cleaned up explicitly instead, see
+   * `TaskStorage.removeTasksForProject`.
+   *
+   * The id can be null for a default project.
    */
-  val projectEntity: ProjectEntity? by ProjectEntityType
+  val projectId: ProjectId? by ProjectIdType
 
   /**
    * Human-readable title of a task, which is used to display the task in UI
@@ -100,7 +103,7 @@ data class TaskInfoEntity(override val eid: EID) : Entity {
     val TaskSuspensionType: Required<TaskSuspension> = requiredValue("isSuspendable", TaskSuspension.serializer())
     val ProgressStateType: Optional<ProgressState> = optionalValue("progressState", ProgressState.serializer())
     val TaskStatusType: Required<TaskStatus> = requiredValue("taskStatus", TaskStatus.serializer())
-    val ProjectEntityType: Optional<ProjectEntity> = optionalRef<ProjectEntity>("project", RefFlags.CASCADE_DELETE_BY)
+    val ProjectIdType: Optional<ProjectId> = optionalValue("projectId", ProjectId.serializer(), Indexing.INDEXED)
     val ProgressBarVisibilityType: Required<Boolean> = requiredValue("visibleInStatusBar", Boolean.serializer())
   }
 }

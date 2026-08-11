@@ -3,13 +3,14 @@ package com.intellij.platform.ide.progress
 
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts.ProgressTitle
 import com.intellij.platform.ide.progress.suspender.TaskSuspension
 import com.intellij.platform.kernel.withKernel
-import com.intellij.platform.project.asEntity
+import com.intellij.platform.project.ProjectId
+import com.intellij.platform.project.projectId
 import com.jetbrains.rhizomedb.ChangeScope
+import com.jetbrains.rhizomedb.entities
 import com.jetbrains.rhizomedb.exists
 import fleet.kernel.change
 import fleet.kernel.delete
@@ -43,19 +44,14 @@ class TaskStorage {
     cancellation: TaskCancellation,
     suspendable: TaskSuspension,
     visibleInStatusBar: Boolean,
-  ): TaskInfoEntity? {
+  ): TaskInfoEntity {
     var taskInfoEntity: TaskInfoEntity? = null
     try {
-      return withKernel {
-        val projectEntity = if (!project.isDefault) project.asEntity() else null
+      withKernel {
+        val projectId = if (!project.isDefault) project.projectId() else null
         taskInfoEntity = change {
-          if (projectEntity?.exists() == false) {
-            LOG.warn("The task info entity for \"${title}\" wasn't created, because $project does not exist anymore")
-            return@change null
-          }
-
           TaskInfoEntity.new {
-            it[TaskInfoEntity.ProjectEntityType] = projectEntity
+            it[TaskInfoEntity.ProjectIdType] = projectId
             it[TaskInfoEntity.TitleType] = title
             it[TaskInfoEntity.TaskCancellationType] = cancellation
             it[TaskInfoEntity.TaskSuspensionType] = suspendable
@@ -64,8 +60,8 @@ class TaskStorage {
             it[TaskInfoEntity.ProgressBarVisibilityType] = visibleInStatusBar
           }
         }
-        return@withKernel taskInfoEntity
       }
+      return checkNotNull(taskInfoEntity)
     }
     catch (ex: Exception) {
       // Ensure that task is deleted if exception happened during creation (e.g. CancellationException on withContext exit)
@@ -89,6 +85,19 @@ class TaskStorage {
   }
 
   /**
+   * Removes all tasks associated with [projectId].
+   *
+   * The explicit replacement of the cascade delete a `ProjectEntity` ref used to provide: callers
+   * invoke it once the project is truly unregistered — not when its entity merely got replaced by
+   * another one with the same id.
+   */
+  suspend fun removeTasksForProject(projectId: ProjectId): Unit = withKernel {
+    change {
+      entities(TaskInfoEntity.ProjectIdType, projectId).forEach { delete(it) }
+    }
+  }
+
+  /**
    * Updates a [TaskInfoEntity] in the storage using provided [updater]
    * It's guaranteed that [taskInfoEntity] exists when [updater] is invoked
    *
@@ -106,7 +115,5 @@ class TaskStorage {
   companion object {
     @JvmStatic
     fun getInstance(): TaskStorage = service()
-
-    private val LOG = logger<TaskStorage>()
   }
 }

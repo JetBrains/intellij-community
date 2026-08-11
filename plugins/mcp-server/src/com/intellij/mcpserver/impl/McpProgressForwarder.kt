@@ -160,7 +160,7 @@ private fun backgroundProgressFlow(project: Project?, observeBackgroundTasks: At
 internal suspend fun taskBelongsToProject(task: TaskInfoEntity, project: Project): Boolean {
   val projectId = project.projectId()
   return tryWithEntities(task) {
-    task.projectEntity?.projectId == projectId
+    task.projectId == projectId
   }.getOrNull() == true
 }
 

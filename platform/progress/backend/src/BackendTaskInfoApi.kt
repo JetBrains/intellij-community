@@ -16,7 +16,6 @@ import com.intellij.platform.ide.progress.statuses
 import com.intellij.platform.ide.progress.suspensionState
 import com.intellij.platform.ide.progress.updates
 import com.intellij.platform.kernel.withKernel
-import com.intellij.platform.project.projectId
 import fleet.kernel.rete.asValuesFlow
 import fleet.kernel.rete.collect
 import fleet.kernel.tryWithEntities
@@ -52,7 +51,7 @@ internal class BackendTaskInfoApi : TaskInfoApi {
             tryWithEntities(task) {
               send(TaskInfoEvent.TaskAdded(
                 taskId = taskId,
-                projectId = task.projectEntity?.projectId,
+                projectId = task.projectId,
                 title = task.title,
                 cancellation = task.cancellation,
                 suspension = task.suspension,
