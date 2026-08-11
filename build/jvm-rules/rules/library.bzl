@@ -152,9 +152,8 @@ def jvm_library(
 
     if use_rules_kotlin_backend:
         # rules_kotlin's kt_jvm_library only accepts .kt/.java/.srcjar in srcs. IntelliJ GUI
-        # Designer .form files are an IJ-specific concept instrumented only by the JPS backend
-        # (see _partitioned_srcs in impl/compile.bzl); the rules_kotlin/BTA backend has no form
-        # instrumenter, so they would fail kt_jvm_library's srcs validation here.
+        # Designer .form files are still allowed in srcs for compatibility with generated
+        # BUILD files, but no backend compiles them, so filter them out here.
         kt_jvm_library(
             name = name,
             srcs = [s for s in srcs if not s.endswith(".form")] if type(srcs) == "list" else srcs,

@@ -56,11 +56,9 @@ kt_jvm_library(
         "//:annotations_import",
         "//:asm-all_import",
         "//:caffeine_import",
-        "//:forms_import",  # forms compilation support
         "//:h2-mvstore_import",
         "//:hash4j_import",
         "//:intellij-deps-fastutil_import",
-        "//:jaxen_import",  # forms compilation support
         "//:jps-javac-extension_import",
         "//:jvm-abi-gen-embeddable_import",
         "//:kotlin-compose-compiler-plugin-embeddable_import",
