@@ -41,6 +41,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.usages.ChunkExtractor;
 import com.intellij.usages.impl.SyntaxHighlighterOverEditorHighlighter;
 import com.intellij.util.containers.IntObjectMap;
+import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.ImmutableCharSequence;
 import com.intellij.util.text.StringSearcher;
@@ -53,7 +54,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.SoftReference;
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
@@ -301,7 +302,7 @@ public abstract class FindManagerBase extends FindManager {
       if (lang != null) {
         final Language finalLang = lang;
         relevantLanguages = ReadAction.computeBlocking(() -> {
-          Set<Language> result = new HashSet<>();
+          Set<Language> result = new SmartHashSet<>();
           FileViewProvider viewProvider = PsiManager.getInstance(myProject).findViewProvider(file);
           if (viewProvider != null) {
             result.addAll(viewProvider.getLanguages());
@@ -318,7 +319,7 @@ public abstract class FindManagerBase extends FindManager {
         }
       }
       else {
-        relevantLanguages = new HashSet<>();
+        relevantLanguages = Collections.emptySet();
         if (ftype instanceof AbstractFileType) {
           if (model.isInCommentsOnly()) {
             tokensOfInterest = TokenSet.create(CustomHighlighterTokenType.LINE_COMMENT, CustomHighlighterTokenType.MULTI_LINE_COMMENT);
@@ -335,10 +336,18 @@ public abstract class FindManagerBase extends FindManager {
       LayeredLexer.ourDisableLayersFlag.set(Boolean.TRUE);
 
       try {
-        SyntaxHighlighterOverEditorHighlighter highlighterAdapter =
-          ReadAction.computeBlocking(() -> new SyntaxHighlighterOverEditorHighlighter(highlighter, file, myProject));
-        currentThreadData =
-          new FindManagerBase.CommentsLiteralsSearchData(file, relevantLanguages, highlighterAdapter, tokensOfInterest, searcher, matcher, model.clone());
+        SyntaxHighlighterOverEditorHighlighter highlighterAdapter = ReadAction.computeBlocking(() -> {
+          return new SyntaxHighlighterOverEditorHighlighter(highlighter, file, myProject);
+        });
+        currentThreadData = new FindManagerBase.CommentsLiteralsSearchData(
+          file,
+          relevantLanguages,
+          highlighterAdapter,
+          tokensOfInterest,
+          searcher,
+          matcher,
+          model.clone()
+        );
         currentThreadData.highlighter.restart(text);
       }
       finally {
@@ -465,7 +474,9 @@ public abstract class FindManagerBase extends FindManager {
     return prevFindResult;
   }
 
-  private static TokenSet addTokenTypesForLanguage(FindModel model, Language lang, TokenSet tokensOfInterest) {
+  private static @NotNull TokenSet addTokenTypesForLanguage(@NotNull FindModel model,
+                                                            @NotNull Language lang,
+                                                            @NotNull TokenSet tokensOfInterest) {
     ParserDefinition definition = LanguageParserDefinitions.INSTANCE.forLanguage(lang);
     if (definition != null) {
       tokensOfInterest = TokenSet.orSet(tokensOfInterest, model.isInCommentsOnly() ? definition.getCommentTokens() : TokenSet.EMPTY);
@@ -474,7 +485,7 @@ public abstract class FindManagerBase extends FindManager {
     return tokensOfInterest;
   }
 
-  private static boolean isWholeWord(CharSequence text, int startOffset, int endOffset) {
+  private static boolean isWholeWord(@NotNull CharSequence text, int startOffset, int endOffset) {
     boolean isWordStart;
 
     if (startOffset != 0) {
@@ -505,14 +516,16 @@ public abstract class FindManagerBase extends FindManager {
     return isWordStart && isWordEnd;
   }
 
-  private static Matcher compileRegExp(FindModel model, CharSequence text) {
+  private static @Nullable Matcher compileRegExp(@NotNull FindModel model, @NotNull CharSequence text) {
     Pattern pattern = model.compileRegExp();
     return pattern == null ? null : pattern.matcher(StringPattern.newBombedCharSequence(text));
   }
 
   @Override
-  public String getStringToReplace(@NotNull String foundString, @NotNull FindModel model,
-                                   int startOffset, @NotNull CharSequence documentText) throws MalformedReplacementStringException {
+  public @NotNull String getStringToReplace(@NotNull String foundString,
+                                            @NotNull FindModel model,
+                                            int startOffset,
+                                            @NotNull CharSequence documentText) throws MalformedReplacementStringException {
     String replacement = model.getStringToReplace();
     if (model.isRegularExpressions()) {
       replacement = getStringToReplaceByRegexp(model, documentText, startOffset);
@@ -530,7 +543,7 @@ public abstract class FindManagerBase extends FindManager {
     return getStringToReplaceByRegexp(model, compileRegexAndFindFirst(model, text, startOffset));
   }
 
-  private static String getStringToReplaceByRegexp(@NotNull FindModel model, Matcher matcher)
+  private static @Nullable String getStringToReplaceByRegexp(@NotNull FindModel model, Matcher matcher)
     throws MalformedReplacementStringException {
     if (matcher == null) return null;
     try {
@@ -541,7 +554,7 @@ public abstract class FindManagerBase extends FindManager {
     }
   }
 
-  private static Matcher compileRegexAndFindFirst(FindModel model, CharSequence text, int startOffset) {
+  private static @Nullable Matcher compileRegexAndFindFirst(@NotNull FindModel model, @NotNull CharSequence text, int startOffset) {
     Matcher matcher = compileRegExp(model, text);
     assert matcher != null;
 
@@ -565,7 +578,7 @@ public abstract class FindManagerBase extends FindManager {
     return matcher;
   }
 
-  private static SyntaxHighlighter getHighlighter(VirtualFile file, @Nullable Language lang) {
+  private static @Nullable SyntaxHighlighter getHighlighter(VirtualFile file, @Nullable Language lang) {
     SyntaxHighlighter syntaxHighlighter = lang != null ? SyntaxHighlighterFactory.getSyntaxHighlighter(lang, null, file) : null;
     if (lang == null || syntaxHighlighter instanceof PlainSyntaxHighlighter) {
       syntaxHighlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(file.getFileType(), null, file);
@@ -574,26 +587,29 @@ public abstract class FindManagerBase extends FindManager {
     return syntaxHighlighter;
   }
 
-  @NotNull
-  private static MalformedReplacementStringException createMalformedReplacementException(@NotNull Exception e) {
+  private static @NotNull MalformedReplacementStringException createMalformedReplacementException(@NotNull Exception e) {
     String message = FindBundle.message("find.replace.invalid.replacement.string", e.getMessage());
     return new MalformedReplacementStringException(message, e);
   }
 
   private static final class CommentsLiteralsSearchData {
-    final VirtualFile lastFile;
+    @NotNull final VirtualFile lastFile;
     int startOffset;
-    final SyntaxHighlighterOverEditorHighlighter highlighter;
+    @NotNull final SyntaxHighlighterOverEditorHighlighter highlighter;
 
-    TokenSet tokensOfInterest;
-    final StringSearcher searcher;
-    final Matcher matcher;
-    final Set<Language> relevantLanguages;
-    final FindModel model;
+    @NotNull TokenSet tokensOfInterest;
+    @Nullable final StringSearcher searcher;
+    @Nullable final Matcher matcher;
+    @NotNull final Set<Language> relevantLanguages;
+    @NotNull final FindModel model;
 
-    CommentsLiteralsSearchData(VirtualFile lastFile, Set<Language> relevantLanguages,
-                               SyntaxHighlighterOverEditorHighlighter highlighter, TokenSet tokensOfInterest,
-                               StringSearcher searcher, Matcher matcher, FindModel model) {
+    CommentsLiteralsSearchData(@NotNull VirtualFile lastFile,
+                               @NotNull Set<Language> relevantLanguages,
+                               @NotNull SyntaxHighlighterOverEditorHighlighter highlighter,
+                               @NotNull TokenSet tokensOfInterest,
+                               @Nullable StringSearcher searcher,
+                               @Nullable Matcher matcher,
+                               @NotNull FindModel model) {
       this.lastFile = lastFile;
       this.highlighter = highlighter;
       this.tokensOfInterest = tokensOfInterest;

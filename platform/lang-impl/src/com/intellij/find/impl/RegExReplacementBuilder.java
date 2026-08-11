@@ -84,7 +84,7 @@ public final class RegExReplacementBuilder {
    * Matcher used to create this instance of RegExReplacementBuilder is supposed to be in a state
    * created by a successful {@link Matcher#find() find()} or {@link Matcher#find(int) find(int)} invocation.
    */
-  public String createReplacement(String template) {
+  public @NotNull String createReplacement(@NotNull String template) {
     myTemplate = template;
     resetState();
     while (myCursor < myTemplate.length()) {
@@ -180,7 +180,7 @@ public final class RegExReplacementBuilder {
     }
   }
 
-  private String generateResult() {
+  private @NotNull String generateResult() {
     StringBuilder result;
     if (myConversionRegions.isEmpty()) {
       result = myReplacement;
