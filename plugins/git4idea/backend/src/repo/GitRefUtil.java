@@ -225,7 +225,7 @@ public final class GitRefUtil {
 
   static @NotNull Map<String, Hash> resolveRefs(@NotNull Map<String, String> data) {
     final Map<String, Hash> resolved = getResolvedHashes(data);
-    Map<String, String> unresolved = ContainerUtil.filter(data, refName -> !resolved.containsKey(refName));
+    Map<String, String> unresolved = new HashMap<>(ContainerUtil.filter(data, refName -> !resolved.containsKey(refName)));
 
     boolean progressed = true;
     while (progressed && !unresolved.isEmpty()) {
