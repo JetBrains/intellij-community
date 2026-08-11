@@ -305,12 +305,31 @@ private fun computeWrapPosition(line: String, width: Int): Int {
             codeSpanTicks > 0 -> {} // No bracket matching required inside code blocks
             c == '[' -> bracketBalance++
             bracketBalance > 0 && c == ']' -> bracketBalance--
-            c == ' ' && bracketBalance == 0 -> breakPoint = i
+            c == ' ' && bracketBalance == 0 && canWrapLineAt(line, i + 1) -> breakPoint = i
         }
         i++
     }
 
     return if (breakPoint > 0) breakPoint else line.length
+}
+
+/**
+ * Checks whether the line can be wrapped at the given index.
+ * If this function returns false, the line should be broken either at an earlier or later possible position.
+ */
+private fun canWrapLineAt(line: String, index: Int): Boolean {
+    return !opensCodeFence(line, index)
+}
+
+/**
+ * Whether the remainder of [line] starting at [index] would open a code fence if wrapped.
+ * Wrapping there would turn into a code block, which changes semantics.
+ */
+private fun opensCodeFence(line: String, index: Int): Boolean {
+    var start = index
+    while (start < line.length && line[start].isWhitespace()) start++
+    val ch = line.getOrNull(start)
+    return (ch == '`' || ch == '~') && findCodeFence(line.substring(start), opening = true) != null
 }
 
 private fun render(

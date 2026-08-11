@@ -229,6 +229,11 @@ public abstract class K2FormatterTestGenerated extends AbstractK2FormatterTest {
                 runTest("../../idea/tests/testData/formatter/kdoc/FenceInsideTagBlock.after.kt");
             }
 
+            @TestMetadata("FenceRunInProseNotMovedToLineStart.after.kt")
+            public void testFenceRunInProseNotMovedToLineStart() throws Exception {
+                runTest("../../idea/tests/testData/formatter/kdoc/FenceRunInProseNotMovedToLineStart.after.kt");
+            }
+
             @TestMetadata("FenceTilde.after.kt")
             public void testFenceTilde() throws Exception {
                 runTest("../../idea/tests/testData/formatter/kdoc/FenceTilde.after.kt");
