@@ -146,6 +146,24 @@ public abstract class FindManagerBase extends FindManager {
     }
   }
 
+  /**
+   * Performs a single search attempt and returns the first occurrence it runs into, without checking whether that occurrence is
+   * acceptable: neither {@link FindModel#isWholeWordsOnly() whole words only} nor the find context are taken into account here.
+   * Filtering those out and resuming the search past a rejected occurrence is the job of {@link #findStringLoop}, which is why this
+   * method is only meaningful as a step of that loop.
+   * <p>
+   * A forward search covers {@code [offset, text.length())} and a backward one {@code [0, offset - 1)}, so {@code offset} is where
+   * the search starts rather than where it is anchored. Depending on the model the search runs over comments and string literals only,
+   * as a regular expression, or as a plain {@link StringSearcher} scan.
+   *
+   * @param text      the text in which the search is performed.
+   * @param textArray the backing array of {@code text} as returned by {@link CharArrayUtil#fromSequenceWithoutCopying}, or {@code null}
+   *                  if it has none; purely an optimization that lets the scan avoid {@link CharSequence#charAt} calls.
+   * @param offset    the start offset for the search.
+   * @param model     the settings for the search, including the string to find.
+   * @param file      the file {@code text} belongs to, needed to search comments and literals; may be {@code null} for other searches.
+   * @return the first occurrence found, or a result with {@link FindResult#isStringFound()} set to {@code false} if there is none.
+   */
   private @NotNull FindResult doFindString(@NotNull CharSequence text,
                                            char @Nullable [] textArray,
                                            int offset,
@@ -181,7 +199,10 @@ public abstract class FindManagerBase extends FindManager {
     return new FindResultImpl(index, index + toFind.length());
   }
 
-  private FindResult findStringByRegularExpression(CharSequence text, int startOffset, FindModel model, VirtualFile file) {
+  private @NotNull FindResult findStringByRegularExpression(@NotNull CharSequence text,
+                                                            int startOffset,
+                                                            @NotNull FindModel model,
+                                                            @Nullable VirtualFile file) {
     Matcher matcher = compileRegExp(model, text);
     if (matcher == null) {
       return NOT_FOUND_RESULT;
@@ -213,7 +234,7 @@ public abstract class FindManagerBase extends FindManager {
 
       if (!ApplicationManager.getApplication().isHeadlessEnvironment() &&
           ourReportedPatterns.put(stringToFind.hashCode(), Boolean.TRUE) == null) {
-        String content = FindBundle.message("notification.content.regular.expression.soe", stringToFind, file.getPresentableUrl());
+        String content = FindBundle.message("notification.content.regular.expression.soe", stringToFind, file != null ? file.getPresentableUrl() : "<no-file>");
         LOG.info(content);
         String message = FindBundle.message("notification.title.regular.expression.failed.to.match");
         NotificationGroupManager.getInstance().getNotificationGroup("Find Problems")
