@@ -55,7 +55,7 @@ import kotlin.math.ceil
  * And, within each, by whether mouse reporting is enabled.
  */
 @TestApplication
-internal class TerminalMouseEventsReportingTest {
+internal class TerminalMouseEventsHandlingTest {
   companion object {
     private val projectFixture = projectFixture()
 
