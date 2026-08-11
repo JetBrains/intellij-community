@@ -3,7 +3,6 @@ package org.jetbrains.intellij.build.impl
 
 import kotlinx.coroutines.CoroutineScope
 import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.BuildPaths
@@ -102,7 +101,7 @@ internal class BazelCompilationContextTest {
       projectHome = tempDir,
       bazelOutputRootResolver = {
         resolveCounter.incrementAndGet()
-        it.resolve("output-base")
+        tempDir.resolve("output-base")
       },
       bazelTargetsLoader = {
         BazelTargetsInfo.TargetsFile(
@@ -125,28 +124,13 @@ internal class BazelCompilationContextTest {
     // classpath there is no `bazel-out` to derive one from, and under runfiles every path comes from a label
     state.bazelTargetsMap
     state.findRequiredModule(moduleName)
+    assertThat(BazelModuleOutputProvider(state, scope = null, useTestCompilationOutput = false).toString())
+      .contains("bazelOutputRoot=<not resolved>")
     assertThat(resolveCounter.get()).isEqualTo(0)
 
     assertThat(state.bazelOutputRoot).isEqualTo(tempDir.resolve("output-base"))
     assertThat(state.bazelOutputRoot).isEqualTo(tempDir.resolve("output-base"))
     assertThat(resolveCounter.get()).isEqualTo(1)
-  }
-
-  @Test
-  fun `Bazel output root is derived from the project convenience symlink`(@TempDir tempDir: Path) {
-    val outputBase = Files.createDirectories(tempDir.resolve("output-base"))
-    val bazelOut = Files.createDirectories(outputBase.resolve("execroot/_main/bazel-out"))
-    val projectHome = Files.createDirectories(tempDir.resolve("project"))
-    Files.createSymbolicLink(Files.createDirectories(projectHome.resolve("out")).resolve("bazel-out"), bazelOut)
-
-    assertThat(resolveBazelOutputRootFromProject(projectHome)).isEqualTo(outputBase.toRealPath())
-  }
-
-  @Test
-  fun `a missing convenience symlink points at bazel-build-all`(@TempDir tempDir: Path) {
-    assertThatThrownBy { resolveBazelOutputRootFromProject(tempDir) }
-      .isInstanceOf(IllegalStateException::class.java)
-      .hasMessageContaining("./bazel-build-all.cmd")
   }
 
   private fun testCompilationContext(project: JpsProject, tempDir: Path, options: BuildOptions): CompilationContext {

@@ -27,7 +27,6 @@ import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleReference
-import java.io.IOException
 import java.net.URI
 import java.nio.file.Path
 import kotlin.io.path.inputStream
@@ -205,36 +204,6 @@ internal val bazelOutputRoot: Path? by lazy {
   }
   Span.current().addEvent("Bazel output root: $outputRoot")
   return@lazy outputRoot
-}
-
-/**
- * The Bazel output base for a build that is not resolving its inputs through runfiles.
- *
- * Prefers the jar-derived [bazelOutputRoot] and otherwise falls back to [resolveBazelOutputRootFromProject], so
- * that a build whose own jars were copied out of `bazel-out` can still locate library jars.
- */
-@Internal
-fun resolveBazelOutputRoot(projectHome: Path): Path = bazelOutputRoot ?: resolveBazelOutputRootFromProject(projectHome)
-
-/**
- * Reads `<projectHome>/out/bazel-out`, the convenience symlink Bazel maintains for this project
- * (`--symlink_prefix=out/`), which points at `<output base>/execroot/_main/bazel-out`. Derived from the project
- * rather than from the running jar, so copying the jar cannot break it.
- */
-@Internal
-fun resolveBazelOutputRootFromProject(projectHome: Path): Path {
-  val convenienceSymlink = projectHome.resolve("out/bazel-out")
-  val realPath = try {
-    convenienceSymlink.toRealPath()
-  }
-  catch (e: IOException) {
-    throw IllegalStateException(
-      "Cannot determine the Bazel output root: '$convenienceSymlink' does not exist. Locally please run ./bazel-build-all.cmd", e
-    )
-  }
-  return cutBazelOutputRoot(realPath) {
-    "Unable to find 'execroot' directory in the path: $it (resolved from $convenienceSymlink)"
-  }
 }
 
 /** Everything above `execroot` in a resolved Bazel path is the output base. */

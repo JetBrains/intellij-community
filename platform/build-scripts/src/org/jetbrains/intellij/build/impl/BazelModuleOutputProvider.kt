@@ -17,16 +17,19 @@ import kotlin.io.path.isRegularFile
 class BazelModuleOutputProviderState(
   modules: List<JpsModule>,
   @JvmField val projectHome: Path,
-  bazelOutputRootResolver: (Path) -> Path = ::resolveBazelOutputRoot,
+  bazelOutputRootResolver: () -> Path = {
+    requireNotNull(bazelOutputRoot) { "Bazel output root is not available" }
+  },
   bazelTargetsLoader: (Path) -> BazelTargetsInfo.TargetsFile = BazelTargetsInfo::loadBazelTargetsJson,
 ) {
   private val index = ModuleOutputProviderIndex(modules)
 
   /**
-   * Demanded only to locate library jars outside of a Bazel run - under runfiles every path comes from a label.
-   * Resolving it lazily is what lets a build whose own jars were copied out of `bazel-out` still use Bazel outputs.
+   * Demanded only to locate library jars outside Bazel runfiles - under runfiles every path comes from a label.
+   * Resolving it lazily lets a build whose own jars were copied out of `bazel-out` use the runfiles without
+   * inventing another way to derive the output root.
    */
-  private val lazyBazelOutputRoot = lazy { bazelOutputRootResolver(projectHome) }
+  private val lazyBazelOutputRoot = lazy { bazelOutputRootResolver() }
 
   val bazelOutputRoot: Path
     get() = lazyBazelOutputRoot.value
