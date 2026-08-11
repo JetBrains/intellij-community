@@ -1,0 +1,4 @@
+deprecated: alpha.svg; to be removed, use Badge.alpha instead
+deprecated: beta.svg; to be removed, use Badge.beta instead
+deprecated: new_badge.svg; to be removed, use Badge.new/Badge.newBadge instead
+deprecated: trialBadge.svg; to be removed, use Badge.trial instead

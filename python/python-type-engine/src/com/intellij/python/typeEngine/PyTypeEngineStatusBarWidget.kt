@@ -31,6 +31,7 @@ import com.intellij.python.lsp.core.typeEngine.PyTypeEngineProvider
 import com.intellij.python.lsp.core.typeEngine.PyTypeEngineType
 import com.intellij.python.lsp.core.typeEngine.PyTypeEngineUsageCollector
 import com.intellij.python.lsp.core.typeEngine.PyTypeEngineUtils
+import com.intellij.ui.components.Badge
 import com.intellij.util.messages.MessageBusConnection
 import com.jetbrains.python.PythonFileType
 import com.jetbrains.python.packaging.management.PythonPackageManager
@@ -158,7 +159,7 @@ private class PyTypeEngineStatusBarWidget(
     override fun update(e: AnActionEvent) {
       val currentEngine = PyTypeEngineProjectSettings.getInstance(project).typeEngine
       if (engine == PyTypeEngineType.PYREFLY) {
-        e.presentation.putClientProperty(ActionUtil.SECONDARY_ICON, AllIcons.General.Beta)
+        e.presentation.putClientProperty(ActionUtil.SECONDARY_ICON, Badge.beta)
       }
       e.presentation.icon = if (currentEngine == engine)
         AllIcons.Actions.Checked

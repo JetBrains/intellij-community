@@ -1457,9 +1457,6 @@ public final class AllIconsKeys {
     /** 16x16 */
     @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey AddJdk = new IntelliJIconKey("general/addJdk.svg", "general/addJdk.svg", AllIconsKeys.class);
-    /** 38x15 */
-    @GeneratedFromIntelliJSources
-    public static final @NotNull IntelliJIconKey Alpha = new IntelliJIconKey("general/alpha.svg", "general/alpha.svg", AllIconsKeys.class);
     /** 16x16 */
     @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey ArrowDown = new IntelliJIconKey("general/arrowDown.svg", "expui/general/chevronDown.svg", AllIconsKeys.class);
@@ -1502,9 +1499,6 @@ public final class AllIconsKeys {
     /** 12x12 */
     @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey BalloonWarning12 = new IntelliJIconKey("general/balloonWarning12.svg", "general/balloonWarning12.svg", AllIconsKeys.class);
-    /** 32x15 */
-    @GeneratedFromIntelliJSources
-    public static final @NotNull IntelliJIconKey Beta = new IntelliJIconKey("general/beta.svg", "general/beta.svg", AllIconsKeys.class);
     /** 8x4 */
     @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey ButtonDropTriangle = new IntelliJIconKey("general/buttonDropTriangle.svg", "general/buttonDropTriangle.svg", AllIconsKeys.class);
@@ -1760,9 +1754,6 @@ public final class AllIconsKeys {
     /** 16x16 */
     @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey Mouse = new IntelliJIconKey("general/mouse.svg", "general/mouse.svg", AllIconsKeys.class);
-    /** 38x16 */
-    @GeneratedFromIntelliJSources
-    public static final @NotNull IntelliJIconKey New_badge = new IntelliJIconKey("general/new_badge.svg", "general/new_badge.svg", AllIconsKeys.class);
     /** 16x16 */
     @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey Note = new IntelliJIconKey("general/note.svg", "expui/status/infoOutline.svg", AllIconsKeys.class);
@@ -1895,9 +1886,6 @@ public final class AllIconsKeys {
     /** 16x16 */
     @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey TreeSelected = new IntelliJIconKey("general/treeSelected.svg", "expui/general/treeSelected.svg", AllIconsKeys.class);
-    /** 32x16 */
-    @GeneratedFromIntelliJSources
-    public static final @NotNull IntelliJIconKey TrialBadge = new IntelliJIconKey("general/trialBadge.svg", "general/trialBadge.svg", AllIconsKeys.class);
     /** 16x16 */
     @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey User = new IntelliJIconKey("general/user.svg", "expui/general/user.svg", AllIconsKeys.class);
@@ -1925,6 +1913,38 @@ public final class AllIconsKeys {
     /** 16x16 */
     @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey ZoomOut = new IntelliJIconKey("general/zoomOut.svg", "general/zoomOut.svg", AllIconsKeys.class);
+
+    /** @deprecated to be removed, use Badge.alpha instead */
+    @SuppressWarnings("unused")
+    @Deprecated
+    @ScheduledForRemoval
+    /** 38x15 */
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Alpha = new IntelliJIconKey("general/alpha.svg", "general/alpha.svg", AllIconsKeys.class);
+
+    /** @deprecated to be removed, use Badge.beta instead */
+    @SuppressWarnings("unused")
+    @Deprecated
+    @ScheduledForRemoval
+    /** 32x15 */
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Beta = new IntelliJIconKey("general/beta.svg", "general/beta.svg", AllIconsKeys.class);
+
+    /** @deprecated to be removed, use Badge.new/Badge.newBadge instead */
+    @SuppressWarnings("unused")
+    @Deprecated
+    @ScheduledForRemoval
+    /** 38x16 */
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey New_badge = new IntelliJIconKey("general/new_badge.svg", "general/new_badge.svg", AllIconsKeys.class);
+
+    /** @deprecated to be removed, use Badge.trial instead */
+    @SuppressWarnings("unused")
+    @Deprecated
+    @ScheduledForRemoval
+    /** 32x16 */
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey TrialBadge = new IntelliJIconKey("general/trialBadge.svg", "general/trialBadge.svg", AllIconsKeys.class);
   }
 
   @GeneratedFromIntelliJSources
