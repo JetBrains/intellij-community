@@ -28,7 +28,7 @@ import kotlin.time.Duration.Companion.minutes
 data class ToolCommandExecutor(
   private val toolName: @NlsSafe String,
   private val additionalSearchPaths: List<ToolSearchPath> = emptyList(),
-  private val getToolPathFromSettings: PropertiesComponent.() -> @SystemIndependent String?,
+  private val getToolPathFromSettings: PropertiesComponent.() -> @SystemIndependent String? = { null },
 ) {
   companion object {
     private val KNOWN_SEARCH_PATHS = listOf(

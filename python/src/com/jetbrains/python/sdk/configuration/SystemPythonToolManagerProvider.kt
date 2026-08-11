@@ -15,9 +15,9 @@ import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrNull
 import com.jetbrains.python.packaging.PyPackageVersionNormalizer
 import com.jetbrains.python.packaging.repository.PyPiPackageRepository
+import com.jetbrains.python.sdk.ToolCommandExecutor
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
-import com.jetbrains.python.sdk.add.v2.detectTool
 import com.jetbrains.python.sdk.add.v2.toFileSystem
 import com.jetbrains.python.sdk.installExecutableViaPythonScript
 import kotlinx.coroutines.Dispatchers
@@ -61,7 +61,9 @@ private class SystemPythonToolManager(
   override suspend fun list(): Map<PyTool, InstalledInfo> {
     return PyTool.EP_NAME.extensionList.filter { it is ConfigurablePyTool }.mapNotNull { tool ->
       val name = tool.packageName.name
-      val executable = fileSystem.detectTool(name) ?: return@mapNotNull null
+      // Resolve on PATH and in the per-user scripts dirs the pip helper installs into (e.g.
+      // %APPDATA%\Python\Scripts on Windows), which are frequently not on PATH (PY-91493).
+      val executable = ToolCommandExecutor(name).detectToolExecutable(fileSystem) { true } ?: return@mapNotNull null
       val installed = BinOnEel(executable.path).getToolVersion(name).getOrNull()?.value ?: return@mapNotNull null
       val latest = latestPyPiVersion(name) ?: installed
       tool to InstalledInfo(path = executable.path, installedVersion = installed, latestVersion = latest)

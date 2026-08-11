@@ -14,6 +14,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Version as PlatformVersion
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.python.pytools.PyTool
 import com.intellij.python.pytools.PyToolsState
 import com.intellij.python.pytools.Version
@@ -121,16 +123,23 @@ internal sealed interface PathFieldValue {
   /** User-supplied [PyToolsState.ToolEntry.customPathToExecutable]. */
   data class Custom(val path: Path) : PathFieldValue
 
-  /** Path derived from system PATH. */
+  /** Path auto-detected on PATH or in a well-known per-user install directory. */
   data class AutoDetected(val path: Path) : PathFieldValue
 
   /** Neither configured nor discoverable. */
   data object NotFound : PathFieldValue
 }
 
-internal fun detect(tool: PyTool, customPath: Path?): PathFieldValue {
+/**
+ * Resolve the row's displayed path. A user-supplied [customPath] wins; a [knownPath] (the exact path an
+ * installer just reported) is trusted next; otherwise the tool is auto-detected via [findExecutableInPath],
+ * which searches PATH **and** the well-known per-user install dirs — a plain PATH lookup misses the per-user
+ * scripts dirs pip/uv install into, which are frequently not on PATH on Windows (PY-91493).
+ */
+internal suspend fun detect(project: Project, tool: PyTool, customPath: Path?, knownPath: Path? = null): PathFieldValue {
   if (customPath != null) return PathFieldValue.Custom(customPath)
-  val auto = tool.findExecutableInPath()
+  if (knownPath != null) return PathFieldValue.AutoDetected(knownPath)
+  val auto = tool.findExecutableInPath(project.getEelDescriptor().toEelApi())
   return if (auto != null) PathFieldValue.AutoDetected(auto) else PathFieldValue.NotFound
 }
 
@@ -182,16 +191,18 @@ internal fun iconKindFor(
  */
 internal fun ToolRow.probeVersion(
   scope: CoroutineScope,
+  project: Project,
   isCustomEdit: Boolean = false,
+  knownPath: Path? = null,
   onUpdated: (ToolRow) -> Unit,
 ) {
   validationJob?.cancel()
   val mode = staged.mode
   val customPath = staged.customPath
   validationJob = scope.launch {
-    // Step 1: resolve the displayed path off the EDT — `findInPath` does disk I/O.
+    // Step 1: resolve the displayed path off the EDT — detection does disk I/O.
     val detected = withContext(Dispatchers.IO) {
-      detect(tool, customPath)
+      detect(project, tool, customPath, knownPath)
     }
     val path = when (detected) {
       is PathFieldValue.Custom -> detected.path

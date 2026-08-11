@@ -1,13 +1,12 @@
 package com.intellij.python.pytools
 
-import com.intellij.execution.configurations.PathEnvironmentVariableUtil
 import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelOsFamily
-import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.localEel
+import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.eel.provider.utils.stderrString
 import com.intellij.platform.eel.provider.utils.stdoutString
 import com.intellij.platform.eel.where
@@ -25,6 +24,8 @@ import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.PyRichSdk
+import com.jetbrains.python.sdk.ToolCommandExecutor
+import com.jetbrains.python.sdk.add.v2.toFileSystem
 import com.jetbrains.python.sdk.baseDir
 import com.jetbrains.python.sdk.moduleIfExists
 import com.jetbrains.python.sdk.pyRichSdk
@@ -44,13 +45,14 @@ suspend fun PyTool.getExecutableWithBaseArgs(
   workingDir: Path? = null,
 ): PyResult<Pair<BinaryToExec, List<String>>> {
   val state = getState(moduleOrProject.project)
+  val eelApi = moduleOrProject.project.getEelDescriptor().toEelApi()
 
   val toolBinaryPath = when (state.discoveryMode) {
     ExecutableDiscoveryMode.INTERPRETER -> {
       val pyRichSdk = moduleOrProject.moduleIfExists?.pythonSdk?.pyRichSdk()
-      pyRichSdk?.let { findExecutableInSdk(it, executableName) } ?: findExecutableInPath(state, executableName)
+      pyRichSdk?.let { findExecutableInSdk(it, executableName) } ?: findExecutableInPath(eelApi, state, executableName)
     }
-    ExecutableDiscoveryMode.PATH -> findExecutableInPath(state, executableName)
+    ExecutableDiscoveryMode.PATH -> findExecutableInPath(eelApi, state, executableName)
     ExecutableDiscoveryMode.UVX -> null
   }
 
@@ -130,24 +132,22 @@ fun PyTool.findExecutableInSdk(pyRichSdk: PyRichSdk, executableName: String = pa
   }
 }
 
-private fun PyTool.findExecutableInPath(state: PyToolsState.ToolEntry, executableName: String = packageName.name): Path? {
-  return state.customToolBinaryPath ?: findExecutableInPath(executableName)
-}
-
-fun PyTool.findExecutableInPath(
+private suspend fun PyTool.findExecutableInPath(
+  eelApi: EelApi,
+  state: PyToolsState.ToolEntry,
   executableName: String = packageName.name,
-  osFamily: EelOsFamily = LocalEelDescriptor.osFamily,
-): Path? = resolveExecutableOnPath(executableName, osFamily)
+): Path? = state.customToolBinaryPath ?: findExecutableInPath(eelApi, executableName)
 
 /**
- * Looks up [executableName] on the system PATH by its OS-specific binary name. This is how the
- * External Tools settings page resolves tool executables (via [findExecutableInPath]); shared so
- * other callers can resolve an installed executable the same way.
+ * Resolve [executableName] in the environment [eelApi] describes: on `PATH` and in the well-known per-user
+ * install directories tool installers use (pip's user scripts dir, uv/pipx's `~/.local/bin`, …). Detection
+ * goes through [ToolCommandExecutor] so it matches how the tool was installed — a plain `PATH` lookup misses
+ * those per-user dirs, which are frequently not on `PATH` on Windows (PY-91493).
  */
-fun resolveExecutableOnPath(
-  executableName: String,
-  osFamily: EelOsFamily = LocalEelDescriptor.osFamily,
-): Path? = PathEnvironmentVariableUtil.findInPath(osFamily.getOsSpecificBinaryName(executableName))?.toPath()
+suspend fun PyTool.findExecutableInPath(
+  eelApi: EelApi,
+  executableName: String = packageName.name,
+): Path? = ToolCommandExecutor(executableName).detectToolExecutable(eelApi.toFileSystem()) { true }?.path
 
 /**
  * Installs this tool's executable into the environment described by [eel], using the first available
