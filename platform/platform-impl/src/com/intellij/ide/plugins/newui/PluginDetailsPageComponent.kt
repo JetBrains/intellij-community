@@ -235,6 +235,8 @@ class PluginDetailsPageComponent private constructor(
   private var documentationUrl: LinkPanel? = null
   private var sourceCodeUrl: LinkPanel? = null
   private var suggestedFeatures: SuggestedComponent? = null
+  private var unknownUpdateSourceBanner: UpdateSourceBanner? = null
+  private var updateSourceInitializedBanner: UpdateSourceBanner? = null
   private lateinit var bottomScrollPane: JBScrollPane
   private val scrollPanes = ArrayList<JBScrollPane>()
   private var descriptionComponent: JEditorPane? = null
@@ -447,6 +449,23 @@ class PluginDetailsPageComponent private constructor(
 
     suggestedFeatures = SuggestedComponent()
     topPanel.add(suggestedFeatures, VerticalLayout.FILL_HORIZONTAL)
+
+    val unknownUpdateSourceWarning = UpdateSourceBanner.createUnknownPluginUpdateSourceWarning {
+      val popup = createUpdateSourcesPopup(myPluginUpdateSourceId!!) {
+        updateSourceInitializedBanner?.isVisible = true
+        tabbedPane?.selectedIndex = 3 //Additional Info tab
+      }
+      val banner = unknownUpdateSourceBanner
+      if (banner != null) {
+        popup.showUnderneathOf(banner)
+      }
+    }
+    unknownUpdateSourceBanner = unknownUpdateSourceWarning
+    topPanel.add(unknownUpdateSourceWarning, VerticalLayout.FILL_HORIZONTAL)
+
+    val successBanner = UpdateSourceBanner.createSuccessfullyUpdateSourceSetting()
+    updateSourceInitializedBanner = successBanner
+    topPanel.add(successBanner, VerticalLayout.FILL_HORIZONTAL)
 
     additionalTextLabel.foreground = ListPluginComponent.GRAY_COLOR
     additionalTextLabel.isVisible = false
@@ -926,7 +945,7 @@ class PluginDetailsPageComponent private constructor(
   }
 
   private fun initializePluginSourceIdDropDownLink(infoPanel: JPanel) {
-    val dropDownLink = object : DropDownLink<PluginUpdateSourceId?>(null, { link -> createPopup(link) }) {
+    val dropDownLink = object : DropDownLink<PluginUpdateSourceId?>(null, { link -> createUpdateSourcesPopup(link) }) {
       override fun itemToString(item: PluginUpdateSourceId?): String {
         return item.getShortenedPresentableName()
       }
@@ -948,7 +967,7 @@ class PluginDetailsPageComponent private constructor(
     return StringUtil.shortenTextWithEllipsis(getPresentableName(), 40, 20)
   }
 
-  private fun createPopup(link: DropDownLink<PluginUpdateSourceId?>): JBPopup {
+  private fun createUpdateSourcesPopup(link: DropDownLink<PluginUpdateSourceId?>, onSelectionCallback: () -> Unit = {}): JBPopup {
     val builder = JBPopupFactory.getInstance()
       .createPopupChooserBuilder(emptyList<PluginUpdateSourceId>())
       .setNamerForFiltering {
@@ -963,10 +982,12 @@ class PluginDetailsPageComponent private constructor(
         if (pluginToHandle != null) {
           link.text = pluginUpdateSource.getShortenedPresentableName()
           link.selectedItem = pluginUpdateSource
+          unknownUpdateSourceBanner?.isVisible = false
           coroutineScope.launch(Dispatchers.IO) {
             pluginModel.setPendingPluginUpdateSourceInSession(pluginToHandle.pluginId, pluginUpdateSource)
           }
         }
+        onSelectionCallback.invoke()
       }
 
     val popup = builder.createPopup()
@@ -1263,7 +1284,7 @@ class PluginDetailsPageComponent private constructor(
       this.text = IdeBundle.message("plugins.configurable.additional.info.plugin.id.label", pluginModel.pluginId)
     }
 
-    updatePluginUpdateSourceUI(pluginModel.pluginId)
+    updatePluginUpdateSourceUI()
 
     val tags = pluginModel.calculateTags(this@PluginDetailsPageComponent.pluginModel.getModel().sessionId)
 
@@ -1374,37 +1395,42 @@ class PluginDetailsPageComponent private constructor(
     }
   }
 
-  private suspend fun updatePluginUpdateSourceUI(pluginId: PluginId?) {
+  internal suspend fun updatePluginUpdateSourceUI(
+    installedPluginForMarketplace: PluginUiModel? = installedDescriptorForMarketplace,
+  ) {
+    val pluginId = plugin?.pluginId
     if (pluginId == null) {
-      myPluginUpdateSourcePanel?.isVisible = false
+      updatePluginUpdateSourceUI(PluginUpdateSourceState(null), null, true)
       return
     }
-
-    val isEnabled = UiPluginManager.getInstance().isPluginUpdateSourceVisibleInUI()
-    if (!isEnabled) {
-      myPluginUpdateSourcePanel?.isVisible = false
-      return
-    }
-
-    val isPluginUpdateSourceVisible = when {
-      !isMarketplace -> true
-      else -> {
-        val (fullyInstalled, status) = UiPluginManager.getInstance().getPluginInstallationState(pluginId)
-        fullyInstalled || status in listOf(PluginStatus.INSTALLED_AND_REQUIRED_RESTART,
-                                           PluginStatus.INSTALLED_WITHOUT_RESTART,
-                                           PluginStatus.UPDATED,
-                                           PluginStatus.UPDATED_WITH_RESTART)
-      }
-    }
-    myPluginUpdateSourcePanel?.isVisible = isPluginUpdateSourceVisible
-    updatePluginUpdateSource(pluginModel.getPluginUpdateSource(pluginId))
+    val state = PluginUpdateSourceState(pluginModel.getPendingPluginUpdateSource(pluginId))
+    updatePluginUpdateSourceUI(state, installedPluginForMarketplace)
   }
 
-  internal fun updatePluginUpdateSource(pluginUpdateSource: PluginUpdateSourceId?) {
+  internal fun updatePluginUpdateSourceUI(
+    pluginUpdateSourceState: PluginUpdateSourceState,
+    installedPluginForMarketplace: PluginUiModel? = installedDescriptorForMarketplace,
+    forceHideUpdateSourceUi: Boolean = false,
+  ) {
+    val currentPlugin = plugin
+    if (currentPlugin == null || forceHideUpdateSourceUi || !UiPluginManager.getInstance().isPluginUpdateSourceVisibleInUI()) {
+      myPluginUpdateSourcePanel?.isVisible = false
+      unknownUpdateSourceBanner?.isVisible = false
+      updateSourceInitializedBanner?.isVisible = false
+      return
+    }
+
+    val pluginUpdateSource = pluginUpdateSourceState.value
     myPluginUpdateSourceId?.apply {
       selectedItem = pluginUpdateSource
       text = pluginUpdateSource.getShortenedPresentableName()
     }
+
+    val isPluginUpdateSourceVisible: Boolean = !isMarketplace || installedPluginForMarketplace != null
+    myPluginUpdateSourcePanel?.isVisible = isPluginUpdateSourceVisible
+    unknownUpdateSourceBanner?.isVisible = isPluginUpdateSourceVisible && pluginUpdateSource == null &&
+                                           !(!isMarketplace && currentPlugin.isBundled && !currentPlugin.allowBundledUpdate)
+    updateSourceInitializedBanner?.isVisible = false
   }
 
   private fun showMarketplaceData(model: PluginUiModel?) {
@@ -1870,8 +1896,17 @@ class PluginDetailsPageComponent private constructor(
     fullRepaint()
   }
 
-  suspend fun finishInstall(success: Boolean, restartRequired: Boolean, pluginId: PluginId? = null, installedPlugin: PluginUiModel? = null) {
-    updatePluginUpdateSourceUI(pluginId)
+  suspend fun finishInstall(
+    success: Boolean,
+    restartRequired: Boolean,
+    pluginId: PluginId? = null,
+    installedPlugin: PluginUiModel? = null,
+  ) {
+    if (pluginId != null) {
+      val state = PluginUpdateSourceState(pluginModel.getPendingPluginUpdateSource(pluginId))
+      updatePluginUpdateSourceUI(state, installedPlugin)
+    }
+
     if (pluginManagerCustomizer != null) {
       updateButtonsAndApplyCustomization()
     }

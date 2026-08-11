@@ -959,7 +959,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     return getErrors(session, pluginId)
   }
 
-  override suspend fun getPluginUpdateSourceId(sessionId: String, pluginId: PluginId): PluginUpdateSourceId? {
+  override suspend fun getPendingPluginUpdateSource(sessionId: String, pluginId: PluginId): PluginUpdateSourceId? {
     val session = findSession(sessionId) ?: return null
     val changedValue = session.pluginUpdateSourceStatesDiff[pluginId]
     if (changedValue != null) return changedValue.newValue.value

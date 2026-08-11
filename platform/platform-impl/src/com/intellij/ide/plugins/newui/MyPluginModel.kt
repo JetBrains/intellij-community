@@ -1071,7 +1071,7 @@ open class MyPluginModel @JvmOverloads constructor(
       forEachDetailPanel { pageComponent ->
         if (!pageComponent.isShowingPlugin(pluginId)) return@forEachDetailPanel
 
-        pageComponent.updatePluginUpdateSource(updateSourceState.value)
+        pageComponent.updatePluginUpdateSourceUI(updateSourceState)
       }
     }
   }

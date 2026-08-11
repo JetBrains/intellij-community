@@ -114,7 +114,7 @@ interface UiPluginManagerController {
 
   suspend fun setPluginsAutoUpdateEnabled(enabled: Boolean)
 
-  suspend fun getPluginUpdateSourceId(sessionId: String, pluginId: PluginId): PluginUpdateSourceId?
+  suspend fun getPendingPluginUpdateSource(sessionId: String, pluginId: PluginId): PluginUpdateSourceId?
   suspend fun setPendingPluginUpdateSourceInSession(sessionId: String, pluginId: PluginId, pluginUpdateSource: PluginUpdateSourceId?)
   suspend fun persistPluginUpdateSource(sessionId: String, pluginId: PluginId, pluginUpdateSource: PluginUpdateSourceId?)
   fun isPluginUpdateSourceVisibleInUI(): Boolean

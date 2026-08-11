@@ -292,8 +292,8 @@ class UiPluginManager {
     }
   }
 
-  suspend fun getPluginUpdateSource(sessionId: String, pluginId: PluginId): PluginUpdateSourceId? {
-    return getController().getPluginUpdateSourceId(sessionId, pluginId)
+  suspend fun getPendingPluginUpdateSource(sessionId: String, pluginId: PluginId): PluginUpdateSourceId? {
+    return getController().getPendingPluginUpdateSource(sessionId, pluginId)
   }
 
   suspend fun setPendingPluginUpdateSourceInSession(sessionId: String, pluginId: PluginId, pluginUpdateSource: PluginUpdateSourceId?) {
