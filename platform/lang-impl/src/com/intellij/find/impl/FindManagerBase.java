@@ -5,6 +5,7 @@ import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.find.FindBundle;
 import com.intellij.find.FindManager;
 import com.intellij.find.FindModel;
+import com.intellij.find.FindModel.SearchContext;
 import com.intellij.find.FindResult;
 import com.intellij.find.FindSettings;
 import com.intellij.find.findUsages.FindUsagesManager;
@@ -14,7 +15,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.KeyWithDefaultValue;
 import com.intellij.openapi.util.registry.Registry;
@@ -22,13 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.patterns.StringPattern;
 import com.intellij.util.containers.IntObjectMap;
 import com.intellij.util.text.CharArrayUtil;
-import com.intellij.util.text.ImmutableCharSequence;
 import com.intellij.util.text.StringSearcher;
-import it.unimi.dsi.fastutil.ints.Int2IntMap;
-import it.unimi.dsi.fastutil.ints.Int2IntRBTreeMap;
-import it.unimi.dsi.fastutil.ints.Int2IntSortedMap;
-import it.unimi.dsi.fastutil.ints.IntComparators;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -103,7 +97,7 @@ public abstract class FindManagerBase extends FindManager {
     return findStringLoop(text, offset, model, file, getFindContextPredicate(model, file, text));
   }
 
-  private FindResult findStringLoop(@NotNull CharSequence text,
+  FindResult findStringLoop(@NotNull CharSequence text,
                                     int offset,
                                     @NotNull FindModel model,
                                     @Nullable VirtualFile file,
@@ -224,22 +218,22 @@ public abstract class FindManagerBase extends FindManager {
 
   private Predicate<FindResult> getFindContextPredicate(@NotNull FindModel model, @Nullable VirtualFile file, @NotNull CharSequence text) {
     if (file == null) return null;
-    FindModel.SearchContext context = model.getSearchContext();
-    if (context == FindModel.SearchContext.ANY || context == FindModel.SearchContext.IN_COMMENTS ||
-        context == FindModel.SearchContext.IN_STRING_LITERALS) {
+    SearchContext context = model.getSearchContext();
+    if (context == SearchContext.ANY || context == SearchContext.IN_COMMENTS || context == SearchContext.IN_STRING_LITERALS) {
       return null;
     }
 
-    ThreadLocal<SoftReference<FindManagerBase.FindExceptCommentsOrLiteralsData>> data;
+    ThreadLocal<SoftReference<FindExceptCommentsOrLiteralsData>> data;
     synchronized (model) {
       data = model.getUserData(ourExceptCommentsOrLiteralsDataKey);
       assert data != null;
     }
 
-    SoftReference<FindManagerBase.FindExceptCommentsOrLiteralsData> currentThreadDataRef = data.get();
-    FindManagerBase.FindExceptCommentsOrLiteralsData currentThreadData = currentThreadDataRef == null ? null : currentThreadDataRef.get();
+    SoftReference<FindExceptCommentsOrLiteralsData> currentThreadDataRef = data.get();
+    FindExceptCommentsOrLiteralsData currentThreadData = currentThreadDataRef == null ? null : currentThreadDataRef.get();
     if (currentThreadData == null || !currentThreadData.isAcceptableFor(model, file, text)) {
-      data.set(new SoftReference<>(currentThreadData = FindManagerBase.FindExceptCommentsOrLiteralsData.create(file, model, text, this)));
+      currentThreadData = FindExceptCommentsOrLiteralsData.create(file, model, text, this);
+      data.set(new SoftReference<>(currentThreadData));
     }
     return currentThreadData;
   }
@@ -349,76 +343,6 @@ public abstract class FindManagerBase extends FindManager {
     return new MalformedReplacementStringException(message, e);
   }
 
-
-  private record FindExceptCommentsOrLiteralsData(@NotNull VirtualFile myFile,
-                                                  @NotNull FindModel myFindModel,
-                                                  @NotNull CharSequence myText,
-                                                  @NotNull Int2IntSortedMap mySkipRangesSet) implements Predicate<FindResult> {
-    @Contract("_, _, _, _ -> new")
-    static @NotNull FindExceptCommentsOrLiteralsData create(@NotNull VirtualFile file,
-                                                            @NotNull FindModel model,
-                                                            @NotNull CharSequence text,
-                                                            @NotNull FindManagerBase manager) {
-      Int2IntSortedMap skipRangesSet = new Int2IntRBTreeMap(IntComparators.OPPOSITE_COMPARATOR);
-
-      if (model.isExceptComments() || model.isExceptCommentsAndStringLiterals()) {
-        addRanges(file, model, text, skipRangesSet, FindModel.SearchContext.IN_COMMENTS, manager);
-      }
-
-      if (model.isExceptStringLiterals() || model.isExceptCommentsAndStringLiterals()) {
-        addRanges(file, model, text, skipRangesSet, FindModel.SearchContext.IN_STRING_LITERALS, manager);
-      }
-
-      return new FindExceptCommentsOrLiteralsData(file, model.clone(), ImmutableCharSequence.asImmutable(text), skipRangesSet);
-    }
-
-    private static void addRanges(@NotNull VirtualFile file,
-                                  @NotNull FindModel model,
-                                  @NotNull CharSequence text,
-                                  @NotNull Int2IntSortedMap result,
-                                  @NotNull FindModel.SearchContext searchContext,
-                                  @NotNull FindManagerBase manager) {
-      FindModel clonedModel = model.clone();
-      clonedModel.setSearchContext(searchContext);
-      clonedModel.setForward(true);
-      int offset = 0;
-
-      while (true) {
-        FindResult customResult = manager.findStringLoop(text, offset, clonedModel, file, null);
-        if (!customResult.isStringFound()) break;
-        result.put(customResult.getStartOffset(), customResult.getEndOffset());
-        offset = Math.max(customResult.getEndOffset(), offset + 1); // avoid loop for zero size reg exps matches
-        if (offset >= text.length()) break;
-      }
-    }
-
-    boolean isAcceptableFor(@NotNull FindModel model, @NotNull VirtualFile file, @NotNull CharSequence text) {
-      return Comparing.equal(myFile, file) &&
-             myFindModel.equals(model) &&
-             myText.length() == text.length()
-        ;
-    }
-
-    @Override
-    public boolean test(@Nullable FindResult input) {
-      if (input == null || !input.isStringFound()) {
-        return true;
-      }
-      Int2IntSortedMap map = mySkipRangesSet.tailMap(input.getStartOffset());
-      for (Int2IntMap.Entry e : map.int2IntEntrySet()) {
-        // [e.key, e.value] intersect with [input.start, input.end]
-        int start = e.getIntKey();
-        int end = e.getIntValue();
-        if (start <= input.getStartOffset() && (input.getStartOffset() <= end || end >= input.getEndOffset())) {
-          return false;
-        }
-        if (end <= input.getStartOffset()) {
-          break;
-        }
-      }
-      return true;
-    }
-  }
 
   public @NotNull FindUsagesManager getFindUsagesManager() {
     return myFindUsagesManager;
