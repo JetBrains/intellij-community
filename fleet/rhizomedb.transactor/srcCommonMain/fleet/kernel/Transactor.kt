@@ -33,6 +33,7 @@ import fleet.util.async.use
 import fleet.util.channels.channels
 import fleet.util.channels.consumeAll
 import fleet.util.channels.consumeEach
+import fleet.util.channels.use
 import fleet.util.logging.KLogger
 import fleet.util.logging.KLoggers
 import kotlinx.coroutines.CancellationException
@@ -539,12 +540,15 @@ fun transactor(
             mutableDbSource.close(x)
           }
         }.use {
-          try {
-            cc(transactor)
-          }
-          finally {
-            Transactor.logger.info { "shutting down kernel $transactor" }
-            priorityDispatchChannel.close(); backgroundDispatchChannel.close()
+          backgroundDispatchChannel.use {
+            priorityDispatchChannel.use {
+              try {
+                cc(transactor)
+              }
+              finally {
+                Transactor.logger.info { "shutting down kernel $transactor" }
+              }
+            }
           }
         }
       }
