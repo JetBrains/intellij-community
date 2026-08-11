@@ -24,6 +24,20 @@ Write one for every change except the mechanical ones (typo, import, format) —
 Say why the change was made and what was decided; the diff already shows what changed.
 A requested suffix such as `IJ-MR-100` goes in its own trailing paragraph.
 
+## Safe message input
+
+Pass a multiline commit message through stdin with `-F -` and a quoted heredoc:
+
+```bash
+git commit -F - <<'EOF'
+IDEA-12345 concise subject
+
+Explain why the change was made and what was decided.
+EOF
+```
+
+Do not stage commit messages in `/tmp`, `/private/tmp`, or another path outside the workspace. That can require an extra filesystem-access approval and leaves a plaintext artifact behind. If a reusable draft is genuinely needed, keep it under the repository's gitignored `out/` directory, for example `out/commit-message.txt`.
+
 ## Before writing
 
 1. `git status --short` and `git diff --stat` for scope.
