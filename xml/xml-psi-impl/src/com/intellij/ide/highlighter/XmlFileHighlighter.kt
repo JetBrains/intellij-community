@@ -10,7 +10,6 @@ import com.intellij.openapi.editor.XmlHighlighterColors
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.extensions.ExtensionPointName.Companion.create
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase
 import com.intellij.openapi.progress.Cancellation
@@ -53,18 +52,21 @@ import com.intellij.psi.xml.XmlTokenType.XML_START_TAG_START
 import com.intellij.psi.xml.XmlTokenType.XML_TAG_CHARACTERS
 import com.intellij.psi.xml.XmlTokenType.XML_TAG_END
 import com.intellij.psi.xml.XmlTokenType.XML_TAG_NAME
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.MultiMap
+import com.intellij.util.containers.nullize
+import java.lang.invoke.MethodHandles
+import java.lang.invoke.VarHandle
 
 open class XmlFileHighlighter
 @JvmOverloads
-constructor(
-  private val isDtd: Boolean = false,
-  private val isXHtml: Boolean = false,
-) : SyntaxHighlighterBase() {
+constructor(val isDtd: Boolean = false, val isXHtml: Boolean = false) : SyntaxHighlighterBase() {
   private object Holder {
-    val ourMap: MultiMap<IElementType, TextAttributesKey> = MultiMap.create()
+    @JvmStatic
+    val ourMap: AttributeArrayMapStorage
 
     init {
+      val ourMap: MultiMap<IElementType, TextAttributesKey> = MultiMap.create()
       ourMap.putValue(XML_DATA_CHARACTERS, XmlHighlighterColors.XML_TAG_DATA)
 
       for (type in sequenceOf(XML_COMMENT_START, XML_COMMENT_END, XML_COMMENT_CHARACTERS,
@@ -102,34 +104,7 @@ constructor(
       ourMap.putValue(XML_ENTITY_REF_TOKEN, XmlHighlighterColors.XML_ENTITY_REFERENCE)
 
       ourMap.putValue(XML_BAD_CHARACTER, HighlighterColors.BAD_CHARACTER)
-
-      Cancellation.computeInNonCancelableSection<Unit, Exception> {
-        // PCE in static initializer breaks class initialization
-        registerAdditionalHighlighters(ourMap)
-        EMBEDDED_HIGHLIGHTERS.addExtensionPointListener(EmbeddedTokenHighlighterExtensionPointListener(ourMap), null)
-      }
-    }
-  }
-
-  internal class EmbeddedTokenHighlighterExtensionPointListener(
-    private val myMap: MultiMap<IElementType, TextAttributesKey>,
-  ) : ExtensionPointListener<EmbeddedTokenHighlighter> {
-    override fun extensionAdded(
-      extension: EmbeddedTokenHighlighter,
-      pluginDescriptor: PluginDescriptor,
-    ) {
-      registerAdditionalHighlighters(myMap, extension)
-    }
-
-    override fun extensionRemoved(
-      extension: EmbeddedTokenHighlighter,
-      pluginDescriptor: PluginDescriptor,
-    ) {
-      val attributes = extension.embeddedTokenAttributes
-      for (key in attributes.keySet()) {
-        myMap.remove(key)
-      }
-      registerAdditionalHighlighters(myMap)
+      this.ourMap = createMapAndListenForExtensionChanges(ourMap)
     }
   }
 
@@ -142,34 +117,87 @@ constructor(
   }
 
   override fun getTokenHighlights(tokenType: IElementType): Array<out TextAttributesKey> {
-    synchronized(javaClass) {
-      return Holder.ourMap[tokenType].toTypedArray()
-    }
+    return Holder.ourMap.getOrDefault(tokenType, TextAttributesKey.EMPTY_ARRAY)
   }
 
   companion object {
-    @JvmField
-    val EMBEDDED_HIGHLIGHTERS: ExtensionPointName<EmbeddedTokenHighlighter> = create("com.intellij.embeddedTokenHighlighter")
+    private val EMBEDDED_HIGHLIGHTERS: ExtensionPointName<EmbeddedTokenHighlighter> = ExtensionPointName.create("com.intellij.embeddedTokenHighlighter")
 
-    @JvmStatic
-    fun registerAdditionalHighlighters(
-      map: MultiMap<IElementType, TextAttributesKey>,
-    ) {
-      for (highlighter in EMBEDDED_HIGHLIGHTERS.extensionList) {
-        registerAdditionalHighlighters(map, highlighter)
+    fun createMapAndListenForExtensionChanges(attributes: MultiMap<IElementType, TextAttributesKey>,
+                                              fixer: (Array<TextAttributesKey>) -> Array<TextAttributesKey> = { it }
+    ): AttributeArrayMapStorage {
+      val map = java.util.Map.copyOf(attributes.entrySet().associate { e -> e.key to fixer(e.value.toTypedArray()) })
+      val storage = AttributeArrayMapStorage(map, fixer)
+      return storage
+    }
+  }
+
+  class AttributeArrayMapStorage {
+    @Volatile
+    private var map:Map<IElementType, Array<TextAttributesKey>>
+    /**
+     * we need to update [map] atomically when the [EMBEDDED_HIGHLIGHTERS] extensions change
+     */
+    private val updater: VarHandle = MethodHandles.privateLookupIn(AttributeArrayMapStorage::class.java, MethodHandles.lookup()).findVarHandle(AttributeArrayMapStorage::class.java, "map", Map::class.java)
+
+    constructor(map: Map<IElementType, Array<TextAttributesKey>>, fixer: (Array<TextAttributesKey>) -> Array<TextAttributesKey>) {
+      this.map = map
+      assert (updater.getVolatile(this) === map)
+      Cancellation.computeInNonCancelableSection<Unit, Exception> {
+        // PCE in static initializer breaks class initialization
+        EMBEDDED_HIGHLIGHTERS.point.addExtensionPointListener(EmbeddedTokenHighlighterExtensionPointListener(fixer), true, null)
       }
     }
 
-    private fun registerAdditionalHighlighters(
-      map: MultiMap<IElementType, TextAttributesKey>,
-      highlighter: EmbeddedTokenHighlighter,
+    fun getOrDefault(token: IElementType, defaultValue: Array<out TextAttributesKey>): Array<out TextAttributesKey> {
+      return map.getOrDefault(token, defaultValue)
+    }
+
+    internal fun registerChangedHighlighters(
+      fixer: (Array<TextAttributesKey>) -> Array<TextAttributesKey>,
+      addedAttributes: MultiMap<IElementType, TextAttributesKey>,
+      removedAttributes: MultiMap<IElementType, TextAttributesKey>
     ) {
-      val attributes = highlighter.embeddedTokenAttributes
-      for ((key, value) in attributes.entrySet()) {
-        if (!map.containsKey(key)) {
-          map.putValues(key, value)
+      do {
+        val oldMap = map
+        val relevantOldMap = oldMap.toMutableMap()
+        for ((removedToken, removedAttributes) in removedAttributes.entrySet()) {
+          relevantOldMap.merge(removedToken, TextAttributesKey.EMPTY_ARRAY) { existingAttributes, _->
+            val fixedRemoved = ContainerUtil.newHashSet(*fixer(removedAttributes.toTypedArray()))
+            ContainerUtil.subtract(ContainerUtil.newHashSet(*existingAttributes), fixedRemoved).toTypedArray().nullize()
+          }
         }
+        val newMap = HashMap.newHashMap<IElementType, Array<TextAttributesKey>>(relevantOldMap.size + addedAttributes.size() )
+        for ((key, value) in addedAttributes.entrySet()) {
+          if (!relevantOldMap.containsKey(key)) {
+            newMap.put(key, fixer(value.toTypedArray()))
+          }
+        }
+        if (newMap.isEmpty() && removedAttributes.isEmpty) {
+          break
+        }
+        newMap.putAll(relevantOldMap)
+      } while(!updater.compareAndSet(this, oldMap, java.util.Map.copyOf(newMap)))
+    }
+    /**
+     * listens for [XmlFileHighlighter.EMBEDDED_HIGHLIGHTERS] extensions and updates the [map] with attributes read from new extension set
+     * calls [fixer] on this attributes list before storing it in the map.
+     */
+    private inner class EmbeddedTokenHighlighterExtensionPointListener(
+      private val fixer: (Array<TextAttributesKey>) -> Array<TextAttributesKey>,
+    ) : ExtensionPointListener<EmbeddedTokenHighlighter> {
+      override fun extensionAdded(extension: EmbeddedTokenHighlighter, pluginDescriptor: PluginDescriptor) {
+        registerChangedHighlighters(fixer,
+                                    addedAttributes = extension.embeddedTokenAttributes,
+                                    removedAttributes = MultiMap.empty())
+      }
+
+      override fun extensionRemoved(extension: EmbeddedTokenHighlighter, pluginDescriptor: PluginDescriptor) {
+        registerChangedHighlighters(fixer,
+                                    addedAttributes = MultiMap.empty(),
+                                    removedAttributes = extension.embeddedTokenAttributes)
       }
     }
   }
+
 }

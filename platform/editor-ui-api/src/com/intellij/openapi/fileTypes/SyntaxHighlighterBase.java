@@ -31,19 +31,19 @@ public abstract class SyntaxHighlighterBase implements SyntaxHighlighter {
   }
 
   public static @NotNull TextAttributesKey @NotNull [] pack(@Nullable TextAttributesKey key1, @Nullable TextAttributesKey key2) {
-    if (key1 == null) return pack(key2);
+    if (key1 == null || key1.equals(key2)) return pack(key2);
     if (key2 == null) return pack(key1);
     return new TextAttributesKey[]{key1, key2};
   }
 
   public static @NotNull TextAttributesKey @NotNull [] pack(@NotNull TextAttributesKey @NotNull [] base, @Nullable TextAttributesKey key) {
     assertNoNulls(base);
-    return key == null ? base : ArrayUtil.append(base, key, TextAttributesKey.ARRAY_FACTORY);
+    return key == null || ArrayUtil.contains(key,base) ? base : ArrayUtil.append(base, key, TextAttributesKey.ARRAY_FACTORY);
   }
 
   public static @NotNull TextAttributesKey @NotNull [] pack(@Nullable TextAttributesKey key, @NotNull TextAttributesKey @NotNull [] base) {
     assertNoNulls(base);
-    return key == null ? base : ArrayUtil.prepend(key, base, TextAttributesKey.ARRAY_FACTORY);
+    return key == null || ArrayUtil.contains(key,base) ? base : ArrayUtil.prepend(key, base, TextAttributesKey.ARRAY_FACTORY);
   }
 
   public static @NotNull TextAttributesKey @NotNull [] pack(@NotNull TextAttributesKey @NotNull [] base, @Nullable TextAttributesKey t1, @Nullable TextAttributesKey t2) {

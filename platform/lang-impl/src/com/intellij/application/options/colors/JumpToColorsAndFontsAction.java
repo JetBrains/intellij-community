@@ -46,6 +46,7 @@ import org.jetbrains.annotations.VisibleForTesting;
 import javax.swing.JList;
 import java.awt.Color;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -204,11 +205,7 @@ public final class JumpToColorsAndFontsAction extends DumbAwareAction {
         HighlighterIterator iterator = highlighter.createIterator(selection.getStartOffset());
         while (!iterator.atEnd()) {
           IElementType type = iterator.getTokenType();
-          for (TextAttributesKey key : type == null ? TextAttributesKey.EMPTY_ARRAY : syntaxHighlighter.getTokenHighlights(type)) {
-            if (key != null) {
-              keys.add(key);
-            }
-          }
+          keys.addAll(Arrays.asList(type == null ? TextAttributesKey.EMPTY_ARRAY : syntaxHighlighter.getTokenHighlights(type)));
           if (iterator.getEnd() >= selection.getEndOffset()) break;
           iterator.advance();
         }
