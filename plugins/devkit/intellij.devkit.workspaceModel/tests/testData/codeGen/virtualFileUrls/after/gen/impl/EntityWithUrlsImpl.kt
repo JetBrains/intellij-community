@@ -5,7 +5,6 @@ import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
@@ -14,7 +13,6 @@ import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
-import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
@@ -57,30 +55,7 @@ return emptyList()
 }
 internal class Builder(result: EntityWithUrlsData?): ModifiableWorkspaceEntityBase<EntityWithUrls, EntityWithUrlsData>(result), EntityWithUrlsBuilder{
 internal constructor(): this(EntityWithUrlsData())
-override fun applyToBuilder(builder: MutableEntityStorage){
-if (this.diff != null){
-if (existsInBuilder(builder)){
-this.diff = builder
-return
-}
-else{
-error("Entity EntityWithUrls is already created in a different builder")
-}
-}
-this.diff = builder
-addToBuilder()
-this.id = getEntityData().createEntityId()
-// After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
-// Builder may switch to snapshot at any moment and lock entity data to modification
-this.currentEntityData = null
-index(this, "simpleUrl", this.simpleUrl)
-index(this, "nullableUrl", this.nullableUrl)
-index(this, "listOfUrls", this.listOfUrls)
-// Process linked entities that are connected without a builder
-processLinkedEntities(builder)
-checkInitialization()
-}
-private fun checkInitialization(){
+override fun checkInitialization(){
 val _diff = diff
 if (!getEntityData().isEntitySourceInitialized()){
 error("Field WorkspaceEntity#entitySource should be initialized")
@@ -113,6 +88,11 @@ if (this.nullableUrl != dataSource?.nullableUrl) this.nullableUrl = dataSource.n
 if (this.listOfUrls != dataSource.listOfUrls) this.listOfUrls = dataSource.listOfUrls.toMutableList()
 if (this.dataClassWithUrl != dataSource.dataClassWithUrl) this.dataClassWithUrl = dataSource.dataClassWithUrl
 updateChildToParentReferences(parents)
+}
+override fun index(){
+index(this, "simpleUrl", this.simpleUrl)
+index(this, "nullableUrl", this.nullableUrl)
+index(this, "listOfUrls", this.listOfUrls)
 }
 override var entitySource: EntitySource
 get() = getEntityData().entitySource
@@ -179,21 +159,8 @@ lateinit var dataClassWithUrl: DataClassWithUrl
 internal fun isSimpleUrlInitialized(): Boolean = ::simpleUrl.isInitialized
 internal fun isListOfUrlsInitialized(): Boolean = ::listOfUrls.isInitialized
 internal fun isDataClassWithUrlInitialized(): Boolean = ::dataClassWithUrl.isInitialized
-override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<EntityWithUrls>{
-val modifiable = EntityWithUrlsImpl.Builder(null)
-modifiable.diff = diff
-modifiable.id = createEntityId()
-return modifiable
-}
-override fun createEntity(snapshot: EntityStorageInstrumentation): EntityWithUrls{
-val entityId = createEntityId()
-return snapshot.initializeEntity(entityId){
-val entity = EntityWithUrlsImpl(this)
-entity.snapshot = snapshot
-entity.id = entityId
-entity
-}
-}
+override fun newInstance(): EntityWithUrls = EntityWithUrlsImpl(this)
+override fun newBuilderInstance(): ModifiableWorkspaceEntityBase<EntityWithUrls, *> = EntityWithUrlsImpl.Builder(null)
 override fun getMetadata(): EntityMetadata{
 return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.workspaceModel.test.api.EntityWithUrls") as EntityMetadata
 }

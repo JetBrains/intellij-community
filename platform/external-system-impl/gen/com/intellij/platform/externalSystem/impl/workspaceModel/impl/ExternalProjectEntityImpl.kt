@@ -10,14 +10,12 @@ import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
-import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -49,28 +47,7 @@ internal class ExternalProjectEntityImpl(private val dataSource: ExternalProject
     ModifiableWorkspaceEntityBase<ExternalProjectEntity, ExternalProjectEntityData>(result), ExternalProjectEntityBuilder {
     internal constructor() : this(ExternalProjectEntityData())
 
-    override fun applyToBuilder(builder: MutableEntityStorage) {
-      if (this.diff != null) {
-        if (existsInBuilder(builder)) {
-          this.diff = builder
-          return
-        }
-        else {
-          error("Entity ExternalProjectEntity is already created in a different builder")
-        }
-      }
-      this.diff = builder
-      addToBuilder()
-      this.id = getEntityData().createEntityId()
-// After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
-// Builder may switch to snapshot at any moment and lock entity data to modification
-      this.currentEntityData = null
-// Process linked entities that are connected without a builder
-      processLinkedEntities(builder)
-      checkInitialization()
-    }
-
-    private fun checkInitialization() {
+    override fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -115,23 +92,8 @@ internal class ExternalProjectEntityImpl(private val dataSource: ExternalProject
 internal class ExternalProjectEntityData : WorkspaceEntityData<ExternalProjectEntity>() {
   lateinit var externalProjectPath: String
   internal fun isExternalProjectPathInitialized(): Boolean = ::externalProjectPath.isInitialized
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<ExternalProjectEntity> {
-    val modifiable = ExternalProjectEntityImpl.Builder(null)
-    modifiable.diff = diff
-    modifiable.id = createEntityId()
-    return modifiable
-  }
-
-  override fun createEntity(snapshot: EntityStorageInstrumentation): ExternalProjectEntity {
-    val entityId = createEntityId()
-    return snapshot.initializeEntity(entityId) {
-      val entity = ExternalProjectEntityImpl(this)
-      entity.snapshot = snapshot
-      entity.id = entityId
-      entity
-    }
-  }
-
+  override fun newInstance(): ExternalProjectEntity = ExternalProjectEntityImpl(this)
+  override fun newBuilderInstance(): ModifiableWorkspaceEntityBase<ExternalProjectEntity, *> = ExternalProjectEntityImpl.Builder(null)
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.platform.externalSystem.impl.workspaceModel.ExternalProjectEntity") as EntityMetadata
   }

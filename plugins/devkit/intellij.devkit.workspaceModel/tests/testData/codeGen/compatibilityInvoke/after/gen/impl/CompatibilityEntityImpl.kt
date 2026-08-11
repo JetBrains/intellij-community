@@ -13,7 +13,6 @@ import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
-import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.workspaceModel.test.api.CompatibilityEntity
@@ -49,27 +48,7 @@ return emptyList()
 }
 internal class Builder(result: CompatibilityEntityData?): ModifiableWorkspaceEntityBase<CompatibilityEntity, CompatibilityEntityData>(result), CompatibilityEntity.Builder{
 internal constructor(): this(CompatibilityEntityData())
-override fun applyToBuilder(builder: MutableEntityStorage){
-if (this.diff != null){
-if (existsInBuilder(builder)){
-this.diff = builder
-return
-}
-else{
-error("Entity CompatibilityEntity is already created in a different builder")
-}
-}
-this.diff = builder
-addToBuilder()
-this.id = getEntityData().createEntityId()
-// After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
-// Builder may switch to snapshot at any moment and lock entity data to modification
-this.currentEntityData = null
-// Process linked entities that are connected without a builder
-processLinkedEntities(builder)
-checkInitialization()
-}
-private fun checkInitialization(){
+override fun checkInitialization(){
 val _diff = diff
 if (!getEntityData().isEntitySourceInitialized()){
 error("Field WorkspaceEntity#entitySource should be initialized")
@@ -127,21 +106,8 @@ var version: Int = 0
 lateinit var name: String
 var isSimple: Boolean = false
 internal fun isNameInitialized(): Boolean = ::name.isInitialized
-override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<CompatibilityEntity>{
-val modifiable = CompatibilityEntityImpl.Builder(null)
-modifiable.diff = diff
-modifiable.id = createEntityId()
-return modifiable
-}
-override fun createEntity(snapshot: EntityStorageInstrumentation): CompatibilityEntity{
-val entityId = createEntityId()
-return snapshot.initializeEntity(entityId){
-val entity = CompatibilityEntityImpl(this)
-entity.snapshot = snapshot
-entity.id = entityId
-entity
-}
-}
+override fun newInstance(): CompatibilityEntity = CompatibilityEntityImpl(this)
+override fun newBuilderInstance(): ModifiableWorkspaceEntityBase<CompatibilityEntity, *> = CompatibilityEntityImpl.Builder(null)
 override fun getMetadata(): EntityMetadata{
 return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.workspaceModel.test.api.CompatibilityEntity") as EntityMetadata
 }

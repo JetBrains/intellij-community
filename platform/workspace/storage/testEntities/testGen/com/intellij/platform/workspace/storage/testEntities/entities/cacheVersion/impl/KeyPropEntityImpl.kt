@@ -7,14 +7,12 @@ import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
-import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.KeyPropEntity
@@ -55,29 +53,7 @@ internal class KeyPropEntityImpl(private val dataSource: KeyPropEntityData) : Ke
                                                        KeyPropEntityBuilder {
     internal constructor() : this(KeyPropEntityData())
 
-    override fun applyToBuilder(builder: MutableEntityStorage) {
-      if (this.diff != null) {
-        if (existsInBuilder(builder)) {
-          this.diff = builder
-          return
-        }
-        else {
-          error("Entity KeyPropEntity is already created in a different builder")
-        }
-      }
-      this.diff = builder
-      addToBuilder()
-      this.id = getEntityData().createEntityId()
-// After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
-// Builder may switch to snapshot at any moment and lock entity data to modification
-      this.currentEntityData = null
-      index(this, "url", this.url)
-// Process linked entities that are connected without a builder
-      processLinkedEntities(builder)
-      checkInitialization()
-    }
-
-    private fun checkInitialization() {
+    override fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -102,6 +78,10 @@ internal class KeyPropEntityImpl(private val dataSource: KeyPropEntityData) : Ke
       if (this.text != dataSource.text) this.text = dataSource.text
       if (this.url != dataSource.url) this.url = dataSource.url
       updateChildToParentReferences(parents)
+    }
+
+    override fun index() {
+      index(this, "url", this.url)
     }
 
     override var entitySource: EntitySource
@@ -146,23 +126,8 @@ internal class KeyPropEntityData : WorkspaceEntityData<KeyPropEntity>() {
   lateinit var url: VirtualFileUrl
   internal fun isTextInitialized(): Boolean = ::text.isInitialized
   internal fun isUrlInitialized(): Boolean = ::url.isInitialized
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<KeyPropEntity> {
-    val modifiable = KeyPropEntityImpl.Builder(null)
-    modifiable.diff = diff
-    modifiable.id = createEntityId()
-    return modifiable
-  }
-
-  override fun createEntity(snapshot: EntityStorageInstrumentation): KeyPropEntity {
-    val entityId = createEntityId()
-    return snapshot.initializeEntity(entityId) {
-      val entity = KeyPropEntityImpl(this)
-      entity.snapshot = snapshot
-      entity.id = entityId
-      entity
-    }
-  }
-
+  override fun newInstance(): KeyPropEntity = KeyPropEntityImpl(this)
+  override fun newBuilderInstance(): ModifiableWorkspaceEntityBase<KeyPropEntity, *> = KeyPropEntityImpl.Builder(null)
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.KeyPropEntity") as EntityMetadata
   }

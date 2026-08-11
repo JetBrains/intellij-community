@@ -14,7 +14,6 @@ import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
@@ -24,7 +23,6 @@ import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
-import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.instrumentation
@@ -80,29 +78,7 @@ internal class ContentRootEntityImpl(private val dataSource: ContentRootEntityDa
                                                            ContentRootEntity.Builder {
     internal constructor() : this(ContentRootEntityData())
 
-    override fun applyToBuilder(builder: MutableEntityStorage) {
-      if (this.diff != null) {
-        if (existsInBuilder(builder)) {
-          this.diff = builder
-          return
-        }
-        else {
-          error("Entity ContentRootEntity is already created in a different builder")
-        }
-      }
-      this.diff = builder
-      addToBuilder()
-      this.id = getEntityData().createEntityId()
-// After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
-// Builder may switch to snapshot at any moment and lock entity data to modification
-      this.currentEntityData = null
-      index(this, "url", this.url)
-// Process linked entities that are connected without a builder
-      processLinkedEntities(builder)
-      checkInitialization()
-    }
-
-    private fun checkInitialization() {
+    override fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -165,6 +141,10 @@ internal class ContentRootEntityImpl(private val dataSource: ContentRootEntityDa
       if (this.url != dataSource.url) this.url = dataSource.url
       if (this.excludedPatterns != dataSource.excludedPatterns) this.excludedPatterns = dataSource.excludedPatterns.toMutableList()
       updateChildToParentReferences(parents)
+    }
+
+    override fun index() {
+      index(this, "url", this.url)
     }
 
     override var entitySource: EntitySource
@@ -339,23 +319,8 @@ internal class ContentRootEntityData : WorkspaceEntityData<ContentRootEntity>() 
   lateinit var excludedPatterns: MutableList<String>
   internal fun isUrlInitialized(): Boolean = ::url.isInitialized
   internal fun isExcludedPatternsInitialized(): Boolean = ::excludedPatterns.isInitialized
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<ContentRootEntity> {
-    val modifiable = ContentRootEntityImpl.Builder(null)
-    modifiable.diff = diff
-    modifiable.id = createEntityId()
-    return modifiable
-  }
-
-  override fun createEntity(snapshot: EntityStorageInstrumentation): ContentRootEntity {
-    val entityId = createEntityId()
-    return snapshot.initializeEntity(entityId) {
-      val entity = ContentRootEntityImpl(this)
-      entity.snapshot = snapshot
-      entity.id = entityId
-      entity
-    }
-  }
-
+  override fun newInstance(): ContentRootEntity = ContentRootEntityImpl(this)
+  override fun newBuilderInstance(): ModifiableWorkspaceEntityBase<ContentRootEntity, *> = ContentRootEntityImpl.Builder(null)
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.platform.workspace.jps.entities.ContentRootEntity") as EntityMetadata
   }

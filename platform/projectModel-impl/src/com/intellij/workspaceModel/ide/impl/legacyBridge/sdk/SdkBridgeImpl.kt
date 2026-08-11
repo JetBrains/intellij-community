@@ -34,6 +34,7 @@ import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.InternalEnvironmentName
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.MutableExternalEntityMapping
+import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
@@ -50,6 +51,7 @@ import java.util.function.Function
 
 // SdkBridgeImpl.clone called from com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel.reset
 // So I need to have such implementation and can't use implementation with SymbolicId and searching in storage
+@OptIn(WorkspaceEntityInternalApi::class)
 @ApiStatus.Internal
 class SdkBridgeImpl(
   private var sdkEntityBuilder: SdkEntityBuilder,

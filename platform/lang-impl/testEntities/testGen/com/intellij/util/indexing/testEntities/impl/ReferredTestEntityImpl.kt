@@ -7,14 +7,12 @@ import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
-import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
@@ -53,29 +51,7 @@ internal class ReferredTestEntityImpl(private val dataSource: ReferredTestEntity
     ModifiableWorkspaceEntityBase<ReferredTestEntity, ReferredTestEntityData>(result), ReferredTestEntityBuilder {
     internal constructor() : this(ReferredTestEntityData())
 
-    override fun applyToBuilder(builder: MutableEntityStorage) {
-      if (this.diff != null) {
-        if (existsInBuilder(builder)) {
-          this.diff = builder
-          return
-        }
-        else {
-          error("Entity ReferredTestEntity is already created in a different builder")
-        }
-      }
-      this.diff = builder
-      addToBuilder()
-      this.id = getEntityData().createEntityId()
-// After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
-// Builder may switch to snapshot at any moment and lock entity data to modification
-      this.currentEntityData = null
-      index(this, "file", this.file)
-// Process linked entities that are connected without a builder
-      processLinkedEntities(builder)
-      checkInitialization()
-    }
-
-    private fun checkInitialization() {
+    override fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -99,6 +75,10 @@ internal class ReferredTestEntityImpl(private val dataSource: ReferredTestEntity
       if (this.name != dataSource.name) this.name = dataSource.name
       if (this.file != dataSource.file) this.file = dataSource.file
       updateChildToParentReferences(parents)
+    }
+
+    override fun index() {
+      index(this, "file", this.file)
     }
 
     override var entitySource: EntitySource
@@ -135,23 +115,8 @@ internal class ReferredTestEntityData : WorkspaceEntityData<ReferredTestEntity>(
   lateinit var file: VirtualFileUrl
   internal fun isNameInitialized(): Boolean = ::name.isInitialized
   internal fun isFileInitialized(): Boolean = ::file.isInitialized
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<ReferredTestEntity> {
-    val modifiable = ReferredTestEntityImpl.Builder(null)
-    modifiable.diff = diff
-    modifiable.id = createEntityId()
-    return modifiable
-  }
-
-  override fun createEntity(snapshot: EntityStorageInstrumentation): ReferredTestEntity {
-    val entityId = createEntityId()
-    return snapshot.initializeEntity(entityId) {
-      val entity = ReferredTestEntityImpl(this)
-      entity.snapshot = snapshot
-      entity.id = entityId
-      entity
-    }
-  }
-
+  override fun newInstance(): ReferredTestEntity = ReferredTestEntityImpl(this)
+  override fun newBuilderInstance(): ModifiableWorkspaceEntityBase<ReferredTestEntity, *> = ReferredTestEntityImpl.Builder(null)
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.util.indexing.testEntities.ReferredTestEntity") as EntityMetadata
   }

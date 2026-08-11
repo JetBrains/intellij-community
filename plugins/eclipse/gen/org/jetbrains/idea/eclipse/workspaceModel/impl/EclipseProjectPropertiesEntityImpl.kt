@@ -9,7 +9,6 @@ import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
@@ -19,7 +18,6 @@ import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
-import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.instrumentation
@@ -94,29 +92,7 @@ internal class EclipseProjectPropertiesEntityImpl(private val dataSource: Eclips
     EclipseProjectPropertiesEntityBuilder {
     internal constructor() : this(EclipseProjectPropertiesEntityData())
 
-    override fun applyToBuilder(builder: MutableEntityStorage) {
-      if (this.diff != null) {
-        if (existsInBuilder(builder)) {
-          this.diff = builder
-          return
-        }
-        else {
-          error("Entity EclipseProjectPropertiesEntity is already created in a different builder")
-        }
-      }
-      this.diff = builder
-      addToBuilder()
-      this.id = getEntityData().createEntityId()
-// After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
-// Builder may switch to snapshot at any moment and lock entity data to modification
-      this.currentEntityData = null
-      index(this, "eclipseUrls", this.eclipseUrls)
-// Process linked entities that are connected without a builder
-      processLinkedEntities(builder)
-      checkInitialization()
-    }
-
-    private fun checkInitialization() {
+    override fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -180,6 +156,10 @@ internal class EclipseProjectPropertiesEntityImpl(private val dataSource: Eclips
         dataSource.expectedModuleSourcePlace
       if (this.srcPlace != dataSource.srcPlace) this.srcPlace = dataSource.srcPlace.toMutableMap()
       updateChildToParentReferences(parents)
+    }
+
+    override fun index() {
+      index(this, "eclipseUrls", this.eclipseUrls)
     }
 
     override var entitySource: EntitySource
@@ -332,22 +312,9 @@ internal class EclipseProjectPropertiesEntityData : WorkspaceEntityData<EclipseP
   internal fun isUnknownConsInitialized(): Boolean = ::unknownCons.isInitialized
   internal fun isKnownConsInitialized(): Boolean = ::knownCons.isInitialized
   internal fun isSrcPlaceInitialized(): Boolean = ::srcPlace.isInitialized
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<EclipseProjectPropertiesEntity> {
-    val modifiable = EclipseProjectPropertiesEntityImpl.Builder(null)
-    modifiable.diff = diff
-    modifiable.id = createEntityId()
-    return modifiable
-  }
-
-  override fun createEntity(snapshot: EntityStorageInstrumentation): EclipseProjectPropertiesEntity {
-    val entityId = createEntityId()
-    return snapshot.initializeEntity(entityId) {
-      val entity = EclipseProjectPropertiesEntityImpl(this)
-      entity.snapshot = snapshot
-      entity.id = entityId
-      entity
-    }
-  }
+  override fun newInstance(): EclipseProjectPropertiesEntity = EclipseProjectPropertiesEntityImpl(this)
+  override fun newBuilderInstance(): ModifiableWorkspaceEntityBase<EclipseProjectPropertiesEntity, *> =
+    EclipseProjectPropertiesEntityImpl.Builder(null)
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn("org.jetbrains.idea.eclipse.config.EclipseProjectPropertiesEntity") as EntityMetadata

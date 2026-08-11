@@ -19,6 +19,7 @@ import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.jps.entities.ModuleSourceDependency
 import com.intellij.platform.workspace.jps.entities.modifyModuleEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
 import com.intellij.platform.workspace.storage.entities
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
@@ -134,6 +135,7 @@ class WorkspaceModelJsonDumpTest {
     ) { "Wrong entity source" }
   }
 
+  @OptIn(WorkspaceEntityInternalApi::class)
   private val WorkspaceEntity.data: WorkspaceEntityData<out WorkspaceEntity>
     get() = (this as WorkspaceEntityBase).getData()
 

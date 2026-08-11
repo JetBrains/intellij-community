@@ -10,7 +10,6 @@ import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
@@ -20,7 +19,6 @@ import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
-import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.instrumentation
@@ -62,29 +60,7 @@ internal class ExcludeUrlOrderEntityImpl(private val dataSource: ExcludeUrlOrder
     ModifiableWorkspaceEntityBase<ExcludeUrlOrderEntity, ExcludeUrlOrderEntityData>(result), ExcludeUrlOrderEntity.Builder {
     internal constructor() : this(ExcludeUrlOrderEntityData())
 
-    override fun applyToBuilder(builder: MutableEntityStorage) {
-      if (this.diff != null) {
-        if (existsInBuilder(builder)) {
-          this.diff = builder
-          return
-        }
-        else {
-          error("Entity ExcludeUrlOrderEntity is already created in a different builder")
-        }
-      }
-      this.diff = builder
-      addToBuilder()
-      this.id = getEntityData().createEntityId()
-// After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
-// Builder may switch to snapshot at any moment and lock entity data to modification
-      this.currentEntityData = null
-      index(this, "order", this.order)
-// Process linked entities that are connected without a builder
-      processLinkedEntities(builder)
-      checkInitialization()
-    }
-
-    private fun checkInitialization() {
+    override fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -121,6 +97,10 @@ internal class ExcludeUrlOrderEntityImpl(private val dataSource: ExcludeUrlOrder
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.order != dataSource.order) this.order = dataSource.order.toMutableList()
       updateChildToParentReferences(parents)
+    }
+
+    override fun index() {
+      index(this, "order", this.order)
     }
 
     override var entitySource: EntitySource
@@ -193,23 +173,8 @@ internal class ExcludeUrlOrderEntityImpl(private val dataSource: ExcludeUrlOrder
 internal class ExcludeUrlOrderEntityData : WorkspaceEntityData<ExcludeUrlOrderEntity>() {
   lateinit var order: MutableList<VirtualFileUrl>
   internal fun isOrderInitialized(): Boolean = ::order.isInitialized
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<ExcludeUrlOrderEntity> {
-    val modifiable = ExcludeUrlOrderEntityImpl.Builder(null)
-    modifiable.diff = diff
-    modifiable.id = createEntityId()
-    return modifiable
-  }
-
-  override fun createEntity(snapshot: EntityStorageInstrumentation): ExcludeUrlOrderEntity {
-    val entityId = createEntityId()
-    return snapshot.initializeEntity(entityId) {
-      val entity = ExcludeUrlOrderEntityImpl(this)
-      entity.snapshot = snapshot
-      entity.id = entityId
-      entity
-    }
-  }
-
+  override fun newInstance(): ExcludeUrlOrderEntity = ExcludeUrlOrderEntityImpl(this)
+  override fun newBuilderInstance(): ModifiableWorkspaceEntityBase<ExcludeUrlOrderEntity, *> = ExcludeUrlOrderEntityImpl.Builder(null)
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.platform.workspace.jps.entities.ExcludeUrlOrderEntity") as EntityMetadata
   }
