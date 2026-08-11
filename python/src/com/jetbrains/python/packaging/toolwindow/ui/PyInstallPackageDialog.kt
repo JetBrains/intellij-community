@@ -673,7 +673,9 @@ internal class PyInstallPackageDialog(private val project: Project) : BigPopupUI
     val sdk = packagingService.currentSdk ?: return
     val trace = com.jetbrains.python.TraceContext(title, null)
     val installKey = installKeyOf(target)
-    packagingService.markInstalling(sdk, installKey)
+    // [trace] is the one the spawned process reports (this path calls the manager UI directly), so the
+    // spinner the packages tree shows for this install can open its output on click (PY-91529).
+    packagingService.markInstalling(sdk, installKey, trace.uuid.toString())
     refreshInstallControl()
 
     packagingService.serviceScope.launch {

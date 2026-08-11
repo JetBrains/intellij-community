@@ -36,6 +36,7 @@ import com.jetbrains.python.packaging.toolwindow.model.WorkspaceMember
 import com.jetbrains.python.packaging.toolwindow.model.DependencyGroupNode
 import com.jetbrains.python.packaging.toolwindow.model.UndeclaredPackagesGroup
 import com.jetbrains.python.packaging.toolwindow.packages.tree.renderers.PyPackageTreeCellRenderer
+import com.jetbrains.python.packaging.toolwindow.packages.tree.renderers.TrailingIconKind
 import com.jetbrains.python.packaging.toolwindow.packages.tree.renderers.asInstalledPackageOrNull
 import com.jetbrains.python.packaging.toolwindow.packages.tree.renderers.trailingIconTooltip
 import com.jetbrains.python.packaging.statistics.PyInstallDialogSource
@@ -229,8 +230,14 @@ internal class PyPackagesTree(
 
     val trailingIconX = renderer.trailingIconX
     val trailingIcon = renderer.trailingIcon
+    val trailingIconKind = renderer.trailingIconKind
     val overTrailingIcon = trailingIconX > 0 && trailingIcon != null && relativeX in trailingIconX..(trailingIconX + trailingIcon.iconWidth)
-    return if (overTrailingIcon) pkg.trailingIconTooltip() else null
+    if (!overTrailingIcon) return null
+    return when (trailingIconKind) {
+      TrailingIconKind.PROGRESS -> installSpinnerTooltip(pkg)
+      TrailingIconKind.ACTION -> pkg.trailingIconTooltip()
+      null -> null
+    }
   }
 
   private val hoverHandler = PyPackagesTreeHoverHandler(this)
@@ -360,15 +367,22 @@ internal class PyPackagesTree(
 
     val trailingIconX = renderer.trailingIconX
     val trailingIcon = renderer.trailingIcon
+    val trailingIconKind = renderer.trailingIconKind
     if (trailingIconX > 0 && trailingIcon != null && relativeX in trailingIconX..(trailingIconX + trailingIcon.iconWidth)) {
-      val handled = when (pkg) {
-        is InstalledPackage -> { setSelectionRow(row); handlePackageSelection(pkg); deletePackageInline(pkg); true }
-        is InstallablePackage -> { setSelectionRow(row); handlePackageSelection(pkg); showInstallDialog(pkg); true }
-        is RequirementPackage,
-        is UndeclaredPackagesGroup,
-        is DependencyGroupNode,
-        is WorkspaceMember,
-        is LoadingNode -> false
+      val handled = when (trailingIconKind) {
+        // A spinner is a progress indicator, not the action button whose hit-box it inherited: show the
+        // output of the install it stands for instead of re-opening the install dialog (PY-91529).
+        TrailingIconKind.PROGRESS -> { setSelectionRow(row); handlePackageSelection(pkg); showInstallOutput(pkg); true }
+        TrailingIconKind.ACTION -> when (pkg) {
+          is InstalledPackage -> { setSelectionRow(row); handlePackageSelection(pkg); deletePackageInline(pkg); true }
+          is InstallablePackage -> { setSelectionRow(row); handlePackageSelection(pkg); showInstallDialog(pkg); true }
+          is RequirementPackage,
+          is UndeclaredPackagesGroup,
+          is DependencyGroupNode,
+          is WorkspaceMember,
+          is LoadingNode -> false
+        }
+        null -> false
       }
       if (handled) return true
     }
@@ -397,6 +411,36 @@ internal class PyPackagesTree(
     PyInstallPackageDialog(project).show(initialSearchText = pkg.name)
   }
 
+  /**
+   * Uuid of the trace the install running for [pkg] on the current SDK was started in, or `null` when
+   * nothing is installing or the install carries no trace (see [installSpinnerTooltip]).
+   */
+  private fun installTraceUuid(pkg: DisplayablePackage): String? {
+    val sdk = packagingService.currentSdk ?: return null
+    return packagingService.installTraceUuid(sdk, PyPackagingToolWindowService.packageKey(pkg.name))
+  }
+
+  /**
+   * Opens Python Process Output with the command installing [pkg] preselected. Fire-and-forget: the
+   * query waits for the process to show up — clicking the spinner right after the link can beat the
+   * actual pip / uv launch — and gives up on its own timeout, so there is nothing to await here.
+   */
+  private fun showInstallOutput(pkg: DisplayablePackage) {
+    val traceUuid = installTraceUuid(pkg) ?: return
+    PyPackageCoroutine.launch(project, Dispatchers.Default) {
+      sendProcessOutputQuery(ProcessOutputQuery.OpenToolWindowByTraceUuid(traceUuid))
+    }
+  }
+
+  /**
+   * Tooltip of the running-install spinner: offers the output when the install can be traced back to a
+   * command, otherwise just states what is going on — an install started from the package details pane
+   * has no trace to point at.
+   */
+  private fun installSpinnerTooltip(pkg: DisplayablePackage): String =
+    if (installTraceUuid(pkg) != null) PyBundle.message("python.toolwindow.packages.tooltip.show.install.output")
+    else PyBundle.message("python.packaging.installing.package", pkg.name)
+
   private fun updatePackageToLatest(pkg: InstalledPackage) {
     val versionString = pkg.nextVersion?.presentableText ?: return
     val requirement = pyRequirement(pkg.name, pyRequirementVersionSpec(versionString))
@@ -422,10 +466,13 @@ internal class PyPackagesTree(
     // Reject a repeated click while this package is already installing on this SDK — otherwise every
     // click fires another heavy install coroutine (PY-91529). The renderer greys the link in parallel.
     val key = PyPackagingToolWindowService.packageKey(pkg.name)
-    if (!packagingService.markInstalling(sdk, key)) return
+    // Own the trace rather than letting the service open a nested one: the uuid stored next to the key
+    // has to be the one the spawned pip / uv process reports, or clicking the spinner finds nothing.
+    val trace = TraceContext(PyBundle.message("python.packaging.installing.package", pkg.name), null)
+    if (!packagingService.markInstalling(sdk, key, trace.uuid.toString())) return
     PyPackageCoroutine.launch(project, Dispatchers.IO) {
       try {
-        packagingService.installPackage(installRequest)
+        packagingService.installPackage(installRequest, trace = trace)
       }
       finally {
         packagingService.unmarkInstalling(sdk, key)
