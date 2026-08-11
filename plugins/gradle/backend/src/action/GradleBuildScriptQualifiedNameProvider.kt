@@ -7,10 +7,12 @@ import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemModuleDataIndex
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.jetbrains.plugins.gradle.model.ExternalProject
+import org.jetbrains.plugins.gradle.service.project.GradleModuleDataIndex
 import org.jetbrains.plugins.gradle.service.project.data.ExternalProjectDataCache
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
@@ -83,10 +85,7 @@ class GradleBuildScriptQualifiedNameProvider : QualifiedNameProvider {
 
     private fun looksLikeGradleBuildOrSettingsScript(fileName: String): Boolean {
       if (GradleConstants.KNOWN_GRADLE_FILES.contains(fileName)) return true
-      if (fileName.endsWith(".${GradleConstants.KOTLIN_DSL_SCRIPT_EXTENSION}")) return true
-      if (fileName.endsWith(".${GradleConstants.DECLARATIVE_EXTENSION}")) return true
-      if (fileName.endsWith(".${GradleConstants.EXTENSION}") && !fileName.endsWith(".${GradleConstants.KOTLIN_DSL_SCRIPT_EXTENSION}")) return true
-      return false
+      return GradleConstants.BUILD_FILE_EXTENSIONS.any { fileName.endsWith(".$it") }
     }
 
     private fun canonicalIoFile(file: Path): String = ExternalSystemApiUtil.toCanonicalPath(file.pathString)
