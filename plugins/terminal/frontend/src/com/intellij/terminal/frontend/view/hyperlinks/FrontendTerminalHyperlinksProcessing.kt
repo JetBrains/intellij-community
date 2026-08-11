@@ -5,7 +5,6 @@ import com.intellij.execution.impl.EditorTextDecorationApplier
 import com.intellij.execution.impl.buildHighlighting
 import com.intellij.execution.impl.buildHyperlink
 import com.intellij.execution.impl.buildInlay
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.asContextElement
@@ -105,8 +104,8 @@ private suspend fun processHyperlinks(
   launch(CoroutineName("Output model tracking")) {
     trackOutputModelChanges(outputModel, sessionModel, outputModelChangesTracker, session.inputEventsSink)
   }
-  // Can't use Dispatchers.UI because editor can require locks
-  launch(Dispatchers.EDT + ModalityState.any().asContextElement() + CoroutineName("Results processing")) {
+
+  launch(Dispatchers.UI + ModalityState.any().asContextElement() + CoroutineName("Results processing")) {
     processHyperlinkResults(
       debugName = "Frontend#${session.id.id}",
       outputModel = outputModel,

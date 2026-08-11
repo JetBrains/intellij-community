@@ -10,8 +10,8 @@ import com.intellij.execution.impl.EditorTextDecorationId
 import com.intellij.execution.impl.buildHyperlink
 import com.intellij.execution.impl.createTextDecorationId
 import com.intellij.ide.setToolTipText
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.event.EditorMouseMotionListener
@@ -100,11 +100,10 @@ fun installOsc8HyperlinksProcessing(
   }, coroutineScope.asDisposable())
 
   // The reconciliation reads the model and mutates the editor markup, so it must run
-  // on the EDT and outside the output model's own content-change notification.
+  // on the EDT thread and outside the output model's own content-change notification.
   // Sampling the StateFlow also limits reconciliation to once every DELAY,
   // no matter how many changes arrive in between.
-  // Can't use Dispatchers.UI because the editor markup can require locks.
-  coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement() + CoroutineName("Terminal OSC8 hyperlinks")) {
+  coroutineScope.launch(Dispatchers.UI + ModalityState.any().asContextElement() + CoroutineName("Terminal OSC8 hyperlinks")) {
     observedChanges.sample(DELAY).collect {
       renderer.reconcile()
     }
