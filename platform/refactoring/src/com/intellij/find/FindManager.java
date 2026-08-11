@@ -46,7 +46,7 @@ public abstract class FindManager {
    * model and saves the settings entered by the user into the same model. Does not
    * perform the actual find or replace operation.
    *
-   * @param model the model containing the settings of a find or replace operation.
+   * @param model     the model containing the settings of a find or replace operation.
    * @param okHandler Will be executed after doOkAction
    */
   public abstract void showFindDialog(@NotNull FindModel model, @NotNull Runnable okHandler);
@@ -108,14 +108,16 @@ public abstract class FindManager {
    * @param model  the settings for the search, including the string to find.
    * @return the result of the search.
    */
-  public abstract @NotNull FindResult findString(@NotNull CharSequence text, int offset, @NotNull FindModel model,
-                                        @Nullable VirtualFile findContextFile);
+  public abstract @NotNull FindResult findString(@NotNull CharSequence text,
+                                                 int offset,
+                                                 @NotNull FindModel model,
+                                                 @Nullable VirtualFile findContextFile);
 
   /**
    * Shows a replace prompt dialog for the bad replace operation.
    *
-   * @param model the model containing the settings of the replace operation.
-   * @param title the title of the dialog to show.
+   * @param model     the model containing the settings of the replace operation.
+   * @param title     the title of the dialog to show.
    * @param exception exception from {@link FindManager#getStringToReplace(String, FindModel, int, CharSequence)}
    * @return the exit code of the dialog, as defined by the {@link PromptResult}
    * interface. May be only {@link PromptResult#CANCEL} or {@link PromptResult#SKIP} for bad replace operation
@@ -135,16 +137,16 @@ public abstract class FindManager {
    * Gets the string to replace with, given the specified found string and find/replace
    * settings. Supports case-preserving and regular expression replaces.
    *
-   * @param foundString the found string.
-   * @param model       the search and replace settings, including the replace string.
-   * @param startOffset offset in the source text at which the string was found (matters for regex searches)
+   * @param foundString  the found string.
+   * @param model        the search and replace settings, including the replace string.
+   * @param startOffset  offset in the source text at which the string was found (matters for regex searches)
    * @param documentText source text in which the string was found (matters for regex searches)
    * @return the string to replace the specified found string.
    */
-  public abstract @NlsSafe String getStringToReplace(
-    @NotNull String foundString, @NotNull FindModel model,
-    int startOffset, @NotNull CharSequence documentText
-  ) throws MalformedReplacementStringException;
+  public abstract @NlsSafe String getStringToReplace(@NotNull String foundString,
+                                                     @NotNull FindModel model,
+                                                     int startOffset,
+                                                     @NotNull CharSequence documentText) throws MalformedReplacementStringException;
 
   /**
    * Gets the flag indicating whether the "Find Next" and "Find Previous" actions are
@@ -152,7 +154,7 @@ public abstract class FindManager {
    * available if at least one search was performed in the current IDE session.)
    *
    * @return {@code true} if the actions are available, {@code false} if there is no previous search
-   *         operation to continue.
+   * operation to continue.
    */
   public abstract boolean findWasPerformed();
 
@@ -221,13 +223,14 @@ public abstract class FindManager {
    * @param element the element to find the usages for.
    */
   public abstract void findUsages(@NotNull PsiElement element);
+
   public abstract void findUsagesInScope(@NotNull PsiElement element, @NotNull SearchScope searchScope);
 
   /**
    * Shows the Find Usages dialog (if {@code showDialog} is true} and performs the Find Usages operation for the
    * specified element.
    *
-   * @param element the element to find the usages for.
+   * @param element    the element to find the usages for.
    * @param showDialog true if find usages settings dialog needs to be shown.
    */
   public abstract void findUsages(@NotNull PsiElement element, boolean showDialog);
@@ -246,7 +249,7 @@ public abstract class FindManager {
    *
    * @param editor the editor in which the find is performed.
    * @return {@code true} if the operation was performed (not necessarily found anything),
-   *         {@code false} if an error occurred during the operation.
+   * {@code false} if an error occurred during the operation.
    */
   public abstract boolean findNextUsageInEditor(@NotNull Editor editor);
 
@@ -256,12 +259,13 @@ public abstract class FindManager {
    *
    * @param editor the editor in which the find is performed.
    * @return {@code true} if the operation was performed (not necessarily found anything),
-   *         {@code false} if an error occurred during the operation.
+   * {@code false} if an error occurred during the operation.
    */
   public abstract boolean findPreviousUsageInEditor(@NotNull Editor editor);
 
   @MagicConstant(valuesFromClass = FindManager.PromptResult.class)
-  public @interface PromptResultValue {}
+  public @interface PromptResultValue {
+  }
 
   /**
    * Possible return values for the {@link FindManager#showPromptDialog(FindModel, String)} method.
