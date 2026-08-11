@@ -3,28 +3,23 @@
 
 package org.jetbrains.intellij.build.impl
 
-import org.jetbrains.annotations.TestOnly
 import org.jetbrains.intellij.build.impl.PlatformJarNames.APP_BACKEND_JAR
 import org.jetbrains.intellij.build.productLayout.LIB_MODULE_PREFIX
 
 /**
  * Describes layout of the platform (*.jar files in IDE_HOME/lib directory).
  *
- * By default, it includes all modules specified in [org.jetbrains.intellij.build.productLayout.ProductModulesLayout],
- * all libraries these modules depend on with scope 'Compile' or 'Runtime', and all project libraries from dependencies (with scope 'Compile'
- * or 'Runtime') of plugin modules for plugins which are [org.jetbrains.intellij.build.productLayout.ProductModulesLayout.bundledPluginModules] bundled
- * (or prepared to be [org.jetbrains.intellij.build.productLayout.ProductModulesLayout.pluginModulesToPublish] published) with the product (except
- * project libraries which are explicitly included in layouts of all plugins depending on them by [BaseLayoutSpec.withProjectLibrary]).
+ * It includes all modules specified in [org.jetbrains.intellij.build.productLayout.ProductModulesLayout] and the module libraries they depend on.
+ *
+ * Project libraries are never added implicitly - only the ones declared by [BaseLayoutSpec.withProjectLibrary] are packed.
+ * A project library referenced by a plugin module, but not provided by the platform, fails the build - it must be converted to a content module
+ * (see IJPL-252372).
  */
 class PlatformLayout(@JvmField val descriptorCacheContainer: DescriptorCacheContainer = DescriptorCacheContainer()) : BaseLayout() {
   internal var libAsProductModule: Set<String> = emptySet()
 
   private val projectLibraryToPolicy: MutableMap<String, ProjectLibraryPackagingPolicy> = HashMap()
   private val productModuleOutputFileOverrides: MutableMap<String, String> = HashMap()
-
-  @get:TestOnly
-  val excludedProjectLibraries: Sequence<String>
-    get() = projectLibraryToPolicy.asSequence().filter { it.value == ProjectLibraryPackagingPolicy.EXCLUDE }.map { it.key }
 
   internal enum class ProjectLibraryPackagingPolicy {
     EXCLUDE,

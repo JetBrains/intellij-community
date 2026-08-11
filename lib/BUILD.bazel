@@ -12408,6 +12408,59 @@ jvm_import(
 )
 
 copy_file(
+    name = "com.jetbrains/keychain-4.4.3.jar_copy",
+    src = "@com_jetbrains-keychain-4_4_3_http//file",
+    out = "com.jetbrains/keychain-4.4.3.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.github.hypfvieh/dbus-java-core-4.0.0.jar_copy",
+    src = "@com_github_hypfvieh-dbus-java-core-4_0_0_http//file",
+    out = "com.github.hypfvieh/dbus-java-core-4.0.0.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.github.hypfvieh/dbus-java-transport-native-unixsocket-4.0.0.jar_copy",
+    src = "@com_github_hypfvieh-dbus-java-transport-native-unixsocket-4_0_0_http//file",
+    out = "com.github.hypfvieh/dbus-java-transport-native-unixsocket-4.0.0.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+java_library(
+    name = "libraries-keychain-keychain",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        ":com_jetbrains-keychain-4_4_3_http_import",
+        ":com_github_hypfvieh-dbus-java-core-4_0_0_http_import",
+        ":com_github_hypfvieh-dbus-java-transport-native-unixsocket-4_0_0_http_import",
+    ],
+)
+
+jvm_import(
+    name = "com_jetbrains-keychain-4_4_3_http_import",
+    jar = "@com_jetbrains-keychain-4_4_3_http//file",
+    source_jar = "@com_jetbrains-keychain-4_4_3-sources_http//file",
+)
+
+jvm_import(
+    name = "com_github_hypfvieh-dbus-java-core-4_0_0_http_import",
+    jar = "@com_github_hypfvieh-dbus-java-core-4_0_0_http//file",
+    source_jar = "@com_github_hypfvieh-dbus-java-core-4_0_0-sources_http//file",
+)
+
+jvm_import(
+    name = "com_github_hypfvieh-dbus-java-transport-native-unixsocket-4_0_0_http_import",
+    jar = "@com_github_hypfvieh-dbus-java-transport-native-unixsocket-4_0_0_http//file",
+    source_jar = "@com_github_hypfvieh-dbus-java-transport-native-unixsocket-4_0_0-sources_http//file",
+)
+
+copy_file(
     name = "org.jetbrains.kotlin/kotlin-gradle-plugin-idea-1.9.20-dev-8162.jar_copy",
     src = "@org_jetbrains_kotlin-kotlin-gradle-plugin-idea-1_9_20-dev-8162_http//file",
     out = "org.jetbrains.kotlin/kotlin-gradle-plugin-idea-1.9.20-dev-8162.jar",
@@ -12721,6 +12774,51 @@ jvm_import(
     name = "libraries-kotlinx-serialization-protobuf-kotlinx-serialization-protobuf",
     jar = "@org_jetbrains_kotlinx-kotlinx-serialization-protobuf-jvm-1_9_0_http//file",
     source_jar = "@org_jetbrains_kotlinx-kotlinx-serialization-protobuf-jvm-1_9_0-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.esotericsoftware.kryo/kryo-2.24.0.jar_copy",
+    src = "@com_esotericsoftware_kryo-kryo-2_24_0_http//file",
+    out = "com.esotericsoftware.kryo/kryo-2.24.0.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.esotericsoftware.minlog/minlog-1.2.jar_copy",
+    src = "@com_esotericsoftware_minlog-minlog-1_2_http//file",
+    out = "com.esotericsoftware.minlog/minlog-1.2.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+java_library(
+    name = "libraries-kryo2-_kryo",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        ":com_esotericsoftware_kryo-kryo-2_24_0_http_import",
+        ":com_esotericsoftware_minlog-minlog-1_2_http_import",
+    ],
+)
+
+jvm_import(
+    name = "com_esotericsoftware_kryo-kryo-2_24_0_http_import",
+    jar = "@com_esotericsoftware_kryo-kryo-2_24_0_http//file",
+    source_jar = "@com_esotericsoftware_kryo-kryo-2_24_0-sources_http//file",
+)
+
+jvm_import(
+    name = "com_esotericsoftware_minlog-minlog-1_2_http_import",
+    jar = "@com_esotericsoftware_minlog-minlog-1_2_http//file",
+    source_jar = "@com_esotericsoftware_minlog-minlog-1_2-sources_http//file",
+)
+
+jvm_import(
+    name = "libraries-kryo2-_objenesis",
+    jar = "@org_objenesis-objenesis-3_4_http//file",
+    source_jar = "@org_objenesis-objenesis-3_4-sources_http//file",
     visibility = ["//visibility:public"],
 )
 

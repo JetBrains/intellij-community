@@ -6,7 +6,9 @@ import com.intellij.platform.pluginGraph.PluginId
 import com.intellij.platform.pluginGraph.PluginModuleId
 import com.intellij.platform.pluginGraph.PluginNode
 import com.intellij.platform.pluginGraph.ProductNode
+import com.intellij.platform.pluginGraph.TargetName
 import com.intellij.platform.pluginGraph.contentName
+import org.jetbrains.intellij.build.productLayout.TestPluginSpec
 import org.jetbrains.intellij.build.productLayout.model.error.PluginDescriptorIdConflictError
 import org.jetbrains.intellij.build.productLayout.model.error.ValidationError
 import org.jetbrains.intellij.build.productLayout.pipeline.ComputeContext
@@ -24,18 +26,27 @@ internal object PluginDescriptorIdConflictValidator : PipelineNode {
   override suspend fun execute(ctx: ComputeContext) {
     val model = ctx.model
     ctx.emitErrorsPerProduct(model.pluginGraph) { product ->
-      validateDescriptorIdConflictsForProduct(product, model.pluginGraph)
+      validateDescriptorIdConflictsForProduct(product, model.pluginGraph, model.dslTestPluginsByProduct)
     }
   }
 }
 
+/**
+ * A test plugin sees more than the plugins its product bundles: a DSL test plugin may pull extra production plugins into the run via
+ * `additionalBundledPluginTargetNames` (mirroring the `-Dadditional.modules=` list of its `intellij.yaml` runner). Those plugins own
+ * descriptor IDs at runtime just like bundled ones, so they are checked per test plugin on top of the shared product-bundled owners.
+ */
 private fun validateDescriptorIdConflictsForProduct(
   productV: ProductNode,
   pluginGraph: PluginGraph,
+  dslTestPluginsByProduct: Map<String, List<TestPluginSpec>>,
 ): List<ValidationError> = pluginGraph.query {
   val productName = productV.name()
+  val additionalBundlesByTestPluginId: Map<PluginId, List<TargetName>> = dslTestPluginsByProduct[productName]
+    ?.filter { it.additionalBundledPluginTargetNames.isNotEmpty() }
+    ?.associate { it.pluginId to it.additionalBundledPluginTargetNames }
+    .orEmpty()
   val productionOwners = LinkedHashMap<PluginId, LinkedHashSet<PluginDescriptorIdConflictError.DescriptorOwner>>()
-  val testOwners = LinkedHashMap<PluginId, LinkedHashSet<PluginDescriptorIdConflictError.DescriptorOwner>>()
 
   fun recordPlugin(
     plugin: PluginNode,
@@ -63,26 +74,46 @@ private fun validateDescriptorIdConflictsForProduct(
   }
 
   productV.bundles { plugin -> recordPlugin(plugin, isTest = false, target = productionOwners) }
-  productV.bundlesTest { plugin -> recordPlugin(plugin, isTest = true, target = testOwners) }
 
-  val duplicates = LinkedHashMap<PluginId, List<PluginDescriptorIdConflictError.DescriptorOwner>>()
-  for ((descriptorId, prodOwners) in productionOwners) {
-    val testOwnersForId = testOwners[descriptorId] ?: continue
+  val duplicates = LinkedHashMap<PluginId, LinkedHashSet<PluginDescriptorIdConflictError.DescriptorOwner>>()
+  productV.bundlesTest { testPlugin ->
+    val testOwners = LinkedHashMap<PluginId, LinkedHashSet<PluginDescriptorIdConflictError.DescriptorOwner>>()
+    recordPlugin(testPlugin, isTest = true, target = testOwners)
+    if (testOwners.isEmpty()) {
+      return@bundlesTest
+    }
 
-    val combined = LinkedHashSet<PluginDescriptorIdConflictError.DescriptorOwner>(
-      prodOwners.size + testOwnersForId.size
-    )
-    combined.addAll(prodOwners)
-    combined.addAll(testOwnersForId)
-    duplicates[descriptorId] = combined.sortedWith(
-      compareBy<PluginDescriptorIdConflictError.DescriptorOwner> { it.pluginName.value }
-        .thenBy { it.contentModule?.value ?: "" }
-    )
+    // Plugins this test plugin drags into the run, even though the product does not bundle them.
+    val ownersForTestPlugin = LinkedHashMap(productionOwners)
+    val additionalBundles = testPlugin.pluginIdOrNull?.let { additionalBundlesByTestPluginId[it] }
+    if (additionalBundles != null) {
+      val additionalOwners = LinkedHashMap<PluginId, LinkedHashSet<PluginDescriptorIdConflictError.DescriptorOwner>>()
+      for (targetName in additionalBundles) {
+        val additionalPlugin = plugin(targetName.value) ?: continue
+        recordPlugin(additionalPlugin, isTest = false, target = additionalOwners)
+      }
+      for ((descriptorId, owners) in additionalOwners) {
+        ownersForTestPlugin.computeIfAbsent(descriptorId) { LinkedHashSet() }.addAll(owners)
+      }
+    }
+
+    for ((descriptorId, testOwnersForId) in testOwners) {
+      val prodOwners = ownersForTestPlugin[descriptorId] ?: continue
+      val combined = duplicates.computeIfAbsent(descriptorId) { LinkedHashSet() }
+      combined.addAll(prodOwners)
+      combined.addAll(testOwnersForId)
+    }
   }
 
   if (duplicates.isEmpty()) {
     return emptyList()
   }
 
-  return listOf(PluginDescriptorIdConflictError(context = productName, duplicates = duplicates))
+  val sorted = duplicates.mapValues { (_, owners) ->
+    owners.sortedWith(
+      compareBy<PluginDescriptorIdConflictError.DescriptorOwner> { it.pluginName.value }
+        .thenBy { it.contentModule?.value ?: "" }
+    )
+  }
+  return listOf(PluginDescriptorIdConflictError(context = productName, duplicates = sorted))
 }

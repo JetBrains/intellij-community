@@ -25,6 +25,8 @@ import org.jetbrains.jps.model.module.JpsLibraryDependency
 import org.jetbrains.jps.model.module.JpsModuleDependency
 import org.jetbrains.jps.model.module.JpsModuleReference
 import java.util.SortedSet
+import java.util.TreeMap
+import java.util.TreeSet
 
 private fun addModule(relativeJarPath: String, moduleNames: Sequence<String>, productLayout: ProductModulesLayout, layout: PlatformLayout) {
   layout.withModules(
@@ -85,8 +87,11 @@ internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedS
     "intellij.platform.eel.nioFs",  // NIO bridge for EEL (EelPath <-> Path conversions, EelPathBoundDescriptor)
   ), productLayout = productLayout, layout = layout)
 
-  // todo as content module
+  // todo as content module (IJPL-252372)
+  // see JarPackager.libsUsedInJps - these libraries must be a part of util-8.jar
   layout.withProjectLibraries(sequenceOf(
+    "Log4J",
+    "kotlin-stdlib",
     "slf4j-api",
     "slf4j-jdk14",
   ), UTIL_8_JAR)
@@ -239,10 +244,25 @@ internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedS
 
   // sqlite - used by DB and "import settings" (temporarily)
   layout.alwaysPackToPlugin(listOf("flexmark", "sqlite"))
+  val violations = TreeMap<String, MutableSet<String>>()
   for (item in projectLibrariesUsedByPlugins) {
     val libName = item.libraryName
-    if (!libAsProductModule.contains(libName) && !layout.isProjectLibraryExcluded(libName) && !layout.isLibraryAlwaysPackedIntoPlugin(libName)) {
-      layout.includedProjectLibraries.add(item)
+    if (layout.hasLibrary(libName) ||
+        libAsProductModule.contains(libName) ||
+        layout.isProjectLibraryExcluded(libName) ||
+        layout.isLibraryAlwaysPackedIntoPlugin(libName)) {
+      continue
+    }
+
+    val dependentModules = violations.computeIfAbsent(libName) { TreeSet() }
+    for (modules in item.dependentModules.values) {
+      dependentModules.addAll(modules)
+    }
+  }
+  check(violations.isEmpty()) {
+    "Project libraries used by plugins must be converted to content modules:\n" +
+    violations.entries.joinToString(separator = "\n") { (libraryName, moduleNames) ->
+      "  '$libraryName' used by " + moduleNames.joinToString { "'$it'" }
     }
   }
 

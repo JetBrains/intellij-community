@@ -806,6 +806,7 @@ internal fun testGenerationModel(
   pluginAllowedMissingDependencies: Map<ContentModuleName, Set<ContentModuleName>> = emptyMap(),
   testLibraryAllowedInModule: Map<ContentModuleName, Set<String>> = emptyMap(),
   productAllowedMissing: Map<String, Set<ContentModuleName>> = emptyMap(),
+  dslTestPluginsByProduct: Map<String, List<org.jetbrains.intellij.build.productLayout.TestPluginSpec>> = emptyMap(),
 ): GenerationModel {
   val effectiveOutputProvider = outputProvider ?: stubModuleOutputProvider()
   val effectiveFileUpdater = fileUpdater ?: DeferredFileUpdater(Path.of("."))
@@ -836,7 +837,7 @@ internal fun testGenerationModel(
     generatedArtifactWritePolicy = GeneratedArtifactWritePolicy(generationMode, effectiveFileUpdater),
     scope = GlobalScope,
     pluginGraph = pluginGraph,
-    dslTestPluginsByProduct = emptyMap(),
+    dslTestPluginsByProduct = dslTestPluginsByProduct,
     dslTestPluginDependencyChains = emptyMap(),
     dslTestPluginSuppressionUsages = emptyList(),
     productAllowedMissing = productAllowedMissing,

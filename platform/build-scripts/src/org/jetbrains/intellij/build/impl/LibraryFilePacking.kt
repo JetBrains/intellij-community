@@ -24,11 +24,15 @@ private val agentLibrariesNotForcedInSeparateJars = listOf(
   "code-prompt-agents"
 )
 
+/**
+ * Libraries that have to stay standalone jar files: agents are attached by path at runtime, and `-rt` / `maven-` jars are loaded by
+ * external processes. Objenesis is deliberately absent - it is an ordinary library, and hoisting it out of the content module that wraps it
+ * left that module's jar empty, so every module depending on the wrapper failed to resolve the classes (IJPL-252372).
+ */
 @Internal
 fun isSeparateLibraryJar(fileName: String): Boolean {
   return fileName.endsWith("-rt.jar") ||
          fileName.startsWith("byte-buddy-") ||
-         fileName.startsWith("objenesis-") ||
          (fileName.contains("-agent") && agentLibrariesNotForcedInSeparateJars.none { fileName.contains(it) }) ||
          fileName.startsWith("maven-")
 }

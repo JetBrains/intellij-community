@@ -9759,6 +9759,48 @@ http_file(
 )
 
 http_file(
+    name = "com_jetbrains-keychain-4_4_3_http",
+    downloaded_file_path = "keychain-4.4.3.jar",
+    sha256 = "8e1186cccf455e34775c35cc39c690d0064922570ce799c63ac409210d17e8cc",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/keychain/4.4.3/keychain-4.4.3.jar",
+)
+
+http_file(
+    name = "com_github_hypfvieh-dbus-java-core-4_0_0_http",
+    downloaded_file_path = "dbus-java-core-4.0.0.jar",
+    sha256 = "b082a52ee22be4a01ed24d8212135c1632c53dabf1b962f2552fd8b4ea9eb2da",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/hypfvieh/dbus-java-core/4.0.0/dbus-java-core-4.0.0.jar",
+)
+
+http_file(
+    name = "com_github_hypfvieh-dbus-java-transport-native-unixsocket-4_0_0_http",
+    downloaded_file_path = "dbus-java-transport-native-unixsocket-4.0.0.jar",
+    sha256 = "13baa50e0808c237b11ab31e9a50af65a12f0f14c511b4e4b3377a13c31e32db",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/hypfvieh/dbus-java-transport-native-unixsocket/4.0.0/dbus-java-transport-native-unixsocket-4.0.0.jar",
+)
+
+http_file(
+    name = "com_jetbrains-keychain-4_4_3-sources_http",
+    downloaded_file_path = "keychain-4.4.3-sources.jar",
+    sha256 = "14c84f4136bcf18f2a8491a6a9110476cacea0b0b7155e39530533afec5ebdaa",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/keychain/4.4.3/keychain-4.4.3-sources.jar",
+)
+
+http_file(
+    name = "com_github_hypfvieh-dbus-java-core-4_0_0-sources_http",
+    downloaded_file_path = "dbus-java-core-4.0.0-sources.jar",
+    sha256 = "8961bfdb9107a7d4ed138415a339c6d8d191e2267058dc376f886a9232eac3ea",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/hypfvieh/dbus-java-core/4.0.0/dbus-java-core-4.0.0-sources.jar",
+)
+
+http_file(
+    name = "com_github_hypfvieh-dbus-java-transport-native-unixsocket-4_0_0-sources_http",
+    downloaded_file_path = "dbus-java-transport-native-unixsocket-4.0.0-sources.jar",
+    sha256 = "c41d6cc9e1509ead8d729090cbae0737ec9e69a41507155f0df5943858f6c914",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/hypfvieh/dbus-java-transport-native-unixsocket/4.0.0/dbus-java-transport-native-unixsocket-4.0.0-sources.jar",
+)
+
+http_file(
     name = "org_jetbrains_kotlin-kotlin-gradle-plugin-idea-1_9_20-dev-8162_http",
     downloaded_file_path = "kotlin-gradle-plugin-idea-1.9.20-dev-8162.jar",
     sha256 = "8d1af87632d95148f122a9fa0ae2903c19ee6fab7d01e017f76e0d2c9a022c20",
@@ -10036,6 +10078,34 @@ http_file(
     downloaded_file_path = "kotlinx-serialization-protobuf-jvm-1.9.0-sources.jar",
     sha256 = "63d88633e89e5cc37d84ff21e57a73ad28710b3ff143fd13b16694dfbd0c73f9",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-serialization-protobuf-jvm/1.9.0/kotlinx-serialization-protobuf-jvm-1.9.0-sources.jar",
+)
+
+http_file(
+    name = "com_esotericsoftware_kryo-kryo-2_24_0_http",
+    downloaded_file_path = "kryo-2.24.0.jar",
+    sha256 = "7e56b32c635058f9aa2820f88919ab702d029cbcd15285da9992e36cc0ae52f2",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/esotericsoftware/kryo/kryo/2.24.0/kryo-2.24.0.jar",
+)
+
+http_file(
+    name = "com_esotericsoftware_minlog-minlog-1_2_http",
+    downloaded_file_path = "minlog-1.2.jar",
+    sha256 = "a678cb1aa8f5d03d901c992c75741841d98a9bc3d55dad02e84d65315c4e60f2",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/esotericsoftware/minlog/minlog/1.2/minlog-1.2.jar",
+)
+
+http_file(
+    name = "com_esotericsoftware_kryo-kryo-2_24_0-sources_http",
+    downloaded_file_path = "kryo-2.24.0-sources.jar",
+    sha256 = "617593f9253ee4246db001641630359df8a8ed9f306a1590e54d6cc091b37439",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/esotericsoftware/kryo/kryo/2.24.0/kryo-2.24.0-sources.jar",
+)
+
+http_file(
+    name = "com_esotericsoftware_minlog-minlog-1_2-sources_http",
+    downloaded_file_path = "minlog-1.2-sources.jar",
+    sha256 = "7c9f5c5b4a541ed9669de73bdc8afbade8cf45e2bbe36c1bd420f74533eedaa8",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/esotericsoftware/minlog/minlog/1.2/minlog-1.2-sources.jar",
 )
 
 http_file(

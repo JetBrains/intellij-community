@@ -508,6 +508,7 @@ libraries/junit6-launcher
 libraries/junit6-params
 libraries/jvm-native-trusted-roots
 libraries/jzlib
+libraries/keychain
 libraries/kotlin/gradle-plugin-idea
 libraries/kotlin/gradle-plugin-idea-proto
 libraries/kotlin/reflect
@@ -534,6 +535,7 @@ libraries/kotlinx/serialization/cbor
 libraries/kotlinx/serialization/core
 libraries/kotlinx/serialization/json
 libraries/kotlinx/serialization/protobuf
+libraries/kryo2
 libraries/kryo5
 libraries/ktor/client
 libraries/ktor/client-cio
