@@ -19,7 +19,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.terminal.block.reworked.TerminalUsageLocalStorage
 import org.jetbrains.plugins.terminal.session.impl.TerminalSession
 import org.jetbrains.plugins.terminal.session.impl.dto.KeyEventProcessingResultDto
@@ -87,11 +86,11 @@ open class TerminalKeyEventsHandlerImpl(
         LOG.trace { "Key event consumed and buffered until session is ready: ${e.original}" }
       }
       else if (processKeyEventResult(processKeyEvent(e.original, session), e)) {
+        editor.selectionModel.removeSelection(true)
+        syncEditorCaretWithModel(editor, outputModel)
         e.original.consume()
         LOG.trace { "Key event consumed: ${e.original}" }
       }
-      // Keep editor/UI state in sync with the original user input even if session processing is replayed later.
-      syncEditorCaretWithModel(editor, outputModel)
       afterKeyEvent(event)
     }
     catch (ex: Exception) {
@@ -119,12 +118,12 @@ open class TerminalKeyEventsHandlerImpl(
         LOG.trace { "Key event consumed and buffered until session is ready: ${e.original}" }
       }
       else if (processKeyEventResult(processKeyEvent(e.original, session), e)) {
+        editor.selectionModel.removeSelection(true)
+        syncEditorCaretWithModel(editor, outputModel)
         e.original.consume()
         ignoreNextKeyTypedEvent = true
         LOG.trace { "Key event consumed: ${e.original}" }
       }
-      // Keep editor/UI state in sync with the original user input even if session processing is replayed later.
-      syncEditorCaretWithModel(editor, outputModel)
       afterKeyEvent(event)
     }
     catch (ex: Exception) {
