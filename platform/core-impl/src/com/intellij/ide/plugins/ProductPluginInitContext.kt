@@ -125,6 +125,9 @@ class ProductPluginInitContext(
     defaultShouldIncludeContentModulesForDependsEdgeTarget(resolvedTarget)
 
   override fun runConfigurationDuringStartup(candidateSubset: UnambiguousPluginSet) {
+    if (checkEssentialPlugins && candidateSubset.resolvePluginId(CORE_ID) == null) {
+      throw EssentialPluginMissingException(listOf("$CORE_ID (platform prefix: ${System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY)})"))
+    }
     thirdPartyPluginsWithoutConsentCheckResult = checkThirdPartyPluginsPrivacyConsent(candidateSubset)
     thirdPartyPluginsWithoutConsentCheckResult?.let { result ->
       if (result.privacyNoteAccepted != null) {

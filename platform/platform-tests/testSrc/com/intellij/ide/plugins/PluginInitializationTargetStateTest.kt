@@ -14,9 +14,11 @@ import com.intellij.platform.testFramework.plugins.installAt
 import com.intellij.platform.testFramework.plugins.module
 import com.intellij.platform.testFramework.plugins.plugin
 import com.intellij.platform.testFramework.plugins.pluginAlias
+import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.TestLoggerFactory
 import com.intellij.testFramework.rules.InMemoryFsExtension
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
@@ -57,6 +59,7 @@ class PluginInitializationTargetStateTest {
     productBuildNumber: BuildNumber = BuildNumber.fromString("241.0")!!,
     explicitPluginSubsetToLoad: Set<PluginId>? = null,
     disablePluginLoadingCompletely: Boolean = false,
+    startupConfiguration: (UnambiguousPluginSet) -> Unit = {},
   ): PluginInitializationContext {
     return object : PseudoProductTestPluginInitContext() {
       override val productBuildNumber: BuildNumber = productBuildNumber
@@ -68,6 +71,7 @@ class PluginInitializationTargetStateTest {
       override val environmentConfiguredModules: Map<PluginModuleId, PluginInitializationContext.EnvironmentConfiguredModuleData> =
         emptyMap()
       override val expiredPlugins: Set<PluginId> = emptySet()
+      override fun runConfigurationDuringStartup(candidateSubset: UnambiguousPluginSet) = startupConfiguration(candidateSubset)
     }
   }
 
@@ -93,12 +97,55 @@ class PluginInitializationTargetStateTest {
     return initContext.computeTargetState(discoveryResult, isStartupInit = false, parentActivity = null)
   }
 
-  private val PluginSet.candidateSubset: UnambiguousPluginSet
-    get() = resolvedPluginSet.candidateSet
-
   private fun PluginSet.getCandidatePlugin(id: String): PluginMainDescriptor {
     return candidateSubset.resolvePluginId(PluginId.getId(id)) as? PluginMainDescriptor
            ?: throw AssertionError("Candidate plugin '$id' not found")
+  }
+
+  @Test
+  fun `core exclusion is logged if startup configuration fails`() {
+    val conflictingId = "duplicate.core.id"
+    plugin(PluginManagerCore.CORE_PLUGIN_ID) {
+      pluginAliases = listOf(conflictingId, conflictingId)
+    }.installAt(pluginsDirPath)
+
+    val startupFailure = IllegalStateException("Core plugin is missing")
+    val initContext = createInitContext(
+      essentialPlugins = setOf(PluginManagerCore.CORE_ID),
+      startupConfiguration = { candidateSubset ->
+        if (candidateSubset.resolvePluginId(PluginManagerCore.CORE_ID) == null) {
+          throw startupFailure
+        }
+      },
+    )
+    val loggedErrors = mutableListOf<Pair<String, Throwable?>>()
+
+    LoggedErrorProcessor.executeWith<Nothing>(object : LoggedErrorProcessor() {
+      override fun processError(
+        category: String,
+        message: String,
+        details: Array<String?>,
+        t: Throwable?,
+      ): MutableSet<Action?> {
+        loggedErrors.add(message to t)
+        return Action.NONE
+      }
+    }) {
+      assertThatThrownBy {
+        initContext.computeTargetState(discoverPlugins(), isStartupInit = true, parentActivity = null)
+      }.isSameAs(startupFailure)
+    }
+
+    assertThat(loggedErrors).hasSize(3)
+    assertThat(loggedErrors[0].first).isEqualTo("Fatal plugin initialization error")
+    assertThat(loggedErrors[0].second).isSameAs(startupFailure)
+    assertThat(loggedErrors[1].first).contains("[plugins] candidate subset:")
+    assertThat(loggedErrors[2].first).contains(
+      "[plugins] excluded from candidate subset:",
+      PluginManagerCore.CORE_PLUGIN_ID,
+      "declares conflicting id",
+      conflictingId,
+    )
   }
 
   @Nested

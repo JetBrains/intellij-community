@@ -526,7 +526,7 @@ object PluginManagerCore {
 
     if (initContext.checkEssentialPlugins) {
       initStagesActivity = initStagesActivity?.endAndStart("check essential plugins")
-      checkEssentialPluginsAreAvailable(resolvedPluginSet, initContext.essentialPlugins, pluginNonLoadReasons, excludedFromCandidateSubset)
+      checkEssentialPluginsAreAvailable(resolvedPluginSet, initContext.essentialPlugins, pluginNonLoadReasons)
     }
 
     if (configureClassLoaders) {
@@ -722,23 +722,9 @@ object PluginManagerCore {
     resolvedPluginSet: ResolvedPluginSet,
     essentialPlugins: Set<PluginId>,
     pluginNonLoadReasons: Map<PluginId, PluginNonLoadReason>,
-    excludedFromCandidateSubset: Map<PluginMainDescriptor, DescriptorExclusionReason>
   ) {
     val corePlugin = resolvedPluginSet.candidateSet.resolvePluginId(CORE_ID)?.getMainDescriptor()
-    if (corePlugin == null) {
-      if (CORE_ID in essentialPlugins) {
-        throw EssentialPluginMissingException(listOf("$CORE_ID (platform prefix: ${System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY)})"))
-          .apply {
-            excludedFromCandidateSubset.asSequence()
-              .firstNotNullOfOrNull { entry ->
-                entry.value.takeIf { entry.key.getMainDescriptor().pluginId == CORE_ID }
-              }
-              ?.let(PluginInitializationDiagnosticUtils::getLogMessageForRootExclusionReason)
-              ?.let { addSuppressed(Exception(it)) }
-          }
-      }
-    }
-    else {
+    if (corePlugin != null) {
       val disabledModulesOfCorePlugin = corePlugin.contentModules.filter { it.moduleLoadingRule.required && !resolvedPluginSet.isResolved(it) }
       if (disabledModulesOfCorePlugin.isNotEmpty()) {
         throw EssentialPluginMissingException(disabledModulesOfCorePlugin.map { it.moduleId.name })

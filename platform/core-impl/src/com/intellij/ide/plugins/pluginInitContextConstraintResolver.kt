@@ -5,6 +5,7 @@ import com.intellij.diagnostic.Activity
 import com.intellij.ide.plugins.PluginDependencyAnalysis.DependencyRef
 import com.intellij.ide.plugins.PluginSetConstraintsResolver.CandidateState.Candidate
 import com.intellij.ide.plugins.PluginSetConstraintsResolver.CandidateState.Excluded
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.util.graph.DFSTBuilder
 import com.intellij.util.graph.OutboundSemiGraph
@@ -22,8 +23,19 @@ fun PluginInitializationContext.computeTargetState(
   val candidateSubset = selectCandidateSubset(discoveryResult, excludedFromCandidateSubset)
 
   if (isStartupInit) {
-    initStagesActivity = initStagesActivity?.endAndStart("startup configuration")
-    runConfigurationDuringStartup(candidateSubset)
+    try {
+      initStagesActivity = initStagesActivity?.endAndStart("startup configuration")
+      runConfigurationDuringStartup(candidateSubset)
+    }
+    catch (e: Exception) {
+      val logger = logger<PluginManagerCore>()
+      logger.error("Fatal plugin initialization error", e)
+      logger.error("[plugins] candidate subset:\n${candidateSubset.plugins.joinToString { it.shortLogDescription }}")
+      logger.error("[plugins] excluded from candidate subset:\n${excludedFromCandidateSubset.entries.joinToString { 
+        "${it.key.shortLogDescription}: ${PluginInitializationDiagnosticUtils.getLogMessageForRootExclusionReason(it.value)}" 
+      }}")
+      throw e
+    }
   }
 
   initStagesActivity = initStagesActivity?.endAndStart("resolve constraints")
