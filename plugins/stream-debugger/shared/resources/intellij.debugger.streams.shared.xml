@@ -23,7 +23,4 @@
       <add-to-group group-id="XDebugger.ToolWindow.TopToolbar3.Extra"/>
     </action>
   </actions>
-  <extensions defaultExtensionNs="com.intellij">
-    <postStartupActivity implementation="com.intellij.debugger.streams.shared.TraceDebuggerInitializationProjectActivity"/>
-  </extensions>
 </idea-plugin>
