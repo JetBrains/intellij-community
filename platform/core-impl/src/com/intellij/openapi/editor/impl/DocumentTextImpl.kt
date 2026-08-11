@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl
 
-import com.intellij.openapi.editor.ex.DocumentSnapshot
+import com.intellij.openapi.editor.ex.DocumentText
 import com.intellij.openapi.editor.ex.DocumentTextPatch
 import com.intellij.openapi.editor.ex.LineIterator
 import com.intellij.openapi.util.TextRange
@@ -11,13 +11,13 @@ import it.unimi.dsi.fastutil.ints.IntArrayList
 import it.unimi.dsi.fastutil.ints.IntList
 import java.lang.ref.SoftReference
 
-internal class DocumentSnapshotImpl private constructor(
+internal class DocumentTextImpl private constructor(
   private val chars: ImmutableCharSequence,
   private val modStamp: Long,
   private val modSequence: Int,
   private var lineSet: LineSet?,                  // non-volatile intentionally, see getLineSet()
   private var textString: SoftReference<String>?, // non-volatile intentionally, see string()
-) : DocumentSnapshot {
+) : DocumentText {
 
   constructor(chars: CharSequence) : this(
     chars = CharArrayUtil.createImmutableCharSequence(chars),
@@ -137,19 +137,19 @@ internal class DocumentSnapshotImpl private constructor(
     return dump.toString()
   }
 
-  override fun withModStamp(newModStamp: Long, incrementModSeq: Boolean): DocumentSnapshot {
+  override fun withModStamp(newModStamp: Long, incrementModSeq: Boolean): DocumentText {
     val newModSequence = if (incrementModSeq) nextModSequence() else modSequence
     if (modStamp == newModStamp && modSequence == newModSequence) {
       return this
     }
-    return DocumentSnapshotImpl(chars, newModStamp, newModSequence, lineSet, textString)
+    return DocumentTextImpl(chars, newModStamp, newModSequence, lineSet, textString)
   }
 
   override fun withClearedLineFlags(
     startLine: Int,
     endLine: Int,
     exceptLines: IntArray,
-  ): DocumentSnapshotImpl {
+  ): DocumentTextImpl {
     if (this.lineSet == null) {
       // there were no text changes if line set is not created yet
       return this
@@ -175,7 +175,7 @@ internal class DocumentSnapshotImpl private constructor(
     return withLineSet(lineSet)
   }
 
-  override fun withMetadata(metadata: DocumentSnapshot): DocumentSnapshot {
+  override fun withMetadata(metadata: DocumentText): DocumentText {
     if (this === metadata) {
       return this
     }
@@ -183,7 +183,7 @@ internal class DocumentSnapshotImpl private constructor(
       return metadata
     }
     // discard metadata.chars, see doc [com.intellij.openapi.editor.ex.DocumentMutator]
-    return DocumentSnapshotImpl(
+    return DocumentTextImpl(
       this.chars,
       metadata.modStamp(),
       metadata.modSequence(),
@@ -192,7 +192,7 @@ internal class DocumentSnapshotImpl private constructor(
     )
   }
 
-  override fun withText(patch: DocumentTextPatch): DocumentSnapshotImpl {
+  override fun withText(patch: DocumentTextPatch): DocumentTextImpl {
     val startOffset = patch.startOffset()
     val endOffset = patch.endOffset()
     val newFragment = patch.newFragment()
@@ -224,7 +224,7 @@ internal class DocumentSnapshotImpl private constructor(
       newLineSet = newLineSet.clearModificationFlags(0, Int.MAX_VALUE)
     }
     val newModSequence = nextModSequence()
-    return DocumentSnapshotImpl(
+    return DocumentTextImpl(
       newText,
       patch.newModStamp(),
       newModSequence,
@@ -233,11 +233,11 @@ internal class DocumentSnapshotImpl private constructor(
     )
   }
 
-  private fun withLineSet(newLineSet: LineSet?): DocumentSnapshotImpl {
+  private fun withLineSet(newLineSet: LineSet?): DocumentTextImpl {
     if (this.lineSet === newLineSet) {
       return this
     }
-    return DocumentSnapshotImpl(chars, modStamp, modSequence, newLineSet, textString)
+    return DocumentTextImpl(chars, modStamp, modSequence, newLineSet, textString)
   }
 
   /**

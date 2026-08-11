@@ -20,7 +20,7 @@ interface DocumentCore {
    * field read, without extra indirection, allocation, or synchronization
    */
   @Contract(pure = true)
-  fun snapshot(): DocumentSnapshot
+  fun snapshot(): DocumentText
 
   /**
    * Returns a live character sequence backed by the current document [snapshot]
@@ -60,7 +60,7 @@ interface DocumentCore {
   /**
    * Returns frozen document based on current [snapshot].
    *
-   * It is a bridge between internal [DocumentSnapshot] and public [DocumentEx]
+   * It is a bridge between internal [DocumentText] and public [DocumentEx]
    */
   @Contract(pure = true)
   fun frozen(): DocumentEx

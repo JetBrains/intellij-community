@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor
 
-import com.intellij.openapi.editor.ex.DocumentSnapshot
+import com.intellij.openapi.editor.ex.DocumentText
 import com.intellij.openapi.editor.ex.DocumentTextPatch
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.testFramework.junit5.TestApplication
@@ -52,7 +52,7 @@ internal class DocumentSnapshotTest {
     assertNotEquals(changed.modSequence(), merged.modSequence())
   }
 
-  private fun snapshot(text: String): DocumentSnapshot {
+  private fun snapshot(text: String): DocumentText {
     return DocumentImpl(text).core.snapshot()
   }
 }

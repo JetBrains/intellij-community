@@ -4,7 +4,7 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.editor.ex.DocumentSnapshot;
+import com.intellij.openapi.editor.ex.DocumentText;
 import com.intellij.openapi.editor.ex.DocumentTextPatch;
 import com.intellij.openapi.editor.ex.EditReadOnlyListener;
 import com.intellij.openapi.editor.ex.LineIterator;
@@ -19,16 +19,16 @@ import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Internal
 public class FrozenDocument implements DocumentEx {
-  private final DocumentSnapshot mySnapshot;
+  private final DocumentText mySnapshot;
 
-  FrozenDocument(@NotNull DocumentSnapshot snapshot) {
+  FrozenDocument(@NotNull DocumentText snapshot) {
     mySnapshot = snapshot;
   }
 
   public @NotNull FrozenDocument applyEvent(@NotNull DocumentEvent event, int newStamp) {
     int originStartOffset = event instanceof DocumentEventImpl ? ((DocumentEventImpl)event).getInitialStartOffset() : event.getOffset();
     int originOldLength = event instanceof DocumentEventImpl ? ((DocumentEventImpl)event).getInitialOldLength() : event.getOldLength();
-    DocumentSnapshot newSnapshot = mySnapshot.withText(DocumentTextPatch.complex(
+    DocumentText newSnapshot = mySnapshot.withText(DocumentTextPatch.complex(
       event.getOffset(),
       event.getOffset() + event.getOldLength(),
       event.getNewFragment(),
@@ -41,7 +41,7 @@ public class FrozenDocument implements DocumentEx {
     return new FrozenDocument(newSnapshot);
   }
 
-  @NotNull DocumentSnapshot getSnapshot() {
+  @NotNull DocumentText getSnapshot() {
     return mySnapshot;
   }
 

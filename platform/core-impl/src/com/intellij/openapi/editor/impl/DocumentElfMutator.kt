@@ -6,7 +6,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.elf.Elf
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.ex.DocumentSettings
-import com.intellij.openapi.editor.ex.DocumentSnapshot
+import com.intellij.openapi.editor.ex.DocumentText
 import com.intellij.openapi.editor.ex.DocumentTextPatch
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl
 import com.intellij.util.DocumentEventUtil
@@ -161,7 +161,7 @@ internal abstract class DocumentElfMutator(
     )
   }
 
-  final override fun updateAndGet(update: UnaryOperator<DocumentSnapshot>): DocumentSnapshot {
+  final override fun updateAndGet(update: UnaryOperator<DocumentText>): DocumentText {
     while (true) {
       val expect = getSnapshotSnapshot()
       val newElf = update.apply(expect.elf)
@@ -174,12 +174,12 @@ internal abstract class DocumentElfMutator(
   }
 
   final override fun changeText(
-    snapshotBefore: DocumentSnapshot,
+    snapshotBefore: DocumentText,
     changeEvent: DocumentEvent,
     patch: DocumentTextPatch,
-  ): DocumentSnapshot {
+  ): DocumentText {
     assertNotNestedModification()
-    val snapshotAfter: DocumentSnapshot
+    val snapshotAfter: DocumentText
     textChangeInProgress = true
     try {
       snapshotAfter = dispatcher.withFiringElfTextUpdate(revertingChangeEvent, changeEvent) {
@@ -207,9 +207,9 @@ internal abstract class DocumentElfMutator(
   }
 
   private fun updateText(
-    snapshotBefore: DocumentSnapshot,
+    snapshotBefore: DocumentText,
     patch: DocumentTextPatch,
-  ): DocumentSnapshot {
+  ): DocumentText {
     return updateAndGet { latest ->
       // modStamp or other metadata could be changed during before-change listeners, should merge it into final snapshot
       val merged = snapshotBefore.withMetadata(latest)
@@ -261,7 +261,7 @@ internal abstract class DocumentElfMutator(
    */
   private fun syncPatch(
     changeEvent: DocumentEvent,
-    snapshotBefore: DocumentSnapshot,
+    snapshotBefore: DocumentText,
     wholeText: ImmutableCharSequence,
     newModStamp: Long,
     clearLineFlags: Boolean,

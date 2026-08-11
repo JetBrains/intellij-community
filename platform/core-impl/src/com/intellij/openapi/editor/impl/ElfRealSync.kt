@@ -3,7 +3,7 @@ package com.intellij.openapi.editor.impl
 
 import com.intellij.openapi.editor.elf.Elf
 import com.intellij.openapi.editor.event.DocumentEvent
-import com.intellij.openapi.editor.ex.DocumentSnapshot
+import com.intellij.openapi.editor.ex.DocumentText
 import com.intellij.openapi.editor.ex.DocumentTextPatch
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl
 import com.intellij.util.DocumentEventUtil
@@ -120,7 +120,7 @@ internal abstract class ElfRealSync(
     return rebasedChanges
   }
 
-  private fun rebaseElfTextChange(change: ElfTextChange, real: DocumentSnapshot, realSpans: List<RealSpan>): ElfTextChange? {
+  private fun rebaseElfTextChange(change: ElfTextChange, real: DocumentText, realSpans: List<RealSpan>): ElfTextChange? {
     val changeEvent = change.changeEvent
     if (DocumentEventUtil.isMoveInsertion(changeEvent) || DocumentEventUtil.isMoveDeletion(changeEvent)) {
       // TODO: Rebase move insertion/deletion as one paired move. Rebasing either half independently can corrupt move offsets/text.
@@ -175,7 +175,7 @@ internal abstract class ElfRealSync(
     )
   }
 
-  private fun computeSnapshotAfter(change: ElfTextChange): DocumentSnapshot {
+  private fun computeSnapshotAfter(change: ElfTextChange): DocumentText {
     return change.snapshotBefore.withText(change.patch)
   }
 

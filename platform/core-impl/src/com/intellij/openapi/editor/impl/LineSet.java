@@ -29,7 +29,7 @@ import java.util.Arrays;
  * Thanks to the final-field semantics (JLS 17.5), a fully constructed instance can be handed to another thread
  * through a data race and still be observed consistently.
  * <p/>
- * {@link DocumentSnapshotImpl} depends on this: it caches a {@code LineSet} in a non-volatile field and reads it
+ * {@link DocumentTextImpl} depends on this: it caches a {@code LineSet} in a non-volatile field and reads it
  * from arbitrary threads without synchronization. Do not break the invariant — never add a non-final field and
  * never mutate {@code myStarts}/{@code myFlags} in place.
  */

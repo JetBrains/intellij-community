@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.openapi.editor.ex.DocumentSnapshot;
+import com.intellij.openapi.editor.ex.DocumentText;
 
 /**
  * Pair of snapshots carried by a magic document core.
@@ -17,10 +17,10 @@ import com.intellij.openapi.editor.ex.DocumentSnapshot;
  */
 final class SnapshotSnapshot {
   /** Snapshot visible through the elf view while the pair is dirty. */
-  final DocumentSnapshot elf;
+  final DocumentText elf;
 
   /** Snapshot visible through the authoritative real document view. */
-  final DocumentSnapshot real;
+  final DocumentText real;
 
   /**
    * Snapshot becomes dirty when
@@ -31,17 +31,17 @@ final class SnapshotSnapshot {
    */
   final boolean isDirty;
 
-  private SnapshotSnapshot(DocumentSnapshot elf, DocumentSnapshot real, boolean isDirty) {
+  private SnapshotSnapshot(DocumentText elf, DocumentText real, boolean isDirty) {
     this.elf = elf;
     this.real = real;
     this.isDirty = isDirty;
   }
 
-  static SnapshotSnapshot newClean(DocumentSnapshot snapshot) {
+  static SnapshotSnapshot newClean(DocumentText snapshot) {
     return new SnapshotSnapshot(snapshot, snapshot, false);
   }
 
-  static SnapshotSnapshot newDirty(DocumentSnapshot elf, DocumentSnapshot real) {
+  static SnapshotSnapshot newDirty(DocumentText elf, DocumentText real) {
     return new SnapshotSnapshot(elf, real, true);
   }
 }

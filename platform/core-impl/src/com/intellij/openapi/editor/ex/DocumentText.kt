@@ -15,7 +15,7 @@ import org.jetbrains.annotations.Contract
  * Metadata is used to track the "timeline" of the text.
  */
 @ApiStatus.Internal
-interface DocumentSnapshot {
+interface DocumentText {
 
   /**
    * @see DocumentEx.getImmutableCharSequence
@@ -121,7 +121,7 @@ interface DocumentSnapshot {
    * @param incrementModSeq whether [modSequence] should be incremented
    */
   @Contract(pure = true)
-  fun withModStamp(newModStamp: Long, incrementModSeq: Boolean): DocumentSnapshot
+  fun withModStamp(newModStamp: Long, incrementModSeq: Boolean): DocumentText
 
   /**
    * Returns snapshot with cleared specified line flags.
@@ -129,7 +129,7 @@ interface DocumentSnapshot {
    * @param endLine is exclusive. Two special values `0` and `Int.MAX_VALUE` ignoring range checks
    */
   @Contract(pure = true)
-  fun withClearedLineFlags(startLine: Int, endLine: Int, exceptLines: IntArray): DocumentSnapshot
+  fun withClearedLineFlags(startLine: Int, endLine: Int, exceptLines: IntArray): DocumentText
 
   /**
    * Returns snapshot with the same text and metadata from the other snapshot.
@@ -138,12 +138,12 @@ interface DocumentSnapshot {
    * @param metadata latest version of the document
    */
   @Contract(pure = true)
-  fun withMetadata(metadata: DocumentSnapshot): DocumentSnapshot
+  fun withMetadata(metadata: DocumentText): DocumentText
 
   /**
    * Returns snapshot with [patch] applied: the result's text is this snapshot's text after replacing
    * `[patch.startOffset, patch.endOffset)` with [DocumentTextPatch.newFragment].
    */
   @Contract(pure = true)
-  fun withText(patch: DocumentTextPatch): DocumentSnapshot
+  fun withText(patch: DocumentTextPatch): DocumentText
 }

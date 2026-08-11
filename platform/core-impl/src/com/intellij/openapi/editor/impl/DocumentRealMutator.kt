@@ -6,7 +6,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.elf.Elf
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.ex.DocumentSettings
-import com.intellij.openapi.editor.ex.DocumentSnapshot
+import com.intellij.openapi.editor.ex.DocumentText
 import com.intellij.openapi.editor.ex.DocumentTextPatch
 import com.intellij.util.concurrency.ThreadingAssertions
 import java.util.function.UnaryOperator
@@ -56,7 +56,7 @@ internal abstract class DocumentRealMutator(
     }
   }
 
-  final override fun updateAndGet(update: UnaryOperator<DocumentSnapshot>): DocumentSnapshot {
+  final override fun updateAndGet(update: UnaryOperator<DocumentText>): DocumentText {
     while (true) {
       val expect = getSnapshotSnapshot()
       val newReal = update.apply(expect.real)
@@ -76,10 +76,10 @@ internal abstract class DocumentRealMutator(
   }
 
   final override fun changeText(
-    snapshotBefore: DocumentSnapshot,
+    snapshotBefore: DocumentText,
     changeEvent: DocumentEvent,
     patch: DocumentTextPatch,
-  ): DocumentSnapshot {
+  ): DocumentText {
     assertNotNestedModification()
     textChangeInProgress = true
     try {
@@ -90,10 +90,10 @@ internal abstract class DocumentRealMutator(
   }
 
   private fun changeAndFireText(
-    snapshotBefore: DocumentSnapshot,
+    snapshotBefore: DocumentText,
     changeEvent: DocumentEvent,
     patch: DocumentTextPatch,
-  ): DocumentSnapshot {
+  ): DocumentText {
     if (elfBarrier()) {
       val snapshotAfterChange = dispatcher.withFiringTextUpdate(changeEvent) {
         updateText(snapshotBefore, patch)
@@ -114,9 +114,9 @@ internal abstract class DocumentRealMutator(
   }
 
   private fun updateText(
-    snapshotBefore: DocumentSnapshot,
+    snapshotBefore: DocumentText,
     patch: DocumentTextPatch,
-  ): DocumentSnapshot {
+  ): DocumentText {
     return updateAndGet { latest ->
       // modStamp or other metadata could be changed during before-change listeners,
       // should merge it into final snapshot

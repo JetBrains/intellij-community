@@ -6,7 +6,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.ex.DocumentSnapshot;
+import com.intellij.openapi.editor.ex.DocumentText;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.ex.ElfCandidate;
 import com.intellij.openapi.editor.impl.EditorDocumentPriorities;
@@ -92,8 +92,8 @@ public final class LogicalPositionCache implements PrioritizedDocumentListener, 
   @Override
   public void documentChanged(@NotNull DocumentEvent event) {
     LogicalLines snapshot = getSnapshot();
-    DocumentSnapshot oldDocument = snapshot.document;
-    DocumentSnapshot newDocument = DocumentInternalUtil.getDocumentSnapshot(event.getDocument());
+    DocumentText oldDocument = snapshot.document;
+    DocumentText newDocument = DocumentInternalUtil.getDocumentSnapshot(event.getDocument());
     int oldEndLine = getAdjustedLineNumber(oldDocument, event.getOffset() + event.getOldLength());
     int newEndLine = getAdjustedLineNumber(newDocument, event.getOffset() + event.getNewLength());
     int startLine = newDocument.lineNumber(event.getOffset());
@@ -147,7 +147,7 @@ public final class LogicalPositionCache implements PrioritizedDocumentListener, 
     return newSnapshot;
   }
 
-  private static int getAdjustedLineNumber(@NotNull DocumentSnapshot document, int offset) {
+  private static int getAdjustedLineNumber(@NotNull DocumentText document, int offset) {
     return document.length() == 0 ? -1 : document.lineNumber(offset);
   }
 

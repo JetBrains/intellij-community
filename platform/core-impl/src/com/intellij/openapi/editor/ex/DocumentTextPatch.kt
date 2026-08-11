@@ -6,7 +6,7 @@ import com.intellij.openapi.editor.impl.SimpleTextPatch
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * Snapshot-update instruction of a text change: the argument of [DocumentSnapshot.withText].
+ * Snapshot-update instruction of a text change: the argument of [DocumentText.withText].
  *
  * [startOffset], [endOffset] and [newFragment] describe the applied replacement.
  * For a whole-text replacement the patch keeps the full range and the caller's untrimmed sequence

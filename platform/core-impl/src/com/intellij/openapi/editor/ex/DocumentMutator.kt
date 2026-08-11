@@ -44,7 +44,7 @@ interface DocumentMutator {
    *
    * Safe to perform concurrently.
    * @param incrementModSequence whether the modSequence should be incremented
-   * @see DocumentSnapshot.withModStamp
+   * @see DocumentText.withModStamp
    */
   fun setModStamp(newModStamp: Long, incrementModSequence: Boolean)
 
@@ -53,7 +53,7 @@ interface DocumentMutator {
    *
    * It is unsafe to perform concurrently with text mutations because line numbers may become outdated causing an exception
    *
-   * @see DocumentSnapshot.withClearedLineFlags
+   * @see DocumentText.withClearedLineFlags
    */
   fun clearLineFlags(startLine: Int, endLine: Int, exceptLines: IntArray)
 

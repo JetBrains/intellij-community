@@ -6,7 +6,7 @@ import com.intellij.openapi.editor.ex.DocumentEventDispatcher
 import com.intellij.openapi.editor.ex.DocumentMutator
 import com.intellij.openapi.editor.ex.RangeMarkerStorage
 import com.intellij.openapi.editor.ex.DocumentSettings
-import com.intellij.openapi.editor.ex.DocumentSnapshot
+import com.intellij.openapi.editor.ex.DocumentText
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater
 import java.util.function.UnaryOperator
 import kotlin.concurrent.Volatile
@@ -15,7 +15,7 @@ import kotlin.concurrent.Volatile
  * Default implementation of [DocumentImpl]
  */
 internal class DocumentCoreImpl private constructor(
-  @Volatile private var snapshot: DocumentSnapshot, // mutable via SNAPSHOT_UPDATER
+  @Volatile private var snapshot: DocumentText, // mutable via SNAPSHOT_UPDATER
   private val settings: DocumentSettings,
   private val dispatcher: DocumentEventDispatcherImpl,
   private val rangeMarkers: RangeMarkerStorage,
@@ -25,7 +25,7 @@ internal class DocumentCoreImpl private constructor(
   private val mutator: DocumentMutator = MutatorImpl()
   @Volatile private var frozen: FrozenDocument? = null
 
-  override fun snapshot(): DocumentSnapshot {
+  override fun snapshot(): DocumentText {
     return snapshot
   }
 
@@ -89,11 +89,11 @@ internal class DocumentCoreImpl private constructor(
   }
 
   private inner class MutatorImpl : DocumentMutatorImpl(settings, dispatcher, guardedBlocks) {
-    override fun getSnapshot(): DocumentSnapshot {
+    override fun getSnapshot(): DocumentText {
       return this@DocumentCoreImpl.snapshot
     }
 
-    override fun updateAndGet(update: UnaryOperator<DocumentSnapshot>): DocumentSnapshot {
+    override fun updateAndGet(update: UnaryOperator<DocumentText>): DocumentText {
       return SNAPSHOT_UPDATER.updateAndGet(this@DocumentCoreImpl, update)
     }
   }
@@ -104,17 +104,17 @@ internal class DocumentCoreImpl private constructor(
       val settings = DocumentSettingsImpl(!forUseInNonAWTThread, acceptSlashR, chars)
       val dispatcher = DocumentEventDispatcherImpl(settings)
       val tree = RangeMarkerStorageImpl(dispatcher)
-      val snapshot = DocumentSnapshotImpl(chars)
+      val snapshot = DocumentTextImpl(chars)
       return DocumentCoreImpl(snapshot, settings, dispatcher, tree)
     }
 
     /**
      * [snapshot] is a performance-critical field, it cannot be replaced with AtomicReference
      */
-    private val SNAPSHOT_UPDATER: AtomicReferenceFieldUpdater<DocumentCoreImpl, DocumentSnapshot> =
+    private val SNAPSHOT_UPDATER: AtomicReferenceFieldUpdater<DocumentCoreImpl, DocumentText> =
       AtomicReferenceFieldUpdater.newUpdater(
         DocumentCoreImpl::class.java,
-        DocumentSnapshot::class.java,
+        DocumentText::class.java,
         "snapshot",
       )
   }

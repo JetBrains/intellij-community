@@ -12,7 +12,7 @@ import com.intellij.openapi.editor.actionSystem.DocCommandGroupId
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.ex.DocumentMutator
 import com.intellij.openapi.editor.ex.DocumentSettings
-import com.intellij.openapi.editor.ex.DocumentSnapshot
+import com.intellij.openapi.editor.ex.DocumentText
 import com.intellij.openapi.editor.ex.DocumentTextPatch
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -28,8 +28,8 @@ internal abstract class DocumentMutatorImpl(
 ) : DocumentMutator {
   @Volatile private var textChangeInProgress = false
 
-  protected abstract fun getSnapshot(): DocumentSnapshot
-  protected abstract fun updateAndGet(update: UnaryOperator<DocumentSnapshot>): DocumentSnapshot
+  protected abstract fun getSnapshot(): DocumentText
+  protected abstract fun updateAndGet(update: UnaryOperator<DocumentText>): DocumentText
 
   override fun setModStamp(newModStamp: Long, incrementModSequence: Boolean) {
     updateAndGet { it.withModStamp(newModStamp, incrementModSequence) }
@@ -183,10 +183,10 @@ internal abstract class DocumentMutatorImpl(
 
   private fun deleteString(
     hostDocument: Document,
-    snapshot: DocumentSnapshot,
+    snapshot: DocumentText,
     startOffset: Int,
     endOffset: Int,
-  ): DocumentSnapshot {
+  ): DocumentText {
     assertBounds(snapshot, startOffset, endOffset)
     assertWriteAccess(hostDocument)
     if (startOffset == endOffset) {
@@ -214,7 +214,7 @@ internal abstract class DocumentMutatorImpl(
 
   private fun replaceString(
     hostDocument: Document,
-    snapshot: DocumentSnapshot,
+    snapshot: DocumentText,
     startOffset: Int,
     endOffset: Int,
     moveOffset: Int,
@@ -222,7 +222,7 @@ internal abstract class DocumentMutatorImpl(
     newModStamp: Long,
     wholeText: Boolean,
     clearLineFlags: Boolean,
-  ): DocumentSnapshot {
+  ): DocumentText {
     assertBounds(snapshot, startOffset, endOffset)
     assertWriteAccess(hostDocument)
     assertValidSeparators(s)
@@ -259,14 +259,14 @@ internal abstract class DocumentMutatorImpl(
 
   private fun changeText(
     hostDocument: Document,
-    snapshotBefore: DocumentSnapshot,
+    snapshotBefore: DocumentText,
     patch: DocumentTextPatch,
     startOffset: Int,
     endOffset: Int,
     oldFragment: CharSequence,
     newFragment: CharSequence,
     wholeTextReplaced: Boolean,
-  ): DocumentSnapshot {
+  ): DocumentText {
     val changeEvent: DocumentEvent = DocumentEventImpl(
       hostDocument,
       startOffset,
@@ -288,12 +288,12 @@ internal abstract class DocumentMutatorImpl(
   }
 
   protected open fun changeText(
-    snapshotBefore: DocumentSnapshot,
+    snapshotBefore: DocumentText,
     changeEvent: DocumentEvent,
     patch: DocumentTextPatch,
-  ): DocumentSnapshot {
+  ): DocumentText {
     assertNotNestedModification()
-    val snapshotAfterChange: DocumentSnapshot
+    val snapshotAfterChange: DocumentText
     textChangeInProgress = true
     try {
       snapshotAfterChange = dispatcher.withFiringTextUpdate(changeEvent) {
@@ -310,7 +310,7 @@ internal abstract class DocumentMutatorImpl(
     return snapshotAfterChange
   }
 
-  private fun trimToSize(hostDocument: Document, snapshot: DocumentSnapshot): DocumentSnapshot {
+  private fun trimToSize(hostDocument: Document, snapshot: DocumentText): DocumentText {
     val bufferSize = settings.cycleBufferSize()
     if (bufferSize > 0 && snapshot.length() > bufferSize) {
       return deleteString(hostDocument, snapshot, 0, snapshot.length() - bufferSize)
@@ -405,7 +405,7 @@ internal abstract class DocumentMutatorImpl(
   }
 
   @Suppress("ConvertTwoComparisonsToRangeCheck")
-  private fun assertBounds(snapshot: DocumentSnapshot, startOffset: Int, endOffset: Int) {
+  private fun assertBounds(snapshot: DocumentText, startOffset: Int, endOffset: Int) {
     val textLength = snapshot.length()
     if (startOffset < 0 || startOffset > textLength) {
       throw IndexOutOfBoundsException("Wrong startOffset: $startOffset; documentLength: $textLength")

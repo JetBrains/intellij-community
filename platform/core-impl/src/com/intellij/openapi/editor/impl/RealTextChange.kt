@@ -2,7 +2,7 @@
 package com.intellij.openapi.editor.impl
 
 import com.intellij.openapi.editor.event.DocumentEvent
-import com.intellij.openapi.editor.ex.DocumentSnapshot
+import com.intellij.openapi.editor.ex.DocumentText
 
 /**
  * Real-document text change recorded while elf and real views are separated.
@@ -12,6 +12,6 @@ import com.intellij.openapi.editor.ex.DocumentSnapshot
  */
 internal class RealTextChange(
   val changeEvent: DocumentEvent,
-  val snapshotAfter: DocumentSnapshot,
+  val snapshotAfter: DocumentText,
   val isInBulkUpdate: Boolean,
 )

@@ -2,9 +2,9 @@
 package com.intellij.util;
 
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.ex.DocumentSnapshot;
+import com.intellij.openapi.editor.ex.DocumentText;
 import com.intellij.openapi.editor.impl.DocumentImpl;
-import com.intellij.openapi.editor.impl.DocumentSnapshotImpl;
+import com.intellij.openapi.editor.impl.DocumentTextImpl;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -69,18 +69,18 @@ public final class DocumentInternalUtil {
     return column;
   }
 
-  public static @NotNull DocumentSnapshot getDocumentSnapshot(@NotNull Document document) {
+  public static @NotNull DocumentText getDocumentSnapshot(@NotNull Document document) {
     if (document instanceof DocumentImpl) {
       return ((DocumentImpl)document).getCore().snapshot();
     }
-    return new DocumentSnapshotImpl(document.getImmutableCharSequence());
+    return new DocumentTextImpl(document.getImmutableCharSequence());
   }
 
-  public static boolean isInsideSurrogatePair(@NotNull DocumentSnapshot snapshot, int offset) {
+  public static boolean isInsideSurrogatePair(@NotNull DocumentText snapshot, int offset) {
     return isSurrogatePair(snapshot, offset - 1);
   }
 
-  public static boolean isSurrogatePair(@NotNull DocumentSnapshot snapshot, int offset) {
+  public static boolean isSurrogatePair(@NotNull DocumentText snapshot, int offset) {
     CharSequence text = snapshot.cachedChars();
     return offset >= 0 &&
            offset + 1 < text.length() &&

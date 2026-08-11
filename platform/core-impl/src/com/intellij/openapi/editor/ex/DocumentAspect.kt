@@ -5,7 +5,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Contract
 
 /**
- * Immutable state attached to [DocumentSnapshot] and rebuilt on every text change to stay consistent with the text.
+ * Immutable state attached to [DocumentText] and rebuilt on every text change to stay consistent with the text.
  *
  * Aspects are identified by [com.intellij.openapi.util.Key] identity.
  * Keep keys in static fields: a garbage-collected key leaves its aspect unreachable and unremovable.
@@ -18,7 +18,7 @@ interface DocumentAspect {
   /**
    * Returns the state of this aspect consistent with the text produced by applying [patch] to [beforeText].
    *
-   * The method runs on the writer thread inside the document mutation producing the next [DocumentSnapshot],
+   * The method runs on the writer thread inside the document mutation producing the next [DocumentText],
    * so implementations must:
    * - be fast: this call is on the critical path of every document change;
    * - not throw: an exception aborts the text change halfway through;
@@ -31,7 +31,7 @@ interface DocumentAspect {
    */
   @Contract(pure = true)
   fun withText(
-    beforeText: DocumentSnapshot,
+    beforeText: DocumentText,
     patch: DocumentTextPatch,
   ): DocumentAspect
 }
