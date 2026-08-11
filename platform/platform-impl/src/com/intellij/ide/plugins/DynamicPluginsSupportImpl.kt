@@ -77,7 +77,7 @@ internal class DynamicPluginsSupportImpl(
     return rwLock.withLock {
       withContext(Dispatchers.Default) {
         if (LOG.isDebugEnabled) {
-          LOG.debug("validating dynamic reconfiguration to $targetState (disabled plugins may appear as unresolved)")
+          LOG.debug("validating dynamic reconfiguration to $targetState")
           PluginInitializationDiagnosticUtils.logExclusionTree(LOG, targetState.resolvedPluginSet)
         }
         reportSequentialProgress { reporter ->
@@ -98,7 +98,7 @@ internal class DynamicPluginsSupportImpl(
         reportSequentialProgress { reporter ->
           val current = getCurrentlyLoadedPluginSet()
           val target = targetState.resolvedPluginSet
-          LOG.info("performing dynamic reconfiguration to $targetState (disabled plugins may appear as unresolved)")
+          LOG.info("performing dynamic reconfiguration to $targetState")
           PluginInitializationDiagnosticUtils.logExclusionTree(LOG, target)
           val sequence = buildTransitionSequence(current, target).also {
             LOG.info(it.getExplanationLogMessage())
