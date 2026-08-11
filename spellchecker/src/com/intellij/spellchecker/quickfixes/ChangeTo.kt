@@ -51,7 +51,7 @@ internal class ChangeTo @JvmOverloads constructor(
   private open inner class ChangeToVariantAction(
     override val index: Int,
     private val tracker: SpellcheckerRateTracker? = null,
-  ) : ChoiceVariantIntentionAction(), HighPriorityAction, EventTrackingIntentionAction {
+  ) : ChoiceVariantIntentionAction(), HighPriorityAction, DumbAware, EventTrackingIntentionAction {
 
     private var suggestion: @NlsSafe String? = null
 

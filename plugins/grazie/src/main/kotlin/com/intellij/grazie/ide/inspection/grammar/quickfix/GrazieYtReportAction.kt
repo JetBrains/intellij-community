@@ -23,6 +23,7 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Iconable
@@ -42,7 +43,7 @@ private val TRIM_REGEX = Regex("^(?:\\s*\\n)+|(?:\\s*\\n)+$")
 private val SUPPORTED_CLASSES = setOf(TypoProblem::class.java, GrazieProblem::class.java, MlecProblem::class.java, TreeProblem::class.java)
 private const val AGREEMENT_KEY = "grazie.report.bug.yt.agreement.accepted"
 
-internal class GrazieYtReportAction(problem: TextProblem) : IntentionAndQuickFixAction(), Iconable {
+internal class GrazieYtReportAction(problem: TextProblem) : IntentionAndQuickFixAction(), Iconable, DumbAware {
   private val naturalLanguage: Language = problem.rule.language
   private val programmingLanguages = problem.text.containingFile.viewProvider.languages
   private val isCloud = seemsCloudConnected()

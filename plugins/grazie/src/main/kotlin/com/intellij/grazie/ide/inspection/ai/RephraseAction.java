@@ -29,6 +29,7 @@ import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
@@ -51,7 +52,7 @@ import java.util.List;
 import static com.intellij.grazie.utils.UtilsKt.ijRange;
 
 @SuppressWarnings("IntentionDescriptionNotFoundInspection")
-public class RephraseAction extends IntentionAndQuickFixAction {
+public class RephraseAction extends IntentionAndQuickFixAction implements DumbAware {
 
   @Override
   public @IntentionName @NotNull String getName() {
