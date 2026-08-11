@@ -376,7 +376,6 @@ class TerminalViewImpl(
     listenPanelSizeChanges()
     listenAlternateBufferSwitch()
     listenApplicationTitleChanges()
-    listenKeyEvents()
 
     refreshVfsOnFocusChange(
       component = terminalPanel,
@@ -571,18 +570,6 @@ class TerminalViewImpl(
         title.change {
           @Suppress("HardCodedStringLiteral")
           applicationTitle = state.windowTitle
-        }
-      }
-    }
-  }
-
-  /** Logic that can be performed asynchronously with typing */
-  private fun listenKeyEvents() {
-    coroutineScope.launch(Dispatchers.UI + CoroutineName("Key events listener")) {
-      keyEventsFlow.collect { e ->
-        if (e.awtEvent.id == KeyEvent.KEY_TYPED) {
-          outputEditor.selectionModel.let { if (it.hasSelection()) it.removeSelection(true) }
-          alternateBufferEditor.selectionModel.let { if (it.hasSelection()) it.removeSelection(true) }
         }
       }
     }

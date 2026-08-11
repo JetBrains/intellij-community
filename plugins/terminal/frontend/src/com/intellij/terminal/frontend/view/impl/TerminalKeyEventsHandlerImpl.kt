@@ -54,6 +54,8 @@ internal open class TerminalKeyEventsHandlerImpl(
     if (!Character.isISOControl(charTyped)) { // keys filtered out here will be processed in processTerminalKeyPressed
       try {
         if (processCharacter(e)) {
+          editor.selectionModel.removeSelection(true)
+          syncEditorCaretWithModel(editor, outputModel)
           e.original.consume()
           LOG.trace { "Key event consumed: ${e.original}" }
         }
@@ -63,7 +65,6 @@ internal open class TerminalKeyEventsHandlerImpl(
       }
     }
 
-    syncEditorCaretWithModel(editor, outputModel)
     check(keyEventsFlow.tryEmit(TerminalKeyEventImpl(e.original, beforeKeyTypedCursorOffset)))
   }
 
@@ -80,6 +81,8 @@ internal open class TerminalKeyEventsHandlerImpl(
       return
     }
     if (processTerminalKeyPressed(e)) {
+      editor.selectionModel.removeSelection(true)
+      syncEditorCaretWithModel(editor, outputModel)
       e.original.consume()
       ignoreNextKeyTypedEvent = true
       LOG.trace { "Key event consumed: ${e.original}" }
@@ -143,9 +146,6 @@ internal open class TerminalKeyEventsHandlerImpl(
     }
     catch (ex: Exception) {
       LOG.error("Error sending pressed key to emulator", ex)
-    }
-    finally {
-      syncEditorCaretWithModel(editor, outputModel)
     }
     return false
   }
