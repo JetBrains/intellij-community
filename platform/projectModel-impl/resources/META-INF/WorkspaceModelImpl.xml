@@ -15,6 +15,7 @@
     <backgroundPostStartupActivity implementation="com.intellij.workspaceModel.ide.impl.VirtualFileUrlsLazyInitializer"/>
     <workspaceModel.fileIndexContributor implementation="com.intellij.workspaceModel.ide.ProjectRootEntityWorkspaceFileIndexContributor"/>
     <workspaceModel.fileIndexContributor implementation="com.intellij.workspaceModel.ide.AutoExcludeWorkspaceFileIndexContributor"/>
+    <workspaceModel.fileIndexContributor implementation="com.intellij.workspaceModel.ide.AutoExcludeInContentRootsWorkspaceFileIndexContributor"/>
   </extensions>
   <applicationListeners>
     <listener class="com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModelSeparationListener"
