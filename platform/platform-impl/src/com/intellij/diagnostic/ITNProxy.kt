@@ -90,11 +90,13 @@ object ITNProxy {
     template["protocol.version"] = "1.1"
     template["user.login"] = "idea_anonymous"
     template["user.password"] = "guest"
-    template["os.cpu.arch"] = if (CpuArch.isEmulated()) "${CpuArch.CURRENT}(emulated)" else "${CpuArch.CURRENT}"
-    template["os.name"] = OS.CURRENT.name
-    template["os.version"] = OS.CURRENT.version()
     template["java.version"] = SystemInfo.JAVA_RUNTIME_VERSION
     template["java.vm.vendor"] = SystemInfo.JAVA_VENDOR
+    template["os.name"] = OS.CURRENT.name
+    template["os.version"] = OS.CURRENT.version()
+    template["os.cpu.arch"] = if (CpuArch.isEmulated()) "${CpuArch.CURRENT}(emulated)" else "${CpuArch.CURRENT}"
+    template["os.cpu.count"] = Runtime.getRuntime().availableProcessors().toString()
+    template["coroutines.default.pool.max.size"] = coroutineDefaultPoolMaxSize().toString()
     template
   }
 
@@ -377,6 +379,15 @@ object ITNProxy {
       append(builder, "plugins.dynamic.unload.attempted", "true")
     }
   }
+
+  /**
+   * The maximum number of threads the Kotlin coroutines `Dispatchers.Default` pool may use, i.e. its parallelism
+   * (kotlinx.coroutines `CORE_POOL_SIZE`). Overridable via the `kotlinx.coroutines.scheduler.core.pool.size` system
+   * property; otherwise defaults to `max(2, availableProcessors)`.
+   */
+  private fun coroutineDefaultPoolMaxSize(): Int =
+    System.getProperty("kotlinx.coroutines.scheduler.core.pool.size")?.trim()?.toIntOrNull()
+    ?: maxOf(2, Runtime.getRuntime().availableProcessors())
 
   private fun append(builder: StringBuilder, key: String, value: String?) {
     if (!value.isNullOrEmpty()) {
