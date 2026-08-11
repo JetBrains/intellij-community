@@ -91,6 +91,8 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : JetBrai
     mavenArtifacts.patchDependencies = { module, dependencies ->
       when {
         JewelMavenArtifacts.isPublishedJewelModule(module) -> JewelMavenArtifacts.patchDependencies(module, dependencies)
+        JewelMavenArtifacts.isPublishedPlatformDependency(module) ->
+          JewelMavenArtifacts.patchPlatformDependencies(module, dependencies)
         else -> dependencies
       }
     }

@@ -21,8 +21,34 @@ import org.jetbrains.jps.model.module.JpsDependencyElement
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleDependency
 import kotlin.io.path.exists
+import kotlin.io.path.name
+import kotlin.io.path.readText
 
 private const val GROUP_ID: String = "org.jetbrains.jewel"
+
+/**
+ * The IJP fork of kotlinx.coroutines, and the stock artifact it is forked from.
+ *
+ * The fork shares the `kotlinx.coroutines.*` packages with the stock artifact but has a different groupId, so
+ * neither Gradle nor Maven can conflict-resolve the two. Consumers get both jars, and whichever one sorts first
+ * on the classpath wins. The fork lags upstream, so when it wins, anything stock added since the fork point is
+ * missing: stock 1.11.0 compiles `runBlocking` to `BuildersKt.runBlockingK` via `@JvmName`, the fork has no such
+ * method, and every `runBlocking` call in a consumer throws `NoSuchMethodError`.
+ *
+ * The fork must never reach standalone consumers. See [JewelMavenArtifacts.patchPlatformDependencies].
+ */
+private const val IJP_COROUTINES_FORK_GROUP: String = "org.jetbrains.intellij.deps.kotlinx"
+private const val STOCK_COROUTINES_GROUP: String = "org.jetbrains.kotlinx"
+
+/** The fork appends this to the stock version it is based on, e.g. `1.10.2-intellij-1` for stock `1.10.2`. */
+private const val IJP_COROUTINES_FORK_VERSION_SUFFIX: String = "-intellij"
+
+/**
+ * Artifact ID prefix used by the upstream coroutines artifacts and by the IJP fork. Matching on it rather than on
+ * [IJP_COROUTINES_FORK_GROUP] also covers a fork that moves to another groupId. This is a best-effort guard: a fork
+ * published under an unrelated artifact ID would still get through.
+ */
+private const val COROUTINES_ARTIFACT_PREFIX: String = "kotlinx-coroutines"
 
 /**
  * Each entry represents a prefix for Platform dependencies which are being published to Maven Central.
@@ -182,6 +208,55 @@ internal object JewelMavenArtifacts {
   private fun MavenArtifactDependency.withTransitiveDependencies(scope: DependencyScope) =
     copy(scope = scope, excludedDependencies = emptyList(), includeTransitiveDeps = true)
 
+  /**
+   * Patches the dependencies of the [isPublishedPlatformDependency] modules, which are consumed outside the IDE
+   * once published to Maven Central.
+   *
+   * These modules depend on the IJP coroutines fork. That is fine in the IDE, where the fork is already on the
+   * platform classpath, but it breaks standalone consumers (see [IJP_COROUTINES_FORK_GROUP]). They only use stock
+   * coroutines API, so the dependency is repointed at the stock artifact: the artifactId is the same in both
+   * groups, and dropping the [IJP_COROUTINES_FORK_VERSION_SUFFIX] suffix gives the stock version the fork is based
+   * on.
+   */
+  fun patchPlatformDependencies(
+    module: JpsModule,
+    dependencies: List<MavenArtifactDependency>,
+  ): List<MavenArtifactDependency> {
+    check(isPublishedPlatformDependency(module))
+    return dependencies.map { dependency ->
+      val coordinates = dependency.coordinates
+      val patched = if (coordinates.groupId == IJP_COROUTINES_FORK_GROUP) {
+        check(coordinates.version.contains(IJP_COROUTINES_FORK_VERSION_SUFFIX)) {
+          "Cannot derive the stock coroutines version from $coordinates: the version does not contain " +
+          "'$IJP_COROUTINES_FORK_VERSION_SUFFIX'. The fork's versioning scheme has changed, so this mapping needs " +
+          "updating; publishing it as-is would point consumers at a $STOCK_COROUTINES_GROUP version that " +
+          "does not exist."
+        }
+        dependency.copy(
+          coordinates = coordinates.copy(
+            groupId = STOCK_COROUTINES_GROUP,
+            version = coordinates.version.substringBefore(IJP_COROUTINES_FORK_VERSION_SUFFIX),
+          )
+        )
+      }
+      else {
+        dependency
+      }
+      checkCoroutinesAreStock(module, patched.coordinates)
+      patched
+    }
+  }
+
+  // Fails the build if [coordinates] is a coroutines artifact from anywhere other than [STOCK_COROUTINES_GROUP].
+  private fun checkCoroutinesAreStock(module: JpsModule, coordinates: MavenCoordinates) {
+    if (!coordinates.artifactId.startsWith(COROUTINES_ARTIFACT_PREFIX)) return
+    check(coordinates.groupId == STOCK_COROUTINES_GROUP) {
+      "The POM for ${module.name} would declare $coordinates, but only $STOCK_COROUTINES_GROUP may provide " +
+      "$COROUTINES_ARTIFACT_PREFIX artifacts. A fork published under any other groupId cannot be conflict-resolved " +
+      "against the stock artifact, so consumers would end up with both jars on the classpath."
+    }
+  }
+
   private fun JpsModule.isTransitiveJewelDependency(coordinates: MavenCoordinates): Boolean {
     val moduleArtifactId = ALL[name] ?: error("Unknown Jewel module: $name")
     val artifactId = coordinates.artifactId
@@ -259,6 +334,28 @@ internal object JewelMavenArtifacts {
       }) {
         "The module $jewelModuleName is expected to have groupId=$GROUP_ID and artifactId=$artifactId: " +
         "${mavenArtifacts.filter { (module) -> module.name == jewelModuleName }}"
+      }
+    }
+    checkNoCoroutinesForkIsPublished(mavenArtifacts)
+  }
+
+  /**
+   * Fails the build if the IJP coroutines fork leaks into a published POM (see [IJP_COROUTINES_FORK_GROUP]).
+   * Consumers only hit that once they package an app, so it is easy to ship by accident.
+   *
+   * This checks the generated POMs rather than the patched dependency lists, so it also catches the fork arriving
+   * transitively through a dependency republished as-is.
+   */
+  private fun checkNoCoroutinesForkIsPublished(mavenArtifacts: Collection<GeneratedMavenArtifacts>) {
+    for ((module, coordinates, files) in mavenArtifacts) {
+      val pomFileName = coordinates.getFileName(packaging = "pom")
+      val pom = files.singleOrNull { it.name == pomFileName }
+      checkNotNull(pom) { "No $pomFileName is generated for the module ${module.name}" }
+      check(!pom.readText().contains(IJP_COROUTINES_FORK_GROUP)) {
+        "The POM of $coordinates declares a dependency on $IJP_COROUTINES_FORK_GROUP. " +
+        "The IJP coroutines fork must not be published to Maven Central: it shares the kotlinx.coroutines.* " +
+        "packages with the stock artifact but uses a different groupId, so consumers get both jars on their " +
+        "classpath and the fork can shadow stock API. See patchPlatformDependencies."
       }
     }
   }
