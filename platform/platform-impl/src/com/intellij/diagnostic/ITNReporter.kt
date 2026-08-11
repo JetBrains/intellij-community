@@ -165,8 +165,17 @@ open class ITNReporter internal constructor(private val postUrl: URI?) : ErrorRe
 
   private fun createReportBean(event: IdeaLoggingEvent, comment: String?, autoReported: Boolean) = ErrorBean(
     event, comment, event.problematicPluginInfo?.pluginId?.idString, event.problematicPluginInfo?.name, event.problematicPluginInfo?.version,
-    IdeaLogger.ourLastActionId, autoReported
+    getLastActionId(event), autoReported
   )
+
+  private fun getLastActionId(event: IdeaLoggingEvent): String? {
+    val throwable = event.throwable
+    if (throwable is Freeze) {
+      return throwable.lastActionId // we must record last action ID before the freeze finished
+    }
+
+    return IdeaLogger.ourLastActionId
+  }
 
   private fun submit(
     project: Project?,

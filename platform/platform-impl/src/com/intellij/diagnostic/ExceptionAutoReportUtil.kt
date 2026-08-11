@@ -189,7 +189,7 @@ object ExceptionAutoReportUtil {
   }
 
   @TestOnly
-  fun createFreezeLogMessage(): LogMessage = LogMessage(Freeze(null, emptyList()), null, emptyList())
+  fun createFreezeLogMessage(): LogMessage = LogMessage(Freeze(null, null, emptyList()), null, emptyList())
 }
 
 internal class ReporterIdForEAAutoReporters : AboutPopupDescriptionProvider {

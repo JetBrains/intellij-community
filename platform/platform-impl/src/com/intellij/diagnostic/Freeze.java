@@ -10,9 +10,11 @@ import java.util.List;
 
 final class Freeze extends Throwable implements PluginCauseException {
   private final @Nullable PluginId problematicPluginId;
+  private final @Nullable String lastActionId;
 
-  Freeze(@Nullable PluginId id, @NotNull List<StackTraceElement> stacktraceCommonPart) {
-    problematicPluginId = id;
+  Freeze(@Nullable PluginId id, @Nullable String lastActionId, @NotNull List<StackTraceElement> stacktraceCommonPart) {
+    this.problematicPluginId = id;
+    this.lastActionId = lastActionId;
     setStackTrace(stacktraceCommonPart.toArray(new StackTraceElement[0]));
   }
 
@@ -20,6 +22,10 @@ final class Freeze extends Throwable implements PluginCauseException {
   @Nullable
   public PluginId getProblematicPluginId() {
     return problematicPluginId;
+  }
+
+  @Nullable String getLastActionId() {
+    return lastActionId;
   }
 
   @Override

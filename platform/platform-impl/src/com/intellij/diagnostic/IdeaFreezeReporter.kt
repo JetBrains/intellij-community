@@ -7,6 +7,7 @@ import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginUtil
 import com.intellij.idea.AppMode
+import com.intellij.idea.IdeaLogger
 import com.intellij.internal.DebugAttachDetector
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationManagerEx
@@ -349,7 +350,7 @@ ${if (finished) "" else if (appClosing) "IDE is closing. " else "IDE KILLED! "}S
     val report = createReportAttachment(durationInSeconds, reportText)
     val pluginId = analyzeFreeze(attachments)
 
-    return LogMessage(Freeze(pluginId, commonStack), message, attachments + report)
+    return LogMessage(Freeze(pluginId, IdeaLogger.ourLastActionId, commonStack), message, attachments + report)
   }
 
   private fun analyzeFreeze(attachments: List<Attachment>): PluginId? {
@@ -578,7 +579,7 @@ internal class UnfinishedFreezeReportService(val coroutineScope: CoroutineScope)
             val stacktraceCommonPart = deserializeStackTrace(readText())
             if (stacktraceCommonPart.isNotEmpty()) {
               // Always rebuild a fresh Freeze from the stored common stacktrace text.
-              throwable = Freeze(null, stacktraceCommonPart)
+              throwable = Freeze(null, null, stacktraceCommonPart)
             }
           }
           catch (_: Exception) {
