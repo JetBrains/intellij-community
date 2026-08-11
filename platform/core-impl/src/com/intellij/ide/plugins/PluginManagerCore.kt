@@ -526,7 +526,7 @@ object PluginManagerCore {
 
     if (initContext.checkEssentialPlugins) {
       initStagesActivity = initStagesActivity?.endAndStart("check essential plugins")
-      checkEssentialPluginsAreAvailable(resolvedPluginSet, initContext.essentialPlugins, pluginNonLoadReasons)
+      checkEssentialPluginsAreAvailable(resolvedPluginSet, initContext.essentialPlugins)
     }
 
     if (configureClassLoaders) {
@@ -721,28 +721,30 @@ object PluginManagerCore {
   private fun checkEssentialPluginsAreAvailable(
     resolvedPluginSet: ResolvedPluginSet,
     essentialPlugins: Set<PluginId>,
-    pluginNonLoadReasons: Map<PluginId, PluginNonLoadReason>,
   ) {
-    val corePlugin = resolvedPluginSet.candidateSet.resolvePluginId(CORE_ID)?.getMainDescriptor()
-    if (corePlugin != null) {
-      val disabledModulesOfCorePlugin = corePlugin.contentModules.filter { it.moduleLoadingRule.required && !resolvedPluginSet.isResolved(it) }
-      if (disabledModulesOfCorePlugin.isNotEmpty()) {
-        throw EssentialPluginMissingException(disabledModulesOfCorePlugin.map { it.moduleId.name })
-      }
-    }
-    var missing: MutableList<Pair<String, PluginNonLoadReason?>>? = null
+    var missing: MutableList<Pair<PluginId, DescriptorExclusionReason?>>? = null
     for (id in essentialPlugins) {
-      val descriptor = resolvedPluginSet.candidateSet.resolvePluginId(id)
-      if (descriptor == null || resolvedPluginSet.isExcluded(descriptor)) {
-        if (missing == null) {
-          missing = ArrayList()
-        }
-        missing.add(id.idString to pluginNonLoadReasons[id])
+      val module = resolvedPluginSet.candidateSet.resolvePluginId(id)
+      if (module != null && resolvedPluginSet.isResolved(module)) {
+        continue
       }
+      if (missing == null) {
+        missing = ArrayList()
+      }
+      val reason = module?.let { resolvedPluginSet.getExclusionReason(it) }
+      missing.add(id to reason)
     }
     if (missing != null) {
-      throw EssentialPluginMissingException(missing.map { it.first })
-        .apply { missing.forEach { (_, reason) -> if (reason != null) addSuppressed(Exception(reason.logMessage)) } }
+      throw EssentialPluginMissingException(missing.map { it.first.idString })
+        .apply {
+          val exclusionTraces = missing.mapNotNull { (_, reason) ->
+            reason?.let { PluginInitializationDiagnosticUtils.buildSingleExclusionChainMessage(resolvedPluginSet, reason.descriptor) }
+          }
+          if (exclusionTraces.isNotEmpty()) {
+            val message = "Exclusion traces:\n${exclusionTraces.joinToString("\n")}"
+            addSuppressed(object : Throwable(message, null, true, false) {})
+          }
+        }
     }
   }
 
