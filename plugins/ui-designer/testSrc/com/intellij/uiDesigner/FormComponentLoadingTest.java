@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner;
 
+import com.intellij.ide.trustedProjects.TrustedProjects;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -67,6 +68,8 @@ public class FormComponentLoadingTest extends JavaCodeInsightFixtureTestCase {
   protected void tearDown() throws Exception {
     try {
       System.clearProperty(MARKER_PROPERTY);
+      // the trusted state is stored per path in an application level service, do not leave an explicit one behind
+      TrustedProjects.setProjectTrusted(getProject(), true);
     }
     catch (Throwable e) {
       addSuppressedException(e);
@@ -137,6 +140,67 @@ public class FormComponentLoadingTest extends JavaCodeInsightFixtureTestCase {
     JComponent delegee = component.getDelegee();
     Object alignment = delegee.getClass().getMethod("getAlignment").invoke(delegee);
     assertEquals("RIGHT", String.valueOf(alignment));
+  }
+
+  /**
+   * IDEA-392515: rendering a form creates instances of the component classes it names, which runs their static
+   * initializers and constructors and has the {@code Introspector} instantiate their {@code BeanInfo}. In a project
+   * the user has not trusted, none of that may happen - the components become placeholders instead.
+   */
+  public void testUntrustedProjectDoesNotCreateProjectComponents() throws Exception {
+    TrustedProjects.setProjectTrusted(getProject(), false);
+    VirtualFile formFile = copyForm("beanInfoSafety/TestHostileComponent.form");
+
+    LoaderFactory loaderFactory = LoaderFactory.getInstance(getProject());
+    LwRootContainer lwRootContainer = loaderFactory.readRootContainer(formFile, VfsUtilCore.loadText(formFile));
+    RadRootContainer rootContainer =
+      XmlReader.createRoot(new MyModuleProvider(getModule()), lwRootContainer, loaderFactory.getLoader(formFile), null);
+
+    if (Files.exists(myMarkerFile)) {
+      fail("Component code was executed for an untrusted project: " + Files.readString(myMarkerFile).trim());
+    }
+
+    RadComponent component = ((RadContainer)rootContainer.getComponent(0)).getComponent(0);
+    assertInstanceOf(component, RadErrorComponent.class);
+  }
+
+  /**
+   * A container element names its class too, and that class can be one of the project as well. The placeholder has
+   * to take the place of that container the same way it does for an atomic component - the whole form failing to
+   * read would leave the user with nothing to edit.
+   */
+  public void testUntrustedProjectDoesNotCreateProjectContainers() throws Exception {
+    TrustedProjects.setProjectTrusted(getProject(), false);
+    VirtualFile formFile = copyForm("beanInfoSafety/TestHostileScrollPane.form");
+
+    LoaderFactory loaderFactory = LoaderFactory.getInstance(getProject());
+    LwRootContainer lwRootContainer = loaderFactory.readRootContainer(formFile, VfsUtilCore.loadText(formFile));
+    RadRootContainer rootContainer =
+      XmlReader.createRoot(new MyModuleProvider(getModule()), lwRootContainer, loaderFactory.getLoader(formFile), null);
+
+    if (Files.exists(myMarkerFile)) {
+      fail("Component code was executed for an untrusted project: " + Files.readString(myMarkerFile).trim());
+    }
+
+    RadComponent component = ((RadContainer)rootContainer.getComponent(0)).getComponent(0);
+    assertInstanceOf(component, RadErrorComponent.class);
+  }
+
+  /**
+   * The counterpart of {@link #testUntrustedProjectDoesNotCreateProjectComponents}: a trusted project still renders
+   * the component, and the standard components of a form are never affected by trust either way.
+   */
+  public void testTrustedProjectCreatesProjectComponents() throws Exception {
+    VirtualFile formFile = copyForm("beanInfoSafety/TestHostileComponent.form");
+
+    LoaderFactory loaderFactory = LoaderFactory.getInstance(getProject());
+    LwRootContainer lwRootContainer = loaderFactory.readRootContainer(formFile, VfsUtilCore.loadText(formFile));
+    RadRootContainer rootContainer =
+      XmlReader.createRoot(new MyModuleProvider(getModule()), lwRootContainer, loaderFactory.getLoader(formFile), null);
+
+    RadComponent component = ((RadContainer)rootContainer.getComponent(0)).getComponent(0);
+    assertFalse("form rendered as an error component: " + component, component instanceof RadErrorComponent);
+    assertEquals("HostileComponent", component.getComponentClass().getName());
   }
 
   private VirtualFile copyForm(String testDataPath) {

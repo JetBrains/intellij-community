@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner;
 
+import com.intellij.ide.trustedProjects.TrustedProjects;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.JBColor;
 import com.intellij.uiDesigner.compiler.RecursiveFormNestingException;
@@ -61,6 +63,22 @@ public final class XmlReader {
                                                       final @NotNull LwComponent lwComponent,
                                                       final @NotNull ClassLoader loader,
                                                       final Locale stringDescriptorLocale) throws Exception{
+    return createComponent(module, lwComponent, loader, stringDescriptorLocale, isProjectTrusted(module));
+  }
+
+  /**
+   * Answering this walks the roots of the project, so it is asked once per form rather than once per component.
+   */
+  private static boolean isProjectTrusted(final @NotNull ModuleProvider module) {
+    Project project = module.getProject();
+    return project == null || TrustedProjects.isProjectTrusted(project);
+  }
+
+  private static @NotNull RadComponent createComponent(final @NotNull ModuleProvider module,
+                                                       final @NotNull LwComponent lwComponent,
+                                                       final @NotNull ClassLoader loader,
+                                                       final Locale stringDescriptorLocale,
+                                                       final boolean projectTrusted) throws Exception{
     // Id
     final String id = lwComponent.getId();
     final RadComponent component;
@@ -86,7 +104,8 @@ public final class XmlReader {
       }
     }
     else {
-      if (lwComponent.getErrorComponentProperties() == null) {
+      if (lwComponent.getErrorComponentProperties() == null &&
+          !isForbiddenByProjectTrust(lwComponent.getComponentClassName(), loader, projectTrusted)) {
         componentClass = Class.forName(lwComponent.getComponentClassName(), true, loader);
       }
 
@@ -96,36 +115,36 @@ public final class XmlReader {
       else if (lwComponent instanceof LwVSpacer) {
         component = new RadVSpacer(module, id);
       }
+      // every remaining kind of component is created from its class - a container names one just as an atomic
+      // component does, and it can be a class of the project too
+      else if (componentClass == null) {
+        component = createErrorComponent(module, id, lwComponent, loader, projectTrusted);
+      }
       else if (lwComponent instanceof LwAtomicComponent) {
-        if (componentClass == null) {
-          component = createErrorComponent(module, id, lwComponent, loader);
-        }
-        else {
-          RadComponent component1;
-          try {
-            if (JTable.class.isAssignableFrom(componentClass)) {
-              component1 = new RadTable(module, componentClass, id);
-            }
-            else {
-              component1 = new RadAtomicComponent(module, componentClass, id);
-            }
+        RadComponent component1;
+        try {
+          if (JTable.class.isAssignableFrom(componentClass)) {
+            component1 = new RadTable(module, componentClass, id);
           }
-          catch (final Exception exc) {
-            String errorDescription = UIDesignerBundle.message("error.class.cannot.be.instantiated", lwComponent.getComponentClassName());
-            final String message = FormEditingUtil.getExceptionMessage(exc);
-            if (message != null) {
-              errorDescription += ": " + message;
-            }
-            component1 = RadErrorComponent.create(
-              module,
-              id,
-              lwComponent.getComponentClassName(),
-              lwComponent.getErrorComponentProperties(),
-              errorDescription
-            );
+          else {
+            component1 = new RadAtomicComponent(module, componentClass, id);
           }
-          component = component1;
         }
+        catch (final Exception exc) {
+          String errorDescription = UIDesignerBundle.message("error.class.cannot.be.instantiated", lwComponent.getComponentClassName());
+          final String message = FormEditingUtil.getExceptionMessage(exc);
+          if (message != null) {
+            errorDescription += ": " + message;
+          }
+          component1 = RadErrorComponent.create(
+            module,
+            id,
+            lwComponent.getComponentClassName(),
+            lwComponent.getErrorComponentProperties(),
+            errorDescription
+          );
+        }
+        component = component1;
       }
       else if (lwComponent instanceof LwScrollPane) {
         component = new RadScrollPane(module, componentClass, id);
@@ -147,36 +166,31 @@ public final class XmlReader {
           layout = xyLayoutManager;
           xyLayoutManager.setPreferredSize(lwComponent.getBounds().getSize());
         }
-        if (componentClass == null) {
-          component = createErrorComponent(module, id, lwComponent, loader);
+        if (lwContainer instanceof LwRootContainer) {
+          component = new RadRootContainer(module, id);
+          if (stringDescriptorLocale != null) {
+            ((RadRootContainer) component).setStringDescriptorLocale(stringDescriptorLocale);
+          }
         }
         else {
-          if (lwContainer instanceof LwRootContainer) {
-            component = new RadRootContainer(module, id);
-            if (stringDescriptorLocale != null) {
-              ((RadRootContainer) component).setStringDescriptorLocale(stringDescriptorLocale);
+          component = new RadContainer(module, componentClass, id);
+
+          String layoutManagerName = lwContainer.getLayoutManager();
+          if (layoutManagerName == null || layoutManagerName.isEmpty()) {
+            if (layout instanceof XYLayoutManager) {
+              layoutManagerName = UIFormXmlConstants.LAYOUT_XY;
+            }
+            else {
+              layoutManagerName = UIFormXmlConstants.LAYOUT_INTELLIJ;
             }
           }
-          else {
-            component = new RadContainer(module, componentClass, id);
 
-            String layoutManagerName = lwContainer.getLayoutManager();
-            if (layoutManagerName == null || layoutManagerName.isEmpty()) {
-              if (layout instanceof XYLayoutManager) {
-                layoutManagerName = UIFormXmlConstants.LAYOUT_XY;
-              }
-              else {
-                layoutManagerName = UIFormXmlConstants.LAYOUT_INTELLIJ;
-              }
-            }
-
-            RadLayoutManager layoutManager = LayoutManagerRegistry.createLayoutManager(layoutManagerName);
-            RadContainer container = (RadContainer)component;
-            layoutManager.readLayout(lwContainer, container);
-            container.setLayoutManager(layoutManager);
-          }
-          ((RadContainer)component).setLayout(layout);
+          RadLayoutManager layoutManager = LayoutManagerRegistry.createLayoutManager(layoutManagerName);
+          RadContainer container = (RadContainer)component;
+          layoutManager.readLayout(lwContainer, container);
+          container.setLayoutManager(layoutManager);
         }
+        ((RadContainer)component).setLayout(layout);
       }
       else {
         throw new IllegalArgumentException("unexpected component: " + lwComponent);
@@ -229,7 +243,8 @@ public final class XmlReader {
 
       // add children
       for (int i=0; i < lwContainer.getComponentCount(); i++){
-        container.addComponent(createComponent(module, (LwComponent)lwContainer.getComponent(i), loader, stringDescriptorLocale));
+        container.addComponent(
+          createComponent(module, (LwComponent)lwContainer.getComponent(i), loader, stringDescriptorLocale, projectTrusted));
       }
     }
 
@@ -258,8 +273,40 @@ public final class XmlReader {
     container.setBorderColor(lwContainer.getBorderColor());
   }
 
-  private static RadErrorComponent createErrorComponent(final ModuleProvider module, final String id, final LwComponent lwComponent, final ClassLoader loader) {
+  /**
+   * Whether creating this component would run code from a project the user has not trusted. Resolving a class is
+   * harmless, but the designer goes on to initialize it and to create an instance of it, which runs its static
+   * initializer and its constructor - and has the {@code Introspector} instantiate its {@code BeanInfo} on top of that
+   * (IDEA-392515). An untrusted project gets a placeholder instead, the same as a class that cannot be resolved.
+   */
+  private static boolean isForbiddenByProjectTrust(final @NotNull String componentClassName,
+                                                   final @NotNull ClassLoader loader,
+                                                   final boolean projectTrusted) {
+    if (projectTrusted) {
+      return false;
+    }
+    try {
+      // resolving without initializing runs nothing, and tells whether the class is the project's at all
+      return LoaderFactory.isProjectClass(Class.forName(componentClassName, false, loader));
+    }
+    catch (ClassNotFoundException | LinkageError e) {
+      // it cannot be created regardless of trust, and the message about that is the more useful one
+      return false;
+    }
+  }
+
+  private static RadErrorComponent createErrorComponent(final ModuleProvider module, final String id, final LwComponent lwComponent,
+                                                        final ClassLoader loader, final boolean projectTrusted) {
     final String componentClassName = lwComponent.getComponentClassName();
+    if (isForbiddenByProjectTrust(componentClassName, loader, projectTrusted)) {
+      return RadErrorComponent.create(
+        module,
+        id,
+        componentClassName,
+        lwComponent.getErrorComponentProperties(),
+        UIDesignerBundle.message("error.project.not.trusted", componentClassName)
+      );
+    }
     final @NlsSafe String errorDescription = Utils.validateJComponentClass(loader, componentClassName, true);
     return RadErrorComponent.create(
       module,
