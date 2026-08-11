@@ -68,6 +68,8 @@ public abstract class FindManagerBase extends FindManager {
     KeyWithDefaultValue.create("except.comments.literals.search.data", () -> new ThreadLocal<>());
   private static final IntObjectMap<Boolean> ourReportedPatterns = ConcurrentCollectionFactory.createConcurrentIntObjectMap();
   private static final FindResultImpl NOT_FOUND_RESULT = new FindResultImpl();
+  /** How many characters of text the comments/literals walk may cover between two cancellation checks. */
+  private static final int CANCELLATION_CHECK_INTERVAL = 8 * 1024;
 
   protected final FindUsagesManager myFindUsagesManager;
   protected final @NotNull FindModel myFindInProjectModel = new FindModel();
@@ -357,11 +359,14 @@ public abstract class FindManagerBase extends FindManager {
     boolean scanningForward = model.isForward();
     FindResultImpl prevFindResult = NOT_FOUND_RESULT;
 
-    int j = 0;
+    // Budget the cancellation checks in characters rather than in loop iterations: a merging lexer collapses a run of
+    // same-type tokens into one, so a megabyte of comment or character data can arrive as a single token and an
+    // iteration counter would let it pass unchecked.
+    int nextCancellationCheckAt = 0;
     while ((tokenType = lexer.getTokenType()) != null) {
-      j++;
-      if (j % 1000 == 0) {
+      if (lexer.getTokenEnd() >= nextCancellationCheckAt) {
         ProgressManager.checkCanceled();
+        nextCancellationCheckAt = lexer.getTokenEnd() + CANCELLATION_CHECK_INTERVAL;
       }
 
       if (lexer.getState() == 0) lastGoodOffset = lexer.getTokenStart();
@@ -387,9 +392,9 @@ public abstract class FindManagerBase extends FindManager {
         final int tokenContentStart = start;
 
         while (true) {
-          j++;
-          if (j % 1000 == 0) {
+          if (start >= nextCancellationCheckAt) {
             ProgressManager.checkCanceled();
+            nextCancellationCheckAt = start + CANCELLATION_CHECK_INTERVAL;
           }
 
           FindResultImpl findResult = null;
