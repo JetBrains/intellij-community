@@ -178,6 +178,9 @@ object UniversalFileChooser {
       return mainPanel
     }
 
+    override fun getPreferredFocusedComponent(): JComponent? =
+      if (::mainPanel.isInitialized) mainPanel.getPreferredFocusedComponent() else null
+
     fun getSelectedFiles(): List<Path> = mainPanel.getSelectedFiles()
 
     override fun doOKAction() {
@@ -503,7 +506,7 @@ object UniversalFileChooser {
             target
           }
           runOnEdt {
-            navigateToFile(effective)
+            navigateToFile(effective, preselectPathText = true)
             if (toSelect == null) {
               preselectProjectTab(project)
             }
@@ -535,16 +538,21 @@ object UniversalFileChooser {
       return fileView?.getSelectedFiles() ?: emptyList()
     }
 
-    fun navigateToFile(file: Path) {
+    fun navigateToFile(file: Path, preselectPathText: Boolean = false) {
       val index = fileViews.indexOfFirst { it.contributor.ownsPath(file) }
       if (index < 0) return
       if (fileViews.size > 1) {
         tabbedPane.selectedIndex = index
       }
       val targetView = fileViews[index]
+      if (preselectPathText) {
+        targetView.requestPathTextPreselection()
+      }
       targetView.fileToSelect = file
       targetView.fileTree.select(file) { targetView.fileTree.expand(file, null) }
     }
+
+    fun getPreferredFocusedComponent(): JComponent? = getActiveFileView()?.pathTextField
 
     private fun getActiveFileView(): FileView? {
       if (fileViews.size == 1) return fileViews[0]
@@ -693,7 +701,18 @@ object UniversalFileChooser {
       private val chooseFolders: Boolean = descriptor.isChooseFolders
 
       var fileToSelect: Path? = null
-      private val pathTextField: NioPathTextField = NioPathTextField(scope, descriptor.isChooseFiles, descriptor.isChooseJarContents)
+      internal val pathTextField: NioPathTextField = NioPathTextField(scope, descriptor.isChooseFiles, descriptor.isChooseJarContents)
+
+      /**
+       * One-shot flag (EDT only): when set, the next non-empty path-field update selects the whole
+       * text so the user can type over the preselected path. Consumed on first apply. See IJPL-247112.
+       */
+      private var preselectPathText: Boolean = false
+
+      /** Requests that the path field text be preselected on its next (initial) update. */
+      fun requestPathTextPreselection() {
+        preselectPathText = true
+      }
 
       @Volatile
       private var pathTextFieldInvalid: Boolean = false
@@ -1112,8 +1131,19 @@ object UniversalFileChooser {
 
       private fun updatePathField(selection: List<Path?>) {
         val file = selection.firstOrNull()
-        pathTextField.text = file?.let { contributor.getPresentablePath(it) } ?: ""
-        pathTextField.caretPosition = pathTextField.text.length
+        val text = file?.let { contributor.getPresentablePath(it) } ?: ""
+        pathTextField.text = text
+        // On the initial preselection, select the whole text so the user can immediately type over
+        // it (the field also receives the focus on dialog open, see IJPL-247112). The text is filled
+        // asynchronously after navigation, so the selection is applied here, once, on the first
+        // non-empty update rather than eagerly in getPreferredFocusedComponent().
+        if (preselectPathText && text.isNotEmpty()) {
+          preselectPathText = false
+          pathTextField.selectAll()
+        }
+        else {
+          pathTextField.caretPosition = text.length
+        }
       }
 
       fun mountVirtualRootAndReload(virtualRoot: UniversalFileChooserContributor.Root) {
