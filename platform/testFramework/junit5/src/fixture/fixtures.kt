@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("RAW_RUN_BLOCKING")
 
 package com.intellij.testFramework.junit5.fixture
@@ -141,8 +141,8 @@ fun TestFixture<Project>.pathInProjectFixture(path: Path): TestFixture<Path> {
 @TestOnly
 fun TestFixture<Project>.fileOrDirInProjectFixture(relativePath: String): TestFixture<VirtualFile> = testFixture {
   val filePath = pathInProjectFixture(Path(relativePath)).init()
-  val file = filePath.refreshAndFindVirtualFileOrDirectory()
-             ?: throw IllegalStateException("File not found: $relativePath, absolutePath: $filePath")
+  val file =
+    filePath.refreshAndFindVirtualFileOrDirectory() ?: throw IllegalStateException("File not found: $relativePath, absolutePath: $filePath")
 
   initialized(file) {}
 }
@@ -156,8 +156,7 @@ fun TestFixture<Project>.existingPsiFileFixture(relativePath: String): TestFixtu
   val project = this@existingPsiFileFixture.init()
   val virtualFile = fileOrDirInProjectFixture(relativePath).init()
   val psiFile = readAction {
-    PsiManager.getInstance(project).findFile(virtualFile)
-    ?: error("Cannot find PsiFile for $virtualFile")
+    PsiManager.getInstance(project).findFile(virtualFile) ?: error("Cannot find PsiFile for $virtualFile")
   }
   initialized(psiFile) {}
 }
@@ -204,7 +203,8 @@ fun projectFixture(
 
   val project = if (!isNewProject) {
     projectManager.openProjectAsync(path, openProjectTask)!!
-  } else {
+  }
+  else {
     val newProject = projectManager.newProjectAsync(path, openProjectTask)
 
     if (openAfterCreation) {
@@ -267,7 +267,7 @@ fun TestFixture<Project>.moduleFixture(
 fun TestFixture<Project>.moduleFixture(
   pathFixture: TestFixture<Path>,
   addPathToSourceRoot: Boolean = false,
-  moduleTypeId: String = ""
+  moduleTypeId: String = "",
 ): TestFixture<Module> = testFixture { _ ->
   val project = this@moduleFixture.init()
   val path = pathFixture.init()
@@ -326,33 +326,32 @@ fun TestFixture<Module>.sourceRootFixture(
   isTestSource: Boolean = false,
   pathFixture: TestFixture<Path> = tempPathFixture(),
   blueprintResourcePath: Path? = null,
-): TestFixture<PsiDirectory> =
-  testFixture { _ ->
-    val module = this@sourceRootFixture.init()
-    val directoryPath: Path = pathFixture.init()
-    val directoryVfs = VfsUtil.createDirectories(directoryPath.toCanonicalPath())
+): TestFixture<PsiDirectory> = testFixture { _ ->
+  val module = this@sourceRootFixture.init()
+  val directoryPath: Path = pathFixture.init()
+  val directoryVfs = VfsUtil.createDirectories(directoryPath.toCanonicalPath())
 
-    blueprintResourcePath?.let {
-      copyBlueprintToDirectory(it, directoryPath)
-    }
+  blueprintResourcePath?.let {
+    copyBlueprintToDirectory(it, directoryPath)
+  }
 
-    ModuleRootModificationUtil.updateModel(module) { model ->
-      model.addContentEntry(directoryVfs).addSourceFolder(directoryVfs, isTestSource)
-    }
-    val directory = readAction {
-      PsiManager.getInstance(module.project).findDirectory(directoryVfs) ?: error("Fail to find directory $directoryVfs")
-    }
-    initialized(directory) {
-      edtWriteAction {
-        if (!module.isDisposed) {
-          ModuleRootModificationUtil.updateModel(module) { model ->
-            model.contentEntries.firstOrNull { it.file == directoryVfs }?.let(model::removeContentEntry)
-          }
+  ModuleRootModificationUtil.updateModel(module) { model ->
+    model.addContentEntry(directoryVfs).addSourceFolder(directoryVfs, isTestSource)
+  }
+  val directory = readAction {
+    PsiManager.getInstance(module.project).findDirectory(directoryVfs) ?: error("Fail to find directory $directoryVfs")
+  }
+  initialized(directory) {
+    edtWriteAction {
+      if (!module.isDisposed) {
+        ModuleRootModificationUtil.updateModel(module) { model ->
+          model.contentEntries.firstOrNull { it.file == directoryVfs }?.let(model::removeContentEntry)
         }
-        directory.delete()
       }
+      directory.delete()
     }
   }
+}
 
 /**
  * Creates [PsiFile] fixture. See the showcase for usage examples.
@@ -438,68 +437,69 @@ fun TestFixture<PsiFile>.editorFixture(): TestFixture<Editor> = testFixture { _ 
  * This is a JUnit 5 fixture alternative to `FileEditorManagerTestCase`.
  */
 @TestOnly
-fun TestFixture<Project>.fileEditorManagerFixture(initDockableContentFactory: Boolean = false): TestFixture<FileEditorManagerImpl> = testFixture {
-  val project = this@fileEditorManagerFixture.init()
-  project.putUserData(FileEditorManagerKeys.ALLOW_IN_LIGHT_PROJECT, true)
+fun TestFixture<Project>.fileEditorManagerFixture(initDockableContentFactory: Boolean = false): TestFixture<FileEditorManagerImpl> =
+  testFixture {
+    val project = this@fileEditorManagerFixture.init()
+    project.putUserData(FileEditorManagerKeys.ALLOW_IN_LIGHT_PROJECT, true)
 
-  val manager = FileEditorManagerImpl(project, (project as ComponentManagerEx).getCoroutineScope().childScope("FileEditorManagerFixture"))
-  if (initDockableContentFactory) {
-    manager.initDockableContentFactory()
-  }
+    val manager = FileEditorManagerImpl(project, (project as ComponentManagerEx).getCoroutineScope().childScope("FileEditorManagerFixture"))
+    if (initDockableContentFactory) {
+      manager.initDockableContentFactory()
+    }
 
-  val disposable = Disposer.newDisposable()
-  project.replaceService(FileEditorManager::class.java, manager, disposable)
-  val providerManager = FileEditorProviderManager.getInstance() as FileEditorProviderManagerImpl
-  runBlocking {
-    withContext(Dispatchers.UiWithModelAccess) {
-      providerManager.clearSelectedProviders()
-      val dockContainerCount = DockManager.getInstance(project).containers.size
-      check(dockContainerCount == 1) {
-        "The previous test didn't clear the state (containers: $dockContainerCount)"
+    val disposable = Disposer.newDisposable()
+    project.replaceService(FileEditorManager::class.java, manager, disposable)
+    val providerManager = FileEditorProviderManager.getInstance() as FileEditorProviderManagerImpl
+    runBlocking {
+      withContext(Dispatchers.UiWithModelAccess) {
+        providerManager.clearSelectedProviders()
+        val dockContainerCount = DockManager.getInstance(project).containers.size
+        check(dockContainerCount == 1) {
+          "The previous test didn't clear the state (containers: $dockContainerCount)"
+        }
       }
     }
-  }
 
-  initialized(manager) {
-    runAll(
-      {
-        runBlocking {
-          withContext(Dispatchers.UiWithModelAccess) {
-            edtWriteAction {
-              manager.closeAllFiles()
+    initialized(manager) {
+      runAll(
+        {
+          runBlocking {
+            withContext(Dispatchers.UiWithModelAccess) {
+              edtWriteAction {
+                manager.closeAllFiles()
+              }
             }
           }
-        }
-      },
-      {
-        runBlocking {
-          withContext(Dispatchers.UiWithModelAccess) {
-            project.serviceIfCreated<EditorHistoryManager>()?.removeAllFiles()
-          }
-        }
-      },
-      {
-        runBlocking {
-          withContext(Dispatchers.UiWithModelAccess) {
-            providerManager.clearSelectedProviders()
-          }
-        }
-      },
-      { Disposer.dispose(disposable) },
-      {
-        runBlocking {
-          withContext(Dispatchers.UiWithModelAccess) {
-            val dockContainers = project.serviceIfCreated<DockManager>()?.containers.orEmpty()
-            val dockContainerCount = dockContainers.size
-            check(dockContainerCount <= 1) {
-              "The previous test didn't clear the state (containers: $dockContainerCount)"
+        },
+        {
+          runBlocking {
+            withContext(Dispatchers.UiWithModelAccess) {
+              project.serviceIfCreated<EditorHistoryManager>()?.removeAllFiles()
             }
           }
-        }
-      },
-    )
+        },
+        {
+          runBlocking {
+            withContext(Dispatchers.UiWithModelAccess) {
+              providerManager.clearSelectedProviders()
+            }
+          }
+        },
+        { Disposer.dispose(disposable) },
+        {
+          runBlocking {
+            withContext(Dispatchers.UiWithModelAccess) {
+              val dockContainers = project.serviceIfCreated<DockManager>()?.containers.orEmpty()
+              val dockContainerCount = dockContainers.size
+              check(dockContainerCount <= 1) {
+                "The previous test didn't clear the state (containers: $dockContainerCount)"
+              }
+            }
+          }
+        },
+      )
+    }
   }
-}
 
 @TestOnly
 fun <T : Any> extensionPointFixture(
@@ -530,21 +530,14 @@ fun registryKeyFixture(@NonNls key: String, setValue: RegistryValue.() -> Unit):
 fun <T : Any> Application.replacedServiceFixture(
   serviceInterface: Class<in T>,
   createService: suspend () -> T,
-): TestFixture<T> = replacedServiceFixtureInner(
-  getComponentManager = { this@replacedServiceFixture },
-  serviceInterface,
-  createService
-)
+): TestFixture<T> = replacedServiceFixtureInner(getComponentManager = { this@replacedServiceFixture }, serviceInterface, createService)
 
 @TestOnly
 fun <T : Any> TestFixture<Project>.replacedServiceFixture(
   serviceInterface: Class<in T>,
   createService: suspend () -> T,
-): TestFixture<T> = replacedServiceFixtureInner(
-  getComponentManager = { this@replacedServiceFixture.init() },
-  serviceInterface,
-  createService
-)
+): TestFixture<T> =
+  replacedServiceFixtureInner(getComponentManager = { this@replacedServiceFixture.init() }, serviceInterface, createService)
 
 @TestOnly
 private fun <T : Any> replacedServiceFixtureInner(
