@@ -20,6 +20,7 @@ import git4idea.test.createSubRepository
 import git4idea.test.git
 import git4idea.ui.branch.GitBranchManager
 import kotlinx.coroutines.runBlocking
+import org.junit.jupiter.api.condition.OS
 
 class GitRepositoriesFrontendHolderTest : GitSingleRepoTest() {
   override fun getDebugLogCategories() = super.getDebugLogCategories().plus(GitRepositoriesHolder::class.java.name)
@@ -98,7 +99,13 @@ class GitRepositoriesFrontendHolderTest : GitSingleRepoTest() {
 
     val newCurrentBranch = GitStandardLocalBranch("new-branch")
     holder.expectEvent(
-      { repo.checkoutNew(newCurrentBranch.name) },
+      {
+        repo.checkoutNew(newCurrentBranch.name)
+        // todo: fix the test to avoid special windows case
+        // for WINDOWS need to call update explicitly, because the scheduled updates in UpdateRequestsQueue are triggered once per 300 ms
+        // and can happen at any moment, which leads to getting the wrong branch as a current state
+        if (OS.current() == OS.WINDOWS) repo.update()
+      },
       { event, _ -> event == GitRepositoriesHolder.UpdateType.REPOSITORY_STATE_UPDATED })
 
     val stateAfterUpdate = holder.getTestRepo().state
