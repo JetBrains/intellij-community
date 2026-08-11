@@ -64,30 +64,12 @@ final class CommentsAndLiteralsSearcher {
   }
 
   /**
-   * Finds the one occurrence next to {@code offset} that lies inside a comment or a string literal: going forward, the
-   * first one starting at or after it; going backward, the last one ending before it. Returns
-   * {@link FindManagerBase#NOT_FOUND_RESULT} when there is none, or when the file has no syntax highlighter to lex it
-   * with.
-   * <p>
-   * Only the occurrence is decided here. Whether it is acceptable -- whole words, the find context -- belongs to
-   * {@link FindManagerBase}, which calls this once per occurrence, so walking a whole file means as many calls as it
-   * has occurrences.
-   * <p>
-   * Both directions walk the token stream forward; backward simply keeps the last occurrence it passes and stops at
-   * the first one reaching {@code offset}, which means a backward search always costs a walk from the start of the
-   * file. A forward search tries to do better by resuming from
-   * {@link CommentsLiteralsSearchData#startOffset the last point the lexer can safely be restarted at}, which only
-   * advances where the lexer returns to its initial state -- in a long attribute list or a large comment it does not,
-   * and the walk starts over from the beginning of the file.
-   *
-   * @param textArray the backing array of {@code text} where it has one, or {@code null}; an optimization that lets
-   *                  the scan avoid {@link CharSequence#charAt} calls
+   * Looks up, and creates if necessary, the lexer and searcher this thread uses to walk {@code file} for {@code model}.
+   * Returns {@code null} when the file has no syntax highlighter, in which case there is nothing to search.
    */
-  @NotNull FindResult findInCommentsAndLiterals(@NotNull CharSequence text,
-                                                char[] textArray,
-                                                int offset,
-                                                @NotNull FindModel model,
-                                                @NotNull VirtualFile file) {
+  private @Nullable CommentsLiteralsSearchData getSearchData(@NotNull CharSequence text,
+                                                             @NotNull FindModel model,
+                                                             @NotNull VirtualFile file) {
     ThreadLocal<SoftReference<CommentsLiteralsSearchData>> data;
     synchronized (model) {
       data = model.getUserData(ourCommentsLiteralsSearchDataKey);
@@ -104,7 +86,7 @@ final class CommentsAndLiteralsSearcher {
 
       if (highlighter == null) {
         // no syntax highlighter -> no search
-        return FindManagerBase.NOT_FOUND_RESULT;
+        return null;
       }
 
       TokenSet tokensOfInterest = TokenSet.EMPTY;
@@ -151,6 +133,7 @@ final class CommentsAndLiteralsSearcher {
         });
         currentThreadData = new CommentsLiteralsSearchData(
           file,
+          lang,
           relevantLanguages,
           highlighterAdapter,
           tokensOfInterest,
@@ -166,6 +149,37 @@ final class CommentsAndLiteralsSearcher {
 
       data.set(new SoftReference<>(currentThreadData));
     }
+
+    return currentThreadData;
+  }
+
+  /**
+   * Finds the one occurrence next to {@code offset} that lies inside a comment or a string literal: going forward, the
+   * first one starting at or after it; going backward, the last one ending before it. Returns
+   * {@link FindManagerBase#NOT_FOUND_RESULT} when there is none, or when the file has no syntax highlighter to lex it
+   * with.
+   * <p>
+   * Only the occurrence is decided here. Whether it is acceptable -- whole words, the find context -- belongs to
+   * {@link FindManagerBase}, which calls this once per occurrence, so walking a whole file means as many calls as it
+   * has occurrences.
+   * <p>
+   * Both directions walk the token stream forward; backward simply keeps the last occurrence it passes and stops at
+   * the first one reaching {@code offset}, which means a backward search always costs a walk from the start of the
+   * file. A forward search tries to do better by resuming from
+   * {@link CommentsLiteralsSearchData#startOffset the last point the lexer can safely be restarted at}, which only
+   * advances where the lexer returns to its initial state -- in a long attribute list or a large comment it does not,
+   * and the walk starts over from the beginning of the file.
+   *
+   * @param textArray the backing array of {@code text} where it has one, or {@code null}; an optimization that lets
+   *                  the scan avoid {@link CharSequence#charAt} calls
+   */
+  @NotNull FindResult findInCommentsAndLiterals(@NotNull CharSequence text,
+                                                char[] textArray,
+                                                int offset,
+                                                @NotNull FindModel model,
+                                                @NotNull VirtualFile file) {
+    CommentsLiteralsSearchData currentThreadData = getSearchData(text, model, file);
+    if (currentThreadData == null) return FindManagerBase.NOT_FOUND_RESULT;
 
     int initialStartOffset = model.isForward() && currentThreadData.startOffset < offset ? currentThreadData.startOffset : 0;
     currentThreadData.highlighter.resetPosition(initialStartOffset);
@@ -271,7 +285,7 @@ final class CommentsAndLiteralsSearcher {
       }
       else {
         Language tokenLang = tokenType.getLanguage();
-        if (tokenLang != lang && tokenLang != Language.ANY && !currentThreadData.relevantLanguages.contains(tokenLang)) {
+        if (tokenLang != currentThreadData.lang && tokenLang != Language.ANY && !currentThreadData.relevantLanguages.contains(tokenLang)) {
           tokens = addTokenTypesForLanguage(model, tokenLang, tokens);
           currentThreadData.tokensOfInterest = tokens;
           currentThreadData.relevantLanguages.add(tokenLang);
@@ -306,6 +320,7 @@ final class CommentsAndLiteralsSearcher {
 
   private static final class CommentsLiteralsSearchData {
     @NotNull final VirtualFile lastFile;
+    final @Nullable Language lang;
     int startOffset;
     @NotNull final SyntaxHighlighterOverEditorHighlighter highlighter;
 
@@ -316,6 +331,7 @@ final class CommentsAndLiteralsSearcher {
     @NotNull final FindModel model;
 
     CommentsLiteralsSearchData(@NotNull VirtualFile lastFile,
+                               @Nullable Language lang,
                                @NotNull Set<Language> relevantLanguages,
                                @NotNull SyntaxHighlighterOverEditorHighlighter highlighter,
                                @NotNull TokenSet tokensOfInterest,
@@ -323,6 +339,7 @@ final class CommentsAndLiteralsSearcher {
                                @Nullable Matcher matcher,
                                @NotNull FindModel model) {
       this.lastFile = lastFile;
+      this.lang = lang;
       this.highlighter = highlighter;
       this.tokensOfInterest = tokensOfInterest;
       this.searcher = searcher;
