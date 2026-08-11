@@ -27,13 +27,16 @@ internal const val ANDROID_RESOURCE_REFERENCE = "org.jetbrains.android.dom.conve
 internal val ALL_STRING_TAGS = setOf("string", "string-array", "plurals", "item", "resources")
 internal val VALID_INNER_COMPOSE_RESOURCES_DIR_NAMES = setOf("drawable", "font", "values")
 
+/** Returns whether this directory name starts with a supported Compose resources directory prefix. */
 internal val String.isValidInnerComposeResourcesDirName: Boolean
   get() =
     VALID_INNER_COMPOSE_RESOURCES_DIR_NAMES.any { this.startsWith(it, ignoreCase = true) }
 
+/** Returns whether this directory name starts with one of the supported prefixes from [dirNames]. */
 internal fun String.isValidInnerComposeResourcesDirNameFor(dirNames: Set<String>): Boolean =
   (dirNames intersect VALID_INNER_COMPOSE_RESOURCES_DIR_NAMES).any { this.startsWith(it, ignoreCase = true) }
 
+/** Returns this file name without the final extension segment. */
 internal val String.withoutExtension: String get() = substringBeforeLast(".")
 
 /**
@@ -92,6 +95,7 @@ private fun Module.getPackageOfResClass(): String? =
     ?.getComposeDataForModule(this)
     ?.packageOfResClass
 
+/** Returns whether this qualified expression resolves to the generated Compose resources class for its module. */
 internal val KtDotQualifiedExpression.isComposeResClass: Boolean
   get() {
     val module = module ?: return false
