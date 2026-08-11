@@ -11,15 +11,16 @@ import com.intellij.python.pytools.statistics.PyToolUsagesCollector
 import com.intellij.python.pytools.statistics.PyToolActionSource
 import com.intellij.python.pytools.Version
 import com.intellij.python.pytools.ui.PyToolsUiBundle
+import com.intellij.python.uv.backend.UVX_EXECUTABLE
 import com.intellij.python.uv.backend.UvPyTool
 import com.intellij.python.pytools.PyToolManager
 import com.intellij.python.pytools.PyToolManagerProvider
+import com.intellij.python.pytools.findExecutableInPath
 import com.intellij.python.pytools.performToolInstallation
 import com.intellij.python.pytools.performToolUpgrade
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.PyPackageVersionComparator
-import com.jetbrains.python.sdk.uv.impl.hasUvExecutableLocal
 import com.jetbrains.python.sdk.uv.impl.setUvExecutableLocal
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -95,7 +96,10 @@ internal class PyToolManagementController(
   fun onShown(scope: CoroutineScope) {
     this.scope = scope
     scope.launch {
-      uvAvailable.set(hasUvExecutableLocal())
+      // Detect uvx in the project's environment (e.g. inside WSL), not on the local host, so the uvx
+      // chain marker and the install-uv footer reflect the actual interpreter target (PY-91503). Detect
+      // via findExecutableInPath so a pip-installed uvx in a per-user dir off PATH is still found.
+      uvAvailable.set(findExecutableInPath(project.getEelDescriptor().toEelApi(), UVX_EXECUTABLE) != null)
       withContext(Dispatchers.Main) { onStateChanged() }
       refreshOutdated()
     }
