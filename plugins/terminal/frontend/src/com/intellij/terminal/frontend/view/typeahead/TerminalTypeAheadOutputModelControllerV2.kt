@@ -297,7 +297,7 @@ class TerminalTypeAheadOutputModelControllerV2(
 
   private fun updateOutputModel(update: Runnable) {
     val lookup = LookupManager.getInstance(project).activeLookup
-    if (lookup != null && lookup.editor.isReworkedTerminalEditor) {
+    if (lookup != null && lookup.topLevelEditor.isReworkedTerminalEditor) {
       lookup.performGuardedChange(update)
     }
     else {

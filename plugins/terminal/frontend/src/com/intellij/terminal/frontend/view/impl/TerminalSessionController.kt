@@ -2,8 +2,8 @@
 package com.intellij.terminal.frontend.view.impl
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
@@ -43,7 +43,7 @@ internal class TerminalSessionController(
   private val eventHandlers: DisposableWrapperList<TerminalOutputEventsHandler> = DisposableWrapperList()
   private val terminationListeners: DisposableWrapperList<Runnable> = DisposableWrapperList()
 
-  private val edtContext = Dispatchers.EDT + ModalityState.any().asContextElement()
+  private val uiContext = Dispatchers.UI + ModalityState.any().asContextElement()
 
   fun handleEvents(session: TerminalSession) {
     coroutineScope.launch(CoroutineName("Output flow collection")) {
@@ -53,7 +53,7 @@ internal class TerminalSessionController(
         // Wrap the flow collection into `durable` call to retry in case of connection issues.
         durable {
           session.getOutputFlow().collect { events ->
-            withContext(edtContext) {
+            withContext(uiContext) {
               doHandleEvents(events)
             }
           }
