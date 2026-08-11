@@ -369,11 +369,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
     @JvmStatic
     suspend fun createOptionsToOpenDotIdeaOrCreateNewIfNotExists(projectDir: Path, projectToClose: Project?): OpenProjectTask {
       return OpenProjectTask {
-        runConfigurators = true
-        isNewProject = !ProjectUtil.isValidProjectPath(projectDir)
-        this.projectToClose = projectToClose
-        useDefaultProjectAsTemplate = true
-        projectRootDir = projectDir
+        configureToOpenDotIdeaOrCreateNewIfNotExists(projectDir, projectToClose)
       }
     }
 
@@ -383,6 +379,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
       isNewProject = !ProjectUtil.isValidProjectPath(projectDir)
       this.projectToClose = projectToClose
       useDefaultProjectAsTemplate = true
+      projectRootDir = projectDir
     }
   }
 
