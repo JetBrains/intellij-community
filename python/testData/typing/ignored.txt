@@ -3,6 +3,7 @@ aliases_recursive.py
 aliases_typealiastype.py
 callables_annotation.py
 callables_protocol.py
+classes_override.py
 constructors_call_type.py
 constructors_callable.py
 dataclasses_hash.py
@@ -10,6 +11,7 @@ dataclasses_transform_converter.py
 dataclasses_usage.py
 directives_disjoint_base.py
 directives_version_platform.py
+enums_expansion.py
 generics_basic.py
 generics_paramspec_semantics.py
 generics_syntax_infer_variance.py
@@ -32,6 +34,7 @@ protocols_generic.py
 qualifiers_annotated.py
 specialtypes_never.py
 specialtypes_promotions.py
+specialtypes_sentinels.py
 specialtypes_type.py
 typeforms_typeform.py
 generics_base_class.py
