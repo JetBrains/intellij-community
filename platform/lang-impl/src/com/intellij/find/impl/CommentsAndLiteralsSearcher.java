@@ -154,43 +154,26 @@ final class CommentsAndLiteralsSearcher {
   }
 
   /**
-   * Finds the one occurrence next to {@code offset} that lies inside a comment or a string literal: going forward, the
-   * first one starting at or after it; going backward, the last one ending before it. Returns
-   * {@link FindManagerBase#NOT_FOUND_RESULT} when there is none, or when the file has no syntax highlighter to lex it
-   * with.
+   * Drives the highlighting lexer once over {@code [fromOffset, text.length())} and reports every occurrence of the
+   * pattern that lies inside a comment or a string literal, in increasing offset order, until {@code processor} stops it.
    * <p>
-   * Only the occurrence is decided here. Whether it is acceptable -- whole words, the find context -- belongs to
-   * {@link FindManagerBase}, which calls this once per occurrence, so walking a whole file means as many calls as it
-   * has occurrences.
-   * <p>
-   * Both directions walk the token stream forward; backward simply keeps the last occurrence it passes and stops at
-   * the first one reaching {@code offset}, which means a backward search always costs a walk from the start of the
-   * file. A forward search tries to do better by resuming from
-   * {@link CommentsLiteralsSearchData#startOffset the last point the lexer can safely be restarted at}, which only
-   * advances where the lexer returns to its initial state -- in a long attribute list or a large comment it does not,
-   * and the walk starts over from the beginning of the file.
-   *
-   * @param textArray the backing array of {@code text} where it has one, or {@code null}; an optimization that lets
-   *                  the scan avoid {@link CharSequence#charAt} calls
+   * The walk deliberately does no filtering of its own: which occurrences are interesting, and when to stop, is the
+   * caller's business. That is what lets a caller that wants all of them get them from a single pass instead of
+   * restarting the walk once per occurrence.
    */
-  @NotNull FindResult findInCommentsAndLiterals(@NotNull CharSequence text,
-                                                char[] textArray,
-                                                int offset,
-                                                @NotNull FindModel model,
-                                                @NotNull VirtualFile file) {
-    CommentsLiteralsSearchData currentThreadData = getSearchData(text, model, file);
-    if (currentThreadData == null) return FindManagerBase.NOT_FOUND_RESULT;
-
-    int initialStartOffset = model.isForward() && currentThreadData.startOffset < offset ? currentThreadData.startOffset : 0;
-    currentThreadData.highlighter.resetPosition(initialStartOffset);
+  private static void processOccurrences(@NotNull CharSequence text,
+                                         char @Nullable [] textArray,
+                                         int fromOffset,
+                                         @NotNull FindModel model,
+                                         @NotNull CommentsLiteralsSearchData currentThreadData,
+                                         @NotNull OccurrenceProcessor processor) {
+    currentThreadData.highlighter.resetPosition(fromOffset);
     final Lexer lexer = currentThreadData.highlighter.getHighlightingLexer();
 
     IElementType tokenType;
     TokenSet tokens = currentThreadData.tokensOfInterest;
 
     int lastGoodOffset = 0;
-    boolean scanningForward = model.isForward();
-    FindResultImpl prevFindResult = FindManagerBase.NOT_FOUND_RESULT;
 
     // Budget the cancellation checks in characters rather than in loop iterations: a merging lexer collapses a run of
     // same-type tokens into one, so a megabyte of comment or character data can arrive as a single token and an
@@ -230,20 +213,14 @@ final class CommentsAndLiteralsSearcher {
             nextCancellationCheckAt = start + CANCELLATION_CHECK_INTERVAL;
           }
 
-          FindResultImpl findResult = null;
+          int matchStart = -1;
+          int matchEnd = -1;
 
           if (currentThreadData.searcher != null) {
-            int matchStart = currentThreadData.searcher.scan(text, textArray, start, end);
-
-            if (matchStart != -1 && matchStart >= start) {
-              final int matchEnd = matchStart + model.getStringToFind().length();
-              if (matchStart >= offset || !scanningForward) {
-                findResult = new FindResultImpl(matchStart, matchEnd);
-              }
-              else {
-                start = matchEnd;
-                continue;
-              }
+            int found = currentThreadData.searcher.scan(text, textArray, start, end);
+            if (found != -1 && found >= start) {
+              matchStart = found;
+              matchEnd = found + model.getStringToFind().length();
             }
           }
           else if (start <= end) {
@@ -251,36 +228,16 @@ final class CommentsAndLiteralsSearcher {
             currentThreadData.matcher.region(start - tokenContentStart, end - tokenContentStart);
             currentThreadData.matcher.useTransparentBounds(true);
             if (currentThreadData.matcher.find()) {
-              final int matchEnd = tokenContentStart + currentThreadData.matcher.end();
-              int matchStart = tokenContentStart + currentThreadData.matcher.start();
-              if (matchStart >= offset || !scanningForward) {
-                findResult = new FindResultImpl(matchStart, matchEnd);
-              }
-              else {
-                int diff = 0;
-                if (start == end || start == matchEnd) {
-                  diff = 1;
-                }
-                start = matchEnd + diff;
-                continue;
-              }
+              matchStart = tokenContentStart + currentThreadData.matcher.start();
+              matchEnd = tokenContentStart + currentThreadData.matcher.end();
             }
           }
 
-          if (findResult != null) {
-            if (scanningForward) {
-              currentThreadData.startOffset = lastGoodOffset;
-              return findResult;
-            }
-            else {
+          if (matchStart == -1) break;
+          if (!processor.process(matchStart, matchEnd, lastGoodOffset)) return;
 
-              if (findResult.getEndOffset() >= offset) return prevFindResult;
-              prevFindResult = findResult;
-              start = findResult.getEndOffset();
-              continue;
-            }
-          }
-          break;
+          // step past the occurrence; the +1 keeps a zero-length regexp match from spinning on the same offset
+          start = matchEnd + (start == end || start == matchEnd ? 1 : 0);
         }
       }
       else {
@@ -294,8 +251,55 @@ final class CommentsAndLiteralsSearcher {
 
       lexer.advance();
     }
+  }
 
-    return prevFindResult;
+  /**
+   * Finds the one occurrence next to {@code offset} that lies inside a comment or a string literal: going forward, the
+   * first one starting at or after it; going backward, the last one ending before it. Returns
+   * {@link FindManagerBase#NOT_FOUND_RESULT} when there is none, or when the file has no syntax highlighter to lex it
+   * with.
+   * <p>
+   * Only the occurrence is decided here. Whether it is acceptable -- whole words, the find context -- belongs to
+   * {@link FindManagerBase}, which calls this once per occurrence, so walking a whole file means as many calls as it
+   * has occurrences.
+   * <p>
+   * Both directions walk the token stream forward; backward simply keeps the last occurrence it passes and stops at
+   * the first one reaching {@code offset}, which means a backward search always costs a walk from the start of the
+   * file. A forward search tries to do better by resuming from
+   * {@link CommentsLiteralsSearchData#startOffset the last point the lexer can safely be restarted at}, which only
+   * advances where the lexer returns to its initial state -- in a long attribute list or a large comment it does not,
+   * and the walk starts over from the beginning of the file.
+   *
+   * @param textArray the backing array of {@code text} where it has one, or {@code null}; an optimization that lets
+   *                  the scan avoid {@link CharSequence#charAt} calls
+   */
+  @NotNull FindResult findInCommentsAndLiterals(@NotNull CharSequence text,
+                                                char[] textArray,
+                                                int offset,
+                                                @NotNull FindModel model,
+                                                @NotNull VirtualFile file) {
+    CommentsLiteralsSearchData data = getSearchData(text, model, file);
+    if (data == null) return FindManagerBase.NOT_FOUND_RESULT;
+
+    FindResultImpl[] result = {FindManagerBase.NOT_FOUND_RESULT};
+    if (model.isForward()) {
+      int initialStartOffset = data.startOffset < offset ? data.startOffset : 0;
+      processOccurrences(text, textArray, initialStartOffset, model, data, (start, end, lastGoodOffset) -> {
+        if (start < offset) return true; // an occurrence the caller has already been given
+        data.startOffset = lastGoodOffset;
+        result[0] = new FindResultImpl(start, end);
+        return false;
+      });
+    }
+    else {
+      // walks forward too, keeping the last occurrence that ends before `offset`
+      processOccurrences(text, textArray, 0, model, data, (start, end, _) -> {
+        if (end >= offset) return false;
+        result[0] = new FindResultImpl(start, end);
+        return true;
+      });
+    }
+    return result[0];
   }
 
   private static @NotNull TokenSet addTokenTypesForLanguage(@NotNull FindModel model,
@@ -316,6 +320,19 @@ final class CommentsAndLiteralsSearcher {
     }
 
     return syntaxHighlighter;
+  }
+
+  /**
+   * Receives the occurrences found by {@link #processOccurrences}, in increasing offset order.
+   */
+  @FunctionalInterface
+  private interface OccurrenceProcessor {
+    /**
+     * @param lastGoodOffset start of the last token at which the lexer was in its initial state, i.e. the furthest point
+     *                       a later call may safely resume lexing from
+     * @return {@code false} to stop the walk
+     */
+    boolean process(int startOffset, int endOffset, int lastGoodOffset);
   }
 
   private static final class CommentsLiteralsSearchData {
