@@ -109,6 +109,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   private static final ThreadLocal<Boolean> ourWarmingDefUseChain = ThreadLocal.withInitial(() -> Boolean.FALSE);
   // Minimum number of earlier same-name definitions before we pre-warm their types; short chains are left untouched.
   private static final int WARM_DEF_USE_THRESHOLD = 64;
+  private static final int CYCLE_FIXED_POINT_ANALYSIS_ITERATION_THRESHOLD = 5;
 
   private record ControlFlowTypeResult(@Nullable PyType type, boolean foundPrefixCall) {
     private ControlFlowTypeResult {
@@ -644,7 +645,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       return new ControlFlowTypeResult(deducedType, foundPrefixCall);
     }
 
-    for (int i = 0; i < 50; i++) {
+    for (int i = 0; i < CYCLE_FIXED_POINT_ANALYSIS_ITERATION_THRESHOLD; i++) {
       final var t = deducedType;
       final @Nullable Ref<PyType> typeOfLaterDefinitions = context.assumeType(anchor, deducedType, ctx -> {
         var types = new ArrayList<PyType>();

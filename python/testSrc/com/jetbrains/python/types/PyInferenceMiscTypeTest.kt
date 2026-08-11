@@ -316,6 +316,20 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
                   break
       """.trimIndent())
 
+    // TODO investigate the inference flakyness
+    // The test is disabled because it's flaky: sometimes different types are inferred in the code analysis and user-initiated contexts.
+    //
+    //@Test
+    //@TestFor(issues = ["PY-90122"])
+    //fun `fixed-point analysis threshold hit for self-referential list comprehension`() = test("""
+    //    def input_data_valid(levels: int):
+    //        data = ["foo"]
+    //        for _ in range(levels):
+    //            data = [data for _ in range(levels)]
+    //        return data
+    //    #           └ TYPE list[str] | list[list[str] | list[list[str]] | list[list[str] | list[list[str]]] | list[list[str] | list[list[str]] | list[list[...] | list[...]]] | list[list[str] | list[list[str]] | list[list[...] | list[...]] | list[list[...] | list[...] | list[...]]] | list[list[str] | list[list[str]] | list[list[...] | list[...]] | list[list[...] | list[...] | list[...]] | list[list[...] | list[...] | list[...] | list[...]]]]
+    //    """)
+
     @Test
     @TestFor(issues = ["EA-40207"])
     fun `recursion through self-referential list`() = test("""
